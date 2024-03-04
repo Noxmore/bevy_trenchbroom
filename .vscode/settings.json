@@ -1,0 +1,4 @@
+{
+	"workbench.iconTheme": "material-icon-theme",
+	"rust-analyzer.showUnlinkedFileNotification": false
+}
