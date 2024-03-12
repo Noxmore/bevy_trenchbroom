@@ -3,6 +3,9 @@ name = "bevy_trenchbroom"
 version = "0.1.0"
 edition = "2021"
 authors = [ "Noxmore" ]
+repository = "https://github.com/Noxmore/bevy_trenchbroom"
+readme = "readme.md"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 anyhow = "1.0"
