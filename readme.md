@@ -12,46 +12,46 @@ use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 fn main() {
-	App::new()
-		// ...
-		.add_plugins(DefaultPlugins)
-		.add_plugins(TrenchBroomPlugin::new(trenchbroom_config()))
-		// ...
-	;
+    App::new()
+        // ...
+        .add_plugins(DefaultPlugins)
+        .add_plugins(TrenchBroomPlugin::new(trenchbroom_config()))
+        // ...
+    ;
 }
 
 // I recommend putting your `TrenchBroomConfig` in a separate function, most likely in its own module.
 fn trenchbroom_config() -> TrenchBroomConfig {
-	TrenchBroomConfig::new("example_game") // <- The name of your game
-		// Here you can customize the resulting game configuration with a builder-like syntax
-		.entity_scale_expression("scale")
-		// ...
-		
-		
-		// You can define entity definitions here, these are written to your game's FGD file
+    TrenchBroomConfig::new("example_game") // <- The name of your game
+        // Here you can customize the resulting game configuration with a builder-like syntax
+        .entity_scale_expression("scale")
+        // ...
+        
+        
+        // You can define entity definitions here, these are written to your game's FGD file
 
-		// It's highly recommended to make the first defined entity your `worldspawn`
-		.define_entity("worldspawn", EntityDefinition::new_solid()
-			.description("World Entity")
-			
-			.property("skybox", EntDefProperty::string().title("Skybox").description("Path to Skybox"))
+        // It's highly recommended to make the first defined entity your `worldspawn`
+        .define_entity("worldspawn", EntityDefinition::new_solid()
+            .description("World Entity")
+            
+            .property("skybox", EntDefProperty::string().title("Skybox").description("Path to Skybox"))
 
-			.inserter(|commands, entity, view| {
-				view.spawn_brushes(commands, entity, BrushSpawnSettings::new().draw_mesh());
-				Ok(())
-			})
-		)
+            .inserter(|commands, entity, view| {
+                view.spawn_brushes(commands, entity, BrushSpawnSettings::new().draw_mesh());
+                Ok(())
+            })
+        )
 
-		.define_entity("angles", EntityDefinition::new_base()
-			.property("angles", EntDefProperty::vec3().title("Pitch Yaw Roll (Y Z X)").default_value(Vec3::ZERO))
-		)
+        .define_entity("angles", EntityDefinition::new_base()
+            .property("angles", EntDefProperty::vec3().title("Pitch Yaw Roll (Y Z X)").default_value(Vec3::ZERO))
+        )
 
-		.define_entity("player_spawnpoint", EntityDefinition::new_point()
-			.description("Bap")
-			.base(["angles"])
-			
-			.property("testing", EntDefProperty::boolean().title("Testing Boolean").default_value(true).description("Awesome description"))
-		)
+        .define_entity("player_spawnpoint", EntityDefinition::new_point()
+            .description("Bap")
+            .base(["angles"])
+            
+            .property("testing", EntDefProperty::boolean().title("Testing Boolean").default_value(true).description("Awesome description"))
+        )
 }
 ```
 
@@ -64,11 +64,11 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, write_trenchbroom_config_system)
 
 fn write_trenchbroom_config_system(config: Res<TrenchBroomConfig>) {
-	if let Err(err) = config.write_folder("<folder_path>") {
-		error!("Could not write TrenchBroom config: {err}");
-	}
+    if let Err(err) = config.write_folder("<folder_path>") {
+        error!("Could not write TrenchBroom config: {err}");
+    }
 
-	// This will write <folder_path>/GameConfig.cfg, and <folder_path>/example_game.fgd
+    // This will write <folder_path>/GameConfig.cfg, and <folder_path>/example_game.fgd
 }
 ```
 
@@ -85,7 +85,7 @@ In this file you can define certain aspects of the material. (See docs on Materi
 To avoid an unnecessary amount of polygons, it's recommended to have `__TB_empty.ron` in your textures root directory, with the following content:
 ```ron
 (
-	kind: Empty
+    kind: Empty
 )
 ```
 This will make any face without a texture get ignored when creating a brush's mesh.
@@ -102,10 +102,10 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, spawn_level)
 
 fn spawn_level(mut commands: Commands, asset_server: Res<AssetServer>) {
-	commands.spawn(MapBundle {
-		map: asset_server.load("maps/test.map"),
-		..default()
-	});
+    commands.spawn(MapBundle {
+        map: asset_server.load("maps/test.map"),
+        ..default()
+    });
 }
 ```
 
