@@ -52,6 +52,7 @@ impl Plugin for TrenchBroomPlugin {
 
 
 
+/// A TrenchBroom map loaded from a .map file.
 #[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Map {
 	pub name: String,

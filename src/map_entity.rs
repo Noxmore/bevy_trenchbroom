@@ -16,37 +16,10 @@ impl MapEntity {
 	pub fn classname(&self) -> Result<&str, MapEntityInsertionError> {
 		self.properties.get("classname")
 			.map(String::as_str)
-			.ok_or_else(|| MapEntityInsertionError::RequiredPropertyNotFound { ent_index: self.ent_index, property: "classname".into() })
+			.ok_or_else(|| MapEntityInsertionError::RequiredPropertyNotFound { property: "classname".into() })
 	}
 }
 
-
-
-#[derive(Error, Debug, Clone, PartialEq)]
-pub enum MapEntityInsertionError
-{
-	#[error("Entity {ent_index} requires property `{property}` to be created")]
-	RequiredPropertyNotFound {
-		ent_index: usize,
-		property: String,
-	},
-	#[error("Entity {ent_index} requires property `{property}` to be a valid `{required_type}`. Error: ")]
-	PropertyParseError {
-		ent_index: usize,
-		property: String,
-		required_type: &'static str,
-		error: String,
-	},
-	#[error("Entity definition for \"{classname}\" not found")]
-	DefinitionNotFound {
-		classname: String,
-	},
-	#[error("Entity class {classname} has a base of {base_name}, but that class does not exist")]
-	InvalidBase {
-		classname: String,
-		base_name: String,
-	},
-}
 
 
 
@@ -58,13 +31,14 @@ pub struct MapEntityPropertiesView<'w> {
 
 impl<'w> MapEntityPropertiesView<'w>
 {
-	/// TODO: document
+	/// Gets a property from this entity accounting for entity class hierarchy.
+	/// If the property is not defined, it attempts to get it's default.
 	pub fn require<T: TrenchBroomValue>(&self, key: &str) -> Result<T, MapEntityInsertionError> {
 		let Some(value_str) = self.entity.properties.get(key).or(self.tb_config.get_entity_property_default(self.entity.classname()?, key)) else { 
-			return Err(MapEntityInsertionError::RequiredPropertyNotFound { ent_index: self.entity.ent_index, property: key.into() });
+			return Err(MapEntityInsertionError::RequiredPropertyNotFound { property: key.into() });
 		};
-		T::tb_parse(value_str).map_err(|err| MapEntityInsertionError::PropertyParseError {
-			ent_index: self.entity.ent_index, property: key.into(), required_type: std::any::type_name::<T>(), error: err.to_string()
+		T::tb_parse(value_str.trim_matches('"')).map_err(|err| MapEntityInsertionError::PropertyParseError {
+			property: key.into(), required_type: std::any::type_name::<T>(), error: err.to_string()
 		})
 	}
 

@@ -3,6 +3,10 @@ use crate::*;
 /// The complete TrenchBroom configuration, it is recommended to set this in the plugin, where it will be put into [CURRENT_CONFIG], and to not change it afterwards.
 #[derive(Resource, Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
+	/// The format version of the TrenchBroom config file, you almost certainly should not change this.
+	#[default(8)]
+	pub tb_format_version: u16,
+
 	/// How many units in the trenchbroom world take up 1 unit in the bevy world. (Default: ~40, 1 unit = 1 inch)
 	#[default(39.37008)]
 	pub scale: f32,
@@ -16,7 +20,7 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub name: String,
 
-	/// Optional icon for the TrenchBroom UI. Contains the data of a PNG file.
+	/// Optional icon for the TrenchBroom UI. Contains the data of a PNG file. Should be 32x32 or it will look weird in the UI.
 	pub icon: Option<Vec<u8>>,
 	/// Supported map file formats, it is recommended to leave this at its default (Valve)
 	#[default(vec![MapFileFormat::Valve])]
@@ -37,14 +41,14 @@ pub struct TrenchBroomConfig {
 	pub texture_pallette: Option<String>,
 	/// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
 	#[builder(into)]
+	#[default(Self::default_texture_exclusions())]
 	pub texture_exclusions: Vec<String>,
 
 	/// The default color for entities in RGBA. (Default: 0.6 0.6 0.6 1.0)
 	#[default(vec4(0.6, 0.6, 0.6, 1.0))]
 	#[builder(into)]
 	pub entity_default_color: Vec4,
-	/// An expression to evaluate how big entities' models are. Any instances of the string `$tb_scale$` will be replaced with the scale configured in this struct. (Default: "$tb_scale$")
-	#[default(Some("$tb_scale$".into()))]
+	/// An expression to evaluate how big entities' models are. Any instances of the string `$tb_scale$` will be replaced with the scale configured in this struct.
 	#[builder(into)]
 	pub entity_scale_expression: Option<String>,
 	/// Whether to set property defaults into an entity on creation, or leave them to use the default value that is defined in entity definitions. It is not recommended to use this.
@@ -53,8 +57,8 @@ pub struct TrenchBroomConfig {
 	/// Tags to apply to brushes.
 	#[builder(into)]
 	pub brush_tags: Vec<TrenchBroomTag>,
-	/// Tags to apply to brush faces. The default is defined by [TrenchBroomConfig::default_face_tags], and all it does is make `__TB_empty` transparent.
-	#[default(Self::default_face_tags())]
+	/// Tags to apply to brush faces. The default is defined by [TrenchBroomConfig::empty_face_tag], and all it does is make `__TB_empty` transparent.
+	#[default(vec![Self::empty_face_tag()])]
 	#[builder(into)]
 	pub face_tags: Vec<TrenchBroomTag>,
 
@@ -92,13 +96,8 @@ impl TrenchBroomConfig {
 	}
 	
 	/// (See documentation on [TrenchBroomConfig::face_tags])
-	pub fn default_face_tags() -> Vec<TrenchBroomTag> {
-		vec![TrenchBroomTag {
-			name: "empty".into(),
-			attributes: vec![TrenchBroomTagAttribute::Transparent],
-			pattern: "__TB_empty".into(),
-			..default()
-		}]
+	pub fn empty_face_tag() -> TrenchBroomTag {
+		TrenchBroomTag::new("empty", "__TB_empty").attributes([TrenchBroomTagAttribute::Transparent])
 	}
 
 	/// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_inserter])
@@ -107,6 +106,7 @@ impl TrenchBroomConfig {
 		commands.entity(entity).insert((
 			Name::new(view.properties.require::<String>("targetname").map(|name| format!("{classname} ({name})")).unwrap_or(classname)),
 			view.properties.get_transform(),
+			GlobalTransform::default(),
 			view.properties.entity.clone(),
 		));
 		Ok(())
@@ -199,23 +199,36 @@ impl MapFileFormat {
 }
 
 /// Tag for applying attributes to certain brushes/faces, for example, making a `trigger` texture transparent.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, DefaultBuilder)]
 pub struct TrenchBroomTag {
 	/// Name of the tag.
+	#[builder(skip)]
 	pub name: String,
 	/// The attributes applied to the brushes/faces the tag targets.
+	#[builder(into)]
 	pub attributes: Vec<TrenchBroomTagAttribute>,
 	/// The pattern to match for, if this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the texture.
+	#[builder(skip)]
 	pub pattern: String,
 	/// Only used if this is a brush tag. When this tag is applied by the use of its keyboard shortcut, then the selected brushes will receive this texture if it is specified.
+	#[builder(into)]
 	pub texture: Option<String>,
 }
 
 impl TrenchBroomTag {
-	pub fn to_json(&self) -> json::JsonValue {
+	/// Creates a new tag.
+	///
+	/// The name is a simple name to identify the tag. The pattern is a pattern to match for allowing wildcards.
+	/// If this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the texture.
+	pub fn new(name: impl Into<String>, pattern: impl Into<String>) -> Self {
+		Self { name: name.into(), pattern: pattern.into(), ..default() }
+	}
+
+	pub(crate) fn to_json(&self, match_type: &str) -> json::JsonValue {
 		let mut json = json::object! {
 			"name": self.name.clone(),
 			"attribs": self.attributes.iter().copied().map(TrenchBroomTagAttribute::config_str).collect::<Vec<_>>(),
+			"match": match_type,
 			"pattern": self.pattern.clone(),
 		};
 
@@ -264,7 +277,7 @@ impl TrenchBroomConfig {
 
 		// The game config file is basically json, so we can get 99% of the way there by just creating a json object.
 		let mut json = json::object! {
-			"version": 6,
+			"version": self.tb_format_version,
 			"name": self.name.clone(),
 			"fileformats": self.file_formats.iter().map(|format| json::object! { "format": format.config_str() }).collect::<Vec<_>>(),
 			"filesystem": {
@@ -272,7 +285,7 @@ impl TrenchBroomConfig {
 				"packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
 			},
 			"textures": {
-				"package": { "type": "directory", "root": self.texture_root.clone() },
+				"root": self.texture_root.clone(),
 				"format": { "extension": self.texture_extension.clone(), "format": "image" },
 				"attribute": "_tb_textures",
 				"excludes": self.texture_exclusions.clone(),
@@ -284,8 +297,8 @@ impl TrenchBroomConfig {
 				"setDefaultProperties": self.entity_set_default_properties,
 			},
 			"tags": {
-				"brush": self.brush_tags.iter().map(TrenchBroomTag::to_json).collect::<Vec<_>>(),
-				"brushface": self.face_tags.iter().map(TrenchBroomTag::to_json).collect::<Vec<_>>()
+				"brush": self.brush_tags.iter().map(|tag| tag.to_json("classname")).collect::<Vec<_>>(),
+				"brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
 			}
 		};
 
@@ -305,7 +318,7 @@ impl TrenchBroomConfig {
 		let mut buf = json.pretty(4);
 
 		if let Some(expression) = &self.entity_scale_expression {
-			buf = buf.replace("\"$$scale$$\"", expression);
+			buf = buf.replace("\"$$scale$$\"", &expression.replace("$tb_scale$", &self.scale.to_string()));
 		}
 
 		fs::write(folder.join("GameConfig.cfg"), buf)?;
@@ -315,7 +328,7 @@ impl TrenchBroomConfig {
 		//////////////////////////////////////////////////////////////////////////////////
 		
 		fs::write(folder.join(format!("{}.fgd", self.name)),
-			self.entity_definitions.iter().map(|(name, def)| def.to_fgd(name)).join("\n\n")
+			self.entity_definitions.iter().map(|(name, def)| def.to_fgd(name, self)).join("\n\n")
 		)?;
 
 		Ok(())
@@ -326,40 +339,4 @@ impl TrenchBroomConfig {
 pub fn mirror_trenchbroom_scale(config: Res<TrenchBroomConfig>) {
 	if !config.is_changed() { return }
 	*TRENCHBROOM_SCALE.write().unwrap() = config.scale;
-}
-
-
-#[test]
-fn write_config() -> io::Result<()> {
-	TrenchBroomConfig::new("boop") // <- The name of your game
-		// Here you can customize the resulting game configuration with a builder-like syntax
-		.entity_scale_expression("scale")
-		// ...
-		
-		
-		// You can define entity definitions here, these are written to your game's FGD file
-
-		// It's highly recommended to make the first defined entity your `worldspawn`
-		.define_entity("worldspawn", EntityDefinition::new_solid()
-			.description("World Entity")
-			
-			.property("skybox", EntDefProperty::string().title("Skybox").description("Path to Skybox"))
-		)
-
-		.define_entity("angles", EntityDefinition::new_base()
-			.property("angles", EntDefProperty::vec3().title("Pitch Yaw Roll (Y Z X)").default_value(Vec3::ZERO))
-		)
-
-		.define_entity("player_spawnpoint", EntityDefinition::new_point()
-			.description("Bap")
-			.base(["angles"])
-			
-			.property("testing", EntDefProperty::boolean().title("Testing Boolean").default_value(true).description("Awesome description"))
-
-			.inserter(|commands, entity, view| {
-				Ok(())
-			})
-		)
-		
-		.write_folder("/d/_tmp/config")
 }

@@ -2,6 +2,7 @@ pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::math::*;
 pub(crate) use bevy::render::primitives::Aabb;
 pub(crate) use bevy::utils::hashbrown::HashMap;
+pub(crate) use bevy::utils::Uuid;
 pub(crate) use std::sync::*;
 pub(crate) use std::io;
 pub(crate) use std::fs;

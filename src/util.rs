@@ -141,8 +141,8 @@ simple_trenchbroom_value_impl!(isize, false);
 
 simple_trenchbroom_value_impl!(bool, true);
 
-simple_trenchbroom_value_impl!(f32, false);
-simple_trenchbroom_value_impl!(f64, false);
+simple_trenchbroom_value_impl!(f32, true);
+simple_trenchbroom_value_impl!(f64, true);
 
 impl TrenchBroomValue for Aabb {
 	const TB_IS_QUOTED: bool = false;
@@ -185,7 +185,8 @@ impl TrenchBroomValue for Vec2 {
 
 impl TrenchBroomValue for Color {
 	fn tb_parse(input: &str) -> anyhow::Result<Self> {
-		<[f32; 4]>::tb_parse(input).map(Color::rgba_from_array)
+		<[f32; 3]>::tb_parse(input).map(Color::rgb_from_array)
+			.or(<[f32; 4]>::tb_parse(input).map(Color::rgba_from_array))
 	}
 	fn tb_to_string(&self) -> String {
 		format!("{} {} {} {}", self.r(), self.g(), self.b(), self.a())
@@ -194,7 +195,7 @@ impl TrenchBroomValue for Color {
 
 // God i love rust's trait system
 impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue for [T; COUNT] {
-	const TB_IS_QUOTED: bool = T::TB_IS_QUOTED;
+	// const TB_IS_QUOTED: bool = T::TB_IS_QUOTED;
 
 	fn tb_parse(input: &str) -> anyhow::Result<Self> {
 		// This might be a problem for TrenchBroomValues that use spaces in their parsing. Oh well!

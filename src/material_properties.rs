@@ -38,9 +38,9 @@ pub enum MaterialKind
 {
 	/// A general solid material, with specified sounds.
 	Solid(String),
-	/// Doesn't draw in-game, but does have collision, sounds are optional.
+	/// Doesn't draw in-game, but does have collision, even if a trimesh collider is used. Sounds are optional.
 	CollisionOnly(Option<String>),
-	/// Does not appear in-game, no collision, nothing.
+	/// Does not appear in-game, no collision, if a trimesh collider is used.
 	Empty,
 }
 

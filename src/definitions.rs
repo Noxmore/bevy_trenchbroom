@@ -19,10 +19,10 @@ pub struct EntityDefinition {
 	pub model: Option<EntDefModel>,
 	#[builder(into)]
 	pub color: EntDefAttribute<[u8; 3]>,
-	/// The path to a sprite to display this entity as.
+	/// The path to a sprite to display this entity as. If an iconsprite is set, the default model size will be set to `1`.
 	#[builder(into)]
-	pub sprite: EntDefAttribute<String>,
-	/// The size of this entity's bounding box in TrenchBroom units. Defaults to 16x16x16.
+	pub iconsprite: EntDefAttribute<String>,
+	/// The size of this entity's bounding box in TrenchBroom units. Defaults to `16x16x16`.
 	#[builder(into)]
 	pub size: EntDefAttribute<[Vec3; 2]>,
 
@@ -69,8 +69,8 @@ impl EntityDefinition {
 		self
 	}
 	
-	/// Returns this definition in the `FGD` format.
-	pub fn to_fgd(&self, entity_name: &str) -> String {
+	/// Returns this definition in `FGD` format.
+	pub fn to_fgd(&self, entity_name: &str, config: &TrenchBroomConfig) -> String {
 		let mut out = String::new();
 		
 		out += &format!("@{:?}Class ", self.class_type);
@@ -80,21 +80,38 @@ impl EntityDefinition {
 			out += &format!("base({}) ", self.base.join(", "));
 		}
 
+		if let Some(value) = self.color.to_fgd() {
+			out += &format!("color({}) ", value.trim_matches('"'));
+		}
+
+		if let Some(value) = self.iconsprite.to_fgd() {
+			out += &format!("iconsprite({value}) ");
+		}
+
+		match &self.size {
+			EntDefAttribute::Undefined => {},
+			EntDefAttribute::Expr(prop) => out += &format!("size({prop}) "),
+			EntDefAttribute::Set(value) => out += &format!("size({}) ", Aabb::from_min_max(value[0], value[1]).tb_to_string()),
+		}
+
 		// (Model)
 		if let Some(model) = &self.model {
-			let mut json = json::object! { "path": model.path.to_fgd() };
+			let mut model_props: Vec<String> = default();
 
+			if let Some(path) = model.path.to_fgd() {
+				model_props.push(format!(r#""path": {path}"#));
+			}
 			if let Some(frame) = model.frame.to_fgd() {
-				json.insert("frame", frame).unwrap();
+				model_props.push(format!(r#""frame": {frame}"#));
 			}
 			if let Some(skin) = model.skin.to_fgd() {
-				json.insert("skin", skin).unwrap();
+				model_props.push(format!(r#""skin": {skin}"#));
 			}
 			if let Some(scale) = model.scale.to_fgd() {
-				json.insert("scale", scale).unwrap();
+				model_props.push(format!(r#""scale": {}"#, scale.replace("$tb_scale$", &config.scale.to_string())));
 			}
 
-			out += &format!("model({})", json.dump());
+			out += &format!("model({{ {} }}) ", model_props.join(", "));
 		}
 
 		// Title
@@ -214,14 +231,22 @@ impl Default for EntDefPropertyType {
 	}
 }
 
+/// Shorthand for `EntDefAttribute::Expr(expr.into())`
+pub fn expr_attr<T: TrenchBroomValue>(expr: impl Into<String>) -> EntDefAttribute<T> {
+	EntDefAttribute::Expr(expr.into())
+}
+/// Shorthand for `EntDefAttribute::Set(value)`
+pub fn set_attr<T: TrenchBroomValue>(value: T) -> EntDefAttribute<T> {
+	EntDefAttribute::Set(value)
+}
 
 /// An attribute about an entity definition, can be not set, set to a property of that entity, or set to a specific value.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum EntDefAttribute<T: TrenchBroomValue> {
 	#[default]
 	Undefined,
-	/// Will use the value of the specified property for this attribute.
-	Property(String),
+	/// Will use the result of the specified expression for this attribute. You can find the documentation for expressions [here](https://trenchbroom.github.io/manual/latest/#expression_language).
+	Expr(String),
 	/// A set value for this attribute, cannot be changed in-editor.
 	Set(T),
 }
@@ -231,7 +256,7 @@ impl<T: TrenchBroomValue> EntDefAttribute<T> {
 	pub fn map<O: TrenchBroomValue>(self, mapper: impl FnOnce(T) -> O) -> EntDefAttribute<O> {
 		match self {
 			Self::Undefined => EntDefAttribute::Undefined,
-			Self::Property(p) => EntDefAttribute::Property(p),
+			Self::Expr(p) => EntDefAttribute::Expr(p),
 			Self::Set(value) => EntDefAttribute::Set(mapper(value)),
 		}
 	}
@@ -241,10 +266,8 @@ impl<T: TrenchBroomValue> EntDefAttribute<T> {
 	pub fn to_fgd(&self) -> Option<String> {
 		match self {
 			Self::Undefined => None,
-			Self::Property(property) => Some(property.clone()),
-			Self::Set(value) => Some({
-				if T::TB_IS_QUOTED { format!("\"{}\"", value.tb_to_string()) } else { value.tb_to_string() }
-			}),
+			Self::Expr(property) => Some(property.clone()),
+			Self::Set(value) => Some(value.tb_to_string_quoted()),
 		}
 	}
 }
@@ -261,23 +284,23 @@ impl From<EntDefAttribute<&str>> for EntDefAttribute<String> {
 	}
 }
 
-#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder, Serialize, Deserialize)]
 pub struct EntDefModel {
-	pub path: EntDefAttribute<String>,
-	#[default(EntDefAttribute::Set(0))]
-	pub frame: EntDefAttribute<usize>,
-	#[default(EntDefAttribute::Set(0))]
-	pub skin: EntDefAttribute<usize>,
-	#[default(EntDefAttribute::Set(Vec3::ONE))]
-	pub scale: EntDefAttribute<Vec3>,
+	#[builder(skip)] pub path: EntDefAttribute<String>,
+	#[builder(into)] pub frame: EntDefAttribute<usize>,
+	#[builder(into)] pub skin: EntDefAttribute<usize>,
+	/// The scale of the model. Any instances of the string `$tb_scale$` in an expression will be replaced with the scale configured in the [TrenchBroomConfig] (Default: `$tb_scale$`)
+	#[default(expr_attr("$tb_scale$"))]
+	#[builder(into)] pub scale: EntDefAttribute<f32>,
 }
 
 impl EntDefModel {
-	pub fn simple_path(path: impl Into<String>) -> Self {
+	pub fn new_set_path(path: impl Into<String>) -> Self {
 		Self { path: EntDefAttribute::Set(path.into()), ..default() }
 	}
 	
-	pub fn simple_property(property: impl Into<String>) -> Self {
-		Self { path: EntDefAttribute::Property(property.into()), ..default() }
+	pub fn new_expr_path(property: impl Into<String>) -> Self {
+		Self { path: EntDefAttribute::Expr(property.into()), ..default() }
 	}
 }
