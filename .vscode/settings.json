@@ -1,4 +1,5 @@
 {
 	"workbench.iconTheme": "material-icon-theme",
-	"rust-analyzer.showUnlinkedFileNotification": false
+	"rust-analyzer.showUnlinkedFileNotification": false,
+	"editor.insertSpaces": true
 }

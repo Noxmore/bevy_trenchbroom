@@ -263,7 +263,7 @@ impl<'w> EntityInsertionView<'w> {
             }
 
             let mut mesh = generate_mesh_from_brush_polygons(faces.as_slice(), self.tb_config);
-            // TODO this makes normal maps work, but messes up the lighting, why????
+            // TODO this makes pbr maps work, but messes up the lighting for me, why????
             if let Err(err) = mesh.generate_tangents() {
                 error!("Couldn't generate tangents for brush in map entity {} with texture {texture}: {err}", self.properties.entity.ent_index);
             }
@@ -316,6 +316,7 @@ impl<'w, 'l> std::ops::Deref for BrushInsertionView<'w, 'l> {
     }
 }
 
+/// A collection of inserters to call on each brush/mesh produced when spawning a brush.
 #[derive(Default)]
 pub struct BrushSpawnSettings {
     mesh_inserters: Vec<Box<dyn Fn(&mut EntityCommands, &BrushMeshInsertionView)>>,
@@ -327,6 +328,7 @@ impl BrushSpawnSettings {
         Self::default()
     }
 
+    /// Calls the specified function on each mesh produced by the entity.
     pub fn mesh_inserter(
         mut self,
         inserter: impl Fn(&mut EntityCommands, &BrushMeshInsertionView) + 'static,
@@ -335,6 +337,7 @@ impl BrushSpawnSettings {
         self
     }
 
+    /// Calls a function with an inserting entity, after said entity polygonizes it's brushes.
     pub fn brush_inserter(
         mut self,
         inserter: impl Fn(&mut Commands, Entity, &BrushInsertionView) -> Vec<Entity> + 'static,

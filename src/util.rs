@@ -84,6 +84,7 @@ impl ConvertZeroToOne for Vec2 {
     }
 }
 
+/// Contains TrenchBroom-specific parsing and stringification functions.
 pub trait TrenchBroomValue: Sized {
     /// If quotes should be put around this value when writing out an `fgd` file.
     const TB_IS_QUOTED: bool = true;

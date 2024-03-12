@@ -1,5 +1,6 @@
 use crate::*;
 
+/// Stores certain aspects about a material to make sure it appears in-game correctly. See [root bevy_trenchbroom docs](crate) or `readme.md` to learn more.
 #[derive(Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component)]
 #[serde(default)]
@@ -35,6 +36,8 @@ impl MaterialProperties {
             .clone()
     }
 }
+
+// TODO in the future, this should probably be able to store more arbitrary data.
 
 /// The kind of material a material is, this includes things like:
 /// - What the material sounds like when walked-on/hit/scraped.
