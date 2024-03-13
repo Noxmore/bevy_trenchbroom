@@ -144,6 +144,6 @@ If you want to try to tackle, or have an idea of how to approach any of these, a
 ---|--|---
 | 0.13 | 0.1 | 2024.1 |
 
-Note: There's a good change that it will work for other TrenchBroom versions then the one your version of bevy_trenchbroom is made for.
+Note: There's a good chance that it will work for other TrenchBroom versions then the one your version of bevy_trenchbroom is made for.
 
 This crate is still in early development and almost certainly has missing features, if your use case isn't covered, please make an issue!
