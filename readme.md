@@ -69,9 +69,9 @@ Then to access the config from TrenchBroom, at some point in your application, y
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
-// app.add_systems(Startup, write_trenchbroom_config_system)
+// app.add_systems(Startup, write_trenchbroom_config)
 
-fn write_trenchbroom_config_system(config: Res<TrenchBroomConfig>) {
+fn write_trenchbroom_config(config: Res<TrenchBroomConfig>) {
     if let Err(err) = config.write_folder("<folder_path>") {
         error!("Could not write TrenchBroom config: {err}");
     }
@@ -107,9 +107,9 @@ You can also more easily do this with a `MapBundle`.
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
-// app.add_systems(Startup, spawn_level)
+// app.add_systems(Startup, spawn_test_map)
 
-fn spawn_level(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
         map: asset_server.load("maps/test.map"),
         ..default()
