@@ -12,10 +12,10 @@ categories = [ "game-development" ]
 [dependencies]
 anyhow = "1.0"
 bevy = { version = "0.13", default-features = false, features = [
-	"bevy_asset",
-	"bevy_render",
-	"bevy_pbr",
-	"serialize",
+    "bevy_asset",
+    "bevy_render",
+    "bevy_pbr",
+    "serialize",
 ] }
 bevy_rapier3d = { version = "0.25", features = ["serde"], optional = true }
 default-struct-builder = "0.5.0"
