@@ -11,6 +11,9 @@ pub struct TrenchBroomConfig {
     #[default(39.37008)]
     pub scale: f32,
 
+    /// Whether the current instance of this application is a server, if true, this will disable unnecessary features such as brush mesh rendering.
+    pub is_server: bool,
+
     /// The path to your game assets, should be the same as in your asset plugin. Probably does not support processed assets (I haven't tested). (Default: "assets")
     #[default("assets".into())]
     #[builder(into)]

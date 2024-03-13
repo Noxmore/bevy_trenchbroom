@@ -113,7 +113,9 @@ Unlike scenes, maps support asset hot-reloading, meaning that iteration times ar
 
 ## Multiplayer
 
-When spawning a map, you can add a `MapSpawningSettings` component to the entity and specify a uuid used to create unique identifiers for each map entity spawned, defining a custom global inserter for your config, you can then use this to add your networking solution's unique identifier type to the entity, allowing for network synchronization.
+If you are making a multiplayer game, call `is_server()` when creating your config, and pass in whether the currently running application is a server.
+
+Then, when spawning a map, you can add a `MapSpawningSettings` component to the entity and specify a uuid used to create unique identifiers for each map entity spawned, defining a custom global inserter for your config, you can then use this to add your networking solution's unique identifier type to the entity, allowing for network synchronization.
 
 ## Physics/Collisions
 

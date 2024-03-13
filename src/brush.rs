@@ -241,12 +241,12 @@ impl BrushSurfacePolygon {
 ///
 /// It is assumed all faces have the same material.
 ///
-/// NOTE: This function makes a file system call to get textures' sizes.
+/// NOTE: If this isn't a server, this function makes a file system call to get textures' sizes.
 pub fn generate_mesh_from_brush_polygons(
     faces: &[&BrushSurfacePolygon],
     config: &TrenchBroomConfig,
 ) -> Mesh {
-    let texture_size = if faces.is_empty() {
+    let texture_size = if faces.is_empty() || config.is_server {
         Vec2::ONE
     } else {
         UVec2::from(
