@@ -5,6 +5,11 @@
 
 Full Bevy integration with TrenchBroom, supporting loading .map files, defining a TrenchBroom game configuration and entities definitions with code, and more!
 
+<img src="assets/screenshots/rune_proto.png">
+<label>(A testing map i made, loaded with bevy_trenchbroom)</label>
+
+<br>
+
 # How to use
 First add the `bevy_trenchbroom` to your project: `cargo add bevy_trenchbroom`.
 
