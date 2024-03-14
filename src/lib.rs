@@ -35,6 +35,8 @@ impl Plugin for TrenchBroomPlugin {
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(self.config.clone())
             .register_type::<MaterialProperties>()
+            .register_type::<MapEntity>()
+            .register_type::<Map>()
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
             .add_event::<MapSpawnedEvent>()
