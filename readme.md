@@ -132,6 +132,7 @@ Then, when spawning a map, you can add a `MapSpawningSettings` component to the 
 First, enable the `rapier` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your `BrushSpawnSettings` when spawning brushes to create the respective type of collider(s) on said brushes.
 
 # Possible future plans
+- Entity IO
 - Map GLTF exporting
 - Offload map insertion to another thread (at least offload the filesystem calls)
 - Find a more modular approach to material properties
