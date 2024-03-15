@@ -53,15 +53,15 @@ impl<'w> MapEntityPropertiesView<'w> {
     /// Extracts a transform from this entity using the properties `angles`, `origin`, and `scale`.
     /// If you are not using those for your transform, you probably shouldn't use this function.
     pub fn get_transform(&self) -> Transform {
-        let rotation = match self.require::<Vec3>("angles") {
-            // TODO i think something is wrong here
+        let rotation = match self.require::<Vec3>("angles")/* .map(Vec3::z_up_to_y_up) */ {
             Ok(rot) => Quat::from_euler(
-                EulerRot::YXZ,
+                // Honestly, i don't know why this works, i got here through hours of trial and error
+                EulerRot::default(),
                 (rot.y - 90.).to_radians(),
                 -rot.x.to_radians(),
                 rot.z.to_radians(),
             ),
-            Err(_) => Quat::IDENTITY,
+            Err(_) => Quat::default(),
         };
 
         Transform {
@@ -70,9 +70,12 @@ impl<'w> MapEntityPropertiesView<'w> {
                 .unwrap_or(Vec3::ZERO)
                 .trenchbroom_to_bevy_space(),
             rotation,
-            scale: match self.require::<Vec3>("scale") {
-                Ok(scale) => scale.trenchbroom_to_bevy_space(),
-                Err(_) => Vec3::ONE,
+            scale: match self.require::<f32>("scale") {
+                Ok(scale) => Vec3::splat(scale),
+                Err(_) => match self.require::<Vec3>("scale") {
+                    Ok(scale) => scale.trenchbroom_to_bevy_space(),
+                    Err(_) => Vec3::ONE,
+                },
             },
         }
     }
