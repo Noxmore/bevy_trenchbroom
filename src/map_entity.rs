@@ -59,7 +59,7 @@ impl<'w> MapEntityPropertiesView<'w> {
                 EulerRot::default(),
                 (rot.y - 90.).to_radians(),
                 -rot.x.to_radians(),
-                rot.z.to_radians(),
+                -rot.z.to_radians(),
             ),
             Err(_) => Quat::default(),
         };
