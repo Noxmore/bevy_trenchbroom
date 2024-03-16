@@ -148,6 +148,13 @@ impl TrenchBroomConfig {
 
         None
     }
+
+    /// Gets and entity definition from this config, or if none is found, returns [MapEntityInsertionError::DefinitionNotFound].
+    pub fn get_definition(&self, classname: &str) -> Result<&EntityDefinition, MapEntityInsertionError> {
+        self.entity_definitions.get(classname).ok_or_else(|| MapEntityInsertionError::DefinitionNotFound {
+            classname: classname.into(),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

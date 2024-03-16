@@ -1,7 +1,7 @@
 use crate::*;
 
 /// A definition for an entity class type that will be both written out to the game's `fgd` file, and used to insert the entity into the world once loaded.
-#[derive(Debug, Clone, Default, DefaultBuilder, Serialize, Deserialize)]
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder, Serialize, Deserialize)]
 pub struct EntityDefinition {
     /// The type of entity this is, see documentation for [EntDefClassType] variants.
     #[builder(skip)]
@@ -34,6 +34,10 @@ pub struct EntityDefinition {
     #[serde(skip)]
     #[builder(skip)]
     pub inserter: Option<EntityInserter>,
+
+    /// If false, the global inserter won't apply to this entity.
+    #[default(true)]
+    pub use_global_inserter: bool,
 }
 
 impl EntityDefinition {

@@ -165,10 +165,13 @@ impl MapEntity {
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        self.insert_class(self.classname()?, commands, entity, view)?;
+        let definition = view.tb_config.get_definition(self.classname()?)?;
+        self.insert_class(definition, commands, entity, view)?;
 
         if let Some(global_inserter) = view.tb_config.global_inserter {
-            global_inserter(commands, entity, view)?;
+            if definition.use_global_inserter {
+                global_inserter(commands, entity, view)?;
+            }
         }
 
         Ok(())
@@ -176,19 +179,13 @@ impl MapEntity {
 
     fn insert_class(
         &self,
-        classname: &str,
+        definition: &EntityDefinition,
         commands: &mut Commands,
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        let Some(definition) = view.tb_config.entity_definitions.get(classname) else {
-            return Err(MapEntityInsertionError::DefinitionNotFound {
-                classname: classname.into(),
-            });
-        };
-
         for base in &definition.base {
-            self.insert_class(base, commands, entity, view)?;
+            self.insert_class(view.tb_config.get_definition(base)?, commands, entity, view)?;
         }
 
         if let Some(inserter) = definition.inserter {
