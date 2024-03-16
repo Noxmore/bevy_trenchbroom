@@ -101,6 +101,8 @@ pub trait TrenchBroomValue: Sized {
             self.tb_to_string()
         }
     }
+
+    fn fgd_type() -> EntDefPropertyType;
 }
 
 impl TrenchBroomValue for String {
@@ -109,6 +111,9 @@ impl TrenchBroomValue for String {
     }
     fn tb_to_string(&self) -> String {
         self.clone()
+    }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("string".into())
     }
 }
 
@@ -120,10 +125,13 @@ impl TrenchBroomValue for &str {
     fn tb_to_string(&self) -> String {
         self.to_string()
     }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("string".into())
+    }
 }
 
 macro_rules! simple_trenchbroom_value_impl {
-    ($ty:ty, $quoted:expr) => {
+    ($ty:ty, $quoted:expr, $fgd_type:ident $fgd_type_value:expr) => {
         impl TrenchBroomValue for $ty {
             const TB_IS_QUOTED: bool = $quoted;
 
@@ -133,25 +141,28 @@ macro_rules! simple_trenchbroom_value_impl {
             fn tb_to_string(&self) -> String {
                 self.to_string()
             }
+            fn fgd_type() -> EntDefPropertyType {
+                EntDefPropertyType::$fgd_type($fgd_type_value.into())
+            }
         }
     };
 }
 
-simple_trenchbroom_value_impl!(u8, false);
-simple_trenchbroom_value_impl!(u16, false);
-simple_trenchbroom_value_impl!(u32, false);
-simple_trenchbroom_value_impl!(u64, false);
-simple_trenchbroom_value_impl!(usize, false);
-simple_trenchbroom_value_impl!(i8, false);
-simple_trenchbroom_value_impl!(i16, false);
-simple_trenchbroom_value_impl!(i32, false);
-simple_trenchbroom_value_impl!(i64, false);
-simple_trenchbroom_value_impl!(isize, false);
+simple_trenchbroom_value_impl!(u8, false, Value "integer");
+simple_trenchbroom_value_impl!(u16, false, Value "integer");
+simple_trenchbroom_value_impl!(u32, false, Value "integer");
+simple_trenchbroom_value_impl!(u64, false, Value "integer");
+simple_trenchbroom_value_impl!(usize, false, Value "integer");
+simple_trenchbroom_value_impl!(i8, false, Value "integer");
+simple_trenchbroom_value_impl!(i16, false, Value "integer");
+simple_trenchbroom_value_impl!(i32, false, Value "integer");
+simple_trenchbroom_value_impl!(i64, false, Value "integer");
+simple_trenchbroom_value_impl!(isize, false, Value "integer");
 
-simple_trenchbroom_value_impl!(bool, true);
+simple_trenchbroom_value_impl!(bool, true, Choices [("true".into(), "true".into()), ("false".into(), "false".into())]);
 
-simple_trenchbroom_value_impl!(f32, true);
-simple_trenchbroom_value_impl!(f64, true);
+simple_trenchbroom_value_impl!(f32, true, Value "float");
+simple_trenchbroom_value_impl!(f64, true, Value "float");
 
 impl TrenchBroomValue for Aabb {
     const TB_IS_QUOTED: bool = false;
@@ -171,6 +182,9 @@ impl TrenchBroomValue for Aabb {
             min.x, min.y, min.z, max.x, max.y, max.z
         )
     }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("aabb".into())
+    }
 }
 
 impl TrenchBroomValue for Vec4 {
@@ -180,6 +194,9 @@ impl TrenchBroomValue for Vec4 {
     fn tb_to_string(&self) -> String {
         format!("{} {} {} {}", self.x, self.y, self.z, self.w)
     }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("vec4".into())
+    }
 }
 impl TrenchBroomValue for Vec3 {
     fn tb_parse(input: &str) -> anyhow::Result<Self> {
@@ -188,6 +205,9 @@ impl TrenchBroomValue for Vec3 {
     fn tb_to_string(&self) -> String {
         format!("{} {} {}", self.x, self.y, self.z)
     }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("vector".into())
+    }
 }
 impl TrenchBroomValue for Vec2 {
     fn tb_parse(input: &str) -> anyhow::Result<Self> {
@@ -195,6 +215,9 @@ impl TrenchBroomValue for Vec2 {
     }
     fn tb_to_string(&self) -> String {
         format!("{} {}", self.x, self.y)
+    }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("vec2".into())
     }
 }
 
@@ -206,6 +229,9 @@ impl TrenchBroomValue for Color {
     }
     fn tb_to_string(&self) -> String {
         format!("{} {} {} {}", self.r(), self.g(), self.b(), self.a())
+    }
+    fn fgd_type() -> EntDefPropertyType {
+        EntDefPropertyType::Value("color1".into())
     }
 }
 
@@ -229,11 +255,14 @@ impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue 
     fn tb_to_string(&self) -> String {
         self.iter().map(T::tb_to_string).join(" ")
     }
+    fn fgd_type() -> EntDefPropertyType {
+        T::fgd_type()
+    }
 }
 
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
-/// 
-/// Put this on an entity when 
+///
+/// Put this on an entity when inserting to counteract the rotation.
 #[derive(Component)]
 pub struct TrenchBroomGltfRotationFix;
 
