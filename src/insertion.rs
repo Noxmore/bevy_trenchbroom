@@ -33,7 +33,9 @@ pub enum MapEntityInsertionError {
 
 /// Gets sent whenever a map gets spawned in the world.
 #[derive(Event, Debug, Clone)]
-pub struct MapSpawnedEvent(pub Entity);
+pub struct MapSpawnedEvent {
+    pub entity: Entity,
+}
 
 /// When put in an entity with a `Handle<Map>`, this component will effect how the map spawns.
 #[derive(Component, Reflect, Debug, Clone)]
@@ -64,7 +66,7 @@ pub fn spawn_maps(
             continue;
         };
 
-        for (ent, map_id, settings) in &has_query {
+        for (entity, map_id, settings) in &has_query {
             if map_id.id() != *id {
                 continue;
             }
@@ -75,26 +77,26 @@ pub fn spawn_maps(
                 .map(|settings| settings.uuid)
                 .unwrap_or_else(Uuid::nil);
 
-            map.insert(&mut commands, ent, &asset_server, &tb_config, uuid);
-            spawned_map_events.send(MapSpawnedEvent(ent));
-            loaded_entities.push(ent);
+            map.insert(&mut commands, entity, &asset_server, &tb_config, uuid);
+            spawned_map_events.send(MapSpawnedEvent { entity });
+            loaded_entities.push(entity);
         }
     }
 
     // Spawn maps in newly-added entities
-    for (ent, map_id, settings) in &added_query {
+    for (entity, map_id, settings) in &added_query {
         let Some(map) = maps.get(map_id) else {
             continue;
         };
-        if loaded_entities.contains(&ent) {
+        if loaded_entities.contains(&entity) {
             continue;
         }
         let uuid = settings
             .map(|settings| settings.uuid)
             .unwrap_or_else(Uuid::nil);
 
-        map.insert(&mut commands, ent, &asset_server, &tb_config, uuid);
-        spawned_map_events.send(MapSpawnedEvent(ent));
+        map.insert(&mut commands, entity, &asset_server, &tb_config, uuid);
+        spawned_map_events.send(MapSpawnedEvent { entity });
     }
 }
 
