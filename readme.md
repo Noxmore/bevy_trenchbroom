@@ -117,7 +117,7 @@ fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
-Unlike scenes, maps support asset hot-reloading, meaning that iteration times are pretty much instant.
+Maps support asset hot-reloading, meaning that iteration times are pretty much instant.
 
 ## Multiplayer
 
@@ -130,6 +130,11 @@ Then, when spawning a map, you can add a `MapSpawningSettings` component to the 
 `bevy_trenchbroom` supports [rapier3d](https://crates.io/crates/bevy_rapier3d) to easily add colliders when spawning brushes.
 
 First, enable the `rapier` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your `BrushSpawnSettings` when spawning brushes to create the respective type of collider(s) on said brushes.
+
+## Known Bugs
+
+If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
+To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it's inserter.
 
 # Possible future plans
 - Entity IO

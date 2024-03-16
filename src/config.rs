@@ -127,6 +127,9 @@ impl TrenchBroomConfig {
             GlobalTransform::default(),
             view.properties.entity.clone(),
         ));
+
+        trenchbroom_gltf_rotation_fix(commands, entity);
+
         Ok(())
     }
 

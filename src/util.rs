@@ -230,3 +230,20 @@ impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue 
         self.iter().map(T::tb_to_string).join(" ")
     }
 }
+
+/// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
+/// 
+/// Put this on an entity when 
+#[derive(Component)]
+pub struct TrenchBroomGltfRotationFix;
+
+/// See docs on [TrenchBroomGltfRotationFix]
+pub(crate) fn trenchbroom_gltf_rotation_fix(commands: &mut Commands, entity: Entity) {
+    commands.entity(entity).add(|mut ent: EntityWorldMut| {
+        if ent.contains::<TrenchBroomGltfRotationFix>() {
+            if let Some(mut transform) = ent.get_mut::<Transform>() {
+                transform.rotate_local_y(std::f32::consts::PI / 2.);
+            }
+        }
+    });
+}
