@@ -159,7 +159,7 @@ simple_trenchbroom_value_impl!(i32, false, Value "integer");
 simple_trenchbroom_value_impl!(i64, false, Value "integer");
 simple_trenchbroom_value_impl!(isize, false, Value "integer");
 
-simple_trenchbroom_value_impl!(bool, true, Choices [("true".into(), "true".into()), ("false".into(), "false".into())]);
+simple_trenchbroom_value_impl!(bool, true, Choices [("true".tb_to_string_quoted(), "true".into()), ("false".tb_to_string_quoted(), "false".into())]);
 
 simple_trenchbroom_value_impl!(f32, true, Value "float");
 simple_trenchbroom_value_impl!(f64, true, Value "float");

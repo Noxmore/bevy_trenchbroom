@@ -167,13 +167,10 @@ impl MapEntity {
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        let definition = view.tb_config.get_definition(self.classname()?)?;
-        self.insert_class(definition, commands, entity, view)?;
+        self.insert_class(view.tb_config.get_definition(self.classname()?)?, commands, entity, view)?;
 
         if let Some(global_inserter) = view.tb_config.global_inserter {
-            if definition.use_global_inserter {
-                global_inserter(commands, entity, view)?;
-            }
+            global_inserter(commands, entity, view)?;
         }
 
         Ok(())

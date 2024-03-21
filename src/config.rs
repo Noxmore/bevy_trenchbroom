@@ -73,7 +73,6 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
-    #[builder(skip)]
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
     /// Entity Inserter that gets run on every single entity (after the regular inserters), regardless of classname. (Default: [TrenchBroomConfig::default_global_inserter])
@@ -87,7 +86,8 @@ impl TrenchBroomConfig {
         Self::default().name(name)
     }
 
-    /// Adds an entity to `entity_definitions`.
+    /// Adds an entity to `entity_definitions`. (deprecated, use `entity_definitions()` with the [entity_definitions!] macro instead)
+    #[deprecated = "Use the `entity_definitions!` macro instead"]
     pub fn define_entity(mut self, id: impl Into<String>, definition: EntityDefinition) -> Self {
         self.entity_definitions.insert(id.into(), definition);
         self
@@ -119,7 +119,7 @@ impl TrenchBroomConfig {
         commands.entity(entity).insert((
             Name::new(
                 view.properties
-                    .require::<String>("targetname")
+                    .get::<String>("targetname")
                     .map(|name| format!("{classname} ({name})"))
                     .unwrap_or(classname),
             ),

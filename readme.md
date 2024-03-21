@@ -39,27 +39,52 @@ fn trenchbroom_config() -> TrenchBroomConfig {
         // You can define entity definitions here, these are written to your game's FGD file
 
         // It's highly recommended to make the first defined entity your `worldspawn`
-        .define_entity("worldspawn", EntityDefinition::new_solid()
-            .description("World Entity")
-            
-            .property("skybox", EntDefProperty::string().title("Skybox").description("Path to Skybox"))
+        .entity_definitions(entity_definitions! {
+            |commands, entity, view|
 
-            .inserter(|commands, entity, view| {
+            /// World Entity
+            Solid worldspawn {} => {
                 view.spawn_brushes(commands, entity, BrushSpawnSettings::new().draw_mesh());
-                Ok(())
-            })
-        )
-
-        .define_entity("angles", EntityDefinition::new_base()
-            .property("angles", EntDefProperty::vec3().title("Pitch Yaw Roll (Y Z X)").default_value(Vec3::ZERO))
-        )
-
-        .define_entity("player_spawnpoint", EntityDefinition::new_point()
-            .description("Bap")
-            .base(["angles"])
+            }
             
-            .property("testing", EntDefProperty::boolean().title("Testing Boolean").default_value(true).description("Awesome description"))
-        )
+            Base angles {
+                /// Pitch Yaw Roll (Y Z X)
+                angles: Vec3,
+            }
+            Base target_name {
+                /// Name
+                targetname: "target_source",
+            }
+            Base target {
+                /// Target
+                target: "target_destination",
+            }
+            Base parent {
+                parent: "target_destination",
+            }
+            
+            /// A GLTF model with no physics
+            Point prop(model = { "path": model, "skin": skin, "scale": {{ scale == undefined -> $tb_scale$, scale * $tb_scale$ }} }) : angles, target_name, parent {
+                model: "studio",
+                scale: f32 = 1.,
+                /// Title : Description
+                skin: u32 = 0,
+                collision_type: [
+                    "model" : "Uses colliders defined in the model, or none if the model doesn't have any",
+                    "bounding_box" : "Mesh bounding box collider",
+                    "none": "No collision",
+                ] = "model",
+                enable_shadows: bool = true,
+            } => {
+                commands.entity(entity).insert((
+                    SceneBundle {
+                        scene: view.asset_server.load(format!("{}#Scene0", view.properties.require::<String>("model")?)),
+                        ..default()
+                    },
+                    TrenchBroomGltfRotationFix,
+                ));
+            }
+        })
 }
 ```
 
@@ -137,6 +162,7 @@ If you are using GLTF models, you might notice that they are rotated 90 degrees 
 To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it's inserter.
 
 # Possible future plans
+- Expression language support in the `entity_definitions!` macro
 - Entity IO
 - Map GLTF exporting
 - Offload map insertion to another thread (at least offload the filesystem calls)
