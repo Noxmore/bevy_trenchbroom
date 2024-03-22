@@ -342,9 +342,9 @@ impl BrushSpawnSettings {
         self
     }
 
-    /// Spawns child entities with meshes for each material used, loading said materials in the process.
+    /// Spawns child entities with meshes per each material used, loading said materials in the process.
     /// Will do nothing is your config is specified to be a server.
-    pub fn draw_mesh(self) -> Self {
+    pub fn pbr_mesh(self) -> Self {
         self.mesh_inserter(|ent, view| {
             if !view.mat_properties.kind.should_render() || view.tb_config.is_server {
                 return;
