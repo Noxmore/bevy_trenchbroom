@@ -115,17 +115,17 @@ impl TrenchBroomConfig {
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        let classname = view.properties.entity.classname()?.to_string();
+        let classname = view.map_entity.classname()?.to_string();
         commands.entity(entity).insert((
             Name::new(
-                view.properties
+                view
                     .get::<String>("targetname")
                     .map(|name| format!("{classname} ({name})"))
                     .unwrap_or(classname),
             ),
-            view.properties.get_transform(),
+            view.get_transform(),
             GlobalTransform::default(),
-            view.properties.entity.clone(),
+            view.map_entity.clone(),
         ));
 
         trenchbroom_gltf_rotation_fix(commands, entity);

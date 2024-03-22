@@ -120,23 +120,20 @@ impl Map {
         hasher.write_u128(uuid.as_u128());
         let mut new_entities = Vec::new();
 
-        for ent in &self.entities {
-            hasher.write_usize(ent.ent_index);
-            hasher.write_usize(ent.brushes.len());
+        for map_entity in &self.entities {
+            hasher.write_usize(map_entity.ent_index);
+            hasher.write_usize(map_entity.brushes.len());
             let high_bits = hasher.finish();
-            hasher.write_usize(ent.properties.len());
+            hasher.write_usize(map_entity.properties.len());
 
             let bevy_ent = commands.spawn_empty().id();
 
-            if let Err(err) = ent.insert(
+            if let Err(err) = map_entity.insert(
                 commands,
                 bevy_ent,
                 EntityInsertionView {
-                    map_entity: entity,
-                    properties: MapEntityPropertiesView {
-                        entity: ent,
-                        tb_config,
-                    },
+                    entity,
+                    map_entity,
                     asset_server,
                     tb_config,
                     uuid: Uuid::from_u64_pair(high_bits, hasher.finish()),
@@ -144,7 +141,7 @@ impl Map {
             ) {
                 error!(
                     "[{}] Problem occurred while spawning map entity {}: {err}",
-                    self.name, ent.ent_index
+                    self.name, map_entity.ent_index
                 );
             }
             new_entities.push(bevy_ent);
@@ -206,8 +203,8 @@ pub type EntityInserter = fn(
 #[derive(Clone, Copy)]
 pub struct EntityInsertionView<'w> {
     /// The entity with the `Handle<Map>` spawning this map entity.
-    pub map_entity: Entity,
-    pub properties: MapEntityPropertiesView<'w>,
+    pub entity: Entity,
+    pub map_entity: &'w MapEntity,
     pub asset_server: &'w AssetServer,
     pub tb_config: &'w TrenchBroomConfig,
     /// A unique identifier for the entity being inserted.
@@ -215,6 +212,56 @@ pub struct EntityInsertionView<'w> {
 }
 
 impl<'w> EntityInsertionView<'w> {
+    /// Gets a property from this entity accounting for entity class hierarchy.
+    /// If the property is not defined, it attempts to get its default.
+    pub fn get<T: TrenchBroomValue>(&self, key: &str) -> Result<T, MapEntityInsertionError> {
+        let Some(value_str) = self.map_entity.properties.get(key).or(self
+            .tb_config
+            .get_entity_property_default(self.map_entity.classname()?, key))
+        else {
+            return Err(MapEntityInsertionError::RequiredPropertyNotFound {
+                property: key.into(),
+            });
+        };
+        T::tb_parse(value_str.trim_matches('"')).map_err(|err| {
+            MapEntityInsertionError::PropertyParseError {
+                property: key.into(),
+                required_type: std::any::type_name::<T>(),
+                error: err.to_string(),
+            }
+        })
+    }
+
+    /// Extracts a transform from this entity using the properties `angles`, `origin`, and `scale`.
+    /// If you are not using those for your transform, you probably shouldn't use this function.
+    pub fn get_transform(&self) -> Transform {
+        let rotation = match self.get::<Vec3>("angles")/* .map(Vec3::z_up_to_y_up) */ {
+            Ok(rot) => Quat::from_euler(
+                // Honestly, i don't know why this works, i got here through hours of trial and error
+                EulerRot::default(),
+                (rot.y - 90.).to_radians(),
+                -rot.x.to_radians(),
+                -rot.z.to_radians(),
+            ),
+            Err(_) => Quat::default(),
+        };
+
+        Transform {
+            translation: self
+                .get::<Vec3>("origin")
+                .unwrap_or(Vec3::ZERO)
+                .trenchbroom_to_bevy_space(),
+            rotation,
+            scale: match self.get::<f32>("scale") {
+                Ok(scale) => Vec3::splat(scale),
+                Err(_) => match self.get::<Vec3>("scale") {
+                    Ok(scale) => scale.trenchbroom_to_bevy_space(),
+                    Err(_) => Vec3::ONE,
+                },
+            },
+        }
+    }
+
     /// Spawns all the brushes in this entity, and parents them to said entity, returning the list of entities that have been spawned.
     pub fn spawn_brushes(
         &self,
@@ -225,7 +272,7 @@ impl<'w> EntityInsertionView<'w> {
         let mut entities = Vec::new();
         let mut faces = Vec::new();
 
-        for brush in &self.properties.entity.brushes {
+        for brush in &self.map_entity.brushes {
             faces.push(brush.polygonize());
         }
 
@@ -261,7 +308,7 @@ impl<'w> EntityInsertionView<'w> {
             let mut mesh = generate_mesh_from_brush_polygons(faces.as_slice(), self.tb_config);
             // TODO this makes pbr maps work, but messes up the lighting for me, why????
             if let Err(err) = mesh.generate_tangents() {
-                error!("Couldn't generate tangents for brush in map entity {} with texture {texture}: {err}", self.properties.entity.ent_index);
+                error!("Couldn't generate tangents for brush in map entity {} with texture {texture}: {err}", self.map_entity.ent_index);
             }
 
             let brush_mesh_insertion_view = BrushMeshInsertionView {
