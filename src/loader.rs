@@ -59,12 +59,12 @@ impl AssetLoader for MapLoader {
             for ent in &map.entities {
                 for brush in &ent.brushes {
                     for surface in &brush.surfaces {
-                        if preloaded_textures.contains(&surface.material.as_str()) { continue }
+                        if preloaded_textures.contains(&surface.texture.as_str()) { continue }
 
-                        let mat_properties_path = PathBuf::from(&surface.material).with_extension(MATERIAL_PROPERTIES_EXTENSION);
+                        let mat_properties_path = PathBuf::from(&surface.texture).with_extension(MATERIAL_PROPERTIES_EXTENSION);
                         if assets_path.join(&texture_root).join(&mat_properties_path).exists() {
-                            map.material_properties_map.insert(surface.material.to_string(), ctx.load::<MaterialProperties>(texture_root.join(&mat_properties_path)));
-                            preloaded_textures.push(&surface.material);
+                            map.material_properties_map.insert(surface.texture.to_string(), ctx.load::<MaterialProperties>(texture_root.join(&mat_properties_path)));
+                            preloaded_textures.push(&surface.texture);
                         }
                     }
                 }

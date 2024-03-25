@@ -80,7 +80,7 @@ pub struct BrushUV {
 #[derive(Reflect, Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct BrushSurface {
     pub plane: BrushPlane,
-    pub material: String,
+    pub texture: String,
     pub uv: BrushUV,
 }
 
@@ -102,7 +102,7 @@ impl Brush {
                             .half_space
                             .map(|half_space| DVec3::from(half_space).trenchbroom_to_bevy_space()),
                     ),
-                    material: surface.texture.to_string_lossy().to_string(),
+                    texture: surface.texture.to_string_lossy().to_string(),
                     uv: BrushUV {
                         offset: DVec2::from(surface.alignment.offset).as_vec2(),
                         rotation: surface.alignment.rotation as f32,
@@ -253,7 +253,7 @@ pub fn generate_mesh_from_brush_polygons(
             image::image_dimensions(
                 config
                     .assets_path
-                    .join(format!("materials/{}.png", &faces[0].surface.material)),
+                    .join(format!("materials/{}.png", &faces[0].surface.texture)),
             )
             .unwrap_or((1, 1)),
         )
@@ -333,7 +333,7 @@ fn contains_point() {
                 normal,
                 distance: -16.,
             },
-            material: default(),
+            texture: default(),
             uv: default(),
         });
     }

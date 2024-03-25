@@ -267,7 +267,7 @@ impl<'w> EntityInsertionView<'w> {
         let mut grouped_surfaces: HashMap<&str, Vec<&BrushSurfacePolygon>> = default();
         for face in faces.iter().flatten() {
             grouped_surfaces
-                .entry(&face.surface.material)
+                .entry(&face.surface.texture)
                 .or_insert_with(Vec::new)
                 .push(face);
         }
