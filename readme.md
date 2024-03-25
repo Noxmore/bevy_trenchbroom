@@ -36,7 +36,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
         // ...
         
         
-        // You can define entity definitions here, these are written to your game's FGD file
+        // You can define entity definitions here with a macro-powered domain specific language, these are written to your game's FGD file
 
         // It's highly recommended to make the first defined entity your `worldspawn`
         .entity_definitions(entity_definitions! {
