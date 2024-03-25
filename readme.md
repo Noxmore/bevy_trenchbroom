@@ -115,7 +115,7 @@ After you write it out, the folder the files need to end up in is your TrenchBro
 
 bevy_trenchbroom uses a material properties system to make the texture appear in-game properly. Right next to your texture (`textures/example.png`), add a `toml` file of the same name (`textures/example.toml`).
 <br>
-In this file you can define certain aspects of the material. (See docs on MaterialProperties for the complete list) 
+In this file you can define certain properties of the material, including user-defined properties. (See [MaterialProperties documentation](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/material_properties/struct.MaterialProperties.html)) 
 
 To avoid an unnecessary amount of polygons being rendered or used for trimesh collision, it's recommended to have `__TB_empty.toml` in your textures root directory, with the following content:
 ```toml
