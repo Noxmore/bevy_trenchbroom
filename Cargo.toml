@@ -35,7 +35,7 @@ thiserror = "1.0"
 toml = "0.8"
 
 [dev-dependencies.bevy]
-version = "*"
+version = "0.13"
 features = ["bevy_scene"]
 
 [features]
