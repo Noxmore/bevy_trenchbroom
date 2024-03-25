@@ -12,12 +12,6 @@ pub mod util;
 
 pub(crate) use prelude::*;
 
-lazy_static! {
-    /// In situations where you need [TrenchBroomConfig::scale] outside any system,
-    /// this will always mirror the current value of said scale from your app's [TrenchBroomConfig] resource.
-    pub static ref TRENCHBROOM_SCALE: RwLock<f32> = default();
-}
-
 pub struct TrenchBroomPlugin {
     pub config: TrenchBroomConfig,
 }
@@ -34,21 +28,26 @@ impl Plugin for TrenchBroomPlugin {
         app
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(self.config.clone())
-            .register_type::<MaterialProperties>()
             .register_type::<MapEntity>()
             .register_type::<Map>()
+            .register_type::<SpawnedMap>()
+            .register_type::<MapSpawningSettings>()
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
-            .add_event::<MapSpawnedEvent>()
-            .add_systems(PreUpdate, (mirror_trenchbroom_scale, spawn_maps));
+            .init_asset::<MaterialProperties>()
+            .init_asset_loader::<MaterialPropertiesLoader>()
+            .add_systems(PreUpdate, (mirror_trenchbroom_config, spawn_maps));
     }
 }
 
 /// A TrenchBroom map loaded from a .map file.
-#[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Asset, Reflect, Debug, Clone, Default)]
 pub struct Map {
+    /// A title for the map, currently it just mirrors it's path.
     pub name: String,
     pub entities: Vec<MapEntity>,
+    /// The material properties required by the textures of the map.
+    pub material_properties_map: HashMap<String, Handle<MaterialProperties>>,
 }
 
 impl Map {

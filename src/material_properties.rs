@@ -1,110 +1,151 @@
+use std::borrow::Cow;
+
+use bevy::asset::{AssetLoader, AsyncReadExt};
+
 use crate::*;
 
-/// Stores certain aspects about a material to make sure it appears in-game correctly. See [root bevy_trenchbroom docs](crate) or `readme.md` to learn more.
-#[derive(Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(Component)]
-#[serde(default)]
-pub struct MaterialProperties {
-    pub kind: MaterialKind,
-    #[default(1.)]
-    pub roughness: f32,
-    #[default(0.)]
-    pub metallic: f32,
-    pub alpha_mode: MaterialAlphaMode,
-    #[default(Color::BLACK)]
-    pub emissive: Color,
-    pub double_sided: bool,
+// TODO should this be in the config?
+
+/// The extension that material properties files should have
+pub static MATERIAL_PROPERTIES_EXTENSION: &str = "toml";
+
+/// Information about an expected field from [MaterialProperties]. Built-in properties are stored in the [MaterialProperties] namespace, such as [MaterialProperties::RENDER].
+pub struct MaterialProperty<T: Deserialize<'static>> {
+    pub key: Cow<'static, str>,
+    pub default_value: T,
 }
 
-lazy_static! {
-    pub static ref MATERIAL_PROPERTIES_CACHE: Mutex<HashMap<PathBuf, MaterialProperties>> =
-        default();
+impl<T: Deserialize<'static>> MaterialProperty<T> {
+    pub const fn new(key: &'static str, default_value: T) -> Self {
+        Self { key: Cow::Borrowed(key), default_value }
+    }
+}
+
+/// Stores toml information about a material, made for brushes.
+/// 
+/// # Examples
+/// 
+/// ```
+/// use bevy_trenchbroom::prelude::*;
+/// 
+/// // You should load MaterialProperties via your app's asset server, this is just for demonstration purposes.
+/// let mat_properties = MaterialPropertiesLoader.load_sync(&std::fs::read_to_string("assets/textures/test.toml").unwrap()).unwrap();
+/// 
+/// assert_eq!(mat_properties.get(MaterialProperties::RENDER), true);
+/// assert_eq!(mat_properties.get(MaterialProperties::COLLIDE), false);
+/// assert_eq!(mat_properties.get(MaterialProperties::ROUGHNESS), 0.25);
+/// ```
+#[derive(Asset, TypePath, Debug, Clone, Default)]
+pub struct MaterialProperties {
+    pub properties: HashMap<String, toml::Value>,
 }
 
 impl MaterialProperties {
-    /// Loads material properties from the specified path, the first time this path is called it loads it from file, then caches it for later loads.
-    pub fn load(path: impl AsRef<Path>) -> MaterialProperties {
-        let path = path.as_ref();
-        MATERIAL_PROPERTIES_CACHE
-            .lock()
-            .unwrap()
-            .entry(path.to_owned())
-            .or_insert_with(|| {
-                ron::from_str(&fs::read_to_string(path).unwrap_or("()".into()))
-                    .unwrap_or(MaterialProperties::default())
-            })
-            .clone()
+    /// Whether the surface should render in the world.
+    pub const RENDER: MaterialProperty<bool> = MaterialProperty::new("render", true);
+    /// Whether the surface should have general collision.
+    pub const COLLIDE: MaterialProperty<bool> = MaterialProperty::new("collide", true);
+    /// How rough the surface should be. Used for [StandardMaterial::perceptual_roughness]. The only difference being the default of this is `1.0`.
+    pub const ROUGHNESS: MaterialProperty<f32> = MaterialProperty::new("roughness", 1.);
+    /// How metallic the surface should be. Used for [StandardMaterial::metallic].
+    pub const METALLIC: MaterialProperty<f32> = MaterialProperty::new("metallic", 0.);
+    /// How a material's base color alpha channel is used for transparency.
+    pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> = MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
+    /// The amount of emissive light given off from the surface. Used for [StandardMaterial::emissive].
+    pub const EMISSIVE: MaterialProperty<Color> = MaterialProperty::new("emissive", Color::BLACK);
+    /// Whether to cull back faces.
+    pub const DOUBLE_SIDED: MaterialProperty<bool> = MaterialProperty::new("double_sided", false);
+
+    pub fn get<T: Deserialize<'static>>(&self, property: MaterialProperty<T>) -> T {
+        // I feel like turning the value into a string just to deserialize it again isn't the best way of doing this, but i don't know of another
+        self.properties.get(property.key.as_ref()).map(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok()).flatten().unwrap_or(property.default_value)
     }
 }
 
-// TODO in the future, this should probably be able to store more arbitrary data.
+#[derive(Default)]
+pub struct MaterialPropertiesLoader;
+/// I have to put this in its own static variable for some reason.
+static MATERIAL_PROPERTIES_LOADER_EXTENSIONS: &[&str] = &[MATERIAL_PROPERTIES_EXTENSION];
+impl AssetLoader for MaterialPropertiesLoader {
+    type Asset = MaterialProperties;
+    type Settings = ();
+    type Error = io::Error;
 
-/// The kind of material a material is, this includes things like:
-/// - What the material sounds like when walked-on/hit/scraped.
-/// - How the material appears in the world.
-#[derive(Reflect, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum MaterialKind {
-    /// A general solid material, with specified sounds.
-    Solid(String),
-    /// Doesn't draw in-game, but does have collision, even if a trimesh collider is used. Sounds are optional.
-    CollisionOnly(Option<String>),
-    /// Does not appear in-game, no collision, if a trimesh collider is used.
-    Empty,
+    fn load<'a>(
+            &'a self,
+            reader: &'a mut bevy::asset::io::Reader,
+            _settings: &'a Self::Settings,
+            _load_context: &'a mut bevy::asset::LoadContext,
+        ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+        Box::pin(async move {
+            let mut buf = String::new();
+            reader.read_to_string(&mut buf).await?;
+            self.load_sync(&buf).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
+        })
+    }
+
+    fn extensions(&self) -> &[&str] {
+        MATERIAL_PROPERTIES_LOADER_EXTENSIONS
+    }
 }
-
-impl MaterialKind {
-    pub fn sounds(&self) -> Option<&str> {
-        match self {
-            Self::Solid(sounds) => Some(sounds),
-            Self::CollisionOnly(sounds) => sounds.as_ref().map(String::as_str),
-            Self::Empty => None,
-        }
-    }
-
-    pub fn should_render(&self) -> bool {
-        match self {
-            Self::Solid(_) => true,
-            Self::CollisionOnly(_) => false,
-            Self::Empty => false,
-        }
-    }
-
-    pub fn should_collide(&self) -> bool {
-        match self {
-            Self::Solid(_) => true,
-            Self::CollisionOnly(_) => true,
-            Self::Empty => false,
-        }
+impl MaterialPropertiesLoader {
+    /// Loads a [MaterialProperties] synchronously, you should probably use regular asset loading instead of this.
+    pub fn load_sync(&self, input: &str) -> Result<MaterialProperties, toml::de::Error> {
+        toml::from_str::<HashMap<String, toml::Value>>(input).map(|properties| MaterialProperties { properties })
     }
 }
 
-impl Default for MaterialKind {
-    fn default() -> Self {
-        Self::Solid("rock".into())
-    }
+lazy_static! {
+    pub(crate) static ref BRUSH_TEXTURE_TO_MATERIALS: Mutex<HashMap<String, Handle<StandardMaterial>>> = default();
 }
 
 /// A serializable copy of [AlphaMode] for [MaterialProperties]
 #[derive(Reflect, Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
-pub enum MaterialAlphaMode {
+#[serde(tag = "type", content = "threshold")]
+pub enum MaterialPropertiesAlphaMode {
     #[default]
+    /// [AlphaMode::Opaque]
     Opaque,
+    /// [AlphaMode::Mask] (To use, use the syntax `alpha_mode = { type = "Mask", threshold = <value> }`, or just `alpha_mode = "Cutout"` if you want the threshold to be `0.5`.)
+    Mask(f32),
+    /// Shortcut for `AlphaMode::Mask(0.5)`
     Cutout,
+    /// [AlphaMode::Blend]
     Blend,
+    /// [AlphaMode::Premultiplied]
     Premultiplied,
+    /// [AlphaMode::Add]
     Add,
+    /// [AlphaMode::Multiply]
     Multiply,
 }
 
-impl From<MaterialAlphaMode> for AlphaMode {
-    fn from(value: MaterialAlphaMode) -> Self {
+impl From<MaterialPropertiesAlphaMode> for AlphaMode {
+    fn from(value: MaterialPropertiesAlphaMode) -> Self {
         match value {
-            MaterialAlphaMode::Opaque => Self::Opaque,
-            MaterialAlphaMode::Cutout => Self::Mask(0.5),
-            MaterialAlphaMode::Blend => Self::Blend,
-            MaterialAlphaMode::Premultiplied => Self::Premultiplied,
-            MaterialAlphaMode::Add => Self::Add,
-            MaterialAlphaMode::Multiply => Self::Multiply,
+            MaterialPropertiesAlphaMode::Opaque => Self::Opaque,
+            MaterialPropertiesAlphaMode::Mask(v) => Self::Mask(v),
+            MaterialPropertiesAlphaMode::Cutout => Self::Mask(0.5),
+            MaterialPropertiesAlphaMode::Blend => Self::Blend,
+            MaterialPropertiesAlphaMode::Premultiplied => Self::Premultiplied,
+            MaterialPropertiesAlphaMode::Add => Self::Add,
+            MaterialPropertiesAlphaMode::Multiply => Self::Multiply,
         }
     }
+}
+
+#[derive(Reflect, Debug)]
+pub struct EmptyMaterialType;
+impl MaterialType for EmptyMaterialType {
+    fn should_collide(&self) -> bool {
+        false
+    }
+    fn should_render(&self) -> bool {
+        false
+    }
+}
+
+pub trait MaterialType : Reflect + std::fmt::Debug {
+    fn should_render(&self) -> bool;
+    fn should_collide(&self) -> bool;
 }

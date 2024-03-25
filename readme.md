@@ -40,11 +40,11 @@ fn trenchbroom_config() -> TrenchBroomConfig {
 
         // It's highly recommended to make the first defined entity your `worldspawn`
         .entity_definitions(entity_definitions! {
-            |commands, entity, view|
-
             /// World Entity
-            Solid worldspawn {} => {
-                view.spawn_brushes(commands, entity, BrushSpawnSettings::new().draw_mesh());
+            Solid worldspawn {} |world, entity, view| {
+                // This is the code to insert the entity into the world, note that the Assets<Map> and TrenchBroomConfig resources are not available in this scope
+                // If you need to access the TrenchBroomConfig, access it via view.tb_config
+                view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
             }
             
             Base angles {
@@ -64,7 +64,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
             }
             
             /// A GLTF model with no physics
-            Point prop(model = { "path": model, "skin": skin, "scale": {{ scale == undefined -> $tb_scale$, scale * $tb_scale$ }} }) : angles, target_name, parent {
+            Point prop( model({ "path": model, "skin": skin, "scale": {{ scale == undefined -> $tb_scale$, scale * $tb_scale$ }} }) ) : angles, target_name, parent {
                 model: "studio",
                 scale: f32 = 1.,
                 /// Title : Description
@@ -75,10 +75,12 @@ fn trenchbroom_config() -> TrenchBroomConfig {
                     "none": "No collision",
                 ] = "model",
                 enable_shadows: bool = true,
-            } => {
-                commands.entity(entity).insert((
+            } |world, entity, view| {
+                let scene = world.resource::<AssetServer>().load(format!("{}#Scene0", view.get::<String>("model")?));
+                
+                world.entity_mut(entity).insert((
                     SceneBundle {
-                        scene: view.asset_server.load(format!("{}#Scene0", view.properties.require::<String>("model")?)),
+                        scene,
                         ..default()
                     },
                     TrenchBroomGltfRotationFix,
@@ -111,15 +113,14 @@ After you write it out, the folder the files need to end up in is your TrenchBro
 
 ## Material Properties
 
-bevy_trenchbroom uses a material properties system to make the texture appear in-game properly. Right next to your texture (`textures/example.png`), add a `ron` file of the same name (`textures/example.ron`).
+bevy_trenchbroom uses a material properties system to make the texture appear in-game properly. Right next to your texture (`textures/example.png`), add a `toml` file of the same name (`textures/example.toml`).
 <br>
 In this file you can define certain aspects of the material. (See docs on MaterialProperties for the complete list) 
 
-To avoid an unnecessary amount of polygons, it's recommended to have `__TB_empty.ron` in your textures root directory, with the following content:
-```ron
-(
-    kind: Empty
-)
+To avoid an unnecessary amount of polygons being rendered or used for trimesh collision, it's recommended to have `__TB_empty.toml` in your textures root directory, with the following content:
+```toml
+render = false
+collide = false
 ```
 This will make any face without a texture get ignored when creating a brush's mesh.
 
@@ -165,8 +166,6 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 - Expression language support in the `entity_definitions!` macro
 - Entity IO
 - Map GLTF exporting
-- Offload map insertion to another thread (at least offload the filesystem calls)
-- Find a more modular approach to material properties
 - Radiosity baking (unlikely)
 
 If you want to try to tackle, or have an idea of how to approach any of these, a PR/issue would be greatly appreciated!

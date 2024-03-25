@@ -1,5 +1,31 @@
 use crate::*;
 
+lazy_static! {
+    /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
+    /// 
+    /// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
+    pub static ref TRENCHBROOM_CONFIG_MIRROR: RwLock<Option<TrenchBroomConfigMirror>> = default();
+}
+
+/// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
+#[macro_export]
+macro_rules! trenchbroom_config_mirror {() => {
+    TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned").as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
+};}
+
+/// See [TRENCHBROOM_CONFIG_MIRROR]
+pub struct TrenchBroomConfigMirror {
+    pub scale: f32,
+    pub texture_root: PathBuf,
+    pub assets_path: PathBuf,
+}
+
+impl TrenchBroomConfigMirror {
+    pub fn new(config: &TrenchBroomConfig) -> Self {
+        Self { scale: config.scale, texture_root: config.texture_root.clone(), assets_path: config.assets_path.clone() }
+    }
+}
+
 /// The complete TrenchBroom configuration, it is recommended to set this in the plugin, where it will be put into [CURRENT_CONFIG], and to not change it afterwards.
 #[derive(Resource, Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
@@ -34,7 +60,7 @@ pub struct TrenchBroomConfig {
     /// The root directory to look for textures. (Default: "textures")
     #[default("textures".into())]
     #[builder(into)]
-    pub texture_root: String,
+    pub texture_root: PathBuf,
     /// The extension of your texture files. (Default: "png")
     #[default("png".into())]
     #[builder(into)]
@@ -111,12 +137,12 @@ impl TrenchBroomConfig {
 
     /// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_inserter])
     pub fn default_global_inserter(
-        commands: &mut Commands,
+        world: &mut World,
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
         let classname = view.map_entity.classname()?.to_string();
-        commands.entity(entity).insert((
+        world.entity_mut(entity).insert((
             Name::new(
                 view
                     .get::<String>("targetname")
@@ -128,7 +154,7 @@ impl TrenchBroomConfig {
             view.map_entity.clone(),
         ));
 
-        trenchbroom_gltf_rotation_fix(commands, entity);
+        trenchbroom_gltf_rotation_fix(world, entity);
 
         Ok(())
     }
@@ -320,7 +346,7 @@ impl TrenchBroomConfig {
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
             "textures": {
-                "root": self.texture_root.clone(),
+                "root": self.texture_root.to_string_lossy().to_string(),
                 "format": { "extension": self.texture_extension.clone(), "format": "image" },
                 "attribute": "_tb_textures",
                 "excludes": self.texture_exclusions.clone(),
@@ -378,9 +404,9 @@ impl TrenchBroomConfig {
 }
 
 /// Mirrors [TrenchBroomConfig::scale] to [TRENCHBROOM_SCALE] if it changes.
-pub fn mirror_trenchbroom_scale(config: Res<TrenchBroomConfig>) {
+pub fn mirror_trenchbroom_config(config: Res<TrenchBroomConfig>) {
     if !config.is_changed() {
         return;
     }
-    *TRENCHBROOM_SCALE.write().unwrap() = config.scale;
+    *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() = Some(TrenchBroomConfigMirror::new(&config));
 }

@@ -52,6 +52,24 @@ impl AssetLoader for MapLoader {
                 ));
             }
 
+            // Start preloading some properties
+            let texture_root = trenchbroom_config_mirror!().texture_root.clone();
+            let assets_path = trenchbroom_config_mirror!().assets_path.clone();
+            let mut preloaded_textures: Vec<&str> = default();
+            for ent in &map.entities {
+                for brush in &ent.brushes {
+                    for surface in &brush.surfaces {
+                        if preloaded_textures.contains(&surface.material.as_str()) { continue }
+
+                        let mat_properties_path = PathBuf::from(&surface.material).with_extension(MATERIAL_PROPERTIES_EXTENSION);
+                        if assets_path.join(&texture_root).join(&mat_properties_path).exists() {
+                            map.material_properties_map.insert(surface.material.to_string(), ctx.load::<MaterialProperties>(texture_root.join(&mat_properties_path)));
+                            preloaded_textures.push(&surface.material);
+                        }
+                    }
+                }
+            }
+
             Ok(map)
         })
     }

@@ -14,7 +14,7 @@ impl TrenchBroomToBevySpace for DVec3 {
     }
     #[inline]
     fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / *TRENCHBROOM_SCALE.read().unwrap() as f64
+        self.z_up_to_y_up() / trenchbroom_config_mirror!().scale as f64
     }
 }
 impl TrenchBroomToBevySpace for Vec3 {
@@ -24,7 +24,7 @@ impl TrenchBroomToBevySpace for Vec3 {
     }
     #[inline]
     fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / *TRENCHBROOM_SCALE.read().unwrap()
+        self.z_up_to_y_up() / trenchbroom_config_mirror!().scale
     }
 }
 
@@ -267,12 +267,10 @@ impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue 
 pub struct TrenchBroomGltfRotationFix;
 
 /// See docs on [TrenchBroomGltfRotationFix]
-pub(crate) fn trenchbroom_gltf_rotation_fix(commands: &mut Commands, entity: Entity) {
-    commands.entity(entity).add(|mut ent: EntityWorldMut| {
-        if ent.contains::<TrenchBroomGltfRotationFix>() {
-            if let Some(mut transform) = ent.get_mut::<Transform>() {
-                transform.rotate_local_y(std::f32::consts::PI / 2.);
-            }
+pub(crate) fn trenchbroom_gltf_rotation_fix(world: &mut World, entity: Entity) {
+    if world.entity(entity).contains::<TrenchBroomGltfRotationFix>() {
+        if let Some(mut transform) = world.entity_mut(entity).get_mut::<Transform>() {
+            transform.rotate_local_y(std::f32::consts::PI / 2.);
         }
-    });
+    }
 }

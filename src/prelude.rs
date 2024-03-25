@@ -18,6 +18,7 @@ pub(crate) use thiserror::Error;
 
 pub use anyhow;
 pub use indexmap;
+pub use toml;
 
 pub use crate::brush::*;
 pub use crate::config::*;

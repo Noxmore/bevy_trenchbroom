@@ -8,7 +8,7 @@ use std::{
     time::Instant,
 };
 
-use bevy::{ecs::system::EntityCommands, render::render_resource::Face};
+use bevy::{ecs::system::Command, render::render_resource::Face};
 
 use crate::*;
 
@@ -31,11 +31,10 @@ pub enum MapEntityInsertionError {
     },
 }
 
-/// Gets sent whenever a map gets spawned in the world.
-#[derive(Event, Debug, Clone)]
-pub struct MapSpawnedEvent {
-    pub entity: Entity,
-}
+/// Marker component that specifies that the [Handle<Map>] of the entity it's on has been loaded spawned. Remove to respawn the map.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct SpawnedMap;
 
 /// When put in an entity with a `Handle<Map>`, this component will effect how the map spawns.
 #[derive(Component, Reflect, Debug, Clone)]
@@ -47,57 +46,35 @@ pub struct MapSpawningSettings {
     pub uuid: Uuid,
 }
 
-pub fn spawn_maps(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut asset_events: EventReader<AssetEvent<Map>>,
-    maps: Res<Assets<Map>>,
-    tb_config: Res<TrenchBroomConfig>,
-    added_query: Query<(Entity, &Handle<Map>, Option<&MapSpawningSettings>), Added<Handle<Map>>>,
-    has_query: Query<(Entity, &Handle<Map>, Option<&MapSpawningSettings>)>,
-    mut spawned_map_events: EventWriter<MapSpawnedEvent>,
-) {
-    // Stores the entities that have already been loaded to avoid spawning the map twice if it loads too fast
-    let mut loaded_entities = Vec::new();
+pub fn spawn_maps(world: &mut World) {
+    world.resource_scope(|world, maps: Mut<Assets<Map>>| {
+        // Borrow checker thingy
+        let mut insertion_params = None;
 
-    // Spawn maps in pre-existing entities when it finishes loading
-    for event in asset_events.read() {
-        let AssetEvent::LoadedWithDependencies { id } = event else {
-            continue;
-        };
+        'map_loop: for (entity, map_handle, settings) in world.query_filtered::<(Entity, &Handle<Map>, Option<&MapSpawningSettings>), Without<SpawnedMap>>().iter(world) {
+            let Some(map) = maps.get(map_handle) else { continue };
 
-        for (entity, map_id, settings) in &has_query {
-            if map_id.id() != *id {
-                continue;
+            // If some material properties hasn't finished loading, don't insert yet
+            for (_, mat_properties_handle) in &map.material_properties_map {
+                if !world.resource::<Assets<MaterialProperties>>().contains(mat_properties_handle) {
+                    continue 'map_loop;
+                }
             }
-            let Some(map) = maps.get(map_id) else {
-                continue;
-            };
+
             let uuid = settings
                 .map(|settings| settings.uuid)
                 .unwrap_or_else(Uuid::nil);
 
-            map.insert(&mut commands, entity, &asset_server, &tb_config, uuid);
-            spawned_map_events.send(MapSpawnedEvent { entity });
-            loaded_entities.push(entity);
+            insertion_params = Some((entity, map_handle.clone(), uuid));
         }
-    }
 
-    // Spawn maps in newly-added entities
-    for (entity, map_id, settings) in &added_query {
-        let Some(map) = maps.get(map_id) else {
-            continue;
-        };
-        if loaded_entities.contains(&entity) {
-            continue;
+        if let Some((entity, map_handle, uuid)) = insertion_params {
+            // Lets make sure we don't spawn a map every frame
+            world.entity_mut(entity).insert(SpawnedMap);
+
+            maps.get(&map_handle).unwrap().insert(world, entity, uuid);
         }
-        let uuid = settings
-            .map(|settings| settings.uuid)
-            .unwrap_or_else(Uuid::nil);
-
-        map.insert(&mut commands, entity, &asset_server, &tb_config, uuid);
-        spawned_map_events.send(MapSpawnedEvent { entity });
-    }
+    });
 }
 
 impl Map {
@@ -106,48 +83,49 @@ impl Map {
     /// Note: `uuid` is the map entity specific id used to make sure every entity's id is unique. This is mainly for networking, if you don't care, [Uuid::nil] works just fine.
     pub fn insert(
         &self,
-        commands: &mut Commands,
+        world: &mut World,
         entity: Entity,
-        asset_server: &AssetServer,
-        tb_config: &TrenchBroomConfig,
         uuid: Uuid,
     ) {
         let start = Instant::now();
         // Just in case we are reloading the level
-        commands.entity(entity).despawn_descendants();
+        DespawnChildrenRecursive { entity }.apply(world);
 
         let mut hasher = DefaultHasher::new();
         hasher.write_u128(uuid.as_u128());
         let mut new_entities = Vec::new();
 
-        for map_entity in &self.entities {
-            hasher.write_usize(map_entity.ent_index);
-            hasher.write_usize(map_entity.brushes.len());
-            let high_bits = hasher.finish();
-            hasher.write_usize(map_entity.properties.len());
-
-            let bevy_ent = commands.spawn_empty().id();
-
-            if let Err(err) = map_entity.insert(
-                commands,
-                bevy_ent,
-                EntityInsertionView {
-                    entity,
-                    map_entity,
-                    asset_server,
-                    tb_config,
-                    uuid: Uuid::from_u64_pair(high_bits, hasher.finish()),
-                },
-            ) {
-                error!(
-                    "[{}] Problem occurred while spawning map entity {}: {err}",
-                    self.name, map_entity.ent_index
-                );
+        world.resource_scope(|world, tb_config: Mut<TrenchBroomConfig>| {
+            for map_entity in &self.entities {
+                hasher.write_usize(map_entity.ent_index);
+                hasher.write_usize(map_entity.brushes.len());
+                let high_bits = hasher.finish();
+                hasher.write_usize(map_entity.properties.len());
+    
+                let bevy_ent = world.spawn_empty().id();
+    
+                if let Err(err) = map_entity.insert(
+                    world,
+                    bevy_ent,
+                    EntityInsertionView {
+                        map: self,
+                        entity,
+                        map_entity,
+                        tb_config: &tb_config,
+                        uuid: Uuid::from_u64_pair(high_bits, hasher.finish()),
+                    },
+                ) {
+                    error!(
+                        "[{}] Problem occurred while spawning map entity {}: {err}",
+                        self.name, map_entity.ent_index
+                    );
+                }
+                new_entities.push(bevy_ent);
             }
-            new_entities.push(bevy_ent);
-        }
+        });
 
-        commands.entity(entity).push_children(&new_entities);
+
+        world.entity_mut(entity).push_children(&new_entities);
 
         info!(
             "Inserted map [{}] in {:.3}s",
@@ -160,14 +138,14 @@ impl Map {
 impl MapEntity {
     pub fn insert(
         &self,
-        commands: &mut Commands,
+        world: &mut World,
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        self.insert_class(view.tb_config.get_definition(self.classname()?)?, commands, entity, view)?;
+        self.insert_class(view.tb_config.get_definition(self.classname()?)?, world, entity, view)?;
 
         if let Some(global_inserter) = view.tb_config.global_inserter {
-            global_inserter(commands, entity, view)?;
+            global_inserter(world, entity, view)?;
         }
 
         Ok(())
@@ -176,16 +154,16 @@ impl MapEntity {
     fn insert_class(
         &self,
         definition: &EntityDefinition,
-        commands: &mut Commands,
+        world: &mut World,
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
         for base in &definition.base {
-            self.insert_class(view.tb_config.get_definition(base)?, commands, entity, view)?;
+            self.insert_class(view.tb_config.get_definition(base)?, world, entity, view)?;
         }
 
         if let Some(inserter) = definition.inserter {
-            inserter(commands, entity, view)?;
+            inserter(world, entity, view)?;
         }
 
         Ok(())
@@ -194,7 +172,7 @@ impl MapEntity {
 
 /// A function that inserts a map entity into a Bevy entity.
 pub type EntityInserter = fn(
-    commands: &mut Commands,
+    commands: &mut World,
     entity: Entity,
     view: EntityInsertionView,
 ) -> Result<(), MapEntityInsertionError>;
@@ -202,10 +180,10 @@ pub type EntityInserter = fn(
 /// Gives you access to important things when inserting an entity.
 #[derive(Clone, Copy)]
 pub struct EntityInsertionView<'w> {
+    pub map: &'w Map,
     /// The entity with the `Handle<Map>` spawning this map entity.
     pub entity: Entity,
     pub map_entity: &'w MapEntity,
-    pub asset_server: &'w AssetServer,
     pub tb_config: &'w TrenchBroomConfig,
     /// A unique identifier for the entity being inserted.
     pub uuid: Uuid,
@@ -235,7 +213,7 @@ impl<'w> EntityInsertionView<'w> {
     /// Extracts a transform from this entity using the properties `angles`, `origin`, and `scale`.
     /// If you are not using those for your transform, you probably shouldn't use this function.
     pub fn get_transform(&self) -> Transform {
-        let rotation = match self.get::<Vec3>("angles")/* .map(Vec3::z_up_to_y_up) */ {
+        let rotation = match self.get::<Vec3>("angles") {
             Ok(rot) => Quat::from_euler(
                 // Honestly, i don't know why this works, i got here through hours of trial and error
                 EulerRot::default(),
@@ -265,7 +243,7 @@ impl<'w> EntityInsertionView<'w> {
     /// Spawns all the brushes in this entity, and parents them to said entity, returning the list of entities that have been spawned.
     pub fn spawn_brushes(
         &self,
-        commands: &mut Commands,
+        world: &mut World,
         entity: Entity,
         settings: BrushSpawnSettings,
     ) -> Vec<Entity> {
@@ -281,11 +259,11 @@ impl<'w> EntityInsertionView<'w> {
             brushes: &faces,
         };
         for inserter in &settings.brush_inserters {
-            entities.append(&mut inserter(commands, entity, &brush_insertion_view));
+            entities.append(&mut inserter(world, entity, &brush_insertion_view));
         }
 
         // Since bevy can only have 1 material per mesh, surfaces with the same material are grouped here,
-        // each group will have its own mesh to reduce draw calls.
+        // each group will have its own mesh to reduce the number of entities.
         let mut grouped_surfaces: HashMap<&str, Vec<&BrushSurfacePolygon>> = default();
         for face in faces.iter().flatten() {
             grouped_surfaces
@@ -294,42 +272,39 @@ impl<'w> EntityInsertionView<'w> {
                 .push(face);
         }
 
-        // Construct the meshes
-        for (texture, faces) in grouped_surfaces {
-            let mat_properties = MaterialProperties::load(
-                self.tb_config
-                    .assets_path
-                    .join(format!("materials/{texture}.ron")),
-            );
-            if !mat_properties.kind.should_render() && !mat_properties.kind.should_collide() {
-                continue;
+        // We need to pass the texture's material properties to the view
+        world.resource_scope(|world, mat_properties_assets: Mut<Assets<MaterialProperties>>| {
+            // Construct the meshes
+            for (texture, faces) in grouped_surfaces {
+                // I'd rather not clone here, oh well!
+                let mat_properties = self.map.material_properties_map.get(texture)
+                    .map(|handle| mat_properties_assets.get(handle).expect(&format!("Could not find material properties for {texture} but path exists, did you remove the asset?")))
+                    .cloned().unwrap_or_default();
+
+                let mut mesh = generate_mesh_from_brush_polygons(faces.as_slice(), self.tb_config);
+                // TODO this makes pbr maps work, but messes up the lighting for me, why????
+                if let Err(err) = mesh.generate_tangents() {
+                    error!("Couldn't generate tangents for brush in map entity {} with texture {texture}: {err}", self.map_entity.ent_index);
+                }
+
+                let brush_mesh_insertion_view = BrushMeshInsertionView {
+                    entity_insertion_view: self,
+                    mesh: &mut mesh,
+                    texture,
+                    mat_properties,
+                };
+
+                let mut ent = world.spawn(Name::new(texture.to_string()));
+
+                for inserter in &settings.mesh_inserters {
+                    inserter(&mut ent, &brush_mesh_insertion_view);
+                }
+
+                entities.push(ent.id());
             }
+        });
 
-            let mut mesh = generate_mesh_from_brush_polygons(faces.as_slice(), self.tb_config);
-            // TODO this makes pbr maps work, but messes up the lighting for me, why????
-            if let Err(err) = mesh.generate_tangents() {
-                error!("Couldn't generate tangents for brush in map entity {} with texture {texture}: {err}", self.map_entity.ent_index);
-            }
-
-            let brush_mesh_insertion_view = BrushMeshInsertionView {
-                entity_insertion_view: self,
-                mesh: &mut mesh,
-                texture,
-                mat_properties: &mat_properties,
-            };
-
-            let mut ent = commands.spawn(Name::new(texture.to_string()));
-
-            for inserter in &settings.mesh_inserters {
-                inserter(&mut ent, &brush_mesh_insertion_view);
-            }
-
-            ent.insert(mat_properties);
-
-            entities.push(ent.id());
-        }
-
-        commands.entity(entity).push_children(&entities);
+        world.entity_mut(entity).push_children(&entities);
 
         entities
     }
@@ -339,7 +314,7 @@ pub struct BrushMeshInsertionView<'w, 'l> {
     entity_insertion_view: &'l EntityInsertionView<'w>,
     pub mesh: &'l mut Mesh,
     pub texture: &'l str,
-    pub mat_properties: &'l MaterialProperties,
+    pub mat_properties: MaterialProperties,
 }
 impl<'w, 'l> std::ops::Deref for BrushMeshInsertionView<'w, 'l> {
     type Target = EntityInsertionView<'w>;
@@ -362,8 +337,8 @@ impl<'w, 'l> std::ops::Deref for BrushInsertionView<'w, 'l> {
 /// A collection of inserters to call on each brush/mesh produced when spawning a brush.
 #[derive(Default)]
 pub struct BrushSpawnSettings {
-    mesh_inserters: Vec<Box<dyn Fn(&mut EntityCommands, &BrushMeshInsertionView)>>,
-    brush_inserters: Vec<Box<dyn Fn(&mut Commands, Entity, &BrushInsertionView) -> Vec<Entity>>>,
+    mesh_inserters: Vec<Box<dyn Fn(&mut EntityWorldMut, &BrushMeshInsertionView)>>,
+    brush_inserters: Vec<Box<dyn Fn(&mut World, Entity, &BrushInsertionView) -> Vec<Entity>>>,
 }
 
 impl BrushSpawnSettings {
@@ -374,7 +349,7 @@ impl BrushSpawnSettings {
     /// Calls the specified function on each mesh produced by the entity.
     pub fn mesh_inserter(
         mut self,
-        inserter: impl Fn(&mut EntityCommands, &BrushMeshInsertionView) + 'static,
+        inserter: impl Fn(&mut EntityWorldMut, &BrushMeshInsertionView) + 'static,
     ) -> Self {
         self.mesh_inserters.push(Box::new(inserter));
         self
@@ -383,7 +358,7 @@ impl BrushSpawnSettings {
     /// Calls a function with an inserting entity, after said entity polygonizes it's brushes.
     pub fn brush_inserter(
         mut self,
-        inserter: impl Fn(&mut Commands, Entity, &BrushInsertionView) -> Vec<Entity> + 'static,
+        inserter: impl Fn(&mut World, Entity, &BrushInsertionView) -> Vec<Entity> + 'static,
     ) -> Self {
         self.brush_inserters.push(Box::new(inserter));
         self
@@ -393,49 +368,60 @@ impl BrushSpawnSettings {
     /// Will do nothing is your config is specified to be a server.
     pub fn pbr_mesh(self) -> Self {
         self.mesh_inserter(|ent, view| {
-            if !view.mat_properties.kind.should_render() || view.tb_config.is_server {
+            if view.tb_config.is_server {
                 return;
             }
 
-            macro_rules! load_texture {
-                ($name:ident = $map:literal) => {
-                    let __texture_path = format!(
-                        concat!("materials/{}", $map, ".{}"),
-                        view.texture, view.tb_config.texture_extension
-                    );
-                    let $name: Option<Handle<Image>> =
-                        if view.tb_config.assets_path.join(&__texture_path).exists() {
-                            Some(view.asset_server.load(__texture_path))
-                        } else {
-                            None
-                        };
-                };
+            let asset_server = ent.world().resource::<AssetServer>();
+
+            if !view.mat_properties.get(MaterialProperties::RENDER) {
+                return;
             }
 
-            load_texture!(base_color_texture = "");
-            load_texture!(normal_map_texture = "_normal");
-            load_texture!(metallic_roughness_texture = "_mr");
-            load_texture!(emissive_texture = "_emissive");
-            load_texture!(depth_texture = "_depth");
+            let material = BRUSH_TEXTURE_TO_MATERIALS.lock().unwrap().entry(view.texture.into()).or_insert_with(|| {
+                macro_rules! load_texture {
+                    ($name:ident = $map:literal) => {
+                        let __texture_path = format!(
+                            concat!("{}/{}", $map, ".{}"),
+                            view.tb_config.texture_root.display(), view.texture, view.tb_config.texture_extension
+                        );
+                        let $name: Option<Handle<Image>> =
+                            if view.tb_config.assets_path.join(&__texture_path).exists() {
+                                Some(asset_server.load(__texture_path))
+                            } else {
+                                None
+                            };
+                    };
+                }
+    
+                load_texture!(base_color_texture = "");
+                load_texture!(normal_map_texture = "_normal");
+                load_texture!(metallic_roughness_texture = "_mr");
+                load_texture!(emissive_texture = "_emissive");
+                load_texture!(depth_texture = "_depth");
 
-            ent.insert(PbrBundle {
-                mesh: view.asset_server.add(view.mesh.clone()),
-                material: view.asset_server.add(StandardMaterial {
+                asset_server.add(StandardMaterial {
                     base_color_texture,
                     normal_map_texture,
                     metallic_roughness_texture,
                     emissive_texture,
                     depth_map: depth_texture,
-                    perceptual_roughness: view.mat_properties.roughness,
-                    metallic: view.mat_properties.metallic,
-                    alpha_mode: view.mat_properties.alpha_mode.into(),
-                    cull_mode: if view.mat_properties.double_sided {
+                    perceptual_roughness: view.mat_properties.get(MaterialProperties::ROUGHNESS),
+                    metallic: view.mat_properties.get(MaterialProperties::METALLIC),
+                    alpha_mode: view.mat_properties.get(MaterialProperties::ALPHA_MODE).into(),
+                    emissive: view.mat_properties.get(MaterialProperties::EMISSIVE),
+                    cull_mode: if view.mat_properties.get(MaterialProperties::DOUBLE_SIDED) {
                         None
                     } else {
                         Some(Face::Back)
                     },
                     ..default()
-                }),
+                })
+            }).clone();
+
+            ent.insert(PbrBundle {
+                mesh: asset_server.add(view.mesh.clone()),
+                material,
                 ..default()
             });
         })
@@ -445,6 +431,8 @@ impl BrushSpawnSettings {
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
         self.mesh_inserter(|ent, view| {
+            if !view.mat_properties.get(MaterialProperties::COLLIDE) { return }
+
             use bevy_rapier3d::prelude::*;
             ent.insert(
                 bevy_rapier3d::geometry::Collider::from_bevy_mesh(
@@ -459,7 +447,7 @@ impl BrushSpawnSettings {
     #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
-        self.brush_inserter(|commands, entity, view| {
+        self.brush_inserter(|world, entity, view| {
             use bevy_rapier3d::prelude::*;
 
             let mut colliders = Vec::new();
@@ -476,8 +464,8 @@ impl BrushSpawnSettings {
                 ));
             }
 
-            commands
-                .entity(entity)
+            world
+                .entity_mut(entity)
                 .insert(Collider::compound(colliders));
             Vec::new()
         })
