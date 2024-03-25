@@ -56,6 +56,7 @@ impl MaterialProperties {
     /// Whether to cull back faces.
     pub const DOUBLE_SIDED: MaterialProperty<bool> = MaterialProperty::new("double_sided", false);
 
+    /// Gets a property from these properties, if it isn't defined, uses the supplied [MaterialProperty]'s default.
     pub fn get<T: Deserialize<'static>>(&self, property: MaterialProperty<T>) -> T {
         // I feel like turning the value into a string just to deserialize it again isn't the best way of doing this, but i don't know of another
         self.properties.get(property.key.as_ref()).map(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok()).flatten().unwrap_or(property.default_value)
