@@ -268,7 +268,10 @@ pub struct TrenchBroomGltfRotationFix;
 
 /// See docs on [TrenchBroomGltfRotationFix]
 pub(crate) fn trenchbroom_gltf_rotation_fix(world: &mut World, entity: Entity) {
-    if world.entity(entity).contains::<TrenchBroomGltfRotationFix>() {
+    if world
+        .entity(entity)
+        .contains::<TrenchBroomGltfRotationFix>()
+    {
         if let Some(mut transform) = world.entity_mut(entity).get_mut::<Transform>() {
             transform.rotate_local_y(std::f32::consts::PI / 2.);
         }

@@ -1,31 +1,31 @@
 use crate::*;
 
 /// Domain specific language for defining your TrenchBroom configuration's entity definitions. See readme.md/[root documentation](crate) for a usage example.
-/// 
+///
 /// # Specification
-/// 
+///
 /// The first thing you will put in the macro will look something like this: `|commands, entity, view|`
 /// These are the arguments to any inserter any entity may have, it's at the top of the file so you don't have to add this boilerplate before every inserter.
-/// 
+///
 /// After that you put 0 or more definitions.
-/// 
+///
 /// Each definition starts like so (`<>` meaning required, and `[]` meaning optional):
 /// ```ignore
 /// /// [description]
 /// <class type> <name>[( <setting>(<expression>).. )]
 /// ```
-/// 
+///
 /// <br>
-/// 
+///
 /// There are 3 different class types:
 /// - `Base`: doesn't appear in the editor, and is used like an abstract class in OOP languages
 /// - `Point`: Appears in the entity menu, has a position, optionally with a model/iconsprite display
 /// - `Solid`: Contains brushes, can be created by selecting the brushes you want to convert, right clicking, and selecting your entity from the `create brush entity` menu
-/// 
+///
 /// It's the convention to make your entity names `snake_case`.
-/// 
+///
 /// For the list of available settings, see documentation on [EntDefSettings].
-/// 
+///
 /// After this, you have to add a block of properties, similar to how you define fields when creating a struct:
 /// ```ignore
 /// ... {
@@ -34,15 +34,15 @@ use crate::*;
 ///     ..
 /// }
 /// ```
-/// 
+///
 /// The main differences here are the lack of visibility specifiers, and the optional default.
-/// 
+///
 /// You can also specify the property's title and description via documentation comment, the `" : "` string separating them.
-/// 
+///
 /// The type here is also different, you can use just a regular type, as long as it implements [TrenchBroomValue], or you could set it to a custom type by using a string in place of the type. (e.g. using `"studio"` for a model)
-/// 
+///
 /// You can also set it to a `choices` type by using this syntax: `[ <key> : <title>, .. ]` That tells the user for the value to be one of the `<key>`s, although its not guaranteed.
-/// 
+///
 /// Then, optionally, you can define an inserter, a piece of code that runs when an entity is spawned with this definition or a subclass of this definition:
 /// ```ignore
 /// ... {
@@ -107,7 +107,7 @@ macro_rules! entity_definitions {
                 ]),
 
                 // Inserter
-                $(inserter: Some(#[allow(unused)] |$commands, $entity, $view| {$inserter Ok(())}),)? 
+                $(inserter: Some(#[allow(unused)] |$commands, $entity, $view| {$inserter Ok(())}),)?
 
                 ..Default::default()
             })),*

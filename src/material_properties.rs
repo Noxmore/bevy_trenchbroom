@@ -17,20 +17,23 @@ pub struct MaterialProperty<T: Deserialize<'static>> {
 
 impl<T: Deserialize<'static>> MaterialProperty<T> {
     pub const fn new(key: &'static str, default_value: T) -> Self {
-        Self { key: Cow::Borrowed(key), default_value }
+        Self {
+            key: Cow::Borrowed(key),
+            default_value,
+        }
     }
 }
 
 /// Stores toml information about a material, made for brushes.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// use bevy_trenchbroom::prelude::*;
-/// 
+///
 /// // You should load MaterialProperties via your app's asset server, this is just for demonstration purposes.
 /// let mat_properties = MaterialPropertiesLoader.load_sync(&std::fs::read_to_string("assets/textures/test.toml").unwrap()).unwrap();
-/// 
+///
 /// assert_eq!(mat_properties.get(MaterialProperties::RENDER), true);
 /// assert_eq!(mat_properties.get(MaterialProperties::COLLIDE), false);
 /// assert_eq!(mat_properties.get(MaterialProperties::ROUGHNESS), 0.25);
@@ -50,7 +53,8 @@ impl MaterialProperties {
     /// How metallic the surface should be. Used for [StandardMaterial::metallic].
     pub const METALLIC: MaterialProperty<f32> = MaterialProperty::new("metallic", 0.);
     /// How a material's base color alpha channel is used for transparency.
-    pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> = MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
+    pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> =
+        MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
     /// The amount of emissive light given off from the surface. Used for [StandardMaterial::emissive].
     pub const EMISSIVE: MaterialProperty<Color> = MaterialProperty::new("emissive", Color::BLACK);
     /// Whether to cull back faces.
@@ -59,7 +63,11 @@ impl MaterialProperties {
     /// Gets a property from these properties, if it isn't defined, uses the supplied [MaterialProperty]'s default.
     pub fn get<T: Deserialize<'static>>(&self, property: MaterialProperty<T>) -> T {
         // I feel like turning the value into a string just to deserialize it again isn't the best way of doing this, but i don't know of another
-        self.properties.get(property.key.as_ref()).map(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok()).flatten().unwrap_or(property.default_value)
+        self.properties
+            .get(property.key.as_ref())
+            .map(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok())
+            .flatten()
+            .unwrap_or(property.default_value)
     }
 }
 
@@ -73,15 +81,16 @@ impl AssetLoader for MaterialPropertiesLoader {
     type Error = io::Error;
 
     fn load<'a>(
-            &'a self,
-            reader: &'a mut bevy::asset::io::Reader,
-            _settings: &'a Self::Settings,
-            _load_context: &'a mut bevy::asset::LoadContext,
-        ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+        &'a self,
+        reader: &'a mut bevy::asset::io::Reader,
+        _settings: &'a Self::Settings,
+        _load_context: &'a mut bevy::asset::LoadContext,
+    ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
             let mut buf = String::new();
             reader.read_to_string(&mut buf).await?;
-            self.load_sync(&buf).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
+            self.load_sync(&buf)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
         })
     }
 
@@ -92,12 +101,14 @@ impl AssetLoader for MaterialPropertiesLoader {
 impl MaterialPropertiesLoader {
     /// Loads a [MaterialProperties] synchronously, you should probably use regular asset loading instead of this.
     pub fn load_sync(&self, input: &str) -> Result<MaterialProperties, toml::de::Error> {
-        toml::from_str::<HashMap<String, toml::Value>>(input).map(|properties| MaterialProperties { properties })
+        toml::from_str::<HashMap<String, toml::Value>>(input)
+            .map(|properties| MaterialProperties { properties })
     }
 }
 
 lazy_static! {
-    pub(crate) static ref BRUSH_TEXTURE_TO_MATERIALS: Mutex<HashMap<String, Handle<StandardMaterial>>> = default();
+    pub(crate) static ref BRUSH_TEXTURE_TO_MATERIALS: Mutex<HashMap<String, Handle<StandardMaterial>>> =
+        default();
 }
 
 /// A serializable copy of [AlphaMode] for [MaterialProperties]
@@ -146,7 +157,7 @@ impl MaterialType for EmptyMaterialType {
     }
 }
 
-pub trait MaterialType : Reflect + std::fmt::Debug {
+pub trait MaterialType: Reflect + std::fmt::Debug {
     fn should_render(&self) -> bool;
     fn should_collide(&self) -> bool;
 }

@@ -2,16 +2,22 @@ use crate::*;
 
 lazy_static! {
     /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
-    /// 
+    ///
     /// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
     pub static ref TRENCHBROOM_CONFIG_MIRROR: RwLock<Option<TrenchBroomConfigMirror>> = default();
 }
 
 /// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
 #[macro_export]
-macro_rules! trenchbroom_config_mirror {() => {
-    TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned").as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
-};}
+macro_rules! trenchbroom_config_mirror {
+    () => {
+        TRENCHBROOM_CONFIG_MIRROR
+            .read()
+            .expect("TrenchBroomConfig mirror poisoned")
+            .as_ref()
+            .expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
+    };
+}
 
 /// See [TRENCHBROOM_CONFIG_MIRROR]
 pub struct TrenchBroomConfigMirror {
@@ -22,7 +28,11 @@ pub struct TrenchBroomConfigMirror {
 
 impl TrenchBroomConfigMirror {
     pub fn new(config: &TrenchBroomConfig) -> Self {
-        Self { scale: config.scale, texture_root: config.texture_root.clone(), assets_path: config.assets_path.clone() }
+        Self {
+            scale: config.scale,
+            texture_root: config.texture_root.clone(),
+            assets_path: config.assets_path.clone(),
+        }
     }
 }
 
@@ -144,8 +154,7 @@ impl TrenchBroomConfig {
         let classname = view.map_entity.classname()?.to_string();
         world.entity_mut(entity).insert((
             Name::new(
-                view
-                    .get::<String>("targetname")
+                view.get::<String>("targetname")
                     .map(|name| format!("{classname} ({name})"))
                     .unwrap_or(classname),
             ),
@@ -179,9 +188,14 @@ impl TrenchBroomConfig {
     }
 
     /// Gets and entity definition from this config, or if none is found, returns [MapEntityInsertionError::DefinitionNotFound].
-    pub fn get_definition(&self, classname: &str) -> Result<&EntityDefinition, MapEntityInsertionError> {
-        self.entity_definitions.get(classname).ok_or_else(|| MapEntityInsertionError::DefinitionNotFound {
-            classname: classname.into(),
+    pub fn get_definition(
+        &self,
+        classname: &str,
+    ) -> Result<&EntityDefinition, MapEntityInsertionError> {
+        self.entity_definitions.get(classname).ok_or_else(|| {
+            MapEntityInsertionError::DefinitionNotFound {
+                classname: classname.into(),
+            }
         })
     }
 }

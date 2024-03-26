@@ -81,12 +81,7 @@ impl Map {
     /// Inserts this map into the Bevy world through the specified entity.
     ///
     /// Note: `uuid` is the map entity specific id used to make sure every entity's id is unique. This is mainly for networking, if you don't care, [Uuid::nil] works just fine.
-    pub fn insert(
-        &self,
-        world: &mut World,
-        entity: Entity,
-        uuid: Uuid,
-    ) {
+    pub fn insert(&self, world: &mut World, entity: Entity, uuid: Uuid) {
         let start = Instant::now();
         // Just in case we are reloading the level
         DespawnChildrenRecursive { entity }.apply(world);
@@ -101,9 +96,9 @@ impl Map {
                 hasher.write_usize(map_entity.brushes.len());
                 let high_bits = hasher.finish();
                 hasher.write_usize(map_entity.properties.len());
-    
+
                 let bevy_ent = world.spawn_empty().id();
-    
+
                 if let Err(err) = map_entity.insert(
                     world,
                     bevy_ent,
@@ -124,7 +119,6 @@ impl Map {
             }
         });
 
-
         world.entity_mut(entity).push_children(&new_entities);
 
         info!(
@@ -142,7 +136,12 @@ impl MapEntity {
         entity: Entity,
         view: EntityInsertionView,
     ) -> Result<(), MapEntityInsertionError> {
-        self.insert_class(view.tb_config.get_definition(self.classname()?)?, world, entity, view)?;
+        self.insert_class(
+            view.tb_config.get_definition(self.classname()?)?,
+            world,
+            entity,
+            view,
+        )?;
 
         if let Some(global_inserter) = view.tb_config.global_inserter {
             global_inserter(world, entity, view)?;
@@ -378,46 +377,58 @@ impl BrushSpawnSettings {
                 return;
             }
 
-            let material = BRUSH_TEXTURE_TO_MATERIALS.lock().unwrap().entry(view.texture.into()).or_insert_with(|| {
-                macro_rules! load_texture {
-                    ($name:ident = $map:literal) => {
-                        let __texture_path = format!(
-                            concat!("{}/{}", $map, ".{}"),
-                            view.tb_config.texture_root.display(), view.texture, view.tb_config.texture_extension
-                        );
-                        let $name: Option<Handle<Image>> =
-                            if view.tb_config.assets_path.join(&__texture_path).exists() {
-                                Some(asset_server.load(__texture_path))
-                            } else {
-                                None
-                            };
-                    };
-                }
-    
-                load_texture!(base_color_texture = "");
-                load_texture!(normal_map_texture = "_normal");
-                load_texture!(metallic_roughness_texture = "_mr");
-                load_texture!(emissive_texture = "_emissive");
-                load_texture!(depth_texture = "_depth");
+            let material = BRUSH_TEXTURE_TO_MATERIALS
+                .lock()
+                .unwrap()
+                .entry(view.texture.into())
+                .or_insert_with(|| {
+                    macro_rules! load_texture {
+                        ($name:ident = $map:literal) => {
+                            let __texture_path = format!(
+                                concat!("{}/{}", $map, ".{}"),
+                                view.tb_config.texture_root.display(),
+                                view.texture,
+                                view.tb_config.texture_extension
+                            );
+                            let $name: Option<Handle<Image>> =
+                                if view.tb_config.assets_path.join(&__texture_path).exists() {
+                                    Some(asset_server.load(__texture_path))
+                                } else {
+                                    None
+                                };
+                        };
+                    }
 
-                asset_server.add(StandardMaterial {
-                    base_color_texture,
-                    normal_map_texture,
-                    metallic_roughness_texture,
-                    emissive_texture,
-                    depth_map: depth_texture,
-                    perceptual_roughness: view.mat_properties.get(MaterialProperties::ROUGHNESS),
-                    metallic: view.mat_properties.get(MaterialProperties::METALLIC),
-                    alpha_mode: view.mat_properties.get(MaterialProperties::ALPHA_MODE).into(),
-                    emissive: view.mat_properties.get(MaterialProperties::EMISSIVE),
-                    cull_mode: if view.mat_properties.get(MaterialProperties::DOUBLE_SIDED) {
-                        None
-                    } else {
-                        Some(Face::Back)
-                    },
-                    ..default()
+                    load_texture!(base_color_texture = "");
+                    load_texture!(normal_map_texture = "_normal");
+                    load_texture!(metallic_roughness_texture = "_mr");
+                    load_texture!(emissive_texture = "_emissive");
+                    load_texture!(depth_texture = "_depth");
+
+                    asset_server.add(StandardMaterial {
+                        base_color_texture,
+                        normal_map_texture,
+                        metallic_roughness_texture,
+                        emissive_texture,
+                        depth_map: depth_texture,
+                        perceptual_roughness: view
+                            .mat_properties
+                            .get(MaterialProperties::ROUGHNESS),
+                        metallic: view.mat_properties.get(MaterialProperties::METALLIC),
+                        alpha_mode: view
+                            .mat_properties
+                            .get(MaterialProperties::ALPHA_MODE)
+                            .into(),
+                        emissive: view.mat_properties.get(MaterialProperties::EMISSIVE),
+                        cull_mode: if view.mat_properties.get(MaterialProperties::DOUBLE_SIDED) {
+                            None
+                        } else {
+                            Some(Face::Back)
+                        },
+                        ..default()
+                    })
                 })
-            }).clone();
+                .clone();
 
             ent.insert(PbrBundle {
                 mesh: asset_server.add(view.mesh.clone()),
@@ -431,7 +442,9 @@ impl BrushSpawnSettings {
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
         self.mesh_inserter(|ent, view| {
-            if !view.mat_properties.get(MaterialProperties::COLLIDE) { return }
+            if !view.mat_properties.get(MaterialProperties::COLLIDE) {
+                return;
+            }
 
             use bevy_rapier3d::prelude::*;
             ent.insert(
