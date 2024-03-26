@@ -52,7 +52,7 @@ impl MaterialProperties {
     pub const ROUGHNESS: MaterialProperty<f32> = MaterialProperty::new("roughness", 1.);
     /// How metallic the surface should be. Used for [StandardMaterial::metallic].
     pub const METALLIC: MaterialProperty<f32> = MaterialProperty::new("metallic", 0.);
-    /// How a material's base color alpha channel is used for transparency.
+    /// How a material's base color alpha channel is used for transparency. See [MaterialPropertiesAlphaMode docs](MaterialPropertiesAlphaMode).
     pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> =
         MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
     /// The amount of emissive light given off from the surface. Used for [StandardMaterial::emissive].
@@ -112,13 +112,18 @@ lazy_static! {
 }
 
 /// A serializable copy of [AlphaMode] for [MaterialProperties]
+/// 
+/// # Examples
+/// ```toml
+/// alpha_mode = { type = "Cutout" } // Shorthand for { type = "Mask", threshold = 0.7 }
+/// ```
 #[derive(Reflect, Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 #[serde(tag = "type", content = "threshold")]
 pub enum MaterialPropertiesAlphaMode {
     #[default]
     /// [AlphaMode::Opaque]
     Opaque,
-    /// [AlphaMode::Mask] (To use, use the syntax `alpha_mode = { type = "Mask", threshold = <value> }`, or just `alpha_mode = "Cutout"` if you want the threshold to be `0.5`.)
+    /// [AlphaMode::Mask]
     Mask(f32),
     /// Shortcut for `AlphaMode::Mask(0.5)`
     Cutout,
