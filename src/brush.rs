@@ -253,7 +253,7 @@ pub fn generate_mesh_from_brush_polygons(
             image::image_dimensions(
                 config
                     .assets_path
-                    .join(format!("materials/{}.png", &faces[0].surface.texture)),
+                    .join(config.texture_root.join(format!("{}.png", &faces[0].surface.texture))),
             )
             .unwrap_or((1, 1)),
         )
