@@ -1,7 +1,7 @@
 [package]
 name = "bevy_trenchbroom"
 description = "Bevy integration with TrenchBroom"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = [ "Noxmore" ]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
