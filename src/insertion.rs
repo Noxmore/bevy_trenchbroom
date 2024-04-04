@@ -305,6 +305,7 @@ impl<'w> EntityInsertionView<'w> {
 
         let mut ent = world.entity_mut(entity);
         ent.push_children(&entities);
+        // To keep the visibility hierarchy for the possible child meshes when inserting these brushes
         if !ent.contains::<Visibility>() { ent.insert(Visibility::default()); }
         if !ent.contains::<InheritedVisibility>() { ent.insert(InheritedVisibility::default()); }
         if !ent.contains::<ViewVisibility>() { ent.insert(ViewVisibility::default()); }
