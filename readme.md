@@ -47,6 +47,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
                 view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
             }
             
+            // Some useful base classes
             Base angles {
                 /// Pitch Yaw Roll (Y Z X)
                 angles: Vec3,
@@ -63,6 +64,8 @@ fn trenchbroom_config() -> TrenchBroomConfig {
                 parent: "target_destination",
             }
             
+            // A more advanced example of a prop class
+
             /// A GLTF model with no physics
             Point prop( model({ "path": model, "skin": skin, "scale": {{ scale == undefined -> $tb_scale$, scale * $tb_scale$ }} }) ) : angles, target_name, parent {
                 model: "studio",
