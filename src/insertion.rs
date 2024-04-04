@@ -303,7 +303,11 @@ impl<'w> EntityInsertionView<'w> {
             }
         });
 
-        world.entity_mut(entity).push_children(&entities);
+        let mut ent = world.entity_mut(entity);
+        ent.push_children(&entities);
+        if !ent.contains::<Visibility>() { ent.insert(Visibility::default()); }
+        if !ent.contains::<InheritedVisibility>() { ent.insert(InheritedVisibility::default()); }
+        if !ent.contains::<ViewVisibility>() { ent.insert(ViewVisibility::default()); }
 
         entities
     }
