@@ -396,6 +396,7 @@ impl BrushSpawnSettings {
                                 view.tb_config.texture_extension
                             );
                             let $name: Option<Handle<Image>> =
+                                // TODO This is a lot of file system calls on the critical path, how can we offload this?
                                 if view.tb_config.assets_path.join(&__texture_path).exists() {
                                     Some(asset_server.load(__texture_path))
                                 } else {
