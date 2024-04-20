@@ -28,7 +28,6 @@ itertools = "0.12"
 json = "0.12"
 lazy_static = "1.4"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
-ron = "0.8.1"
 serde = { version = "1.0", features = ["derive"] }
 smart-default = "0.7"
 thiserror = "1.0"
