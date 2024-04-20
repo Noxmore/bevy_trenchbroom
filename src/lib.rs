@@ -3,7 +3,7 @@
 pub mod brush;
 pub mod config;
 pub mod definitions;
-pub mod insertion;
+pub mod spawning;
 pub mod loader;
 pub mod map_entity;
 pub mod material_properties;

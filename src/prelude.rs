@@ -23,7 +23,7 @@ pub use toml;
 pub use crate::brush::*;
 pub use crate::config::*;
 pub use crate::definitions::*;
-pub use crate::insertion::*;
+pub use crate::spawning::*;
 pub use crate::loader::*;
 pub use crate::map_entity::*;
 pub use crate::material_properties::*;
