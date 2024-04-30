@@ -44,7 +44,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
         .entity_definitions(entity_definitions! {
             /// World Entity
             Solid worldspawn {} |world, entity, view| {
-                // This is the code to insert the entity into the world, note that the Assets<Map> and TrenchBroomConfig resources are not available in this scope
+                // This is the code to spawn the entity into the world, note that the Assets<Map> and TrenchBroomConfig resources are not available in this scope
                 // If you need to access the TrenchBroomConfig, access it via view.tb_config
                 view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
             }
@@ -154,7 +154,7 @@ Maps support asset hot-reloading, meaning that iteration times are pretty much i
 
 If you are making a multiplayer game, call `is_server()` when creating your config, and pass in whether the currently running application is a server.
 
-Then, when spawning a map, you can add a `MapSpawningSettings` component to the entity and specify a uuid used to create unique identifiers for each map entity spawned, defining a custom global inserter for your config, you can then use this to add your networking solution's unique identifier type to the entity, allowing for network synchronization.
+Then, if your networking solution has a unique identifier type, you can define a custom global spawner for your config that adds such an identifier.
 
 ## Physics/Collisions
 
@@ -165,13 +165,14 @@ First, enable the `rapier` feature on the crate, then either call `convex_collid
 ## Known Bugs
 
 If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
-To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it's inserter.
+To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it's spawner.
 
 # Possible future plans
 - Expression language support in the `entity_definitions!` macro
+- Reduce the amount of filesystem calls being done synchronously
 - Entity IO
 - Map GLTF exporting
-- Radiosity baking (unlikely)
+- Radiosity baking (very unlikely)
 
 If you want to try to tackle, or have an idea of how to approach any of these, a PR/issue would be greatly appreciated!
 
@@ -182,4 +183,4 @@ If you want to try to tackle, or have an idea of how to approach any of these, a
 
 Note: There's a good chance that it will work for other TrenchBroom versions then the one your version of bevy_trenchbroom is made for.
 
-This crate is still in early development and almost certainly has missing features, if your use case isn't covered, please make an issue!
+This crate is still in early development and certainly has missing features, if your use case isn't covered, please make an issue!

@@ -37,7 +37,7 @@ impl AssetLoader for MapLoader {
                     .collect::<HashMap<String, String>>();
 
                 let entity = MapEntity {
-                    ent_index: i,
+                    ent_index: Some(i),
                     properties,
                     brushes: ent.brushes.iter().map(Brush::from_quake_util).collect(),
                 };
@@ -51,37 +51,7 @@ impl AssetLoader for MapLoader {
                     "worldspawn not defined",
                 ));
             }
-
-            // Start preloading some properties
-            let texture_root = trenchbroom_config_mirror!().texture_root.clone();
-            let assets_path = trenchbroom_config_mirror!().assets_path.clone();
-            let mut preloaded_textures: Vec<&str> = default();
-            for ent in &map.entities {
-                for brush in &ent.brushes {
-                    for surface in &brush.surfaces {
-                        if preloaded_textures.contains(&surface.texture.as_str()) {
-                            continue;
-                        }
-
-                        let mat_properties_path = PathBuf::from(&surface.texture)
-                            .with_extension(MATERIAL_PROPERTIES_EXTENSION);
-                        if assets_path
-                            .join(&texture_root)
-                            .join(&mat_properties_path)
-                            .exists()
-                        {
-                            map.material_properties_map.insert(
-                                surface.texture.to_string(),
-                                ctx.load::<MaterialProperties>(
-                                    texture_root.join(&mat_properties_path),
-                                ),
-                            );
-                            preloaded_textures.push(&surface.texture);
-                        }
-                    }
-                }
-            }
-
+            
             Ok(map)
         })
     }

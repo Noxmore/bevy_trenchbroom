@@ -106,10 +106,8 @@ impl MaterialPropertiesLoader {
     }
 }
 
-lazy_static! {
-    pub(crate) static ref BRUSH_TEXTURE_TO_MATERIALS: Mutex<HashMap<String, Handle<StandardMaterial>>> =
-        default();
-}
+/// Caches textures used on brushes to [StandardMaterial] handles.
+pub static BRUSH_TEXTURE_TO_MATERIALS_CACHE: Lazy<Mutex<HashMap<String, Handle<StandardMaterial>>>> = Lazy::new(default);
 
 /// A serializable copy of [AlphaMode] for [MaterialProperties]
 /// 

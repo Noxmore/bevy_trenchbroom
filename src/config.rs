@@ -1,11 +1,9 @@
 use crate::*;
 
-lazy_static! {
-    /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
-    ///
-    /// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
-    pub static ref TRENCHBROOM_CONFIG_MIRROR: RwLock<Option<TrenchBroomConfigMirror>> = default();
-}
+/// Mirrors certain variables of the any active app's [TrenchBroomConfig].
+///
+/// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
+pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> = Lazy::new(default);
 
 /// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
 #[macro_export]
@@ -111,9 +109,9 @@ pub struct TrenchBroomConfig {
 
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
-    /// Entity Inserter that gets run on every single entity (after the regular inserters), regardless of classname. (Default: [TrenchBroomConfig::default_global_inserter])
-    #[default(Some(Self::default_global_inserter))]
-    pub global_inserter: Option<EntityInserter>,
+    /// Entity spawner that gets run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
+    #[default(Some(Self::default_global_spawner))]
+    pub global_spawner: Option<EntitySpawner>,
 }
 
 impl TrenchBroomConfig {
@@ -145,12 +143,12 @@ impl TrenchBroomConfig {
             .attributes([TrenchBroomTagAttribute::Transparent])
     }
 
-    /// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_inserter])
-    pub fn default_global_inserter(
+    /// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    pub fn default_global_spawner(
         world: &mut World,
         entity: Entity,
-        view: EntityInsertionView,
-    ) -> Result<(), MapEntityInsertionError> {
+        view: EntitySpawnView,
+    ) -> Result<(), MapEntitySpawnError> {
         let classname = view.map_entity.classname()?.to_string();
         world.entity_mut(entity).insert((
             Name::new(
@@ -187,13 +185,13 @@ impl TrenchBroomConfig {
         None
     }
 
-    /// Gets and entity definition from this config, or if none is found, returns [MapEntityInsertionError::DefinitionNotFound].
+    /// Gets and entity definition from this config, or if none is found, returns [MapEntitySpawnError::DefinitionNotFound].
     pub fn get_definition(
         &self,
         classname: &str,
-    ) -> Result<&EntityDefinition, MapEntityInsertionError> {
+    ) -> Result<&EntityDefinition, MapEntitySpawnError> {
         self.entity_definitions.get(classname).ok_or_else(|| {
-            MapEntityInsertionError::DefinitionNotFound {
+            MapEntitySpawnError::DefinitionNotFound {
                 classname: classname.into(),
             }
         })

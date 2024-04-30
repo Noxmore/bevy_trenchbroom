@@ -29,9 +29,9 @@ impl Plugin for TrenchBroomPlugin {
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(self.config.clone())
             .register_type::<MapEntity>()
+            .register_type::<SpawnedMapEntity>()
             .register_type::<Map>()
             .register_type::<SpawnedMap>()
-            .register_type::<MapSpawningSettings>()
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
             .init_asset::<MaterialProperties>()
@@ -44,13 +44,11 @@ impl Plugin for TrenchBroomPlugin {
 }
 
 /// A TrenchBroom map loaded from a .map file.
-#[derive(Asset, Reflect, Debug, Clone, Default)]
+#[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Map {
     /// A title for the map, currently it just mirrors it's path.
     pub name: String,
     pub entities: Vec<MapEntity>,
-    /// The material properties required by the textures of the map.
-    pub material_properties_map: HashMap<String, Handle<MaterialProperties>>,
 }
 
 impl Map {

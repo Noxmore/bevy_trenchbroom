@@ -5,7 +5,7 @@ use crate::*;
 /// # Specification
 ///
 /// The first thing you will put in the macro will look something like this: `|commands, entity, view|`
-/// These are the arguments to any inserter any entity may have, it's at the top of the file so you don't have to add this boilerplate before every inserter.
+/// These are the arguments to any spawner any entity may have, it's at the top of the file so you don't have to add this boilerplate before every spawner.
 ///
 /// After that you put 0 or more definitions.
 ///
@@ -43,7 +43,7 @@ use crate::*;
 ///
 /// You can also set it to a `choices` type by using this syntax: `[ <key> : <title>, .. ]` That tells the user for the value to be one of the `<key>`s, although its not guaranteed.
 ///
-/// Then, optionally, you can define an inserter, a piece of code that runs when an entity is spawned with this definition or a subclass of this definition:
+/// Then, optionally, you can define a spawner, a piece of code that runs when an entity is spawned with this definition or a subclass of this definition:
 /// ```ignore
 /// ... {
 ///     ...
@@ -51,7 +51,7 @@ use crate::*;
 ///     // You can now access commands, entity, and view from here.
 /// }
 /// ```
-/// It should be noted that [TrenchBroomConfig] also has a global inserter, that is called on every entity regardless of classname.
+/// It should be noted that [TrenchBroomConfig] also has a global spawner, that is called on every entity regardless of classname.
 #[macro_export]
 macro_rules! entity_definitions {
     {
@@ -60,7 +60,7 @@ macro_rules! entity_definitions {
             $(#[$prop_attr:meta])*
             $prop_name:ident : $prop_type:tt $(= $default:expr)?
             ),* $(,)?
-        } $(|$commands:ident, $entity:ident, $view:ident $(,)?| $inserter:expr)?)*
+        } $(|$commands:ident, $entity:ident, $view:ident $(,)?| $spawner:expr)?)*
     } => {{
         use $crate::prelude::*;
         use bevy::reflect::Typed;
@@ -106,8 +106,8 @@ macro_rules! entity_definitions {
                     })),*
                 ]),
 
-                // Inserter
-                $(inserter: Some(#[allow(unused)] |$commands, $entity, $view| {$inserter Ok(())}),)?
+                // Spawner
+                $(spawner: Some(#[allow(unused)] |$commands, $entity, $view| {$spawner Ok(())}),)?
 
                 ..Default::default()
             })),*
@@ -125,7 +125,7 @@ macro_rules! entity_definitions {
     };
 }
 
-/// A definition for an entity class type that will be both written out to the game's `fgd` file, and used to insert the entity into the world once loaded.
+/// A definition for an entity class type that will be both written out to the game's `fgd` file, and used to spawn the entity into the world once loaded.
 #[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
 pub struct EntityDefinition {
     /// The type of entity this is, see documentation for [EntDefClassType] variants.
@@ -142,9 +142,9 @@ pub struct EntityDefinition {
     /// The properties specific to this definition, if you want properties that accounts for class hierarchy, use the `get_property` function.
     pub properties: IndexMap<String, EntDefProperty>,
 
-    /// How this entity inserts itself into the Bevy world.
+    /// How this entity spawns itself into the Bevy world.
     #[serde(skip)]
-    pub inserter: Option<EntityInserter>,
+    pub spawner: Option<EntitySpawner>,
 }
 
 impl EntityDefinition {

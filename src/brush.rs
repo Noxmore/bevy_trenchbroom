@@ -29,6 +29,8 @@ impl BrushPlane {
     }
 
     /// Projects `point` onto this plane, and returns the 2d position of it.
+    /// 
+    /// TODO what is this function here for? how does it work?
     pub fn project(&self, point: DVec3) -> DVec2 {
         let x_normal = self.normal.cross(DVec3::Y);
         // If the x normal is 0, then the normal vector is pointing straight up, and we can use `DVec3::X` instead
@@ -132,7 +134,6 @@ impl Brush {
     pub fn polygonize(&self) -> Vec<BrushSurfacePolygon> {
         let mut vertex_map: HashMap<usize, Vec<DVec3>> = default();
 
-        // TODO use parallel iterator here
         for ((s1_i, s1), (s2_i, s2), (s3_i, s3)) in
             self.surfaces.iter().enumerate().tuple_combinations()
         {
@@ -280,7 +281,9 @@ pub fn generate_mesh_from_brush_polygons(
 
             // Correct the size into Bevy space
             // Honestly not sure how this works, but it does
-            uv *= config.scale * config.scale / texture_size;
+            if face.surface.uv.axes.is_some() {
+                uv *= config.scale * config.scale / texture_size;
+            }
 
             uv /= face.surface.uv.scale.convert_zero_to_one();
             uv += face.surface.uv.offset / texture_size;

@@ -274,7 +274,7 @@ impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue 
 
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
-/// Put this on an entity when inserting to counteract the rotation.
+/// Put this on an entity when spawning to counteract the rotation.
 #[derive(Component)]
 pub struct TrenchBroomGltfRotationFix;
 
