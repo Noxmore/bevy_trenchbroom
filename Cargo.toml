@@ -19,7 +19,8 @@ bevy = { version = "0.13", default-features = false, features = [
     "serialize",
 ] }
 bevy_reflect = { version = "0.13", features = ["documentation"] }
-bevy_rapier3d = { version = "0.25", features = ["serde"], optional = true }
+bevy_rapier3d = { version = "0.25", optional = true }
+bevy_xpbd_3d = { version = "0.4", optional = true }
 default-struct-builder = "0.5.0"
 float-ord = "0.3"
 image = "0.24"
@@ -39,3 +40,4 @@ features = ["bevy_scene"]
 
 [features]
 rapier = [ "dep:bevy_rapier3d" ]
+xpbd = ["dep:bevy_xpbd_3d"]

@@ -459,7 +459,22 @@ impl BrushSpawnSettings {
             );
         })
     }
+    
+    #[cfg(feature = "xpbd")]
+    /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
+    pub fn trimesh_collider(self) -> Self {
+        self.mesh_spawner(|ent, view| {
+            if !view.mat_properties.get(MaterialProperties::COLLIDE) {
+                return;
+            }
 
+            use bevy_xpbd_3d::prelude::*;
+            if let Some(collider) = Collider::trimesh_from_mesh(&view.mesh) {
+                ent.insert(collider);
+            }
+        })
+    }
+    
     #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
@@ -490,4 +505,31 @@ impl BrushSpawnSettings {
             Vec::new()
         })
     }
+    
+    #[cfg(feature = "xpbd")]
+    /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
+    pub fn convex_collider(self) -> Self {
+        self.brush_spawner(|world, entity, view| {
+            use bevy_xpbd_3d::prelude::*;
+            let mut colliders = Vec::new();
+            for faces in view.brushes.iter() {
+                let mesh = generate_mesh_from_brush_polygons(
+                    &faces.iter().collect::<Vec<_>>(),
+                    view.tb_config,
+                );
+                if let Some(collider) = Collider::convex_hull_from_mesh(&mesh) {
+                    colliders.push((
+                        Vec3::ZERO,
+                        Quat::IDENTITY,
+                        collider
+                    ))
+                }                
+            }
+            world
+                .entity_mut(entity)
+                .insert(Collider::compound(colliders));
+            Vec::new()
+        })
+    }
+
 }
