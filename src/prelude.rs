@@ -26,7 +26,7 @@ pub use crate::definitions::*;
 pub use crate::loader::*;
 pub use crate::map_entity::*;
 pub use crate::material_properties::*;
-pub use crate::spawning::*;
 pub use crate::spawning::brushes::*;
+pub use crate::spawning::*;
 pub use crate::util::*;
 pub use crate::*;

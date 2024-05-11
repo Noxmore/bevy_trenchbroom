@@ -46,7 +46,7 @@ impl<'w> EntitySpawnView<'w> {
             for (texture, faces) in grouped_surfaces {
                 let mat_properties_path = self.tb_config.texture_root.join(texture).with_extension(MATERIAL_PROPERTIES_EXTENSION);
                 let full_mat_properties_path = self.tb_config.assets_path.join(&mat_properties_path);
-                
+
                 // If we don't check if the material properties file exists, the asset server will scream that it doesn't
                 // This is a lot of filesystem calls, but i'm unsure of a better way to do this
                 // We could make a cache mapping each path to whether it exists or not, but that's really only a band-aid fix
@@ -111,9 +111,6 @@ impl<'w> EntitySpawnView<'w> {
         entities
     }
 }
-
-
-
 
 pub struct BrushMeshSpawnView<'w, 'l> {
     entity_spawn_view: &'l EntitySpawnView<'w>,
@@ -263,7 +260,7 @@ impl BrushSpawnSettings {
             );
         })
     }
-    
+
     #[cfg(feature = "xpbd")]
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
@@ -278,7 +275,7 @@ impl BrushSpawnSettings {
             }
         })
     }
-    
+
     #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
@@ -309,7 +306,7 @@ impl BrushSpawnSettings {
             Vec::new()
         })
     }
-    
+
     #[cfg(feature = "xpbd")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
@@ -322,12 +319,8 @@ impl BrushSpawnSettings {
                     view.tb_config,
                 );
                 if let Some(collider) = Collider::convex_hull_from_mesh(&mesh) {
-                    colliders.push((
-                        Vec3::ZERO,
-                        Quat::IDENTITY,
-                        collider
-                    ))
-                }                
+                    colliders.push((Vec3::ZERO, Quat::IDENTITY, collider))
+                }
             }
             world
                 .entity_mut(entity)
@@ -335,5 +328,4 @@ impl BrushSpawnSettings {
             Vec::new()
         })
     }
-
 }

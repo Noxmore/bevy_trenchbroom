@@ -90,7 +90,7 @@ pub fn reload_maps(
 ) {
     for event in asset_events.read() {
         let AssetEvent::Modified { id } = event else {
-            continue
+            continue;
         };
 
         for (entity, map_handle) in &spawned_map_query {
