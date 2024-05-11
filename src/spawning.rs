@@ -81,6 +81,24 @@ pub fn spawn_maps(world: &mut World) {
     });
 }
 
+pub fn reload_maps(
+    mut commands: Commands,
+    mut asset_events: EventReader<AssetEvent<Map>>,
+    spawned_map_query: Query<(Entity, &Handle<Map>), With<SpawnedMap>>,
+) {
+    for event in asset_events.read() {
+        let AssetEvent::Modified { id } = event else {
+            continue
+        };
+
+        for (entity, map_handle) in &spawned_map_query {
+            if &map_handle.id() == id {
+                commands.entity(entity).remove::<SpawnedMap>();
+            }
+        }
+    }
+}
+
 impl Map {
     /// Spawns this map into the Bevy world through the specified entity. The map will not be fully spawned until [spawn_maps] has ran.
     pub fn spawn(&self, world: &mut World, entity: Entity) {
