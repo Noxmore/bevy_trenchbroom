@@ -22,7 +22,7 @@ fn main() {
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(7., 8., 7.).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(7., 8., 7.).looking_at(Vec3::Y, Vec3::Y),
         ..default()
     });
 
