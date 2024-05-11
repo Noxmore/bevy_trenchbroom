@@ -3,7 +3,8 @@ use crate::*;
 /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
 ///
 /// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
-pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> = Lazy::new(default);
+pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> =
+    Lazy::new(default);
 
 /// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
 #[macro_export]

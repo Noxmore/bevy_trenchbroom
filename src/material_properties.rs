@@ -107,10 +107,12 @@ impl MaterialPropertiesLoader {
 }
 
 /// Caches textures used on brushes to [StandardMaterial] handles.
-pub static BRUSH_TEXTURE_TO_MATERIALS_CACHE: Lazy<Mutex<HashMap<String, Handle<StandardMaterial>>>> = Lazy::new(default);
+pub static BRUSH_TEXTURE_TO_MATERIALS_CACHE: Lazy<
+    Mutex<HashMap<String, Handle<StandardMaterial>>>,
+> = Lazy::new(default);
 
 /// A serializable copy of [AlphaMode] for [MaterialProperties]
-/// 
+///
 /// # Examples
 /// ```toml
 /// alpha_mode = { type = "Cutout" } // Shorthand for { type = "Mask", threshold = 0.7 }

@@ -4,12 +4,16 @@ use crate::*;
 
 /// Creates an image sampler with repeating textures, and optionally filtered.
 pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
-	ImageSamplerDescriptor {
-		address_mode_u: ImageAddressMode::Repeat,
-		address_mode_v: ImageAddressMode::Repeat,
-		address_mode_w: ImageAddressMode::Repeat,
-		..if filtered { ImageSamplerDescriptor::linear() } else { ImageSamplerDescriptor::nearest() }
-	}
+    ImageSamplerDescriptor {
+        address_mode_u: ImageAddressMode::Repeat,
+        address_mode_v: ImageAddressMode::Repeat,
+        address_mode_w: ImageAddressMode::Repeat,
+        ..if filtered {
+            ImageSamplerDescriptor::linear()
+        } else {
+            ImageSamplerDescriptor::nearest()
+        }
+    }
 }
 
 pub trait TrenchBroomToBevySpace {

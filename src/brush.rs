@@ -29,7 +29,7 @@ impl BrushPlane {
     }
 
     /// Projects `point` onto this plane, and returns the 2d position of it.
-    /// 
+    ///
     /// TODO what is this function here for? how does it work?
     pub fn project(&self, point: DVec3) -> DVec2 {
         let x_normal = self.normal.cross(DVec3::Y);
@@ -66,6 +66,15 @@ impl BrushPlane {
         Some(dvec3(d.dot(u), m3.dot(v), -m2.dot(v)) / denom)
     }
 }
+impl std::ops::Neg for BrushPlane {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Self {
+            normal: -self.normal,
+            distance: -self.distance,
+        }
+    }
+}
 
 /// Brush face UV coordinates.
 #[derive(Reflect, Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -84,6 +93,15 @@ pub struct BrushSurface {
     pub plane: BrushPlane,
     pub texture: String,
     pub uv: BrushUV,
+}
+impl BrushSurface {
+    /// Returns this BrushSurface with it's plane facing the opposite direction.
+    pub fn inverted(self) -> Self {
+        Self {
+            plane: -self.plane,
+            ..self
+        }
+    }
 }
 
 /// A convex hull with material data attached.
@@ -126,11 +144,55 @@ impl Brush {
             .all(|surface| surface.plane.point_side(point) < 0.000001)
     }
 
-    /// Calculates the intersections of the planes making up the brush,
-    /// returns a map that maps the surfaces of the brush onto them,
-    /// and filters out intersections that exist outside the brush.
+    /// Returns `true` if `plane` is intersecting the brush, or directly on one of the existing planes, else `false`.
+    pub fn contains_plane(&self, plane: &BrushPlane) -> bool {
+        !self
+            .calculate_vertices()
+            .into_iter()
+            .map(|(vertex, _)| match plane.point_side(vertex) {
+                0.0.. => true,
+                _ => false,
+            })
+            .all_equal()
+            || self.surfaces.iter().any(|surface| plane == &surface.plane)
+    }
+
+    /// Cuts the brush along the specified surface, adding said surface to the brush, and removing all other surfaces in front of it.
     ///
-    /// NOTE: Duplicate intersections can occur on more complex shapes, this is not a bug.
+    /// NOTE: If `along` is outside of the brush, it can make this brush invalid, if you are using untrusted data, check with [Brush::contains_plane].
+    pub fn cut(&mut self, along: BrushSurface) {
+        // TODO this should probably support cutting along a Vec<BrushSurface>
+        let vertices = self.calculate_vertices();
+
+        // We're going to take the current vector of surfaces, and add back the ones we want to keep
+        let mut old_surfaces = mem::take(&mut self.surfaces)
+            .into_iter()
+            .map(Option::from)
+            .collect_vec();
+
+        for (vertex, surfaces) in vertices {
+            if along.plane.point_side(vertex) < -f64::EPSILON {
+                for surface_index in surfaces {
+                    // If the surface has already been added, we don't need to add it again
+                    if old_surfaces[surface_index].is_none() {
+                        continue;
+                    }
+                    self.surfaces
+                        .push(mem::take(&mut old_surfaces[surface_index]).unwrap());
+                }
+            }
+        }
+
+        self.surfaces.push(along);
+    }
+
+    /// Calculates the intersections of the surfaces making up the brush, filtering out intersections that exist outside the brush.
+    ///
+    /// Returns a vector of polygonal faces where each face includes vertices, indices, and a copy of the surface the face was calculated from.
+    ///
+    /// If you want a map of intersections to the surfaces causing them, see [calculate_vertices\()](Self::calculate_vertices)
+    ///
+    /// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
     pub fn polygonize(&self) -> Vec<BrushSurfacePolygon> {
         let mut vertex_map: HashMap<usize, Vec<DVec3>> = default();
 
@@ -162,9 +224,41 @@ impl Brush {
             })
             .collect()
     }
+
+    /// Calculates the intersections of the surfaces making up the brush,
+    /// returns a map that maps the intersection position to the indexes of the surfaces causing it,
+    /// and filters out the intersections that exist outside of the brush.
+    ///
+    /// If you want a map of the surfaces to the intersections they cause, see [polygonize\()](Self::polygonize).
+    ///
+    /// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
+    pub fn calculate_vertices(&self) -> Vec<(DVec3, [usize; 3])> {
+        let mut vertex_map = Vec::new();
+
+        for ((s1_i, s1), (s2_i, s2), (s3_i, s3)) in
+            self.surfaces.iter().enumerate().tuple_combinations()
+        {
+            if let Some(intersection) =
+                BrushPlane::calculate_intersection_point([&s1.plane, &s2.plane, &s3.plane])
+            {
+                // If the intersection does not exist within the bounds the hull, discard it
+                if !self.contains_point(intersection) {
+                    continue;
+                }
+
+                vertex_map.push((intersection, [s1_i, s2_i, s3_i]));
+                // vertex_map.push(BrushVertex {
+                //     position: intersection,
+                //     surfaces: [s1, s2, s3],
+                // });
+            }
+        }
+
+        vertex_map
+    }
 }
 
-/// A polygonal face calculated from a [BrushSurface].
+/// A polygonal face calculated from a [BrushSurface], mainly used for rendering.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrushSurfacePolygon {
     pub surface: BrushSurface,
@@ -252,9 +346,11 @@ pub fn generate_mesh_from_brush_polygons(
     } else {
         UVec2::from(
             image::image_dimensions(
-                config
-                    .assets_path
-                    .join(config.texture_root.join(format!("{}.png", &faces[0].surface.texture))),
+                config.assets_path.join(
+                    config
+                        .texture_root
+                        .join(format!("{}.png", &faces[0].surface.texture)),
+                ),
             )
             .unwrap_or((1, 1)),
         )

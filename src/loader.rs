@@ -51,7 +51,7 @@ impl AssetLoader for MapLoader {
                     "worldspawn not defined",
                 ));
             }
-            
+
             Ok(map)
         })
     }

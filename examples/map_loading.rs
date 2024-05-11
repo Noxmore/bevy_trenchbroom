@@ -3,24 +3,24 @@ use bevy_trenchbroom::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin { default_sampler: repeating_image_sampler(false) }))
+        .add_plugins(DefaultPlugins.set(ImagePlugin {
+            default_sampler: repeating_image_sampler(false),
+        }))
         .add_plugins(TrenchBroomPlugin::new(
-            TrenchBroomConfig::new("bevy_trenchbroom_example")
-                .entity_definitions(entity_definitions! {
+            TrenchBroomConfig::new("bevy_trenchbroom_example").entity_definitions(
+                entity_definitions! {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {
                         view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
                     }
-                })
+                },
+            ),
         ))
         .add_systems(Startup, (setup_scene, write_config))
         .run();
 }
 
-fn setup_scene(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(7., 8., 7.).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()

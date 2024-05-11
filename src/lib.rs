@@ -3,11 +3,11 @@
 pub mod brush;
 pub mod config;
 pub mod definitions;
-pub mod spawning;
 pub mod loader;
 pub mod map_entity;
 pub mod material_properties;
 pub mod prelude;
+pub mod spawning;
 pub mod util;
 
 pub(crate) use prelude::*;
@@ -39,7 +39,8 @@ impl Plugin for TrenchBroomPlugin {
             .add_systems(PreUpdate, (mirror_trenchbroom_config, spawn_maps));
 
         // Mirror before any schedule is run, so it won't crash on startup systems. (https://github.com/Noxmore/bevy_trenchbroom/issues/1)
-        *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() = Some(TrenchBroomConfigMirror::new(&self.config));
+        *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() =
+            Some(TrenchBroomConfigMirror::new(&self.config));
     }
 }
 

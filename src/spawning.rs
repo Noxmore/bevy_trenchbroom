@@ -31,16 +31,18 @@ pub enum MapEntitySpawnError {
 #[reflect(Component)]
 pub struct SpawnedMap;
 
-
 pub fn spawn_maps(world: &mut World) {
     // Spawn maps
     world.resource_scope(|world, maps: Mut<Assets<Map>>| {
-        for (entity, map_handle) in world.query_filtered::<(Entity, &Handle<Map>), Without<SpawnedMap>>()
+        for (entity, map_handle) in world
+            .query_filtered::<(Entity, &Handle<Map>), Without<SpawnedMap>>()
             .iter(world)
             .map(|(e, h)| (e, h.clone()))
             .collect_vec()
         {
-            let Some(map) = maps.get(map_handle) else { continue };
+            let Some(map) = maps.get(map_handle) else {
+                continue;
+            };
 
             // Lets make sure we don't spawn a map every frame
             world.entity_mut(entity).insert(SpawnedMap);
@@ -51,19 +53,29 @@ pub fn spawn_maps(world: &mut World) {
 
     // Spawn individual map entities
     world.resource_scope(|world, tb_config: Mut<TrenchBroomConfig>| {
-        for (entity, map_entity) in world.query_filtered::<(Entity, &MapEntity), Without<SpawnedMapEntity>>()
+        for (entity, map_entity) in world
+            .query_filtered::<(Entity, &MapEntity), Without<SpawnedMapEntity>>()
             .iter(world)
             // I'd really rather not clone this, but the borrow checker has forced my hand
             .map(|(e, h)| (e, h.clone()))
             .collect_vec()
         {
+            DespawnChildrenRecursive { entity }.apply(world);
+
             world.entity_mut(entity).insert(SpawnedMapEntity);
 
-            if let Err(err) = MapEntity::spawn(world, entity, EntitySpawnView {
-                map_entity: &map_entity,
-                tb_config: &tb_config,
-            }) {
-                error!("Problem occurred while spawning MapEntity {entity:?} (index {:?}): {err}", map_entity.ent_index);
+            if let Err(err) = MapEntity::spawn(
+                world,
+                entity,
+                EntitySpawnView {
+                    map_entity: &map_entity,
+                    tb_config: &tb_config,
+                },
+            ) {
+                error!(
+                    "Problem occurred while spawning MapEntity {entity:?} (index {:?}): {err}",
+                    map_entity.ent_index
+                );
             }
         }
     });
@@ -76,7 +88,9 @@ impl Map {
         DespawnChildrenRecursive { entity }.apply(world);
 
         // Add skeleton entities as children of the Map entity, if this is being called from spawn_maps, they'll be spawned later this update
-        let skeleton_entities = self.entities.iter()
+        let skeleton_entities = self
+            .entities
+            .iter()
             .cloned()
             .map(|map_entity| world.spawn(map_entity).id())
             .collect_vec();
@@ -86,16 +100,15 @@ impl Map {
 }
 
 impl MapEntity {
-    /// Spawns this MapEntity into the Bevy world 
+    /// Spawns this MapEntity into the Bevy world.
     pub fn spawn(
         world: &mut World,
         entity: Entity,
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
-        DespawnChildrenRecursive { entity }.apply(world);
-
         Self::spawn_class(
-            view.tb_config.get_definition(view.map_entity.classname()?)?,
+            view.tb_config
+                .get_definition(view.map_entity.classname()?)?,
             world,
             entity,
             view,
@@ -227,7 +240,7 @@ impl<'w> EntitySpawnView<'w> {
         world.resource_scope(|world, mut mat_properties_assets: Mut<Assets<MaterialProperties>>| {
             // Used for material properties where it's file doesn't exist
             let default_material_properties = MaterialProperties::default();
-            
+
             // Construct the meshes for each surface group
             for (texture, faces) in grouped_surfaces {
                 let mat_properties_path = self.tb_config.texture_root.join(texture).with_extension(MATERIAL_PROPERTIES_EXTENSION);
@@ -240,7 +253,7 @@ impl<'w> EntitySpawnView<'w> {
                 let mat_properties = if full_mat_properties_path.exists() {
                     // TODO does this work or does it load every time
                     let mat_properties_handle = world.resource::<AssetServer>().load::<MaterialProperties>(mat_properties_path.clone());
-    
+
                     // This is an expanded version of mat_properties_assets.get_or_insert_with so that i can access control flow in the error state
                     if !mat_properties_assets.contains(&mat_properties_handle) {
                         match || -> anyhow::Result<MaterialProperties> {
@@ -284,9 +297,15 @@ impl<'w> EntitySpawnView<'w> {
         let mut ent = world.entity_mut(entity);
         ent.push_children(&entities);
         // To keep the visibility hierarchy for the possible child meshes when spawning these brushes
-        if !ent.contains::<Visibility>() { ent.insert(Visibility::default()); }
-        if !ent.contains::<InheritedVisibility>() { ent.insert(InheritedVisibility::default()); }
-        if !ent.contains::<ViewVisibility>() { ent.insert(ViewVisibility::default()); }
+        if !ent.contains::<Visibility>() {
+            ent.insert(Visibility::default());
+        }
+        if !ent.contains::<InheritedVisibility>() {
+            ent.insert(InheritedVisibility::default());
+        }
+        if !ent.contains::<ViewVisibility>() {
+            ent.insert(ViewVisibility::default());
+        }
 
         entities
     }
@@ -454,10 +473,14 @@ impl BrushSpawnSettings {
                     &faces.iter().collect::<Vec<_>>(),
                     view.tb_config,
                 );
+                let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull) else {
+                    error!("MapEntity {entity:?} has an invalid (non-convex) brush, and a collider could not be computed for it!");
+                    continue;
+                };
                 colliders.push((
                     Vec3::ZERO,
                     Quat::IDENTITY,
-                    Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull).unwrap(),
+                    collider,
                 ));
             }
 
