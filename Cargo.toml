@@ -25,7 +25,7 @@ default-struct-builder = "0.5.0"
 float-ord = "0.3"
 image = "0.24"
 indexmap = { version = "2.2", features = ["serde"] }
-itertools = "0.12"
+itertools = "0.13"
 json = "0.12"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
 serde = { version = "1.0", features = ["derive"] }
