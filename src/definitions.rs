@@ -4,11 +4,6 @@ use crate::*;
 ///
 /// # Specification
 ///
-/// The first thing you will put in the macro will look something like this: `|commands, entity, view|`
-/// These are the arguments to any spawner any entity may have, it's at the top of the file so you don't have to add this boilerplate before every spawner.
-///
-/// After that you put 0 or more definitions.
-///
 /// Each definition starts like so (`<>` meaning required, and `[]` meaning optional):
 /// ```ignore
 /// /// [description]
@@ -45,10 +40,13 @@ use crate::*;
 ///
 /// Then, optionally, you can define a spawner, a piece of code that runs when an entity is spawned with this definition or a subclass of this definition:
 /// ```ignore
-/// ... {
+/// ... |world, entity, view| {
 ///     ...
 /// } => {
-///     // You can now access commands, entity, and view from here.
+///     // The closure arguments above give you exclusive access to the Bevy world,
+///     // the Bevy entity this TrenchBroom entity is being spawned into,
+///     // and a view into the the TrenchBroom entity (as well as the current TrenchBroomConfig).
+///     // With this, you can get properties from the TrenchBroom entity with `view.get(key)`.
 /// }
 /// ```
 /// It should be noted that [TrenchBroomConfig] also has a global spawner, that is called on every entity regardless of classname.
