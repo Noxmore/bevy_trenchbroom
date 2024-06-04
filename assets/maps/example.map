@@ -96,3 +96,13 @@
 ( -32 16 16 ) ( -32 16 17 ) ( -32 17 16 ) __TB_empty [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
+// entity 1
+{
+"classname" "test"
+"origin" "-40 -40 40"
+}
+// entity 2
+{
+"classname" "test"
+"origin" "40 40 40"
+}

@@ -13,6 +13,18 @@ fn main() {
                     Solid worldspawn {} |world, entity, view| {
                         view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
                     }
+
+                    /// A simple point entity example
+                    Point test {} |world, entity, view| {
+                        let asset_server = world.resource::<AssetServer>();
+                        let cube = asset_server.add(Cuboid::new(0.3, 0.3, 0.3).mesh());
+                        let material = asset_server.add(StandardMaterial::default());
+                        world.entity_mut(entity).insert((
+                            cube,
+                            material,
+                            VisibilityBundle::default(),
+                        ));
+                    }
                 },
             ),
         ))
