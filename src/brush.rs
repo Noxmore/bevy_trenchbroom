@@ -292,15 +292,15 @@ impl BrushSurfacePolygon {
                 let (_first, rest) = vertices.split_first_mut().unwrap();
                 rest.sort_unstable_by_key(|vertex| {
                     if *vertex == vert_1 {
-                        return FloatOrd(0.0);
+                        return float_ord::FloatOrd(0.0);
                     }
                     // Make sure duplicates of vert_0 are at the start of the list for deduplication
                     if vertex.almost_eq(vert_0, Self::VERTEX_PRECISION_MARGIN) {
-                        return FloatOrd(f64::NEG_INFINITY);
+                        return float_ord::FloatOrd(f64::NEG_INFINITY);
                     }
                     let vertex_vector = *vertex - vert_0;
 
-                    FloatOrd(
+                    float_ord::FloatOrd(
                         vertex_vector
                             .cross(starting_vector)
                             .dot(surface.plane.normal)

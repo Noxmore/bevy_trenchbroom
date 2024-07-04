@@ -17,7 +17,7 @@ fn main() {
                     /// A simple point entity example
                     Point test {} |world, entity, view| {
                         let asset_server = world.resource::<AssetServer>();
-                        let cube = asset_server.add(Cuboid::new(0.3, 0.3, 0.3).mesh());
+                        let cube = asset_server.add(Mesh::from(Cuboid::new(0.3, 0.3, 0.3)));
                         let material = asset_server.add(StandardMaterial::default());
                         world.entity_mut(entity).insert((
                             cube,

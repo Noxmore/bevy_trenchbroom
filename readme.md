@@ -179,7 +179,8 @@ If you want to try to tackle, or have an idea of how to approach any of these, a
 # Supported Bevy && TrenchBroom Versions
 | Bevy | bevy_trenchbroom | TrenchBroom |
 ---|--|---
-| 0.13 | 0.1-0.2 | 2024.1 |
+| 0.14 | 0.4 | 2024.1 |
+| 0.13 | 0.1-0.3 | 2024.1 |
 
 Note: There's a good chance that it will work for other TrenchBroom versions then the one your version of bevy_trenchbroom is made for.
 

@@ -3,7 +3,7 @@
 // Currently, spawning uses too many file system calls for my liking.
 // I've tried to only do cheep fs calls, or cache the results of said calls whenever i can, but in the future i would like all this to be asynchronous.
 
-use bevy::ecs::system::Command;
+use bevy::ecs::world::Command;
 
 use crate::*;
 
@@ -42,7 +42,7 @@ pub fn spawn_maps(world: &mut World) {
             .map(|(e, h)| (e, h.clone()))
             .collect_vec()
         {
-            let Some(map) = maps.get(map_handle) else {
+            let Some(map) = maps.get(&map_handle) else {
                 continue;
             };
 

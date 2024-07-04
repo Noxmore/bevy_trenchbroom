@@ -1,6 +1,6 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, future::Future};
 
-use bevy::asset::{AssetLoader, AsyncReadExt};
+use bevy::{asset::{AssetLoader, AsyncReadExt}, utils::ConditionalSendFuture};
 
 use crate::*;
 
@@ -56,7 +56,7 @@ impl MaterialProperties {
     pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> =
         MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
     /// The amount of emissive light given off from the surface. Used for [StandardMaterial::emissive].
-    pub const EMISSIVE: MaterialProperty<Color> = MaterialProperty::new("emissive", Color::BLACK);
+    pub const EMISSIVE: MaterialProperty<LinearRgba> = MaterialProperty::new("emissive", LinearRgba::BLACK);
     /// Whether to cull back faces.
     pub const DOUBLE_SIDED: MaterialProperty<bool> = MaterialProperty::new("double_sided", false);
 
@@ -85,7 +85,7 @@ impl AssetLoader for MaterialPropertiesLoader {
         reader: &'a mut bevy::asset::io::Reader,
         _settings: &'a Self::Settings,
         _load_context: &'a mut bevy::asset::LoadContext,
-    ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+    ) -> impl ConditionalSendFuture + Future<Output = Result<<Self as AssetLoader>::Asset, <Self as AssetLoader>::Error>> {
         Box::pin(async move {
             let mut buf = String::new();
             reader.read_to_string(&mut buf).await?;

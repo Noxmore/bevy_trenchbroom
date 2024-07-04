@@ -237,14 +237,16 @@ impl TrenchBroomValue for Vec2 {
     }
 }
 
+// Should this use linear or srgb? VDC doesn't specify the color space. It probably doesn't matter anyway.
 impl TrenchBroomValue for Color {
     fn tb_parse(input: &str) -> anyhow::Result<Self> {
         <[f32; 3]>::tb_parse(input)
-            .map(Color::rgb_from_array)
-            .or(<[f32; 4]>::tb_parse(input).map(Color::rgba_from_array))
+            .map(Color::srgb_from_array)
+            .or(<[f32; 4]>::tb_parse(input).map(|[r, g, b, a]| Color::srgba(r, g, b, a)))
     }
     fn tb_to_string(&self) -> String {
-        format!("{} {} {} {}", self.r(), self.g(), self.b(), self.a())
+        let col = self.to_srgba();
+        format!("{} {} {} {}", col.red, col.green, col.blue, col.alpha)
     }
     fn fgd_type() -> EntDefPropertyType {
         EntDefPropertyType::Value("color1".into())

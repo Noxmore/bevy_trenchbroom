@@ -1,6 +1,8 @@
+use std::future::Future;
+
 use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext},
-    utils::BoxedFuture,
+    utils::ConditionalSendFuture,
 };
 
 use crate::*;
@@ -17,7 +19,7 @@ impl AssetLoader for MapLoader {
         reader: &'a mut Reader,
         _settings: &'a (),
         ctx: &'a mut LoadContext,
-    ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+    ) -> impl ConditionalSendFuture + Future<Output = Result<<Self as AssetLoader>::Asset, <Self as AssetLoader>::Error>> {
         Box::pin(async move {
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;
