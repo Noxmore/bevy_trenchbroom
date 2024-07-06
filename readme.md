@@ -158,9 +158,9 @@ Then, if your networking solution has a unique identifier type, you can define a
 
 ## Physics/Collisions
 
-`bevy_trenchbroom` supports [rapier3d](https://crates.io/crates/bevy_rapier3d) and [xpbd 3d](https://crates.io/crates/bevy_xpbd_3d) to easily add colliders when spawning brushes.
+`bevy_trenchbroom` supports [bevy_rapier3d](https://crates.io/crates/bevy_rapier3d) and [avian3d](https://crates.io/crates/avian3d) to easily add colliders when spawning brushes.
 
-First, enable the `rapier` or `xpbd` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your `BrushSpawnSettings` when spawning brushes to create the respective type of collider(s) on said brushes.
+First, enable the `rapier` or `avian` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your `BrushSpawnSettings` when spawning brushes to create the respective type of collider(s) on said brushes.
 
 ## Known Bugs
 

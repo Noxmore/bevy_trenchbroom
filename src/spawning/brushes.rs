@@ -261,7 +261,7 @@ impl BrushSpawnSettings {
         })
     }
 
-    #[cfg(feature = "xpbd")]
+    #[cfg(feature = "avian")]
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
         self.mesh_spawner(|ent, view| {
@@ -269,7 +269,7 @@ impl BrushSpawnSettings {
                 return;
             }
 
-            use bevy_xpbd_3d::prelude::*;
+            use avian3d::prelude::*;
             if let Some(collider) = Collider::trimesh_from_mesh(&view.mesh) {
                 ent.insert(collider);
             }
@@ -307,11 +307,11 @@ impl BrushSpawnSettings {
         })
     }
 
-    #[cfg(feature = "xpbd")]
+    #[cfg(feature = "avian")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
         self.brush_spawner(|world, entity, view| {
-            use bevy_xpbd_3d::prelude::*;
+            use avian3d::prelude::*;
             let mut colliders = Vec::new();
             for faces in view.brushes.iter() {
                 let mesh = generate_mesh_from_brush_polygons(

@@ -1,6 +1,6 @@
 #![doc = include_str!("../readme.md")]
 
-#[cfg(all(feature = "rapier", feature = "xpbd"))]
+#[cfg(all(feature = "rapier", feature = "avian"))]
 compile_error!("can only have one collider backend enabled");
 
 pub mod brush;
