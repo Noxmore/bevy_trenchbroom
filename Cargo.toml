@@ -19,7 +19,7 @@ bevy = { version = "0.14", default-features = false, features = [
     "serialize",
 ] }
 bevy_reflect = { version = "0.14", features = ["documentation"] }
-bevy_rapier3d = { version = "0.26", optional = true }
+bevy_rapier3d = { version = "0.27", optional = true }
 avian3d = { version = "0.1", optional = true }
 default-struct-builder = "0.5.0"
 float-ord = "0.3"
