@@ -349,6 +349,18 @@ impl TrenchBroomConfig {
         //// GAME CONFIGURATION && ICON
         //////////////////////////////////////////////////////////////////////////////////
 
+        // We need to check the game config version first and set the keys for textures accordingly.
+        let texture_key = if self.tb_format_version >= 9 {
+            "materials"
+        } else {
+            "textures"
+        };
+        let texture_key_match = if self.tb_format_version >= 9 {
+            "material"
+        } else {
+            "texture"
+        };
+
         // The game config file is basically json, so we can get 99% of the way there by just creating a json object.
         let mut json = json::object! {
             "version": self.tb_format_version,
@@ -358,7 +370,7 @@ impl TrenchBroomConfig {
                 "searchpath": self.assets_path.to_string_lossy().to_string(),
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
-            "textures": {
+            [texture_key]: {
                 "root": self.texture_root.to_string_lossy().to_string(),
                 "format": { "extension": self.texture_extension.clone(), "format": "image" },
                 "attribute": "_tb_textures",
@@ -372,7 +384,7 @@ impl TrenchBroomConfig {
             },
             "tags": {
                 "brush": self.brush_tags.iter().map(|tag| tag.to_json("classname")).collect::<Vec<_>>(),
-                "brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
+                "brushface": self.face_tags.iter().map(|tag| tag.to_json(texture_key_match)).collect::<Vec<_>>()
             }
         };
 
