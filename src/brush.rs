@@ -347,7 +347,7 @@ pub fn generate_mesh_from_brush_polygons(
                 config.assets_path.join(
                     config
                         .texture_root
-                        .join(format!("{}.png", &faces[0].surface.texture)),
+                        .join(format!("{}.{}", &faces[0].surface.texture, config.texture_extension)),
                 ),
             )
             .unwrap_or((1, 1)),
