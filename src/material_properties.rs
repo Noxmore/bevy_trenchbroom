@@ -29,12 +29,20 @@ impl<T: Deserialize<'static>> MaterialProperty<T> {
 /// ```
 /// use bevy_trenchbroom::prelude::*;
 ///
+/// // You can create your own custom material properties like so
+/// pub const TEST: MaterialProperty<f32> = MaterialProperty::new("test", 2.0);
+///
 /// // You should load MaterialProperties via your app's asset server, this is just for demonstration purposes.
-/// let mat_properties = MaterialPropertiesLoader.load_sync(&std::fs::read_to_string("assets/textures/test.toml").unwrap()).unwrap();
+/// let mat_properties = MaterialPropertiesLoader.load_sync(r#"
+/// collide = false
+/// roughness = 0.25
+/// test = 3.0
+/// "#).unwrap();
 ///
 /// assert_eq!(mat_properties.get(MaterialProperties::RENDER), true);
 /// assert_eq!(mat_properties.get(MaterialProperties::COLLIDE), false);
 /// assert_eq!(mat_properties.get(MaterialProperties::ROUGHNESS), 0.25);
+/// assert_eq!(mat_properties.get(TEST), 3.0);
 /// ```
 #[derive(Asset, TypePath, Debug, Clone, Default)]
 pub struct MaterialProperties {
