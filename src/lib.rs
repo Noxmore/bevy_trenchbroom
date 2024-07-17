@@ -41,11 +41,7 @@ impl Plugin for TrenchBroomPlugin {
             .init_asset_loader::<MaterialPropertiesLoader>()
             .add_systems(
                 PreUpdate,
-                (
-                    mirror_trenchbroom_config,
-                    reload_maps,
-                    spawn_maps,
-                ),
+                (mirror_trenchbroom_config, reload_maps, spawn_maps),
             );
 
         // Mirror before any schedule is run, so it won't crash on startup systems. (https://github.com/Noxmore/bevy_trenchbroom/issues/1)

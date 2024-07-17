@@ -2,7 +2,6 @@
 
 use crate::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
-use bevy::render::render_asset::RenderAssetUsages;
 
 /// Represents an infinitely large plane in 3d space, used for defining convex hulls like [Brush]es.
 #[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
@@ -28,9 +27,8 @@ impl BrushPlane {
         self.normal.dot(point) + self.distance
     }
 
+    // TODO This function was made for brush uvs with quake projections, but i don't think it works right now. This isn't a high priority to fix
     /// Projects `point` onto this plane, and returns the 2d position of it.
-    ///
-    /// TODO what is this function here for? how does it work?
     pub fn project(&self, point: DVec3) -> DVec2 {
         let x_normal = self.normal.cross(DVec3::Y);
         // If the x normal is 0, then the normal vector is pointing straight up, and we can use `DVec3::X` instead
@@ -220,7 +218,7 @@ impl Brush {
         vertex_map
             .into_iter()
             .map(|(surface_index, vertices)| {
-                BrushSurfacePolygon::new(self.surfaces[surface_index].clone(), vertices)
+                BrushSurfacePolygon::new(&self.surfaces[surface_index], vertices)
             })
             .collect()
     }
@@ -259,19 +257,19 @@ impl Brush {
 }
 
 /// A polygonal face calculated from a [BrushSurface], mainly used for rendering.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BrushSurfacePolygon {
-    pub surface: BrushSurface,
+#[derive(Debug, Clone)]
+pub struct BrushSurfacePolygon<'w> {
+    pub surface: &'w BrushSurface,
     vertices: Vec<DVec3>,
     indices: Vec<u32>,
 }
 
-impl BrushSurfacePolygon {
+impl<'w> BrushSurfacePolygon<'w> {
     /// The margin that vertices can be off by, but are still treated as one.
     pub const VERTEX_PRECISION_MARGIN: f64 = 0.0001;
 
     /// Creates a new surface polygon, sorts and deduplicates the vertices, and calculates indices.
-    pub fn new(surface: BrushSurface, mut vertices: Vec<DVec3>) -> Self {
+    pub fn new(surface: &'w BrushSurface, mut vertices: Vec<DVec3>) -> Self {
         let mut indices = Vec::new();
 
         // Calculate 2d vertices
@@ -402,7 +400,7 @@ pub fn generate_mesh_from_brush_polygons(
 
     let mut mesh = Mesh::new(
         PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD,
+        config.brush_mesh_asset_usages,
     );
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);

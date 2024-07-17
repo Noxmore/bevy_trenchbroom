@@ -1,3 +1,5 @@
+use bevy::render::render_asset::RenderAssetUsages;
+
 use crate::*;
 
 /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
@@ -113,6 +115,10 @@ pub struct TrenchBroomConfig {
     /// Entity spawner that gets run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
     #[default(Some(Self::default_global_spawner))]
     pub global_spawner: Option<EntitySpawner>,
+
+    /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+    #[default(RenderAssetUsages::RENDER_WORLD)]
+    pub brush_mesh_asset_usages: RenderAssetUsages,
 }
 
 impl TrenchBroomConfig {

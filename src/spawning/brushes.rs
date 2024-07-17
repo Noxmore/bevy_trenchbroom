@@ -1,31 +1,18 @@
 //! Handles spawning brushes from a [MapEntity] into the Bevy world.
 
-use bevy::render::render_resource::Face;
+use bevy::render::{mesh::VertexAttributeValues, render_resource::Face};
 
 use crate::*;
 
 impl<'w> EntitySpawnView<'w> {
     /// Spawns all the brushes in this entity, and parents them to said entity, returning the list of entities that have been spawned.
-    pub fn spawn_brushes(
-        &self,
-        world: &mut World,
-        entity: Entity,
-        settings: BrushSpawnSettings,
-    ) -> Vec<Entity> {
+    pub fn spawn_brushes(&self, world: &mut World, entity: Entity, settings: BrushSpawnSettings) {
         let mut entities = Vec::new();
-        // Each element of this vector is a vector the polygonized surfaces of a brush
+        // Each element of this vector represents a brush, each brush is a vector the polygonized surfaces of said brush
         let mut faces = Vec::new();
 
         for brush in &self.map_entity.brushes {
             faces.push(brush.polygonize());
-        }
-
-        let brush_spawn_view = BrushSpawnView {
-            entity_spawn_view: self,
-            brushes: &faces,
-        };
-        for spawner in &settings.brush_spawners {
-            entities.append(&mut spawner(world, entity, &brush_spawn_view));
         }
 
         // Since bevy can only have 1 material per mesh, surfaces with the same material are grouped here, each group will have its own mesh.
@@ -39,6 +26,9 @@ impl<'w> EntitySpawnView<'w> {
 
         // We need to pass the texture's material properties to the view
         world.resource_scope(|world, mut mat_properties_assets: Mut<Assets<MaterialProperties>>| {
+            // let mut mat_properties_assets = std::cell::UnsafeCell::new(mat_properties_assets);
+            let mut brush_mesh_views = Vec::new();
+
             // Used for material properties where it's file doesn't exist
             let default_material_properties = MaterialProperties::default();
 
@@ -51,7 +41,7 @@ impl<'w> EntitySpawnView<'w> {
                 // This is a lot of filesystem calls, but i'm unsure of a better way to do this
                 // We could make a cache mapping each path to whether it exists or not, but that's really only a band-aid fix
                 // It would be better to get all this off the critical path in the first place, or at least pre-load all this when loading maps
-                let mat_properties = if full_mat_properties_path.exists() {
+                let mat_properties_handle = if full_mat_properties_path.exists() {
                     // TODO does this work or does it load every time
                     let mat_properties_handle = world.resource::<AssetServer>().load::<MaterialProperties>(mat_properties_path.clone());
 
@@ -60,6 +50,8 @@ impl<'w> EntitySpawnView<'w> {
                         match || -> anyhow::Result<MaterialProperties> {
                             Ok(MaterialPropertiesLoader.load_sync(&fs::read_to_string(&full_mat_properties_path)?)?)
                         }() {
+                            // mat_properties escapes this loop, so the borrow checker throws a fuss about it
+                            // SAFETY: insert doesn't remove any elements, making the references valid
                             Ok(mat_properties) => mat_properties_assets.insert(&mat_properties_handle, mat_properties),
                             Err(err) => {
                                 error!("Error reading MaterialProperties from {} when spawning brush {entity:?} (index: {:?}): {err}", full_mat_properties_path.display(), self.map_entity.ent_index);
@@ -67,37 +59,46 @@ impl<'w> EntitySpawnView<'w> {
                             }
                         }
                     }
-                    mat_properties_assets.get(&mat_properties_handle).unwrap()
+                    // mat_properties_assets.get(&mat_properties_handle).unwrap()
+                    Some(mat_properties_handle)
                 } else {
-                    &default_material_properties
+                    None
                 };
 
                 let mut mesh = generate_mesh_from_brush_polygons(faces.as_slice(), self.tb_config);
-                // TODO this makes pbr maps work, but messes up the lighting for me, why????
                 if let Err(err) = mesh.generate_tangents() {
                     error!("Couldn't generate tangents for brush in MapEntity {entity:?} (index {:?}) with texture {texture}: {err}", self.map_entity.ent_index);
                 }
 
-                let brush_mesh_insertion_view = BrushMeshSpawnView {
-                    entity_spawn_view: self,
-                    mesh: &mut mesh,
-                    texture,
-                    mat_properties,
-                };
+                let mesh_entity = world.spawn(Name::new(texture.to_string())).id();
 
-                let mut ent = world.spawn(Name::new(texture.to_string()));
+                // Because of the borrow checker, we have to push the handle, not just a reference to the material properties
+                brush_mesh_views.push((mesh_entity, mesh, texture, mat_properties_handle));
 
-                for spawner in &settings.mesh_spawners {
-                    spawner(&mut ent, &brush_mesh_insertion_view);
-                }
+                entities.push(mesh_entity);
+            }
 
-                entities.push(ent.id());
+
+            let mut view = BrushSpawnView {
+                entity_spawn_view: self,
+                computed_polygons: &faces,
+                meshes: brush_mesh_views.into_iter().map(|(entity, mesh, texture, mat_properties_handle)| {
+                    BrushMeshView {
+                        entity,
+                        mesh,
+                        texture,
+                        mat_properties: mat_properties_handle.map(|handle| mat_properties_assets.get(&handle).unwrap()).unwrap_or(&default_material_properties)
+                    }
+                }).collect(),
+            };
+
+            for spawner in settings.spawners {
+                spawner(world, entity, &mut view);
             }
         });
 
-        let mut ent = world.entity_mut(entity);
-        ent.push_children(&entities);
         // To keep the visibility hierarchy for the possible child meshes when spawning these brushes
+        let mut ent = world.entity_mut(entity);
         if !ent.contains::<Visibility>() {
             ent.insert(Visibility::default());
         }
@@ -107,8 +108,6 @@ impl<'w> EntitySpawnView<'w> {
         if !ent.contains::<ViewVisibility>() {
             ent.insert(ViewVisibility::default());
         }
-
-        entities
     }
 }
 
@@ -126,8 +125,9 @@ impl<'w, 'l> std::ops::Deref for BrushMeshSpawnView<'w, 'l> {
 }
 pub struct BrushSpawnView<'w, 'l> {
     entity_spawn_view: &'l EntitySpawnView<'w>,
-    /// A Vec of computed brushes, each brush is a Vec of [BrushSurfacePolygon]s.
-    pub brushes: &'l Vec<Vec<BrushSurfacePolygon>>,
+    /// A Vec of computed brushes' faces, each brush is a Vec of [BrushSurfacePolygon]s.
+    pub computed_polygons: &'l Vec<Vec<BrushSurfacePolygon<'w>>>,
+    pub meshes: Vec<BrushMeshView<'w, 'l>>,
 }
 impl<'w, 'l> std::ops::Deref for BrushSpawnView<'w, 'l> {
     type Target = EntitySpawnView<'w>;
@@ -136,11 +136,20 @@ impl<'w, 'l> std::ops::Deref for BrushSpawnView<'w, 'l> {
     }
 }
 
+pub struct BrushMeshView<'w, 'l> {
+    pub entity: Entity,
+    pub mesh: Mesh,
+    pub texture: &'l str,
+    pub mat_properties: &'w MaterialProperties,
+}
+
+/// A good starting threshold in radians for interpolating similar normals, creating smoother curved surfaces.
+pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
+
 /// A collection of spawners to call on each brush/mesh produced when spawning a brush.
 #[derive(Default)]
 pub struct BrushSpawnSettings {
-    mesh_spawners: Vec<Box<dyn Fn(&mut EntityWorldMut, &BrushMeshSpawnView)>>,
-    brush_spawners: Vec<Box<dyn Fn(&mut World, Entity, &BrushSpawnView) -> Vec<Entity>>>,
+    spawners: Vec<Box<dyn Fn(&mut World, Entity, &mut BrushSpawnView)>>,
 }
 
 impl BrushSpawnSettings {
@@ -148,130 +157,226 @@ impl BrushSpawnSettings {
         Self::default()
     }
 
-    /// Calls the specified function on each mesh produced by the entity.
-    pub fn mesh_spawner(
+    /// Add a function to the settings' spawner stack.
+    pub fn spawner(
         mut self,
-        spawner: impl Fn(&mut EntityWorldMut, &BrushMeshSpawnView) + 'static,
+        spawner: impl Fn(&mut World, Entity, &mut BrushSpawnView) + 'static,
     ) -> Self {
-        self.mesh_spawners.push(Box::new(spawner));
+        self.spawners.push(Box::new(spawner));
         self
     }
 
-    /// Calls a function with an inserting entity, after said entity polygonizes it's brushes.
-    pub fn brush_spawner(
-        mut self,
-        spawner: impl Fn(&mut World, Entity, &BrushSpawnView) -> Vec<Entity> + 'static,
-    ) -> Self {
-        self.brush_spawners.push(Box::new(spawner));
-        self
+    /// Any intersecting vertices where the angle between their normals in radians is less than [DEFAULT_NORMAL_SMOOTH_THRESHOLD] will have their normals interpolated, making curved surfaces look smooth.
+    ///
+    /// Shorthand for `self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)` to reduce syntactic noise.
+    pub fn smooth_by_default_angle(self) -> Self {
+        self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)
+    }
+
+    /// Any intersecting vertices where the angle between their normals in radians is less than `normal_smooth_threshold` will have their normals interpolated, making curved surfaces look smooth.
+    /// [DEFAULT_NORMAL_SMOOTH_THRESHOLD] is a good starting value for this, shorthanded by [smooth_by_default_angle\()](Self::smooth_by_default_angle).
+    ///
+    /// if `normal_smooth_threshold` is <= 0, nothing will happen.
+    pub fn smooth_by_angle(self, normal_smooth_threshold: f32) -> Self {
+        self.spawner(move |_world, _entity, view| {
+            if normal_smooth_threshold <= 0. {
+                return; // The user doesn't want to smooth after all!
+            }
+
+            #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+            struct Vec3Ord([FloatOrd; 3]);
+
+            // It's either a map or a doubly-connected edge list.
+            let mut vertex_map: HashMap<Vec3Ord, Vec<&mut [f32; 3]>> = default();
+
+
+            let ent_index = view.map_entity.ent_index;
+            for mesh_view in &mut view.meshes {
+                if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
+                    continue;
+                }
+
+                // SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
+                let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
+
+                let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).map(VertexAttributeValues::as_float3).flatten() else {
+                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!", mesh_view.entity, ent_index);
+                    return;
+                };
+                let positions_len = positions.len();
+
+                let Some(normals) = mesh2.attribute_mut(Mesh::ATTRIBUTE_NORMAL).map(|values| match values {
+                    VertexAttributeValues::Float32x3(v) => Some(v),
+                    _ => None,
+                }).flatten() else {
+                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!", mesh_view.entity, ent_index);
+                    return;
+                };
+                let normals_len = normals.len();
+
+                if normals_len != positions_len {
+                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but ATTRIBUTE_NORMAL len doesn't match ATTRIBUTE_POSITION len! ({} and {})", mesh_view.entity, ent_index, normals_len, positions_len);
+                    return;
+                }
+
+                for (i, normal) in normals.into_iter().enumerate() {
+                    // We want to make this lower precision, just in case
+                    let position = Vec3Ord(positions[i].map(|v| FloatOrd((v * 10000.).round() / 10000.)));
+
+                    vertex_map.entry(position).or_default().push(normal);
+                }
+            }
+
+
+            // return;
+            for (_position, mut normals) in vertex_map {
+                use disjoint_sets::*;
+
+                if normals.len() <= 1 { // There are no duplicates
+                    continue;
+                }
+
+                let mut uf = UnionFind::new(normals.len());
+
+                for ((a_i, a), (b_i, b)) in normals.iter().map(|v| Vec3::from(**v)).enumerate().tuple_combinations() {
+                    if a.angle_between(b) < normal_smooth_threshold {
+                        uf.union(a_i, b_i);
+                    }
+                }
+
+                let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
+                for i in 0..normals.len() {
+                    let root = uf.find(i);
+                    groups.entry(root).or_default().push(i);
+                }
+
+                for (_, group) in groups {
+                    let new_normal = group.iter().map(|idx| Vec3::from(*normals[*idx])).sum::<Vec3>() / normals.len() as f32;
+
+                    for idx in group {
+                        *normals[idx] = new_normal.to_array();
+                    }
+                }
+            }
+        })
     }
 
     /// Spawns child entities with meshes per each material used, loading said materials in the process.
     /// Will do nothing is your config is specified to be a server.
     pub fn pbr_mesh(self) -> Self {
-        self.mesh_spawner(|ent, view| {
+        self.spawner(|world, entity, view| {
             if view.tb_config.is_server {
                 return;
             }
 
-            let asset_server = ent.world().resource::<AssetServer>();
+            for mesh_view in &view.meshes {
+                let asset_server = world.resource::<AssetServer>();
 
-            if !view.mat_properties.get(MaterialProperties::RENDER) {
-                return;
-            }
+                if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
+                    continue;
+                }
 
-            let material = BRUSH_TEXTURE_TO_MATERIALS_CACHE
-                .lock()
-                .unwrap()
-                .entry(view.texture.into())
-                .or_insert_with(|| {
-                    macro_rules! load_texture {
-                        ($name:ident = $map:literal) => {
-                            let __texture_path = format!(
-                                concat!("{}/{}", $map, ".{}"),
-                                view.tb_config.texture_root.display(),
-                                view.texture,
-                                view.tb_config.texture_extension
-                            );
-                            let $name: Option<Handle<Image>> =
-                                // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                if view.tb_config.assets_path.join(&__texture_path).exists() {
-                                    Some(asset_server.load(__texture_path))
-                                } else {
-                                    None
-                                };
-                        };
-                    }
+                let material = BRUSH_TEXTURE_TO_MATERIALS_CACHE
+                    .lock()
+                    .unwrap()
+                    .entry(mesh_view.texture.into())
+                    .or_insert_with(|| {
+                        macro_rules! load_texture {
+                            ($name:ident = $map:literal) => {
+                                let __texture_path = format!(
+                                    concat!("{}/{}", $map, ".{}"),
+                                    view.tb_config.texture_root.display(),
+                                    mesh_view.texture,
+                                    view.tb_config.texture_extension
+                                );
+                                let $name: Option<Handle<Image>> =
+                                    // TODO This is a lot of file system calls on the critical path, how can we offload this?
+                                    if view.tb_config.assets_path.join(&__texture_path).exists() {
+                                        Some(asset_server.load(__texture_path))
+                                    } else {
+                                        None
+                                    };
+                            };
+                        }
 
-                    load_texture!(base_color_texture = "");
-                    load_texture!(normal_map_texture = "_normal");
-                    load_texture!(metallic_roughness_texture = "_mr");
-                    load_texture!(emissive_texture = "_emissive");
-                    load_texture!(depth_texture = "_depth");
+                        load_texture!(base_color_texture = "");
+                        load_texture!(normal_map_texture = "_normal");
+                        load_texture!(metallic_roughness_texture = "_mr");
+                        load_texture!(emissive_texture = "_emissive");
+                        load_texture!(depth_texture = "_depth");
 
-                    asset_server.add(StandardMaterial {
-                        base_color_texture,
-                        normal_map_texture,
-                        metallic_roughness_texture,
-                        emissive_texture,
-                        depth_map: depth_texture,
-                        perceptual_roughness: view
-                            .mat_properties
-                            .get(MaterialProperties::ROUGHNESS),
-                        metallic: view.mat_properties.get(MaterialProperties::METALLIC),
-                        alpha_mode: view
-                            .mat_properties
-                            .get(MaterialProperties::ALPHA_MODE)
-                            .into(),
-                        emissive: view.mat_properties.get(MaterialProperties::EMISSIVE),
-                        cull_mode: if view.mat_properties.get(MaterialProperties::DOUBLE_SIDED) {
-                            None
-                        } else {
-                            Some(Face::Back)
-                        },
-                        ..default()
+                        asset_server.add(StandardMaterial {
+                            base_color_texture,
+                            normal_map_texture,
+                            metallic_roughness_texture,
+                            emissive_texture,
+                            depth_map: depth_texture,
+                            perceptual_roughness: mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::ROUGHNESS),
+                            metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
+                            alpha_mode: mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::ALPHA_MODE)
+                                .into(),
+                            emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
+                            cull_mode: if mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::DOUBLE_SIDED)
+                            {
+                                None
+                            } else {
+                                Some(Face::Back)
+                            },
+                            ..default()
+                        })
                     })
-                })
-                .clone();
+                    .clone();
 
-            ent.insert(PbrBundle {
-                mesh: asset_server.add(view.mesh.clone()),
-                material,
-                ..default()
-            });
+                let mesh_handle = asset_server.add(mesh_view.mesh.clone());
+                world.entity_mut(entity).insert(PbrBundle {
+                    mesh: mesh_handle,
+                    material,
+                    ..default()
+                });
+            }
         })
     }
 
     #[cfg(feature = "rapier")]
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
-        self.mesh_spawner(|ent, view| {
-            if !view.mat_properties.get(MaterialProperties::COLLIDE) {
-                return;
-            }
+        self.spawner(|world, _entity, view| {
+            for mesh_view in &view.meshes {
+                if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
+                    continue;
+                }
 
-            use bevy_rapier3d::prelude::*;
-            ent.insert(
-                bevy_rapier3d::geometry::Collider::from_bevy_mesh(
-                    &view.mesh,
-                    &ComputedColliderShape::TriMesh,
-                )
-                .unwrap(),
-            );
+                use bevy_rapier3d::prelude::*;
+                world.entity_mut(mesh_view.entity).insert(
+                    bevy_rapier3d::geometry::Collider::from_bevy_mesh(
+                        &mesh_view.mesh,
+                        &ComputedColliderShape::TriMesh,
+                    )
+                    .unwrap(),
+                );
+            }
         })
     }
 
     #[cfg(feature = "avian")]
     /// Inserts trimesh colliders on each mesh this entity's brushes produce. This means that brushes will be hollow. Not recommended to use on physics objects.
     pub fn trimesh_collider(self) -> Self {
-        self.mesh_spawner(|ent, view| {
-            if !view.mat_properties.get(MaterialProperties::COLLIDE) {
-                return;
-            }
+        self.spawner(|world, entity, view| {
+            for mesh_view in &view.meshes {
+                if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
+                    continue;
+                }
 
-            use avian3d::prelude::*;
-            if let Some(collider) = Collider::trimesh_from_mesh(&view.mesh) {
-                ent.insert(collider);
+                use avian3d::prelude::*;
+                if let Some(collider) = Collider::trimesh_from_mesh(&mesh_view.mesh) {
+                    world.entity_mut(entity).insert(collider);
+                }
             }
         })
     }
@@ -279,18 +384,18 @@ impl BrushSpawnSettings {
     #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
-        self.brush_spawner(|world, entity, view| {
+        self.spawner(|world, entity, view| {
             use bevy_rapier3d::prelude::*;
 
             let mut colliders = Vec::new();
 
-            for faces in view.brushes.iter() {
+            for faces in view.computed_polygons.iter() {
                 let mesh = generate_mesh_from_brush_polygons(
                     &faces.iter().collect::<Vec<_>>(),
                     view.tb_config,
                 );
                 let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull) else {
-                    error!("MapEntity {entity:?} has an invalid (non-convex) brush, and a collider could not be computed for it!");
+                    error!("MapEntity {entity} has an invalid (non-convex) brush, and a collider could not be computed for it!");
                     continue;
                 };
                 colliders.push((
@@ -300,20 +405,17 @@ impl BrushSpawnSettings {
                 ));
             }
 
-            world
-                .entity_mut(entity)
-                .insert(Collider::compound(colliders));
-            Vec::new()
+            world.entity_mut(entity).insert(Collider::compound(colliders));
         })
     }
 
     #[cfg(feature = "avian")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {
-        self.brush_spawner(|world, entity, view| {
+        self.spawner(|world, entity, view| {
             use avian3d::prelude::*;
             let mut colliders = Vec::new();
-            for faces in view.brushes.iter() {
+            for faces in view.computed_polygons.iter() {
                 let mesh = generate_mesh_from_brush_polygons(
                     &faces.iter().collect::<Vec<_>>(),
                     view.tb_config,
@@ -325,7 +427,6 @@ impl BrushSpawnSettings {
             world
                 .entity_mut(entity)
                 .insert(Collider::compound(colliders));
-            Vec::new()
         })
     }
 }

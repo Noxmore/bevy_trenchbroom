@@ -4,8 +4,6 @@ use bevy::{asset::{AssetLoader, AsyncReadExt}, utils::ConditionalSendFuture};
 
 use crate::*;
 
-// TODO should this be in the config?
-
 /// The extension that material properties files should have
 pub static MATERIAL_PROPERTIES_EXTENSION: &str = "toml";
 
