@@ -30,25 +30,26 @@ fn main() {
     ;
 }
 
-// I recommend putting your `TrenchBroomConfig` in a separate function, most likely in its own module.
+// Because of how big it tends to get, I recommend putting your `TrenchBroomConfig` in a separate function, most likely in its own module.
 fn trenchbroom_config() -> TrenchBroomConfig {
     TrenchBroomConfig::new("example_game") // <- The name of your game
         // Here you can customize the resulting game configuration with a builder-like syntax
         .entity_scale_expression("scale")
         // ...
-        
-        
-        // You can define entity definitions here with a macro-powered domain specific language, these are written to your game's FGD file
 
-        // It's highly recommended to make the first defined entity your `worldspawn`
+
+        // You can define entity definitions here with a rust-like macro-powered domain specific language, these are written to your game's FGD file, and used for spawning entities
+
+        // It's standard practice to make the first defined entity your `worldspawn`
         .entity_definitions(entity_definitions! {
             /// World Entity
             Solid worldspawn {} |world, entity, view| {
-                // This is the code to spawn the entity into the world, note that the Assets<Map> and TrenchBroomConfig resources are not available in this scope
+                // This is the code to spawn the entity into the world, note that the TrenchBroomConfig resource is not available in this scope
                 // If you need to access the TrenchBroomConfig, access it via view.tb_config
-                view.spawn_brushes(world, entity, BrushSpawnSettings::new().pbr_mesh());
+                view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
+                // Here, we also call smooth_by_default_angle(), which smooths the normals of connected surfaces curving less than a default threshold
             }
-            
+
             // Some useful base classes
             Base angles {
                 /// Pitch Yaw Roll (Y Z X)
@@ -56,7 +57,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
             }
             Base target_name {
                 /// Name
-                targetname: "target_source",
+                targetname: "target_source", // A custom type for a FGD property
             }
             Base target {
                 /// Target
@@ -65,7 +66,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
             Base parent {
                 parent: "target_destination",
             }
-            
+
             // A more advanced example of a prop class
 
             /// A GLTF model with no physics
@@ -120,7 +121,7 @@ After you write it out, the folder the files need to end up in is your TrenchBro
 
 bevy_trenchbroom uses a material properties system to make the texture appear in-game properly. Right next to your texture (`textures/example.png`), add a `toml` file of the same name (`textures/example.toml`).
 <br>
-In this file you can define certain properties of the material, including user-defined properties. (See [MaterialProperties documentation](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/material_properties/struct.MaterialProperties.html)) 
+In this file you can define certain properties of the material, including user-defined properties. (See [MaterialProperties documentation](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/material_properties/struct.MaterialProperties.html))
 
 To avoid an unnecessary amount of polygons being rendered or used for trimesh collision, it's recommended to have `__TB_empty.toml` in your textures root directory, with the following content:
 ```toml
