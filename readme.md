@@ -173,7 +173,7 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 - Reduce the amount of filesystem calls being done synchronously
 - Entity IO
 - Map GLTF exporting
-- Radiosity baking (very unlikely)
+- BSP loading
 
 If you want to try to tackle, or have an idea of how to approach any of these, a PR/issue would be greatly appreciated!
 
