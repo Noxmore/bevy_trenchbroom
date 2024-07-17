@@ -134,8 +134,8 @@ impl MapEntity {
             view,
         )?;
 
-        if let Some(global_inserter) = view.tb_config.global_spawner {
-            global_inserter(world, entity, view)?;
+        if let Some(global_spawner) = view.tb_config.global_spawner {
+            global_spawner(world, entity, view)?;
         }
 
         Ok(())
@@ -151,8 +151,8 @@ impl MapEntity {
             Self::spawn_class(view.tb_config.get_definition(base)?, world, entity, view)?;
         }
 
-        if let Some(inserter) = definition.spawner {
-            inserter(world, entity, view)?;
+        if let Some(spawner) = definition.spawner {
+            spawner(world, entity, view)?;
         }
 
         Ok(())
