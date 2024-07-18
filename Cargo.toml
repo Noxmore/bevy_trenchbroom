@@ -28,7 +28,7 @@ indexmap = { version = "2.2", features = ["serde"] }
 itertools = "0.13"
 json = "0.12"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] } # serde isn't optional because MaterialProperties requires to be deserialized
 smart-default = "0.7"
 thiserror = "1.0"
 toml = "0.8"
