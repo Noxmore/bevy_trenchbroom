@@ -7,13 +7,13 @@ use crate::*;
 impl<'w> EntitySpawnView<'w> {
     /// Spawns all the brushes in this entity, and parents them to said entity, returning the list of entities that have been spawned.
     pub fn spawn_brushes(&self, world: &mut World, entity: Entity, settings: BrushSpawnSettings) {
-        let mut entities = Vec::new();
         // Each element of this vector represents a brush, each brush is a vector the polygonized surfaces of said brush
         let mut faces = Vec::new();
 
         for brush in &self.map_entity.brushes {
             faces.push(brush.polygonize());
         }
+
 
         // Since bevy can only have 1 material per mesh, surfaces with the same material are grouped here, each group will have its own mesh.
         let mut grouped_surfaces: HashMap<&str, Vec<&BrushSurfacePolygon>> = default();
@@ -75,7 +75,7 @@ impl<'w> EntitySpawnView<'w> {
                 // Because of the borrow checker, we have to push the handle, not just a reference to the material properties
                 brush_mesh_views.push((mesh_entity, mesh, texture, mat_properties_handle));
 
-                entities.push(mesh_entity);
+                world.entity_mut(entity).add_child(mesh_entity);
             }
 
 
@@ -270,6 +270,7 @@ impl BrushSpawnSettings {
             }
 
             for mesh_view in &view.meshes {
+                // println!("{}: {:?}", mesh_view.texture, mesh_view.entity);
                 let asset_server = world.resource::<AssetServer>();
 
                 if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
@@ -334,7 +335,7 @@ impl BrushSpawnSettings {
                     .clone();
 
                 let mesh_handle = asset_server.add(mesh_view.mesh.clone());
-                world.entity_mut(entity).insert(PbrBundle {
+                world.entity_mut(mesh_view.entity).insert(PbrBundle {
                     mesh: mesh_handle,
                     material,
                     ..default()
