@@ -264,7 +264,7 @@ impl BrushSpawnSettings {
     /// Spawns child entities with meshes per each material used, loading said materials in the process.
     /// Will do nothing is your config is specified to be a server.
     pub fn pbr_mesh(self) -> Self {
-        self.spawner(|world, entity, view| {
+        self.spawner(|world, _entity, view| {
             if view.tb_config.is_server {
                 return;
             }
