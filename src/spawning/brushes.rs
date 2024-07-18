@@ -186,11 +186,12 @@ impl BrushSpawnSettings {
             #[derive(Clone, Copy, PartialEq, Eq, Hash)]
             struct Vec3Ord([FloatOrd; 3]);
 
-            // It's either a map or a doubly-connected edge list.
+            // It's either a map or a doubly-connected edge list, the prior seems to work well enough.
             let mut vertex_map: HashMap<Vec3Ord, Vec<&mut [f32; 3]>> = default();
 
 
-            let ent_index = view.map_entity.ent_index;
+            let ent_index = view.map_entity.ent_index; // Borrow checker
+            // We go through all the meshes and add all their normals into vertex_map
             for mesh_view in &mut view.meshes {
                 if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
                     continue;
@@ -220,7 +221,7 @@ impl BrushSpawnSettings {
                 }
 
                 for (i, normal) in normals.into_iter().enumerate() {
-                    // We want to make this lower precision, just in case
+                    // Let's make this lower precision, just in case
                     let position = Vec3Ord(positions[i].map(|v| FloatOrd((v * 10000.).round() / 10000.)));
 
                     vertex_map.entry(position).or_default().push(normal);
@@ -228,7 +229,6 @@ impl BrushSpawnSettings {
             }
 
 
-            // return;
             for (_position, mut normals) in vertex_map {
                 use disjoint_sets::*;
 
@@ -236,6 +236,7 @@ impl BrushSpawnSettings {
                     continue;
                 }
 
+                // Group normals to be smoothed
                 let mut uf = UnionFind::new(normals.len());
 
                 for ((a_i, a), (b_i, b)) in normals.iter().map(|v| Vec3::from(**v)).enumerate().tuple_combinations() {
@@ -244,6 +245,7 @@ impl BrushSpawnSettings {
                     }
                 }
 
+                // Put the groups into an easily iterable structure, then average the normals in each group
                 let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
                 for i in 0..normals.len() {
                     let root = uf.find(i);
@@ -270,7 +272,6 @@ impl BrushSpawnSettings {
             }
 
             for mesh_view in &view.meshes {
-                // println!("{}: {:?}", mesh_view.texture, mesh_view.entity);
                 let asset_server = world.resource::<AssetServer>();
 
                 if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
