@@ -25,15 +25,31 @@ fn main() {
                     }
 
                     /// A simple point entity example
-                    Point test {} |world, entity, view| {
+                    Point cube {} |world, entity, view| {
                         let asset_server = world.resource::<AssetServer>();
-                        let cube = asset_server.add(Mesh::from(Cuboid::new(0.3, 0.3, 0.3)));
+                        let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
                         let material = asset_server.add(StandardMaterial::default());
                         world.entity_mut(entity).insert((
                             cube,
                             material,
                             VisibilityBundle::default(),
                         ));
+                    }
+
+                    /// Point light
+                    Point light {
+                        color: Color,
+                        intensity: f32,
+                    } |world, entity, view| {
+                        world.entity_mut(entity).insert(PointLightBundle {
+                            point_light: PointLight {
+                                color: view.get("color")?,
+                                intensity: view.get("intensity")?,
+                                shadows_enabled: true,
+                                ..default()
+                            },
+                            ..default()
+                        });
                     }
                 },
             ),
@@ -43,15 +59,6 @@ fn main() {
 }
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(2., 3., 1.),
-        point_light: PointLight {
-            shadows_enabled: true,
-            ..default()
-        },
-        ..default()
-    });
-
     commands.spawn(MapBundle {
         map: asset_server.load("maps/example.map"),
         ..default()
