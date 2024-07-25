@@ -12,6 +12,7 @@ pub mod material_properties;
 pub mod prelude;
 pub mod spawning;
 pub mod util;
+mod wad;
 
 pub(crate) use prelude::*;
 
@@ -37,6 +38,7 @@ impl Plugin for TrenchBroomPlugin {
             .register_type::<SpawnedMap>()
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
+            .init_asset_loader::<BspLoader>()
             .init_asset::<MaterialProperties>()
             .init_asset_loader::<MaterialPropertiesLoader>()
             .add_systems(

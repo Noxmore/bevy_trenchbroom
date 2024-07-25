@@ -11,7 +11,7 @@ pub struct MapEntity {
     /// The properties defined in this entity instance.
     /// If you want to get a property that accounts for base classes, use [MapEntityPropertiesView].
     pub properties: HashMap<String, String>,
-    pub brushes: Vec<Brush>,
+    pub geometry: MapEntityGeometry,
 }
 
 impl MapEntity {
@@ -30,3 +30,20 @@ impl MapEntity {
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct SpawnedMapEntity;
+
+/// The geometry that might be stored in a [MapEntity].
+#[derive(Reflect, Debug, Clone, Serialize, Deserialize)]
+pub enum MapEntityGeometry {
+    /// Raw brush data that still needs to be computed into meshes.
+    Map(Vec<Brush>),
+
+    #[serde(skip)]
+    #[reflect(ignore)]
+    /// Pre-computed geometry, maps textures to the mesh that uses it.
+    Bsp(HashMap<String, Mesh>),
+}
+impl Default for MapEntityGeometry {
+    fn default() -> Self {
+        Self::Map(Vec::new())
+    }
+}

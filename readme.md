@@ -84,6 +84,8 @@ fn trenchbroom_config() -> TrenchBroomConfig {
             } |world, entity, view| {
                 let scene = world.resource::<AssetServer>().load(format!("{}#Scene0", view.get::<String>("model")?));
 
+                // (skin, collision type, and shadows not implemented here)
+
                 world.entity_mut(entity).insert((
                     SceneBundle {
                         scene,
@@ -173,9 +175,6 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 - Reduce the amount of filesystem calls being done synchronously
 - Entity IO
 - Map GLTF exporting
-- BSP loading
-
-If you want to try to tackle, or have an idea of how to approach any of these, a PR/issue would be greatly appreciated!
 
 # Supported Bevy && TrenchBroom Versions
 | Bevy | bevy_trenchbroom | TrenchBroom |

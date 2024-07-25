@@ -66,9 +66,10 @@ pub struct TrenchBroomConfig {
     #[default(vec![MapFileFormat::Valve])]
     pub file_formats: Vec<MapFileFormat>,
     /// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
-    pub package_format: AssetPackageFormat,
+    #[builder(skip)] // bevy_trenchbroom currently *only* support loose files
+    package_format: AssetPackageFormat,
 
-    /// The root directory to look for textures. (Default: "textures")
+    /// The root directory to look for textures in the [assets_path](Self::assets_path). (Default: "textures")
     #[default("textures".into())]
     #[builder(into)]
     pub texture_root: PathBuf,
@@ -76,13 +77,16 @@ pub struct TrenchBroomConfig {
     #[default("png".into())]
     #[builder(into)]
     pub texture_extension: String,
-    /// An optional pallette file to use for textures.
-    #[builder(into)]
-    pub texture_pallette: Option<String>,
+    // /// An optional pallette file to use for textures.
+    // #[builder(into)]
+    // pub texture_pallette: Option<String>,
     /// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
     #[builder(into)]
     #[default(Self::default_texture_exclusions())]
     pub texture_exclusions: Vec<String>,
+
+    /// How WADs are created, if at all.
+    pub wad: WadType,
 
     /// The default color for entities in RGBA. (Default: 0.6 0.6 0.6 1.0)
     #[default(vec4(0.6, 0.6, 0.6, 1.0))]
@@ -103,7 +107,6 @@ pub struct TrenchBroomConfig {
     pub face_tags: Vec<TrenchBroomTag>,
 
     /// The optional bounding box enclosing the map to draw in the 2d viewports.
-    /// This doesn't use [Aabb] because at the time of writing it does not implement `Serialize`.
     ///
     /// The two values are the bounding box min, and max respectively.
     ///
@@ -203,6 +206,17 @@ impl TrenchBroomConfig {
             }
         })
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum WadType {
+    /// Doesn't create any WADs. TrenchBroom reads textures straight from the file system.
+    #[default]
+    None,
+    /// All textures are put into a single WAD. TrenchBroom reads from that.
+    /// 
+    /// This is meant for use with BSP loading, and has the limitation that textures' names cannot be more than 16 characters long.
+    Monolithic,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -387,9 +401,9 @@ impl TrenchBroomConfig {
             json.insert("icon", "Icon.png").unwrap();
         }
 
-        if let Some(palette) = &self.texture_pallette {
-            json["textures"].insert("palette", palette.clone()).unwrap();
-        }
+        // if let Some(palette) = &self.texture_pallette {
+        //     json["textures"].insert("palette", palette.clone()).unwrap();
+        // }
 
         if let Some(bounds) = self.soft_map_bounds {
             json.insert("softMapBounds", bounds.tb_to_string()).unwrap();
@@ -418,11 +432,58 @@ impl TrenchBroomConfig {
                 .join("\n\n"),
         )?;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //// WADS
+        //////////////////////////////////////////////////////////////////////////////////
+
+        if self.wad != WadType::None {
+            type WadData = HashMap<PathBuf, image::RgbImage>;
+            let mut wad = WadData::new();
+            // let mut images = Vec::new();
+    
+            fn traverse_dir(dir: impl AsRef<Path>, wad: &mut WadData, texture_extension: &std::ffi::OsStr) -> io::Result<()> {
+                let dir = dir.as_ref();
+    
+                // TODO multithreading?
+                for entry in dir.read_dir()? {
+                    let path = entry?.path();
+    
+                    if path.is_dir() {
+                        traverse_dir(path, wad, texture_extension)?;
+                    } else if path.extension() == Some(texture_extension) {
+                        let image_data = fs::read(&path)?;
+                        let image = image::load_from_memory(&image_data).map_err(|err| match err {
+                            image::ImageError::IoError(err) => err,
+                            err => io::Error::new(io::ErrorKind::InvalidData, err),
+                        })?;
+    
+                        wad.insert(path, image.into_rgb8());
+                    }
+                }
+                
+                Ok(())
+            }
+    
+            traverse_dir(self.assets_path.join(&self.texture_root), &mut wad, &std::ffi::OsString::from(self.texture_extension.clone()))?;
+
+            match self.wad {
+                WadType::None => unreachable!(),
+                WadType::Monolithic => {
+                    fs::write(
+                        folder.join(format!("{}.wad", self.texture_root.display())),
+                        wad::create_wad(wad.into_iter()
+                            .map(|(path, image)| (path.file_name().expect("(writing wad) Path does not have a file name, report this!!").to_string_lossy().into(), image))
+                            .collect()
+                        ),
+                    )?;
+                }
+            }
+        }
+        
         Ok(())
     }
 }
 
-/// Mirrors [TrenchBroomConfig::scale] to [TRENCHBROOM_SCALE] if it changes.
 pub fn mirror_trenchbroom_config(config: Res<TrenchBroomConfig>) {
     if !config.is_changed() {
         return;

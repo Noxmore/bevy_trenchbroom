@@ -23,6 +23,8 @@ pub use crate::brush::*;
 pub use crate::config::*;
 pub use crate::definitions::*;
 pub use crate::loader::*;
+pub use crate::loader::bsp::*;
+pub use crate::loader::map::*;
 pub use crate::map_entity::*;
 pub use crate::material_properties::*;
 pub use crate::spawning::brushes::*;
