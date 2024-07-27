@@ -18,7 +18,7 @@ fn main() {
         // .insert_resource(WireframeConfig { global: true, default_color: Color::WHITE })
 
         .add_plugins(TrenchBroomPlugin::new(
-            TrenchBroomConfig::new("bevy_trenchbroom_example").wad(WadType::Monolithic).entity_definitions(
+            TrenchBroomConfig::new("bevy_trenchbroom_example").wad(WadType::None).entity_definitions(
                 entity_definitions! {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {

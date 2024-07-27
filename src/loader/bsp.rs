@@ -9,8 +9,6 @@ macro_rules! add_msg {($($args:tt)+) => {
     move |err| io::Error::new(err.kind(), format!("{}: {}", format!($($args)+), err.into_inner().map(|err| err.to_string()).unwrap_or_default()))
 };}
 
-// pub static TMP_DEBUG: Lazy<Mutex<(Vec<Vec3>, Vec<BspEdge>)>> = Lazy::new(default);
-
 #[derive(Default)]
 pub struct BspLoader;
 impl AssetLoader for BspLoader {
@@ -53,7 +51,31 @@ impl AssetLoader for BspLoader {
                 .split_last().map(|(_, v)| v).unwrap_or(&[]);
             let mut map = qmap_to_map(parse_qmap(qmap_input).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into())?;
 
-            let mut lumps = Lumps::read(&bytes, &lump_entries)?;
+            let lumps = Lumps::read(&bytes, &lump_entries)?;
+
+            {
+                let entry = &lump_entries[Lump::Textures as usize];
+                println!("at {:x}", entry.offset);
+                println!("to {:x}", entry.offset + entry.len);
+                let lump_data = entry.get(&bytes)?;
+                let mut reader = ByteReader::new(lump_data);
+
+                let header: BspTextureHeader = reader.read()?;
+
+                println!("{header:#?}");
+
+                for offset in header.offsets {
+                    if offset.is_negative() { continue }
+
+                    reader.pos = offset as usize;
+
+                    let mip_texture: BspMipTexture = reader.read()?;
+
+                    println!("{mip_texture:#?}");
+                }
+            }
+
+            // println!("{:#?}", lumps.textures);
 
             // *TMP_DEBUG.lock().unwrap() = (lumps.vertices.clone(), lumps.edges.clone());
             
@@ -85,22 +107,6 @@ impl AssetLoader for BspLoader {
     fn extensions(&self) -> &[&str] {
         &["bsp"]
     }
-}
-
-fn read_lump<T: BspRead>(data: &[u8], lumps: &[LumpEntry; LUMP_COUNT], lump: Lump) -> io::Result<Vec<T>> {
-    let entry = &lumps[lump as usize];
-    let lump_data = entry.get(data)?;
-    let lump_entries = entry.len as usize / mem::size_of::<T>();
-
-    let mut reader = ByteReader::new(lump_data);
-    let mut out = Vec::new();
-    out.reserve(lump_entries);
-
-    for i in 0..lump_entries {
-        out.push(reader.read().map_err(add_msg!("Parsing lump \"{lump:?}\" entry {i}"))?);
-    }
-
-    Ok(out)
 }
 
 fn invalid_data(err: impl std::error::Error + Send + Sync + 'static) -> io::Error {
@@ -180,13 +186,10 @@ impl BspRead for Vec3 {
 impl<T: BspRead + std::fmt::Debug, const NUM: usize> BspRead for [T; NUM] {
     fn bsp_read(reader: &mut ByteReader) -> io::Result<Self> {
         // Look ma, no heap allocations!
-        // let mut out = Vec::new();
         let mut out = [(); NUM].map(|_| mem::MaybeUninit::uninit());
         for i in 0..NUM {
             out[i].write(reader.read()?);
-            // out.push(reader.read()?);
         }
-        // Ok(out.try_into().unwrap())
         Ok(out.map(|v| unsafe { v.assume_init() }))
     }
 }
@@ -235,6 +238,22 @@ impl LumpEntry {
     }
 }
 
+fn read_lump<T: BspRead>(data: &[u8], lumps: &[LumpEntry; LUMP_COUNT], lump: Lump) -> io::Result<Vec<T>> {
+    let entry = &lumps[lump as usize];
+    let lump_data = entry.get(data)?;
+    let lump_entries = entry.len as usize / mem::size_of::<T>();
+
+    let mut reader = ByteReader::new(lump_data);
+    let mut out = Vec::new();
+    out.reserve(lump_entries);
+
+    for i in 0..lump_entries {
+        out.push(reader.read().map_err(add_msg!("Parsing lump \"{lump:?}\" entry {i}"))?);
+    }
+
+    Ok(out)
+}
+
 struct Lumps {
     pub vertices: Vec<Vec3>,
     pub planes: Vec<BspPlane>,
@@ -243,6 +262,7 @@ struct Lumps {
     pub faces: Vec<BspFace>,
     pub tex_info: Vec<BspTexInfo>,
     pub models: Vec<BspModel>,
+    // pub textures: Vec<BspTextureHeader>,
 }
 impl Lumps {
     pub fn read(data: &[u8], lump_entries: &[LumpEntry; LUMP_COUNT]) -> io::Result<Self> {
@@ -254,6 +274,7 @@ impl Lumps {
             faces: read_lump(data, &lump_entries, Lump::Faces)?,
             tex_info: read_lump(data, &lump_entries, Lump::TexInfo)?,
             models: read_lump(data, &lump_entries, Lump::Models)?,
+            // textures: read_lump(data, &lump_entries, Lump::Textures)?,
         })
     }
 
@@ -412,13 +433,31 @@ struct BspPlane {
 }
 impl_bsp_read_simple!(BspPlane, normal, dist, ty);
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[repr(C)]
 struct BspTextureHeader {
-    pub num_mip_textures: u32,
-    pub offset: u32, // TODO long offset[num_mip_textures];???
+    // pub num_mip_textures: u32,
+    // pub offset: u32, // TODO long offset[num_mip_textures];???
+    /// The offsets to the texture data in the texture lump. Negative values means it does not exist.
+    pub offsets: Vec<i32>,
 }
-impl_bsp_read_simple!(BspTextureHeader, num_mip_textures, offset);
+// impl_bsp_read_simple!(BspTextureHeader, num_mip_textures, offset);
+impl BspRead for BspTextureHeader {
+    fn bsp_read(reader: &mut ByteReader) -> io::Result<Self> {
+        let mut header = Self::default();
+        let num_mip_textures: u32 = reader.read()?;
+
+        for _ in 0..num_mip_textures {
+            // let offset = reader.read()?;
+            // if offset < 4 * num_mip_textures as i32 || offset > reader.bytes.len() as i32 {
+            //     return Err(invalid_data(""));
+            // }
+            header.offsets.push(reader.read()?);
+        }
+
+        Ok(header)
+    }
+}
 
 #[derive(Debug)]
 #[repr(C)]
@@ -435,3 +474,27 @@ struct BspMipTexture {
     pub offset_eighth: u32,
 }
 impl_bsp_read_simple!(BspMipTexture, texture_name, width, height, offset_full, offset_half, offset_quarter, offset_eighth);
+
+#[test]
+fn bsp_loading() {
+    let mut app = App::new();
+
+    app
+        .add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), TrenchBroomPlugin::new(default())))
+        .init_asset::<Map>()
+        .init_asset_loader::<BspLoader>()
+    ;
+
+    let bsp_handle = app.world().resource::<AssetServer>().load::<Map>("maps/example.bsp");
+    
+    for _ in 0..1000 {
+        match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
+            bevy::asset::LoadState::Loaded => return,
+            bevy::asset::LoadState::Failed(err) => panic!("{err}"),
+            _ => std::thread::sleep(std::time::Duration::from_millis(5)),
+        }
+        
+        app.update();
+    }
+    panic!("no loaded");
+}

@@ -37,7 +37,6 @@ impl TrenchBroomConfigMirror {
     }
 }
 
-/// The complete TrenchBroom configuration, it is recommended to set this in the plugin, where it will be put into [CURRENT_CONFIG], and to not change it afterwards.
 #[derive(Resource, Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
     /// The format version of the TrenchBroom config file, you almost certainly should not change this.
@@ -352,8 +351,6 @@ impl TrenchBroomTagAttribute {
 
 impl TrenchBroomConfig {
     /// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
-    ///
-    /// NOTE: If you are using [CURRENT_CONFIG], make sure to apply this AFTER your app gets built, otherwise you will be writing [TrenchBroomConfig]'s default value.
     pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
         if self.name.is_empty() {
             return Err(io::Error::new(
@@ -378,11 +375,19 @@ impl TrenchBroomConfig {
                 "searchpath": self.assets_path.to_string_lossy().to_string(),
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
-            "textures": {
-                "root": self.texture_root.to_string_lossy().to_string(),
-                "format": { "extension": self.texture_extension.clone(), "format": "image" },
-                "attribute": "_tb_textures",
-                "excludes": self.texture_exclusions.clone(),
+            "textures": if self.wad == WadType::None {
+                json::object! {
+                    "root": self.texture_root.to_string_lossy().to_string(),
+                    "format": { "extension": self.texture_extension.clone(), "format": "image" },
+                    "attribute": "_tb_textures",
+                    "excludes": self.texture_exclusions.clone(),
+                }
+            } else {
+                json::object! {
+                    "root": folder.canonicalize()?.to_string_lossy().to_string(),
+                    "extensions": [ ".wad" ],
+                    "attribute": "wad",
+                }
             },
             "entities": {
                 "definitions": [ format!("{}.fgd", self.name) ],
@@ -395,6 +400,7 @@ impl TrenchBroomConfig {
                 "brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
             }
         };
+        
 
         if let Some(icon) = &self.icon {
             fs::write(folder.join("Icon.png"), icon)?;
@@ -450,7 +456,7 @@ impl TrenchBroomConfig {
     
                     if path.is_dir() {
                         traverse_dir(path, wad, texture_extension)?;
-                    } else if path.extension() == Some(texture_extension) {
+                    } else if path.extension() == Some(texture_extension) { // TODO texture exclusions
                         let image_data = fs::read(&path)?;
                         let image = image::load_from_memory(&image_data).map_err(|err| match err {
                             image::ImageError::IoError(err) => err,
@@ -471,10 +477,15 @@ impl TrenchBroomConfig {
                 WadType::Monolithic => {
                     fs::write(
                         folder.join(format!("{}.wad", self.texture_root.display())),
-                        wad::create_wad(wad.into_iter()
-                            .map(|(path, image)| (path.file_name().expect("(writing wad) Path does not have a file name, report this!!").to_string_lossy().into(), image))
-                            .collect()
-                        ),
+                        wad::create_wad(wad.into_iter().map(|(path, image)| (
+                            path
+                                .with_extension("")
+                                .file_name()
+                                .expect("(writing wad) Path does not have a file name, report this!!")
+                                .to_string_lossy()
+                                .into(),
+                            image,
+                        )).collect()),
                     )?;
                 }
             }

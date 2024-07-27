@@ -33,3 +33,27 @@ impl AssetLoader for MapLoader {
         &["map"]
     }
 }
+
+#[test]
+fn map_loading() {
+    let mut app = App::new();
+
+    app
+        .add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), TrenchBroomPlugin::new(default())))
+        .init_asset::<Map>()
+        .init_asset_loader::<MapLoader>()
+    ;
+
+    let bsp_handle = app.world().resource::<AssetServer>().load::<Map>("maps/example.map");
+    
+    for _ in 0..1000 {
+        match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
+            bevy::asset::LoadState::Loaded => return,
+            bevy::asset::LoadState::Failed(err) => panic!("{err}"),
+            _ => std::thread::sleep(std::time::Duration::from_millis(5)),
+        }
+        
+        app.update();
+    }
+    panic!("no loaded");
+}
