@@ -75,7 +75,7 @@ pub fn spawn_maps(world: &mut World) {
                 },
             ) {
                 error!(
-                    "Problem occurred while spawning MapEntity {entity:?} (index {:?}): {err}",
+                    "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
                     map_entity.ent_index
                 );
             }

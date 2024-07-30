@@ -1,7 +1,8 @@
 pub(crate) use bevy::math::*;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
-pub(crate) use bevy::utils::hashbrown::HashMap;
+// pub(crate) use bevy::utils::hashbrown::HashMap;
+pub(crate) use std::collections::HashMap;
 pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
@@ -14,6 +15,7 @@ pub(crate) use std::mem;
 pub(crate) use std::path::{Path, PathBuf};
 pub(crate) use std::sync::*;
 pub(crate) use thiserror::Error;
+pub(crate) use rayon::prelude::*;
 
 pub use anyhow;
 pub use indexmap;

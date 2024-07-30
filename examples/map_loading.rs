@@ -14,10 +14,12 @@ fn main() {
             sensitivity: 0.00005,
             speed: 4.,
         })
-        // .add_plugins(WireframePlugin)
-        // .insert_resource(WireframeConfig { global: true, default_color: Color::WHITE })
+        // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
+        // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
+        // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
 
         .add_plugins(TrenchBroomPlugin::new(
+            // TODO
             TrenchBroomConfig::new("bevy_trenchbroom_example").wad(WadType::None).entity_definitions(
                 entity_definitions! {
                     /// World Entity
@@ -73,7 +75,7 @@ fn main() {
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/example.bsp"),
+        map: asset_server.load("maps/ad_tears.bsp"),
         ..default()
     });
 }

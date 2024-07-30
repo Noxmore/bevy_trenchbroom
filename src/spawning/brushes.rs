@@ -16,14 +16,14 @@ impl<'w> EntitySpawnView<'w> {
 
             
             // Create, or retrieve the meshes from the entity
-            let meshes: HashMap<&str, Mesh>;
+            let meshes: HashMap<MapEntityGeometryTexture, Mesh>;
 
             match &self.map_entity.geometry {
                 MapEntityGeometry::Bsp(bsp_meshes) => {
                     meshes = bsp_meshes.iter().map(|(texture, mesh)| {
                         let mut mesh = mesh.clone();
                         mesh.asset_usage = self.tb_config.brush_mesh_asset_usages;
-                        (texture.as_str(), mesh)
+                        (texture.clone(), mesh)
                     }).collect();
                 }
                 
@@ -45,7 +45,7 @@ impl<'w> EntitySpawnView<'w> {
                     }
 
                     meshes = grouped_surfaces.into_iter().map(|(texture, polygons)| {
-                        (texture, generate_mesh_from_brush_polygons(polygons.as_slice(), self.tb_config))
+                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), self.tb_config))
                     }).collect();
                 }
             }
@@ -55,8 +55,8 @@ impl<'w> EntitySpawnView<'w> {
             // I know, it's an ugly solution, but it gets the job done
             let mut brush_mesh_views = Vec::new();
 
-            for (texture, mesh) in meshes {
-                let mat_properties_path = self.tb_config.texture_root.join(texture).with_extension(MATERIAL_PROPERTIES_EXTENSION);
+            for (texture, mut mesh) in meshes {
+                let mat_properties_path = self.tb_config.texture_root.join(&texture.name).with_extension(MATERIAL_PROPERTIES_EXTENSION);
                 let full_mat_properties_path = self.tb_config.assets_path.join(&mat_properties_path);
 
                 // If we don't check if the material properties file exists, the asset server will scream that it doesn't
@@ -85,12 +85,11 @@ impl<'w> EntitySpawnView<'w> {
                     None
                 };
 
-                // TODO
-                // if let Err(err) = mesh.generate_tangents() {
-                //     error!("Couldn't generate tangents for brush in MapEntity {entity:?} (index {:?}) with texture {texture}: {err}", self.map_entity.ent_index);
-                // }
+                if let Err(err) = mesh.generate_tangents() {
+                    error!("Couldn't generate tangents for brush in MapEntity {entity:?} (index {:?}) with texture {}: {err}", self.map_entity.ent_index, texture.name);
+                }
 
-                let mesh_entity = world.spawn(Name::new(texture.to_string())).id();
+                let mesh_entity = world.spawn(Name::new(texture.name.clone())).id();
 
                 // Because of the borrow checker, we have to push the handle, not just a reference to the material properties. Tuples it is!
                 brush_mesh_views.push((mesh_entity, mesh, texture, mat_properties_handle));
@@ -143,7 +142,7 @@ impl<'w, 'l> std::ops::Deref for BrushMeshSpawnView<'w, 'l> {
 }
 pub struct BrushSpawnView<'w, 'l> {
     entity_spawn_view: &'l EntitySpawnView<'w>,
-    pub meshes: Vec<BrushMeshView<'w, 'l>>,
+    pub meshes: Vec<BrushMeshView<'w>>,
 }
 impl<'w, 'l> std::ops::Deref for BrushSpawnView<'w, 'l> {
     type Target = EntitySpawnView<'w>;
@@ -152,10 +151,10 @@ impl<'w, 'l> std::ops::Deref for BrushSpawnView<'w, 'l> {
     }
 }
 
-pub struct BrushMeshView<'w, 'l> {
+pub struct BrushMeshView<'w> {
     pub entity: Entity,
     pub mesh: Mesh,
-    pub texture: &'l str,
+    pub texture: MapEntityGeometryTexture,
     pub mat_properties: &'w MaterialProperties,
 }
 
@@ -294,62 +293,65 @@ impl BrushSpawnSettings {
                     continue;
                 }
 
-                let material = BRUSH_TEXTURE_TO_MATERIALS_CACHE
-                    .lock()
-                    .unwrap()
-                    .entry(mesh_view.texture.into())
-                    .or_insert_with(|| {
-                        macro_rules! load_texture {
-                            ($name:ident = $map:literal) => {
-                                let __texture_path = format!(
-                                    concat!("{}/{}", $map, ".{}"),
-                                    view.tb_config.texture_root.display(),
-                                    mesh_view.texture,
-                                    view.tb_config.texture_extension
-                                );
-                                let $name: Option<Handle<Image>> =
-                                    // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                    if view.tb_config.assets_path.join(&__texture_path).exists() {
-                                        Some(asset_server.load(__texture_path))
-                                    } else {
-                                        None
-                                    };
-                            };
-                        }
+                let material = match &mesh_view.texture.embedded {
+                    Some(handle) => handle.clone(),
+                    None => BRUSH_TEXTURE_TO_MATERIALS_CACHE
+                        .lock()
+                        .unwrap()
+                        .entry(mesh_view.texture.name.clone())
+                        .or_insert_with(|| {
+                            macro_rules! load_texture {
+                                ($name:ident = $map:literal) => {
+                                    let __texture_path = format!(
+                                        concat!("{}/{}", $map, ".{}"),
+                                        view.tb_config.texture_root.display(),
+                                        mesh_view.texture.name,
+                                        view.tb_config.texture_extension
+                                    );
+                                    let $name: Option<Handle<Image>> =
+                                        // TODO This is a lot of file system calls on the critical path, how can we offload this?
+                                        if view.tb_config.assets_path.join(&__texture_path).exists() {
+                                            Some(asset_server.load(__texture_path))
+                                        } else {
+                                            None
+                                        };
+                                };
+                            }
 
-                        load_texture!(base_color_texture = "");
-                        load_texture!(normal_map_texture = "_normal");
-                        load_texture!(metallic_roughness_texture = "_mr");
-                        load_texture!(emissive_texture = "_emissive");
-                        load_texture!(depth_texture = "_depth");
+                            load_texture!(base_color_texture = "");
+                            load_texture!(normal_map_texture = "_normal");
+                            load_texture!(metallic_roughness_texture = "_mr");
+                            load_texture!(emissive_texture = "_emissive");
+                            load_texture!(depth_texture = "_depth");
 
-                        asset_server.add(StandardMaterial {
-                            base_color_texture,
-                            normal_map_texture,
-                            metallic_roughness_texture,
-                            emissive_texture,
-                            depth_map: depth_texture,
-                            perceptual_roughness: mesh_view
-                                .mat_properties
-                                .get(MaterialProperties::ROUGHNESS),
-                            metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
-                            alpha_mode: mesh_view
-                                .mat_properties
-                                .get(MaterialProperties::ALPHA_MODE)
-                                .into(),
-                            emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
-                            cull_mode: if mesh_view
-                                .mat_properties
-                                .get(MaterialProperties::DOUBLE_SIDED)
-                            {
-                                None
-                            } else {
-                                Some(Face::Back)
-                            },
-                            ..default()
+                            asset_server.add(StandardMaterial {
+                                base_color_texture,
+                                normal_map_texture,
+                                metallic_roughness_texture,
+                                emissive_texture,
+                                depth_map: depth_texture,
+                                perceptual_roughness: mesh_view
+                                    .mat_properties
+                                    .get(MaterialProperties::ROUGHNESS),
+                                metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
+                                alpha_mode: mesh_view
+                                    .mat_properties
+                                    .get(MaterialProperties::ALPHA_MODE)
+                                    .into(),
+                                emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
+                                cull_mode: if mesh_view
+                                    .mat_properties
+                                    .get(MaterialProperties::DOUBLE_SIDED)
+                                {
+                                    None
+                                } else {
+                                    Some(Face::Back)
+                                },
+                                ..default()
+                            })
                         })
-                    })
-                    .clone();
+                        .clone()
+                };
 
                 let mesh_handle = asset_server.add(mesh_view.mesh.clone());
                 world.entity_mut(mesh_view.entity).insert(PbrBundle {
