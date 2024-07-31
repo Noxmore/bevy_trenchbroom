@@ -85,18 +85,31 @@ impl Lumps {
             embedded_textures: HashMap::new(),
         };
 
+        // If any texture is embedded, let's load the palette
+        let palette: Option<[[u8; 3]; 256]> = if lumps.textures.iter().flatten().any(|texture| texture.data.is_some()) {
+            trenchbroom_config_mirror!(mirror);
+            let path = mirror.assets_path.join(&mirror.texture_palette);
+            let palette_data = fs::read(&path).map_err(add_msg!("Reading {}", path.display()))?;
+
+            if palette_data.len() != 768 {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, format!("Invalid palette from {} length, expected 768, found {}", path.display(), palette_data.len())));
+            }
+            
+            Some(palette_data.chunks_exact(3).map(|col| [col[0], col[1], col[2]]).collect_vec().try_into().unwrap())
+        } else {
+            None
+        };
+        
         // Read embedded textures
-        // let entry = &lump_entries[Lump::Textures as usize];
-        // let lump_data = entry.get(data)?;
-        // for texture in lumps.textures.iter().flatten() {
         lumps.embedded_textures = lumps.textures.par_iter().flatten().filter(|texture| texture.data.is_some()).map(|texture| {
-            // let Some(data) = &texture.data else { continue };
             let Some(data) = &texture.data else { unreachable!() };
+            // Since this texture is embedded, palette must be Some
+            let palette = palette.as_ref().unwrap();
+
             let mut alpha_mode = AlphaMode::Opaque;
             let image = Image::new(
                 Extent3d { width: texture.header.width, height: texture.header.height, depth_or_array_layers: 1 },
                 bevy::render::render_resource::TextureDimension::D2,
-                // TODO can wads use custom palettes?
                 data.iter().copied().map(|v| {
                     // According to https://quakewiki.org/wiki/Quake_palette, this is a special case, allowing transparency
                     if v == 255 {
@@ -104,7 +117,7 @@ impl Lumps {
                         alpha_mode = AlphaMode::Mask(0.5);
                         return [0, 0, 0, 0];
                     }
-                    let [r, g, b] = QUAKE_PALETTE[v as usize];
+                    let [r, g, b] = palette[v as usize];
                     [r, g, b, 255]
                 }).flatten().collect_vec(),
                 bevy::render::render_resource::TextureFormat::Rgba8Unorm,
@@ -112,16 +125,14 @@ impl Lumps {
             );
             
             let texture_name = texture.header.name.as_str().to_string();
-            // println!("loading {texture_name}");
-            // let image_handle = load_context.add_labeled_asset(format!("{texture_name}_color"), image);
             
             (
                 texture_name.clone(),
                 image,
                 alpha_mode,
-                // load_context.add_labeled_asset(texture_name, StandardMaterial { base_color_texture: Some(image_handle), perceptual_roughness: 1., alpha_mode, ..default() }),
             )
         }).collect::<Vec<_>>().into_iter().map(|(name, image, alpha_mode)| {
+            // For adding assets, we have to do that synchronously
             let image_handle = load_context.add_labeled_asset(format!("{name}_color"), image);
             (
                 name.clone(),
@@ -176,7 +187,7 @@ impl Lumps {
                     let pos = self.vertices[vert_idx.0 as usize];
     
                     positions.push(pos);
-                    normals.push(plane.normal);
+                    normals.push(if face.plane_side == 0 { plane.normal } else { -plane.normal });
                     let scale = trenchbroom_config_mirror!().scale;
                     uvs.push(vec2(
                         // Counteract the trenchbroom_to_bevy_space conversion by multiplying by scale twice

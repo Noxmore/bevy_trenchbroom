@@ -11,10 +11,6 @@ use bevy::{
     utils::ConditionalSendFuture,
 };
 
-pub static QUAKE_PALETTE: Lazy<[[u8; 3]; 256]> = Lazy::new(|| {
-    include_str!("quake_palette.txt").split(',').map(|col| Srgba::hex(col.trim()).unwrap().to_u8_array_no_alpha()).collect_vec().try_into().unwrap()
-});
-
 #[derive(Default)]
 pub struct BspLoader;
 impl AssetLoader for BspLoader {
@@ -143,12 +139,6 @@ impl<'a> ByteReader<'a> {
 }
 
 
-
-#[test]
-fn quake_palette_loading() {
-    // Initializes the lazy
-    let _ = QUAKE_PALETTE.iter();
-}
 
 #[test]
 fn bsp_loading() {

@@ -303,5 +303,5 @@ pub(crate) fn invalid_data(err: impl std::error::Error + Send + Sync + 'static) 
 /// Internal bevy_trenchbroom macro that adds an extra error message to io errors.
 #[macro_export]
 macro_rules! add_msg {($($args:tt)+) => {
-    move |err| io::Error::new(err.kind(), format!("{}: {}", format!($($args)+), err.into_inner().map(|err| err.to_string()).unwrap_or_default()))
+    |err| io::Error::new(err.kind(), format!("{}: {}", format!($($args)+), err.into_inner().map(|err| err.to_string()).unwrap_or_default()))
 };}

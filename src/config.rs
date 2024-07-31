@@ -18,6 +18,10 @@ macro_rules! trenchbroom_config_mirror {
             .as_ref()
             .expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
     };
+    ($var:ident) => {
+        let $var = TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned");
+        let $var = $var.as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.");
+    };
 }
 
 /// See [TRENCHBROOM_CONFIG_MIRROR]
@@ -25,6 +29,7 @@ pub struct TrenchBroomConfigMirror {
     pub scale: f32,
     pub texture_root: PathBuf,
     pub assets_path: PathBuf,
+    pub texture_palette: PathBuf,
 }
 
 impl TrenchBroomConfigMirror {
@@ -33,6 +38,7 @@ impl TrenchBroomConfigMirror {
             scale: config.scale,
             texture_root: config.texture_root.clone(),
             assets_path: config.assets_path.clone(),
+            texture_palette: config.texture_pallette.clone(),
         }
     }
 }
@@ -76,9 +82,13 @@ pub struct TrenchBroomConfig {
     #[default("png".into())]
     #[builder(into)]
     pub texture_extension: String,
-    // /// An optional pallette file to use for textures.
-    // #[builder(into)]
-    // pub texture_pallette: Option<String>,
+    /// The palette file used for WADs. Roots from your assets folder.
+    /// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip).
+    /// Simply put palette.lmp into your assets folder, and it should work. If TrenchBroom can't find this palette file, all WAD textures will be black.
+    /// (Default: "palette.lmp")
+    #[builder(into)]
+    #[default("palette.lmp".into())]
+    pub texture_pallette: PathBuf,
     /// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
     #[builder(into)]
     #[default(Self::default_texture_exclusions())]
@@ -378,8 +388,11 @@ impl TrenchBroomConfig {
             "textures": if self.wad == WadType::None {
                 json::object! {
                     "root": self.texture_root.to_string_lossy().to_string(),
-                    "format": { "extension": self.texture_extension.clone(), "format": "image" },
-                    "attribute": "_tb_textures",
+                    // "format": { "extension": self.texture_extension.clone(), "format": "image" },
+                    // .D is required for WADs to work
+                    "extensions": [".D", self.texture_extension.clone()],
+                    "palette": self.texture_pallette.to_string_lossy().to_string(),
+                    "attribute": "wad",
                     "excludes": self.texture_exclusions.clone(),
                 }
             } else {

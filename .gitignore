@@ -3,6 +3,7 @@
 /.idea
 /.cargo
 /assets/maps/autosave
+/assets/maps/ad_tears.bsp
 /assets/maps/*.log
 /assets/maps/*.prt
 /assets/maps/*.lit

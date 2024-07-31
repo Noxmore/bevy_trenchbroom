@@ -16,7 +16,7 @@ macro_rules! impl_bsp_read_primitive {($ty:ty) => {
 macro_rules! impl_bsp_read_simple {($ty:ty, $($field:ident),+ $(,)?) => {
     impl BspRead for $ty {
         fn bsp_read(reader: &mut ByteReader) -> io::Result<Self> {
-            Ok(Self { $($field: reader.read().map_err(add_msg!(concat!("Reading field ", stringify!($field), " on type ", stringify!($ty))))?),+ })
+            Ok(Self { $($field: reader.read().map_err(add_msg!(concat!("Reading field \"", stringify!($field), "\" on type ", stringify!($ty))))?),+ })
         }
     }
 };}
@@ -108,7 +108,7 @@ impl_bsp_read_simple!(BspEdge, a, b);
 pub struct BspFace {
     /// Index of the plane the face is parallel to
     pub plane_idx: u32,
-    /// Set if the normal is parallel to the plane normal (???)
+    /// If not zero, seems to indicate that the normal should be inverted when creating meshes
     pub plane_side: u32,
 
     /// Index of the first edge (in the face edge array)
@@ -187,20 +187,22 @@ pub struct BspTexture {
 }
 impl BspRead for BspTexture {
     fn bsp_read(reader: &mut ByteReader) -> io::Result<Self> {
+        // TODO animated textures and the like
         let start_pos = reader.pos;
         let header: BspTextureHeader = reader.read()?;
+        
         // From my testing, it seems the data starts at the end of the header, but this is just making sure
         reader.pos = start_pos + header.offset_full as usize;
 
         let data = if header.offset_full == 0 { None } else {
-            Some(reader.read_bytes(header.width as usize * header.height as usize)?.to_vec())
+            Some(reader.read_bytes(header.width as usize * header.height as usize).map_err(add_msg!("Reading texture with header {header:#?}"))?.to_vec())
         };
 
         Ok(Self { header, data })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct BspTextureHeader {
     /// Ascii characters

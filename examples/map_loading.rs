@@ -75,7 +75,7 @@ fn main() {
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/ad_tears.bsp"),
+        map: asset_server.load("maps/example.bsp"),
         ..default()
     });
 }
