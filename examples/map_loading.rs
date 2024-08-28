@@ -17,6 +17,7 @@ fn main() {
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
+        .insert_resource(AmbientLight::NONE)
 
         .add_plugins(TrenchBroomPlugin::new(
             // TODO
@@ -25,7 +26,7 @@ fn main() {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {
                         // The order here matters, we want to smooth out curved surfaces *before* spawning the mesh with `pbr_mesh`.
-                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
+                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps());
                     }
 
                     // TMP
@@ -55,15 +56,15 @@ fn main() {
                         color: Color,
                         intensity: f32,
                     } |world, entity, view| {
-                        world.entity_mut(entity).insert(PointLightBundle {
-                            point_light: PointLight {
-                                color: view.get("color")?,
-                                intensity: view.get("intensity")?,
-                                shadows_enabled: true,
-                                ..default()
-                            },
-                            ..default()
-                        });
+                        // world.entity_mut(entity).insert(PointLightBundle {
+                        //     point_light: PointLight {
+                        //         color: view.get("color")?,
+                        //         intensity: view.get("intensity")?,
+                        //         shadows_enabled: true,
+                        //         ..default()
+                        //     },
+                        //     ..default()
+                        // });
                     }
                 },
             ),

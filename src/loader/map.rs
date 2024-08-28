@@ -44,10 +44,10 @@ fn map_loading() {
         .init_asset_loader::<MapLoader>()
     ;
 
-    let bsp_handle = app.world().resource::<AssetServer>().load::<Map>("maps/example.map");
+    let map_handle = app.world().resource::<AssetServer>().load::<Map>("maps/example.map");
     
     for _ in 0..1000 {
-        match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
+        match app.world().resource::<AssetServer>().load_state(&map_handle) {
             bevy::asset::LoadState::Loaded => return,
             bevy::asset::LoadState::Failed(err) => panic!("{err}"),
             _ => std::thread::sleep(std::time::Duration::from_millis(5)),

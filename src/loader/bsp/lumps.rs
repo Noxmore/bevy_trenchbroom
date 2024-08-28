@@ -1,4 +1,4 @@
-use bevy::render::{mesh::Indices, render_asset::RenderAssetUsages, render_resource::Extent3d};
+use bevy::render::{render_asset::RenderAssetUsages, render_resource::Extent3d};
 
 use crate::*;
 use super::*;
@@ -66,12 +66,15 @@ pub struct Lumps {
     pub tex_info: Vec<BspTexInfo>,
     pub models: Vec<BspModel>,
     pub textures: Vec<Option<BspTexture>>,
+    pub lighting: Option<BspLighting>,
 
     /// Textures from 
     pub embedded_textures: HashMap<String, Handle<StandardMaterial>>,
 }
 impl Lumps {
     pub fn read(data: &[u8], lump_entries: &[LumpEntry; LUMP_COUNT], load_context: &mut LoadContext) -> io::Result<Self> {
+        let lit_path = TrenchBroomConfigMirrorGuard::get().assets_path.join(load_context.path().with_extension("lit"));
+        
         let mut lumps = Self {
             vertices: read_lump(data, &lump_entries, Lump::Vertices)?,
             planes: read_lump(data, &lump_entries, Lump::Planes)?,
@@ -81,13 +84,27 @@ impl Lumps {
             tex_info: read_lump(data, &lump_entries, Lump::TexInfo)?,
             models: read_lump(data, &lump_entries, Lump::Models)?,
             textures: read_texture_lump(&mut ByteReader::new(lump_entries[Lump::Textures as usize].get(data)?)).map_err(add_msg!("Reading texture lump"))?,
+            lighting: if lit_path.exists() {
+                Some(BspLighting::read_lit(&fs::read(lit_path).map_err(add_msg!("Reading .lit file"))?).map_err(add_msg!("Parsing .lit file"))?)
+                // TODO BSPX (DECOUPLED_LM && RGBLIGHTING)
+            } else {
+                let lighting = lump_entries[Lump::Lighting as usize].get(data)?;
+
+                if lighting.is_empty() {
+                    None
+                } else {
+                    Some(BspLighting::White(lighting.to_vec()))
+                }
+            },
 
             embedded_textures: HashMap::new(),
         };
 
+        // println!("{:x}", lump_entries[Lump::Lighting as usize].offset);
+
         // If any texture is embedded, let's load the palette
         let palette: Option<[[u8; 3]; 256]> = if lumps.textures.iter().flatten().any(|texture| texture.data.is_some()) {
-            trenchbroom_config_mirror!(mirror);
+            let mirror = TrenchBroomConfigMirrorGuard::get();
             let path = mirror.assets_path.join(&mirror.texture_palette);
             let palette_data = fs::read(&path).map_err(add_msg!("Reading {}", path.display()))?;
 
@@ -136,91 +153,16 @@ impl Lumps {
             let image_handle = load_context.add_labeled_asset(format!("{name}_color"), image);
             (
                 name.clone(),
-                load_context.add_labeled_asset(name, StandardMaterial { base_color_texture: Some(image_handle), perceptual_roughness: 1., alpha_mode, ..default() }),
+                load_context.add_labeled_asset(name, StandardMaterial {
+                    base_color_texture: Some(image_handle),
+                    perceptual_roughness: 1.,
+                    alpha_mode,
+                    lightmap_exposure: DEFAULT_LIGHTMAP_EXPOSURE,
+                    ..default()
+                }),
             )
         }).collect();
         
         Ok(lumps)
-    }
-
-    pub fn create_meshes(&self, model_idx: usize) -> HashMap<MapEntityGeometryTexture, Mesh> {
-        let model = &self.models[model_idx];
-        
-        let mut grouped_faces: HashMap<&str, Vec<&BspFace>> = default();
-
-        for i in model.first_face..model.first_face + model.num_faces {
-            let face = &self.faces[i as usize];
-            let tex_info = &self.tex_info[face.texture_info_idx as usize];
-            let Some(texture) = &self.textures[tex_info.texture_idx as usize] else { continue };
-            // let name = match std::str::from_utf8(&texture.texture_name) {
-            //     Ok(s) => s,
-            //     Err(err) => {
-            //         error!("Failed to read texture name for {:?}: {err}", texture.texture_name);
-            //         "MISSING"
-            //     }
-            // };
-
-            grouped_faces.entry(texture.header.name.as_str()).or_default().push(face);
-        }
-        
-        let mut grouped_meshes = HashMap::new();
-        
-        for (texture, faces) in grouped_faces {
-            let mut positions: Vec<Vec3> = default();
-            let mut normals: Vec<Vec3> = default();
-            let mut uvs: Vec<Vec2> = default();
-            let mut indices: Vec<u32> = default();
-        
-            for face in faces {
-                let plane = &self.planes[face.plane_idx as usize];
-                let tex_info = &self.tex_info[face.texture_info_idx as usize];
-                let texture_size = self.textures[tex_info.texture_idx as usize].as_ref()
-                    .map(|tex| vec2(tex.header.width as f32, tex.header.height as f32))
-                    .unwrap_or(Vec2::ONE);
-        
-                let first_index = positions.len() as u32;
-                for i in face.first_edge..face.first_edge + face.num_edges {
-                    let surf_edge = self.surface_edges[i as usize];
-                    let edge = self.edges[surf_edge.abs() as usize];
-                    let vert_idx = if surf_edge.is_negative() { (edge.b, edge.a) } else { (edge.a, edge.b) };
-    
-                    let pos = self.vertices[vert_idx.0 as usize];
-    
-                    positions.push(pos);
-                    normals.push(if face.plane_side == 0 { plane.normal } else { -plane.normal });
-                    let scale = trenchbroom_config_mirror!().scale;
-                    uvs.push(vec2(
-                        // Counteract the trenchbroom_to_bevy_space conversion by multiplying by scale twice
-                        // TODO is there a more elegant way of fixing this?
-                        pos.dot(tex_info.u_axis * scale * scale) + tex_info.u_offset,
-                        pos.dot(tex_info.v_axis * scale * scale) + tex_info.v_offset,
-                    ) / texture_size);
-                }
-    
-                // Calculate indices
-                for i in 1..face.num_edges - 1 {
-                    indices.extend([0, i + 1, i].map(|x| first_index + x));
-                }
-            }
-    
-            indices.dedup();
-    
-            let mut mesh = Mesh::new(bevy::render::mesh::PrimitiveTopology::TriangleList, RenderAssetUsages::all());
-    
-            mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-            mesh.insert_indices(Indices::U32(indices));
-
-            grouped_meshes.insert(
-                MapEntityGeometryTexture {
-                    name: texture.to_string(),
-                    embedded: self.embedded_textures.get(texture).cloned(),
-                },
-                mesh,
-            );
-        }
-        
-        grouped_meshes
     }
 }

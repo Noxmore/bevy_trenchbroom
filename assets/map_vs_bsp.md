@@ -9,6 +9,6 @@
 - Higher iteration time: Compiling is an extra step before you get to play on your map, though with TrenchBroom's inbuilt compiler utility, it's not that bad.
 - Lightmaps are static: If your scene is highly dynamic, you probably won't want lightmaps, or 
 
-`bevy_trenchbroom` supports loading BSP2 files with
+`bevy_trenchbroom` supports loading BSP2 files with 
 
 NOTE: At the time of writing, the latest version of ericw-tools (0.18.1) has a bug relating to writing loose textures into the BSP, so if it hasn't updated yet, [use the master branch](https://github.com/ericwa/ericw-tools/tree/brushbsp?tab=readme-ov-file#compiling).

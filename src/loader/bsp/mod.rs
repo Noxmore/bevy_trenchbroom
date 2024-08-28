@@ -2,6 +2,8 @@ pub(self) mod lumps;
 pub(self) use lumps::*;
 pub(self) mod lump_data;
 pub(self) use lump_data::*;
+pub(self) mod mesh_creation;
+pub(self) use mesh_creation::*;
 
 use crate::*;
 use super::*;
@@ -10,6 +12,8 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext},
     utils::ConditionalSendFuture,
 };
+
+pub(crate) const DEFAULT_LIGHTMAP_EXPOSURE: f32 = 300.;
 
 #[derive(Default)]
 pub struct BspLoader;
@@ -32,8 +36,10 @@ impl AssetLoader for BspLoader {
 
             let magic = reader.read_bytes(4)?;
             if magic != b"BSP2" {
-                let msg = format!("Wrong magic number/format! Expected BSP2, found {}", std::str::from_utf8(magic).unwrap_or(&format!("{magic:?}")));
-                return Err(io::Error::new(io::ErrorKind::InvalidData, msg));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Wrong magic number/format! Expected BSP2, found {}", display_magic_number(magic)),
+                ));
             }
 
             // let version: u32 = reader.read()?;
@@ -54,7 +60,7 @@ impl AssetLoader for BspLoader {
             let mut map = qmap_to_map(parse_qmap(qmap_input).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into())?;
 
             
-            let lumps = Lumps::read(&bytes, &lump_entries, load_context)?;
+            let mut lumps = Lumps::read(&bytes, &lump_entries, load_context)?;
             
 
             // {
@@ -86,7 +92,7 @@ impl AssetLoader for BspLoader {
             
             for map_entity in &mut map.entities {
                 if map_entity.classname().map_err(invalid_data)? == "worldspawn" {
-                    map_entity.geometry = MapEntityGeometry::Bsp(lumps.create_meshes(0));
+                    map_entity.geometry = MapEntityGeometry::Bsp(lumps.create_meshes(0, load_context));
                     continue;
                 }
 
@@ -97,7 +103,7 @@ impl AssetLoader for BspLoader {
 
                 let Ok(model_idx) = model_idx.parse::<usize>() else { continue };
 
-                map_entity.geometry = MapEntityGeometry::Bsp(lumps.create_meshes(model_idx));
+                map_entity.geometry = MapEntityGeometry::Bsp(lumps.create_meshes(model_idx, load_context));
             }
             
             // println!("{:#?}", lumps.edges);
@@ -147,6 +153,8 @@ fn bsp_loading() {
     app
         .add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), TrenchBroomPlugin::new(default())))
         .init_asset::<Map>()
+        .init_asset::<Image>()
+        .init_asset::<StandardMaterial>()
         .init_asset_loader::<BspLoader>()
     ;
 
@@ -161,5 +169,5 @@ fn bsp_loading() {
         
         app.update();
     }
-    panic!("no loaded");
+    panic!("Bsp took longer than 5 seconds to load.");
 }

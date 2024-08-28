@@ -16,6 +16,7 @@ pub(crate) use std::path::{Path, PathBuf};
 pub(crate) use std::sync::*;
 pub(crate) use thiserror::Error;
 pub(crate) use rayon::prelude::*;
+pub(crate) use grid::*;
 
 pub use anyhow;
 pub use indexmap;

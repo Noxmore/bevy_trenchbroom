@@ -3,7 +3,7 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-Full Bevy integration with TrenchBroom, supporting loading .map files, defining a TrenchBroom game configuration and entities definitions with code, and more!
+Full Bevy integration with TrenchBroom, supporting loading .map and BSP files, defining a TrenchBroom game configuration and entities definitions with code, and more!
 
 <img src="assets/screenshots/rune_proto.png">
 <label>(A testing map i made, loaded with bevy_trenchbroom)</label>
@@ -145,13 +145,14 @@ use bevy_trenchbroom::prelude::*;
 
 fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/test.map"),
+        map: asset_server.load("maps/test.map"), // Or test.bsp if you're loading BSPs
         ..default()
     });
 }
 ```
 
-Maps support asset hot-reloading, meaning that iteration times are pretty much instant.
+## BSP loading
+// TODO
 
 ## Multiplayer
 

@@ -30,7 +30,7 @@ impl TrenchBroomToBevySpace for DVec3 {
     }
     #[inline]
     fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / trenchbroom_config_mirror!().scale as f64
+        self.z_up_to_y_up() / TrenchBroomConfigMirrorGuard::get().scale as f64
     }
 }
 impl TrenchBroomToBevySpace for Vec3 {
@@ -40,7 +40,7 @@ impl TrenchBroomToBevySpace for Vec3 {
     }
     #[inline]
     fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / trenchbroom_config_mirror!().scale
+        self.z_up_to_y_up() / TrenchBroomConfigMirrorGuard::get().scale
     }
 }
 
@@ -301,7 +301,12 @@ pub(crate) fn invalid_data(err: impl std::error::Error + Send + Sync + 'static) 
 }
 
 /// Internal bevy_trenchbroom macro that adds an extra error message to io errors.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! add_msg {($($args:tt)+) => {
     |err| io::Error::new(err.kind(), format!("{}: {}", format!($($args)+), err.into_inner().map(|err| err.to_string()).unwrap_or_default()))
 };}
+
+pub(crate) fn display_magic_number(bytes: &[u8]) -> String {
+    std::str::from_utf8(bytes).map(str::to_owned).unwrap_or(format!("{bytes:?}"))
+}

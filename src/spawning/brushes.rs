@@ -1,6 +1,6 @@
 //! Handles spawning brushes from a [MapEntity] into the Bevy world.
 
-use bevy::render::{mesh::VertexAttributeValues, render_resource::Face};
+use bevy::{pbr::Lightmap, render::{mesh::VertexAttributeValues, render_resource::Face}};
 
 use crate::*;
 
@@ -45,7 +45,7 @@ impl<'w> EntitySpawnView<'w> {
                     }
 
                     meshes = grouped_surfaces.into_iter().map(|(texture, polygons)| {
-                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), self.tb_config))
+                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), self.tb_config))
                     }).collect();
                 }
             }
@@ -347,6 +347,7 @@ impl BrushSpawnSettings {
                                 } else {
                                     Some(Face::Back)
                                 },
+                                lightmap_exposure: DEFAULT_LIGHTMAP_EXPOSURE,
                                 ..default()
                             })
                         })
@@ -359,6 +360,18 @@ impl BrushSpawnSettings {
                     material,
                     ..default()
                 });
+            }
+        })
+    }
+
+    /// Inserts lightmaps if available.
+    pub fn with_lightmaps(self) -> Self {
+        self.spawner(|world, _entity, view| {
+            for mesh_view in &view.meshes {
+                let Some(lightmap) = &mesh_view.texture.lightmap else { continue };
+                
+                world.entity_mut(mesh_view.entity)
+                    .insert(Lightmap { image: lightmap.clone(), uv_rect: Rect::new(0., 0., 1., 1.) });
             }
         })
     }

@@ -2,29 +2,31 @@ use bevy::render::render_asset::RenderAssetUsages;
 
 use crate::*;
 
+// TODO i'd really prefer a better system than this, but i can't think of a better one, mainly because we can't access the config when loading assets
+
 /// Mirrors certain variables of the any active app's [TrenchBroomConfig].
 ///
 /// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
-pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> =
-    Lazy::new(default);
+/// 
+/// See [TrenchBroomConfigMirrorGuard] to unlock this.
+pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> = Lazy::new(default);
 
-/// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
-#[macro_export]
-macro_rules! trenchbroom_config_mirror {
-    () => {
-        TRENCHBROOM_CONFIG_MIRROR
-            .read()
-            .expect("TrenchBroomConfig mirror poisoned")
-            .as_ref()
-            .expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
-    };
-    ($var:ident) => {
-        let $var = TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned");
-        let $var = $var.as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.");
-    };
+/// Helper type to unlock [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages with [TrenchBroomConfigMirrorGuard::get].
+pub struct TrenchBroomConfigMirrorGuard(RwLockReadGuard<'static, Option<TrenchBroomConfigMirror>>);
+impl TrenchBroomConfigMirrorGuard {
+    /// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
+    pub fn get() -> Self {
+        Self(TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned"))
+    }
+}
+impl std::ops::Deref for TrenchBroomConfigMirrorGuard {
+    type Target = TrenchBroomConfigMirror;
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
+    }
 }
 
-/// See [TRENCHBROOM_CONFIG_MIRROR]
+/// See [TRENCHBROOM_CONFIG_MIRROR] and [TrenchBroomConfigMirrorGuard]
 pub struct TrenchBroomConfigMirror {
     pub scale: f32,
     pub texture_root: PathBuf,

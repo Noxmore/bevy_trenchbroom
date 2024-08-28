@@ -40,7 +40,7 @@ pub enum MapEntityGeometry {
     #[serde(skip)]
     #[reflect(ignore)]
     /// Pre-computed geometry, maps textures to the mesh that uses it.
-    Bsp(HashMap<MapEntityGeometryTexture, Mesh>),
+    Bsp(Vec<(MapEntityGeometryTexture, Mesh)>),
 }
 impl Default for MapEntityGeometry {
     fn default() -> Self {
@@ -52,4 +52,5 @@ impl Default for MapEntityGeometry {
 pub struct MapEntityGeometryTexture {
     pub name: String,
     pub embedded: Option<Handle<StandardMaterial>>,
+    pub lightmap: Option<Handle<Image>>,
 }

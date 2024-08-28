@@ -1,6 +1,9 @@
 use crate::*;
 use super::*;
 
+// NOTE: I use repr(C) here for structs where the size does matter, to protect it from rust optimization somehow causing the size to change in the future
+//       Said structs are used in the read_lump function, where it splits up the data based on the size of the struct
+
 /// Defines how a type should be read from a BSP file.
 pub trait BspRead: Sized {
     fn bsp_read(reader: &mut ByteReader) -> io::Result<Self>;
@@ -121,10 +124,28 @@ pub struct BspFace {
 
     /// Styles (bit flags) for the lightmaps
     pub lightmap_styles: [u8; 4],
-    /// Offset of the lightmap (in bytes) in the lightmap lump
-    pub lightmap_offset: u32,
+
+    /// Offset of the lightmap (in bytes) in the lightmap lump, or -1 if no lightmap
+    pub lightmap_offset: i32,
 }
 impl_bsp_read_simple!(BspFace, plane_idx, plane_side, first_edge, num_edges, texture_info_idx, lightmap_styles, lightmap_offset);
+impl BspFace {
+    /// The kind of lighting that should be applied to the face.
+    /// - value 0 is the normal value, to be used with a light map.
+    /// - value 0xFF is to be used when there is no light map.
+    /// - value 1 produces a fast pulsating light
+    /// - value 2 produces a slow pulsating light
+    /// - value 3 to 10 produce various other lighting effects. (TODO implement these lighting effects?)
+    pub fn light_type(&self) -> u8 {
+        self.lightmap_styles[0]
+    }
+
+    /// Gives the base light level for the face, that is the minimum light level for the light map, or the constant light level in the absence of light map.
+    /// Curiously, value 0xFF codes for minimum light, and value 0 codes for maximum light.
+    pub fn base_light(&self) -> u8 {
+        self.lightmap_styles[1]
+    }
+}
 
 #[derive(Debug)]
 #[repr(C)]
@@ -203,7 +224,6 @@ impl BspRead for BspTexture {
 }
 
 #[derive(Debug, Clone)]
-#[repr(C)]
 pub struct BspTextureHeader {
     /// Ascii characters
     // pub texture_name: [u8; 16],
@@ -213,8 +233,42 @@ pub struct BspTextureHeader {
     pub height: u32,
 
     pub offset_full: u32,
-    pub offset_half: u32,
-    pub offset_quarter: u32,
-    pub offset_eighth: u32,
+    #[allow(unused)] pub offset_half: u32,
+    #[allow(unused)] pub offset_quarter: u32,
+    #[allow(unused)] pub offset_eighth: u32,
 }
 impl_bsp_read_simple!(BspTextureHeader, name, width, height, offset_full, offset_half, offset_quarter, offset_eighth);
+
+pub enum BspLighting {
+    White(Vec<u8>),
+    Colored(Vec<[u8; 3]>),
+}
+impl BspLighting {
+    pub fn read_lit(data: &[u8]) -> io::Result<Self> {
+        let mut reader = ByteReader::new(data);
+        
+        let magic = reader.read_bytes(4)?;
+        if magic != b"QLIT" {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, format!("Wrong magic number! Expected QLIT, found {}", display_magic_number(magic))));
+        }
+
+        let _version: i32 = reader.read()?;
+
+        if data[reader.pos..].len() % 3 != 0 {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, format!("Invalid color data, size {} is not devisable by 3!", data[reader.pos..].len())));
+        }
+
+        Ok(Self::Colored(data[reader.pos..].chunks_exact(3).map(|v| [v[0], v[1], v[2]]).collect()))
+    }
+
+    /// Convince function to get a location as an RGB color.
+    pub fn get(&self, i: usize) -> Option<[u8; 3]> {
+        match self {
+            Self::White(v) => {
+                let v = *v.get(i)?;
+                Some([v, v, v])
+            },
+            Self::Colored(v) => v.get(i).copied(),
+        }
+    }
+}
