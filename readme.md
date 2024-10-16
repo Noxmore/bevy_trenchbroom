@@ -3,7 +3,7 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-Full Bevy integration with TrenchBroom, supporting loading .map and BSP files, defining a TrenchBroom game configuration and entities definitions with code, and more!
+Streamlined workflow for creating maps with TrenchBroom and ericw-tools (if compiling maps), supporting loading .map and .bsp files, defining a TrenchBroom game configuration and entities definitions with code, and more!
 
 <img src="assets/screenshots/rune_proto.png">
 <label>(A testing map i made, loaded with bevy_trenchbroom)</label>

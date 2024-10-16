@@ -52,7 +52,7 @@ impl Plugin for TrenchBroomPlugin {
     }
 }
 
-/// A TrenchBroom map loaded from a .map file.
+/// A Quake map loaded from a .map or .bsp file.
 #[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Map {
     /// A title for the map, currently it just mirrors it's path.

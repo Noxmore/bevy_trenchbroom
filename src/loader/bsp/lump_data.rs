@@ -147,6 +147,59 @@ impl BspFace {
     }
 }
 
+/// TODO Document
+pub struct BspFaceExtents {
+    pub texture_mins: U16Vec2,
+    pub extents: U16Vec2,
+}
+impl BspFaceExtents {
+    pub fn calculate(lumps: &Lumps, face: &BspFace) -> Self {
+        // Implantation referenced from vkQuake (https://github.com/Novum/vkQuake/blob/b6eb0cf5812c09c661d51e3b95fc08d88da2288a/Quake/gl_model.c#L1287)
+        let tex_info = &lumps.tex_info[face.texture_info_idx as usize];
+
+        let mut rect = Rect::EMPTY;
+
+        // let tex_vecs = [
+        //     tex_info.u_axis.xyzx().with_w(tex_info.u_offset),
+        //     tex_info.v_axis.xyzx().with_w(tex_info.v_offset),
+        // ];
+        let tex_axis = [ tex_info.u_axis, tex_info.v_axis ];
+        let tex_offsets = [ tex_info.u_offset, tex_info.v_offset ];
+
+        for edge_idx in 0..face.num_edges {
+            let edge_idx = lumps.surface_edges[(face.first_edge + edge_idx) as usize];
+
+            let vertex = if edge_idx.is_negative() {
+                lumps.vertices[lumps.edges[-edge_idx as usize].a as usize]
+            } else {
+                lumps.vertices[lumps.edges[edge_idx as usize].b as usize]
+            };
+
+            for axis_idx in 0..2 {
+                // TODO coordinate system translation?
+                // let val = (
+                //     vertex.x as f64 * tex_vecs[tex_vec_idx].x as f64 +
+                //     vertex.y as f64 * tex_vecs[tex_vec_idx].x as f64 +
+                //     vertex.z as f64 * tex_vecs[tex_vec_idx].z as f64) +
+                //     tex_vecs[tex_vec_idx].w as f64;
+
+                let val = vertex.as_dvec3().dot(tex_axis[axis_idx].as_dvec3()) + tex_offsets[axis_idx] as f64;
+
+                rect.min[axis_idx] = rect.min[axis_idx].min(val as f32);
+                rect.max[axis_idx] = rect.max[axis_idx].max(val as f32);
+            }
+        }
+
+        rect.min = (rect.min / 16.).floor();
+        rect.max = (rect.max / 16.).ceil();
+
+        Self {
+            texture_mins: (rect.min * 16.).as_u16vec2(),
+            extents: (rect.size() * 16.).as_u16vec2(),
+        }
+    }
+}
+
 #[derive(Debug)]
 #[repr(C)]
 pub struct BspTexInfo {
@@ -269,6 +322,13 @@ impl BspLighting {
                 Some([v, v, v])
             },
             Self::Colored(v) => v.get(i).copied(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            Self::White(vec) => vec.len(),
+            Self::Colored(vec) => vec.len(),
         }
     }
 }

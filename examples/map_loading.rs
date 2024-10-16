@@ -3,6 +3,7 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 fn main() {
+    std::fs::remove_file("tmp.txt").ok(); // TODO
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin {
             default_sampler: repeating_image_sampler(false),
