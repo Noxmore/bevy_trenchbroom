@@ -12,7 +12,6 @@ pub mod material_properties;
 pub mod prelude;
 pub mod spawning;
 pub mod util;
-mod wad;
 
 pub(crate) use prelude::*;
 

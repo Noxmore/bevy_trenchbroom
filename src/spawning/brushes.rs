@@ -355,7 +355,6 @@ impl BrushSpawnSettings {
                 };
 
                 let mesh_handle = asset_server.add(mesh_view.mesh.clone());
-                let test = asset_server.add(StandardMaterial::default());
                 world.entity_mut(mesh_view.entity).insert(PbrBundle {
                     mesh: mesh_handle,
                     material,
