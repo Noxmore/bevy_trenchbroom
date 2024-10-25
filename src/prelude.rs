@@ -14,15 +14,17 @@ pub use anyhow;
 pub use indexmap;
 pub use toml;
 
-pub use crate::brush::*;
-pub use crate::config::*;
-pub use crate::definitions::*;
-pub use crate::load::*;
-pub use crate::load::bsp::*;
-pub use crate::load::map::*;
-pub use crate::map_entity::*;
-pub use crate::material_properties::*;
-pub use crate::spawn::geometry::*;
-pub use crate::spawn::*;
-pub use crate::util::*;
-pub use crate::*;
+pub use crate::{
+    brush::*,
+    config::*,
+    definitions::*,
+    load::*,
+    load::bsp::*,
+    load::map::*,
+    map_entity::*,
+    material_properties::*,
+    spawn::geometry::*,
+    spawn::*,
+    util::*,
+    *,
+};
