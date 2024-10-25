@@ -4,7 +4,6 @@ pub(crate) use bevy::render::primitives::Aabb;
 pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
-pub(crate) use once_cell::sync::Lazy;
 pub(crate) use serde::*;
 pub(crate) use nil::prelude::*;
 pub(crate) use nil::std_prelude::*;

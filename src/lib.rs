@@ -30,7 +30,7 @@ impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
         app
             // I'd rather not clone here, but i only have a reference to self
-            .insert_resource(TrenchBroomServer { config: Arc::new(self.config.clone()) })
+            .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .register_type::<MapEntity>()
             .register_type::<SpawnedMapEntity>()
             .register_type::<Map>()
@@ -50,7 +50,29 @@ impl Plugin for TrenchBroomPlugin {
 /// The main hub of `bevy_trenchbroom`-related data. Similar to [AssetServer], all data this stores is reference counted and can be easily cloned.
 #[derive(Resource, Debug, Clone)]
 pub struct TrenchBroomServer {
-    pub config: Arc<TrenchBroomConfig>,
+    data: Arc<TrenchBroomServerData>,
+}
+impl TrenchBroomServer {
+    pub fn new(config: TrenchBroomConfig) -> Self {
+        Self {
+            data: Arc::new(TrenchBroomServerData {
+                config,
+                material_cache: default(),
+            }),
+        }
+    }
+}
+impl std::ops::Deref for TrenchBroomServer {
+    type Target = TrenchBroomServerData;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+#[derive(Debug)]
+pub struct TrenchBroomServerData {
+    pub config: TrenchBroomConfig,
+    /// Caches textures used on brushes to [StandardMaterial] handles.
+    pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
 }
 
 /// A Quake map loaded from a .map or .bsp file.
