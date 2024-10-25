@@ -35,9 +35,7 @@ toml = "0.8"
 once_cell = "1.19.0"
 disjoint-sets = "0.4.2"
 exoquant = "0.2.0"
-rayon = "1.10.0"
-grid = "0.14.0"
-# ogre = "0.1.7"
+q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "c916901" }
 
 [dev-dependencies.bevy]
 version = "0.14"
@@ -45,6 +43,7 @@ features = ["bevy_scene"]
 
 [dev-dependencies]
 bevy_flycam = "0.14"
+bevy-inspector-egui = "0.27" # TODO TMP
 
 [features]
 rapier = ["dep:bevy_rapier3d"]

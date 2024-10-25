@@ -3,7 +3,10 @@
 /.idea
 /.cargo
 /assets/maps/autosave
+# TMP
 /assets/maps/ad_tears.bsp
+/assets/maps/ad_crucial.bsp
+# /TMP
 /assets/maps/*.log
 /assets/maps/*.prt
 /assets/maps/*.lit

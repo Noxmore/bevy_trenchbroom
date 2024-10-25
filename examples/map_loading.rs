@@ -13,8 +13,9 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00005,
-            speed: 4.,
+            speed: 10.,
         })
+        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
@@ -35,9 +36,9 @@ fn main() {
                         view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
                     }
 
-                    // TMP
+                    // TODO TMP
                     Solid func_door {} |world, entity, view| {
-                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
+                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps());
                     }
 
                     /// A simple point entity example
@@ -77,7 +78,7 @@ fn main() {
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/example.bsp"),
+        map: asset_server.load("maps/ad_crucial.bsp"), // ad_crucial
         ..default()
     });
 }

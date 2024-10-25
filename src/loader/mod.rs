@@ -39,5 +39,3 @@ pub(self) fn qmap_to_map(qmap: quake_util::qmap::QuakeMap, name: String) -> io::
 
     Ok(map)
 }
-
-

@@ -7,6 +7,8 @@
 "classname" "worldspawn"
 "wad" "/d/_map/wads/prototype_basic_1_3.wad;/d/_map/wads/prototype_symbols_1_3.wad"
 "_dirt" "1"
+"_phong" "1"
+"_bounce" "8"
 // brush 0
 {
 ( -64 -64 -16 ) ( -64 -63 -16 ) ( -64 -64 -15 ) wood [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -214,6 +216,15 @@
 ( 48 16 16 ) ( 49 16 16 ) ( 48 16 17 ) bricks [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
 ( 48 16 16 ) ( 48 16 17 ) ( 48 17 16 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
+// brush 23
+{
+( 44 40 0 ) ( 44 41 0 ) ( 44 40 1 ) wood [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 44 40 0 ) ( 44 40 1 ) ( 45 40 0 ) wood [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 44 40 0 ) ( 45 40 0 ) ( 44 41 0 ) wood [ -1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 52 48 8 ) ( 52 49 8 ) ( 53 48 8 ) wood [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 52 48 8 ) ( 53 48 8 ) ( 52 48 9 ) wood [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 52 48 8 ) ( 52 48 9 ) ( 52 49 8 ) wood [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
 }
 // entity 1
 {
@@ -228,28 +239,12 @@
 // entity 3
 {
 "classname" "light"
-"origin" "0 0 132"
-"_color" "255 255 255"
-"intensity" "50000"
-"light" "300"
-}
-// entity 4
-{
-"classname" "light"
 "origin" "-48 12 36"
 "_color" "255 204 178"
 "intensity" "20000"
 "light" "300"
 }
-// entity 5
-{
-"classname" "light"
-"origin" "40 -52 72"
-"_color" "228 204 255"
-"intensity" "20000"
-"light" "300"
-}
-// entity 6
+// entity 4
 {
 "classname" "func_door"
 // brush 0
@@ -264,7 +259,7 @@
 ( 48 -16 32 ) ( 48 -48 32 ) ( 32 -32 64 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 7
+// entity 5
 {
 "classname" "func_detail"
 // brush 0
@@ -281,7 +276,7 @@
 ( -48 -44 128 ) ( -48 -52 0 ) ( -48 -52 128 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 8
+// entity 6
 {
 "classname" "func_detail"
 // brush 0
@@ -296,7 +291,7 @@
 ( -48 64 128 ) ( -48 60 0 ) ( -48 60 128 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 9
+// entity 7
 {
 "classname" "func_detail"
 // brush 0
@@ -313,8 +308,16 @@
 ( 64 64 144 ) ( 64 60 0 ) ( 64 60 144 ) bricks [ 2.220446049250313e-16 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 10
+// entity 8
 {
 "classname" "info_player_start"
 "origin" "-8 -40 72"
+}
+// entity 9
+{
+"classname" "light"
+"origin" "40 -52 112"
+"_color" "228 204 255"
+"intensity" "20000"
+"light" "300"
 }

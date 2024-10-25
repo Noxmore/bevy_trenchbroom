@@ -1,5 +1,7 @@
 use crate::*;
 
+// TODO we don't need WADs?
+
 pub fn create_wad(textures: HashMap<String, image::RgbImage>) -> Vec<u8> {
     // typedef struct
     // {
