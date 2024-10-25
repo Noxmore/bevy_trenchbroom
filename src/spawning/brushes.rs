@@ -293,66 +293,74 @@ impl BrushSpawnSettings {
                     continue;
                 }
 
-                let material = match &mesh_view.texture.embedded {
-                    Some(handle) => handle.clone(),
-                    None => BRUSH_TEXTURE_TO_MATERIALS_CACHE
-                        .lock()
-                        .unwrap()
-                        .entry(mesh_view.texture.name.clone())
-                        .or_insert_with(|| {
-                            macro_rules! load_texture {
-                                ($name:ident = $map:literal) => {
-                                    let __texture_path = format!(
-                                        concat!("{}/{}", $map, ".{}"),
-                                        view.server.config.texture_root.display(),
-                                        mesh_view.texture.name,
-                                        view.server.config.texture_extension
-                                    );
-                                    let $name: Option<Handle<Image>> =
-                                        // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                        if view.server.config.assets_path.join(&__texture_path).exists() {
-                                            Some(asset_server.load(__texture_path))
-                                        } else {
-                                            None
-                                        };
-                                };
-                            }
+                let material = BRUSH_TEXTURE_TO_MATERIALS_CACHE
+                    .lock()
+                    .unwrap()
+                    .entry(mesh_view.texture.name.clone())
+                    .or_insert_with(|| {
+                        let material = StandardMaterial {
+                            perceptual_roughness: mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::ROUGHNESS),
+                            metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
+                            alpha_mode: mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::ALPHA_MODE)
+                                .into(),
+                            emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
+                            cull_mode: if mesh_view
+                                .mat_properties
+                                .get(MaterialProperties::DOUBLE_SIDED)
+                            {
+                                None
+                            } else {
+                                Some(Face::Back)
+                            },
+                            lightmap_exposure: view.server.config.default_lightmap_exposure,
+                            ..default()
+                        };
+                        
+                        if let Some(handle) = &mesh_view.texture.embedded {
+                            return asset_server.add(StandardMaterial {
+                                base_color_texture: Some(handle.clone()),
+                                lightmap_exposure: view.server.config.default_lightmap_exposure,
+                                ..material
+                            });
+                        }
 
-                            load_texture!(base_color_texture = "");
-                            load_texture!(normal_map_texture = "_normal");
-                            load_texture!(metallic_roughness_texture = "_mr");
-                            load_texture!(emissive_texture = "_emissive");
-                            load_texture!(depth_texture = "_depth");
-
-                            asset_server.add(StandardMaterial {
-                                base_color_texture,
-                                normal_map_texture,
-                                metallic_roughness_texture,
-                                emissive_texture,
-                                depth_map: depth_texture,
-                                perceptual_roughness: mesh_view
-                                    .mat_properties
-                                    .get(MaterialProperties::ROUGHNESS),
-                                metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
-                                alpha_mode: mesh_view
-                                    .mat_properties
-                                    .get(MaterialProperties::ALPHA_MODE)
-                                    .into(),
-                                emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
-                                cull_mode: if mesh_view
-                                    .mat_properties
-                                    .get(MaterialProperties::DOUBLE_SIDED)
-                                {
-                                    None
+                        macro_rules! load_texture {
+                            ($map:literal) => {{
+                                let texture_path = format!(
+                                    concat!("{}/{}", $map, ".{}"),
+                                    view.server.config.texture_root.display(),
+                                    mesh_view.texture.name,
+                                    view.server.config.texture_extension
+                                );
+                                // TODO This is a lot of file system calls on the critical path, how can we offload this?
+                                if view.server.config.assets_path.join(&texture_path).exists() {
+                                    Some(asset_server.load(texture_path))
                                 } else {
-                                    Some(Face::Back)
-                                },
-                                lightmap_exposure: DEFAULT_LIGHTMAP_EXPOSURE,
-                                ..default()
-                            })
+                                    None
+                                }
+                            }};
+                        }
+
+                        let base_color_texture = load_texture!("");
+                        let normal_map_texture = load_texture!("_normal");
+                        let metallic_roughness_texture = load_texture!("_mr");
+                        let emissive_texture = load_texture!("_emissive");
+                        let depth_texture = load_texture!("_depth");
+
+                        asset_server.add(StandardMaterial {
+                            base_color_texture,
+                            normal_map_texture,
+                            metallic_roughness_texture,
+                            emissive_texture,
+                            depth_map: depth_texture,
+                            ..material
                         })
-                        .clone()
-                };
+                    })
+                    .clone();
 
                 let mesh_handle = asset_server.add(mesh_view.mesh.clone());
                 world.entity_mut(mesh_view.entity).insert(PbrBundle {

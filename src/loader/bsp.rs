@@ -6,9 +6,6 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d, texture::ImageSampler}, utils::ConditionalSendFuture
 };
 
-// TODO this should be configurable?
-pub(crate) const DEFAULT_LIGHTMAP_EXPOSURE: f32 = 5000.;
-
 pub struct BspLoader {
     pub server: TrenchBroomServer,
 }
@@ -37,24 +34,17 @@ impl AssetLoader for BspLoader {
             // TODO cache atlas?
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
             let mut map = qmap_to_map(parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into(), &self.server.config)?;
-            let textures = data.parse_embedded_textures(&QUAKE_PALETTE)
+            map.embedded_textures = data.parse_embedded_textures(&QUAKE_PALETTE)
                 .into_iter()
                 .map(|(name, image)| {
                     let image_handle = load_context.add_labeled_asset(name.clone(), rgb_image_to_bevy_image(&image));
-
-                    // TODO store images not materials
-                    (name.clone(), load_context.add_labeled_asset(name + "_material", StandardMaterial {
-                        base_color_texture: Some(image_handle),
-                        perceptual_roughness: 1.,
-                        lightmap_exposure: DEFAULT_LIGHTMAP_EXPOSURE,
-                        ..default()
-                    }))
+                    (name, image_handle)
                 })
                 .collect();
 
             for map_entity in &mut map.entities {
                 if map_entity.classname().map_err(invalid_data)? == "worldspawn" {
-                    map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &textures, load_context));
+                    map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &map.embedded_textures, load_context));
                     continue;
                 }
 
@@ -65,7 +55,7 @@ impl AssetLoader for BspLoader {
 
                 let Ok(model_idx) = model_idx.parse::<usize>() else { continue };
 
-                map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, model_idx, &textures, load_context));
+                map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, model_idx, &map.embedded_textures, load_context));
             }
 
             Ok(map)
@@ -77,7 +67,7 @@ impl AssetLoader for BspLoader {
     }
 }
 impl BspLoader {
-    fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, Handle<StandardMaterial>>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
+    fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, Handle<Image>>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
         let output = data.mesh_model(model_idx);
         let mut meshes = Vec::with_capacity(output.meshes.len());
     

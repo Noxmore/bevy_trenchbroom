@@ -71,16 +71,28 @@ fn main() {
                 },
             ),
         ))
-        .add_systems(Startup, (setup_scene, write_config))
+        .add_systems(PostStartup, (setup_scene, write_config))
         // .add_systems(Update, visualize_stuff)
         .run();
 }
 
-fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_scene(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut projection_query: Query<&mut Projection>,
+) {
     commands.spawn(MapBundle {
         map: asset_server.load("maps/ad_crucial.bsp"), // ad_crucial
         ..default()
     });
+
+    // Wide FOV
+    for mut projection in &mut projection_query {
+        *projection = Projection::Perspective(PerspectiveProjection {
+            fov: 90_f32.to_radians(),
+            ..default()
+        });
+    }
 }
 
 fn write_config(server: Res<TrenchBroomServer>) {

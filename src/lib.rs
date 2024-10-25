@@ -59,6 +59,9 @@ pub struct Map {
     /// A title for the map, currently it just mirrors it's path.
     pub name: String,
     pub entities: Vec<MapEntity>,
+    /// Textures embedded in a BSP file.
+    #[serde(skip)]
+    pub embedded_textures: HashMap<String, Handle<Image>>,
 }
 
 impl Map {

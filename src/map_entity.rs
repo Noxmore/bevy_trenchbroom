@@ -51,6 +51,6 @@ impl Default for MapEntityGeometry {
 #[derive(Reflect, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct MapEntityGeometryTexture {
     pub name: String,
-    pub embedded: Option<Handle<StandardMaterial>>,
+    pub embedded: Option<Handle<Image>>,
     pub lightmap: Option<Handle<Image>>,
 }

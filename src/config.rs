@@ -79,6 +79,10 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
+    #[default(5000.)]
+    /// The default lightmap exposure for BSP loaded lightmaps.
+    pub default_lightmap_exposure: f32,
+
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
     /// Entity spawner that gets run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
