@@ -33,6 +33,11 @@ pub enum MapEntitySpawnError {
 #[reflect(Component)]
 pub struct SpawnedMap;
 
+/// Marker component for a [MapEntity] that has been spawned, to respawn a [MapEntity], remove this component.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct SpawnedMapEntity;
+
 pub fn spawn_maps(world: &mut World) {
     // Spawn maps
     world.resource_scope(|world, maps: Mut<Assets<Map>>| {

@@ -26,11 +26,6 @@ impl MapEntity {
     }
 }
 
-/// Marker component for a [MapEntity] that has been spawned, to respawn a [MapEntity], remove this component.
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct SpawnedMapEntity;
-
 /// The geometry that might be stored in a [MapEntity].
 #[derive(Reflect, Debug, Clone, Serialize, Deserialize)]
 pub enum MapEntityGeometry {
