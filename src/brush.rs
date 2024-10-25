@@ -110,7 +110,7 @@ pub struct Brush {
 
 impl Brush {
     /// Converts a brush from [quake_util] to a bevy_trenchbroom brush.
-    pub(crate) fn from_quake_util(brush: &quake_util::qmap::Brush) -> Self {
+    pub(crate) fn from_quake_util(brush: &quake_util::qmap::Brush, config: &TrenchBroomConfig) -> Self {
         Self {
             surfaces: brush
                 .iter()
@@ -118,7 +118,7 @@ impl Brush {
                     plane: BrushPlane::from_triangle(
                         surface
                             .half_space
-                            .map(|half_space| DVec3::from(half_space).trenchbroom_to_bevy_space()),
+                            .map(|half_space| config.to_bevy_space_f64(DVec3::from(half_space))),
                     ),
                     texture: surface.texture.to_string_lossy().to_string(),
                     uv: BrushUV {
@@ -126,7 +126,7 @@ impl Brush {
                         rotation: surface.alignment.rotation as f32,
                         scale: DVec2::from(surface.alignment.scale).as_vec2(),
                         axes: surface.alignment.axes.map(|axes| {
-                            axes.map(|axes_vec| DVec3::from(axes_vec).trenchbroom_to_bevy_space())
+                            axes.map(|axes_vec| config.to_bevy_space_f64(DVec3::from(axes_vec)))
                         }),
                     },
                 })

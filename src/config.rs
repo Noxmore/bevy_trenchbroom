@@ -2,50 +2,8 @@ use bevy::render::render_asset::RenderAssetUsages;
 
 use crate::*;
 
-// TODO i'd really prefer a better system than this, but i can't think of a better one, mainly because we can't access the config when loading assets
-
-/// Mirrors certain variables of the any active app's [TrenchBroomConfig].
-///
-/// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
-/// 
-/// See [TrenchBroomConfigMirrorGuard] to unlock this.
-pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> = Lazy::new(default);
-
-/// Helper type to unlock [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages with [TrenchBroomConfigMirrorGuard::get].
-pub struct TrenchBroomConfigMirrorGuard(RwLockReadGuard<'static, Option<TrenchBroomConfigMirror>>);
-impl TrenchBroomConfigMirrorGuard {
-    /// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
-    pub fn get() -> Self {
-        Self(TRENCHBROOM_CONFIG_MIRROR.read().expect("TrenchBroomConfig mirror poisoned"))
-    }
-}
-impl std::ops::Deref for TrenchBroomConfigMirrorGuard {
-    type Target = TrenchBroomConfigMirror;
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref().expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
-    }
-}
-
-/// See [TRENCHBROOM_CONFIG_MIRROR] and [TrenchBroomConfigMirrorGuard]
-pub struct TrenchBroomConfigMirror {
-    pub scale: f32,
-    pub texture_root: PathBuf,
-    pub assets_path: PathBuf,
-    pub texture_palette: PathBuf,
-}
-
-impl TrenchBroomConfigMirror {
-    pub fn new(config: &TrenchBroomConfig) -> Self {
-        Self {
-            scale: config.scale,
-            texture_root: config.texture_root.clone(),
-            assets_path: config.assets_path.clone(),
-            texture_palette: config.texture_pallette.clone(),
-        }
-    }
-}
-
-#[derive(Resource, Debug, Clone, SmartDefault, DefaultBuilder)]
+/// The main configuration structure of bevy_trenchbroom.
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
     /// The format version of the TrenchBroom config file, you almost certainly should not change this.
     #[default(8)]
@@ -213,6 +171,16 @@ impl TrenchBroomConfig {
                 classname: classname.into(),
             }
         })
+    }
+
+    /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
+    pub fn to_bevy_space(&self, vec: Vec3) -> Vec3 {
+        vec.z_up_to_y_up() / self.scale
+    }
+
+    /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
+    pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
+        vec.z_up_to_y_up() / self.scale as f64
     }
 }
 
@@ -432,11 +400,4 @@ impl TrenchBroomConfig {
 
         Ok(())
     }
-}
-
-pub fn mirror_trenchbroom_config(config: Res<TrenchBroomConfig>) {
-    if !config.is_changed() {
-        return;
-    }
-    *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() = Some(TrenchBroomConfigMirror::new(&config));
 }

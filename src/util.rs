@@ -19,8 +19,6 @@ pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
 pub trait TrenchBroomToBevySpace {
     /// Converts from a z-up coordinate space to a y-up coordinate space.
     fn z_up_to_y_up(self) -> Self;
-    /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by the current [TrenchBroomConfig]'s scale.
-    fn trenchbroom_to_bevy_space(self) -> Self;
 }
 
 impl TrenchBroomToBevySpace for DVec3 {
@@ -28,19 +26,11 @@ impl TrenchBroomToBevySpace for DVec3 {
     fn z_up_to_y_up(self) -> Self {
         dvec3(self.x, self.z, -self.y)
     }
-    #[inline]
-    fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / TrenchBroomConfigMirrorGuard::get().scale as f64
-    }
 }
 impl TrenchBroomToBevySpace for Vec3 {
     #[inline]
     fn z_up_to_y_up(self) -> Self {
         vec3(self.x, self.z, -self.y)
-    }
-    #[inline]
-    fn trenchbroom_to_bevy_space(self) -> Self {
-        self.z_up_to_y_up() / TrenchBroomConfigMirrorGuard::get().scale
     }
 }
 

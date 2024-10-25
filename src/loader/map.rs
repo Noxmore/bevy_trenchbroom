@@ -8,8 +8,14 @@ use bevy::{
     utils::ConditionalSendFuture,
 };
 
-#[derive(Default)]
-pub struct MapLoader;
+pub struct MapLoader {
+    pub server: TrenchBroomServer,
+}
+impl FromWorld for MapLoader {
+    fn from_world(world: &mut World) -> Self {
+        Self { server: world.resource::<TrenchBroomServer>().clone() }
+    }
+}
 impl AssetLoader for MapLoader {
     type Asset = Map;
     type Settings = ();
@@ -25,7 +31,7 @@ impl AssetLoader for MapLoader {
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;
 
-            Ok(qmap_to_map(parse_qmap(&bytes)?, load_context.path().to_string_lossy().into())?)
+            Ok(qmap_to_map(parse_qmap(&bytes)?, load_context.path().to_string_lossy().into(), &self.server.config)?)
         })
     }
 

@@ -53,34 +53,32 @@ pub fn spawn_maps(world: &mut World) {
         }
     });
 
-    // Spawn individual map entities
-    world.resource_scope(|world, tb_config: Mut<TrenchBroomConfig>| {
-        for (entity, map_entity) in world
-            .query_filtered::<(Entity, &MapEntity), Without<SpawnedMapEntity>>()
-            .iter(world)
-            // I'd really rather not clone this, but the borrow checker has forced my hand
-            .map(|(e, h)| (e, h.clone()))
-            .collect_vec()
-        {
-            DespawnChildrenRecursive { entity }.apply(world);
+    let server = world.resource::<TrenchBroomServer>().clone();
+    for (entity, map_entity) in world
+        .query_filtered::<(Entity, &MapEntity), Without<SpawnedMapEntity>>()
+        .iter(world)
+        // I'd really rather not clone this, but the borrow checker has forced my hand
+        .map(|(e, h)| (e, h.clone()))
+        .collect_vec()
+    {
+        DespawnChildrenRecursive { entity }.apply(world);
 
-            world.entity_mut(entity).insert(SpawnedMapEntity);
+        world.entity_mut(entity).insert(SpawnedMapEntity);
 
-            if let Err(err) = MapEntity::spawn(
-                world,
-                entity,
-                EntitySpawnView {
-                    map_entity: &map_entity,
-                    tb_config: &tb_config,
-                },
-            ) {
-                error!(
-                    "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
-                    map_entity.ent_index
-                );
-            }
+        if let Err(err) = MapEntity::spawn(
+            world,
+            entity,
+            EntitySpawnView {
+                map_entity: &map_entity,
+                server: &server,
+            },
+        ) {
+            error!(
+                "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
+                map_entity.ent_index
+            );
         }
-    });
+    }
 }
 
 pub fn reload_maps(
@@ -127,14 +125,14 @@ impl MapEntity {
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
         Self::spawn_class(
-            view.tb_config
+            view.server.config
                 .get_definition(view.map_entity.classname()?)?,
             world,
             entity,
             view,
         )?;
 
-        if let Some(global_spawner) = view.tb_config.global_spawner {
+        if let Some(global_spawner) = view.server.config.global_spawner {
             global_spawner(world, entity, view)?;
         }
 
@@ -148,7 +146,7 @@ impl MapEntity {
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
         for base in &definition.base {
-            Self::spawn_class(view.tb_config.get_definition(base)?, world, entity, view)?;
+            Self::spawn_class(view.server.config.get_definition(base)?, world, entity, view)?;
         }
 
         if let Some(spawner) = definition.spawner {
@@ -170,7 +168,7 @@ pub type EntitySpawner = fn(
 #[derive(Clone, Copy)]
 pub struct EntitySpawnView<'w> {
     pub map_entity: &'w MapEntity,
-    pub tb_config: &'w TrenchBroomConfig,
+    pub server: &'w TrenchBroomServer,
 }
 
 impl<'w> EntitySpawnView<'w> {
@@ -178,7 +176,7 @@ impl<'w> EntitySpawnView<'w> {
     /// If the property is not defined, it attempts to get its default.
     pub fn get<T: TrenchBroomValue>(&self, key: &str) -> Result<T, MapEntitySpawnError> {
         let Some(value_str) = self.map_entity.properties.get(key).or(self
-            .tb_config
+            .server.config
             .get_entity_property_default(self.map_entity.classname()?, key))
         else {
             return Err(MapEntitySpawnError::RequiredPropertyNotFound {
@@ -209,15 +207,14 @@ impl<'w> EntitySpawnView<'w> {
         };
 
         Transform {
-            translation: self
+            translation: self.server.config.to_bevy_space(self
                 .get::<Vec3>("origin")
-                .unwrap_or(Vec3::ZERO)
-                .trenchbroom_to_bevy_space(),
+                .unwrap_or(Vec3::ZERO)),
             rotation,
             scale: match self.get::<f32>("scale") {
                 Ok(scale) => Vec3::splat(scale),
                 Err(_) => match self.get::<Vec3>("scale") {
-                    Ok(scale) => scale.trenchbroom_to_bevy_space(),
+                    Ok(scale) => self.server.config.to_bevy_space(scale),
                     Err(_) => Vec3::ONE,
                 },
             },

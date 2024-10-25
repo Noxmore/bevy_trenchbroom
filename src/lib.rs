@@ -30,7 +30,7 @@ impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
         app
             // I'd rather not clone here, but i only have a reference to self
-            .insert_resource(self.config.clone())
+            .insert_resource(TrenchBroomServer { config: Arc::new(self.config.clone()) })
             .register_type::<MapEntity>()
             .register_type::<SpawnedMapEntity>()
             .register_type::<Map>()
@@ -42,13 +42,15 @@ impl Plugin for TrenchBroomPlugin {
             .init_asset_loader::<MaterialPropertiesLoader>()
             .add_systems(
                 PreUpdate,
-                (mirror_trenchbroom_config, reload_maps, spawn_maps),
+                (reload_maps, spawn_maps),
             );
-
-        // Mirror before any schedule is run, so it won't crash on startup systems. (https://github.com/Noxmore/bevy_trenchbroom/issues/1)
-        *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() =
-            Some(TrenchBroomConfigMirror::new(&self.config));
     }
+}
+
+/// The main hub of `bevy_trenchbroom`-related data. Similar to [AssetServer], all data this stores is reference counted and can be easily cloned.
+#[derive(Resource, Debug, Clone)]
+pub struct TrenchBroomServer {
+    pub config: Arc<TrenchBroomConfig>,
 }
 
 /// A Quake map loaded from a .map or .bsp file.

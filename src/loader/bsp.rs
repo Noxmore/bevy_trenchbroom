@@ -9,8 +9,14 @@ use bevy::{
 // TODO this should be configurable?
 pub(crate) const DEFAULT_LIGHTMAP_EXPOSURE: f32 = 5000.;
 
-#[derive(Default)]
-pub struct BspLoader;
+pub struct BspLoader {
+    pub server: TrenchBroomServer,
+}
+impl FromWorld for BspLoader {
+    fn from_world(world: &mut World) -> Self {
+        Self { server: world.resource::<TrenchBroomServer>().clone() }
+    }
+}
 impl AssetLoader for BspLoader {
     type Asset = Map;
     type Settings = ();
@@ -30,7 +36,7 @@ impl AssetLoader for BspLoader {
             
             // TODO cache atlas?
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
-            let mut map = qmap_to_map(parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into())?;
+            let mut map = qmap_to_map(parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into(), &self.server.config)?;
             let textures = data.parse_embedded_textures(&QUAKE_PALETTE)
                 .into_iter()
                 .map(|(name, image)| {
@@ -48,7 +54,7 @@ impl AssetLoader for BspLoader {
 
             for map_entity in &mut map.entities {
                 if map_entity.classname().map_err(invalid_data)? == "worldspawn" {
-                    map_entity.geometry = MapEntityGeometry::Bsp(convert_q1bsp_mesh(&data, 0, &textures, load_context));
+                    map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &textures, load_context));
                     continue;
                 }
 
@@ -59,7 +65,7 @@ impl AssetLoader for BspLoader {
 
                 let Ok(model_idx) = model_idx.parse::<usize>() else { continue };
 
-                map_entity.geometry = MapEntityGeometry::Bsp(convert_q1bsp_mesh(&data, model_idx, &textures, load_context));
+                map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, model_idx, &textures, load_context));
             }
 
             Ok(map)
@@ -70,49 +76,50 @@ impl AssetLoader for BspLoader {
         &["bsp"]
     }
 }
-
-fn convert_q1bsp_mesh(data: &BspData, model_idx: usize, textures: &HashMap<String, Handle<StandardMaterial>>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
-    let output = data.mesh_model(model_idx);
-    let mut meshes = Vec::with_capacity(output.meshes.len());
-
-    let lightmap = output.lightmap_atlas.map(|atlas| {
-        // Convert lightmap_atlas grid into image
-        let mut image = rgb_image_to_bevy_image(&atlas);
-
-        image.sampler = ImageSampler::linear();
-
-        // TODO
-        // image.clone().try_into_dynamic().unwrap().save_with_format(format!("target/lightmap_{model_idx}.png"), image::ImageFormat::Png).ok();
-
-        load_context.add_labeled_asset(format!("model_{model_idx}_lightmap"), image)
-    });
-
-    for exported_mesh in output.meshes {
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
-
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3).collect_vec());
-        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals.into_iter().map(convert_vec3).collect_vec());
-        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, exported_mesh.uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
-        if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
-            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
-        }
-        mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
-
-        let texture = MapEntityGeometryTexture {
-            embedded: textures.get(&exported_mesh.texture).cloned(),
-            name: exported_mesh.texture,
-            lightmap: lightmap.clone(),
-        };
-
-        meshes.push((texture, mesh));
-    }
+impl BspLoader {
+    fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, Handle<StandardMaterial>>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
+        let output = data.mesh_model(model_idx);
+        let mut meshes = Vec::with_capacity(output.meshes.len());
     
-    meshes
+        let lightmap = output.lightmap_atlas.map(|atlas| {
+            // Convert lightmap_atlas grid into image
+            let mut image = rgb_image_to_bevy_image(&atlas);
+    
+            image.sampler = ImageSampler::linear();
+    
+            // TODO
+            // image.clone().try_into_dynamic().unwrap().save_with_format(format!("target/lightmap_{model_idx}.png"), image::ImageFormat::Png).ok();
+    
+            load_context.add_labeled_asset(format!("model_{model_idx}_lightmap"), image)
+        });
+    
+        for exported_mesh in output.meshes {
+            let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
+    
+            mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3(&self.server)).collect_vec());
+            mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals.into_iter().map(convert_vec3(&self.server)).collect_vec());
+            mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, exported_mesh.uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
+            if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
+                mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
+            }
+            mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
+    
+            let texture = MapEntityGeometryTexture {
+                embedded: textures.get(&exported_mesh.texture).cloned(),
+                name: exported_mesh.texture,
+                lightmap: lightmap.clone(),
+            };
+    
+            meshes.push((texture, mesh));
+        }
+        
+        meshes
+    }
 }
 
 #[inline]
-fn convert_vec3(x: q1bsp::glam::Vec3) -> Vec3 {
-    Vec3::from_array(x.to_array()).trenchbroom_to_bevy_space()
+fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + 'a {
+    |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
 fn rgb_image_to_bevy_image(image: &image::RgbImage) -> Image {

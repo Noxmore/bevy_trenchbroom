@@ -106,8 +106,8 @@ use bevy_trenchbroom::prelude::*;
 
 // app.add_systems(Startup, write_trenchbroom_config)
 
-fn write_trenchbroom_config(config: Res<TrenchBroomConfig>) {
-    if let Err(err) = config.write_folder("<folder_path>") {
+fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
+    if let Err(err) = server.config.write_folder("<folder_path>") {
         error!("Could not write TrenchBroom config: {err}");
     }
 

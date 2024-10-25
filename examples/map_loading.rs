@@ -83,9 +83,9 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn write_config(tb_config: Res<TrenchBroomConfig>) {
+fn write_config(server: Res<TrenchBroomServer>) {
     std::fs::create_dir("target/example_config").ok();
-    tb_config.write_folder("target/example_config").unwrap();
+    server.config.write_folder("target/example_config").unwrap();
     // tb_config.write_wad("target/example_config/textures.wad").unwrap();
 }
 

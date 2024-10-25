@@ -8,7 +8,7 @@ pub(self) fn parse_qmap(bytes: &[u8]) -> io::Result<quake_util::qmap::QuakeMap> 
         .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
 }
 
-pub(self) fn qmap_to_map(qmap: quake_util::qmap::QuakeMap, name: String) -> io::Result<Map> {
+pub(self) fn qmap_to_map(qmap: quake_util::qmap::QuakeMap, name: String, config: &TrenchBroomConfig) -> io::Result<Map> {
     let mut map = Map::default();
     map.name = name;
 
@@ -24,7 +24,7 @@ pub(self) fn qmap_to_map(qmap: quake_util::qmap::QuakeMap, name: String) -> io::
         let entity = MapEntity {
             ent_index: Some(i),
             properties,
-            geometry: MapEntityGeometry::Map(ent.brushes.iter().map(Brush::from_quake_util).collect()),
+            geometry: MapEntityGeometry::Map(ent.brushes.iter().map(|brush | Brush::from_quake_util(brush, config)).collect()),
         };
 
         map.entities.push(entity);

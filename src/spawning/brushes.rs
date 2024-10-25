@@ -22,7 +22,7 @@ impl<'w> EntitySpawnView<'w> {
                 MapEntityGeometry::Bsp(bsp_meshes) => {
                     meshes = bsp_meshes.iter().map(|(texture, mesh)| {
                         let mut mesh = mesh.clone();
-                        mesh.asset_usage = self.tb_config.brush_mesh_asset_usages;
+                        mesh.asset_usage = self.server.config.brush_mesh_asset_usages;
                         (texture.clone(), mesh)
                     }).collect();
                 }
@@ -45,7 +45,7 @@ impl<'w> EntitySpawnView<'w> {
                     }
 
                     meshes = grouped_surfaces.into_iter().map(|(texture, polygons)| {
-                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), self.tb_config))
+                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), &self.server.config))
                     }).collect();
                 }
             }
@@ -56,8 +56,8 @@ impl<'w> EntitySpawnView<'w> {
             let mut brush_mesh_views = Vec::new();
 
             for (texture, mut mesh) in meshes {
-                let mat_properties_path = self.tb_config.texture_root.join(&texture.name).with_extension(MATERIAL_PROPERTIES_EXTENSION);
-                let full_mat_properties_path = self.tb_config.assets_path.join(&mat_properties_path);
+                let mat_properties_path = self.server.config.texture_root.join(&texture.name).with_extension(MATERIAL_PROPERTIES_EXTENSION);
+                let full_mat_properties_path = self.server.config.assets_path.join(&mat_properties_path);
 
                 // If we don't check if the material properties file exists, the asset server will scream that it doesn't
                 // This is a lot of filesystem calls, but i'm unsure of a better way to do this
@@ -282,7 +282,7 @@ impl BrushSpawnSettings {
     /// Will do nothing is your config is specified to be a server.
     pub fn pbr_mesh(self) -> Self {
         self.spawner(|world, _entity, view| {
-            if view.tb_config.is_server {
+            if view.server.config.is_server {
                 return;
             }
 
@@ -304,13 +304,13 @@ impl BrushSpawnSettings {
                                 ($name:ident = $map:literal) => {
                                     let __texture_path = format!(
                                         concat!("{}/{}", $map, ".{}"),
-                                        view.tb_config.texture_root.display(),
+                                        view.server.config.texture_root.display(),
                                         mesh_view.texture.name,
-                                        view.tb_config.texture_extension
+                                        view.server.config.texture_extension
                                     );
                                     let $name: Option<Handle<Image>> =
                                         // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                        if view.tb_config.assets_path.join(&__texture_path).exists() {
+                                        if view.server.config.assets_path.join(&__texture_path).exists() {
                                             Some(asset_server.load(__texture_path))
                                         } else {
                                             None
