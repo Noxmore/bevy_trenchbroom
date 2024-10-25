@@ -96,9 +96,6 @@ pub struct TrenchBroomConfig {
     #[default(Self::default_texture_exclusions())]
     pub texture_exclusions: Vec<String>,
 
-    /// How WADs are created, if at all.
-    pub wad: WadType,
-
     /// The default color for entities in RGBA. (Default: 0.6 0.6 0.6 1.0)
     #[default(vec4(0.6, 0.6, 0.6, 1.0))]
     #[builder(into)]
@@ -217,17 +214,6 @@ impl TrenchBroomConfig {
             }
         })
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub enum WadType {
-    /// Doesn't create any WADs. TrenchBroom reads textures straight from the file system.
-    #[default]
-    None,
-    /// All textures are put into a single WAD. TrenchBroom reads from that.
-    /// 
-    /// This is meant for use with BSP loading, and has the limitation that textures' names cannot be more than 16 characters long.
-    Monolithic,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -387,22 +373,13 @@ impl TrenchBroomConfig {
                 "searchpath": self.assets_path.to_string_lossy().to_string(),
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
-            "textures": if self.wad == WadType::None {
-                json::object! {
-                    "root": self.texture_root.to_string_lossy().to_string(),
-                    // "format": { "extension": self.texture_extension.clone(), "format": "image" },
-                    // .D is required for WADs to work
-                    "extensions": [".D", self.texture_extension.clone()],
-                    "palette": self.texture_pallette.to_string_lossy().to_string(),
-                    "attribute": "wad",
-                    "excludes": self.texture_exclusions.clone(),
-                }
-            } else {
-                json::object! {
-                    "root": folder.canonicalize()?.to_string_lossy().to_string(),
-                    "extensions": [ ".wad" ],
-                    "attribute": "wad",
-                }
+            "textures": {
+                "root": self.texture_root.to_string_lossy().to_string(),
+                // .D is required for WADs to work
+                "extensions": [".D", self.texture_extension.clone()],
+                "palette": self.texture_pallette.to_string_lossy().to_string(),
+                "attribute": "wad",
+                "excludes": self.texture_exclusions.clone(),
             },
             "entities": {
                 "definitions": [ format!("{}.fgd", self.name) ],
@@ -453,59 +430,6 @@ impl TrenchBroomConfig {
                 .join("\n\n"),
         )?;
 
-        //////////////////////////////////////////////////////////////////////////////////
-        //// WADS
-        //////////////////////////////////////////////////////////////////////////////////
-
-        if self.wad != WadType::None {
-            type WadData = HashMap<PathBuf, image::RgbImage>;
-            let mut wad = WadData::new();
-            // let mut images = Vec::new();
-    
-            fn traverse_dir(dir: impl AsRef<Path>, wad: &mut WadData, texture_extension: &std::ffi::OsStr) -> io::Result<()> {
-                let dir = dir.as_ref();
-    
-                // TODO multithreading?
-                for entry in dir.read_dir()? {
-                    let path = entry?.path();
-    
-                    if path.is_dir() {
-                        traverse_dir(path, wad, texture_extension)?;
-                    } else if path.extension() == Some(texture_extension) { // TODO texture exclusions
-                        let image_data = fs::read(&path)?;
-                        let image = image::load_from_memory(&image_data).map_err(|err| match err {
-                            image::ImageError::IoError(err) => err,
-                            err => io::Error::new(io::ErrorKind::InvalidData, err),
-                        })?;
-    
-                        wad.insert(path, image.into_rgb8());
-                    }
-                }
-                
-                Ok(())
-            }
-    
-            traverse_dir(self.assets_path.join(&self.texture_root), &mut wad, &std::ffi::OsString::from(self.texture_extension.clone()))?;
-
-            match self.wad {
-                WadType::None => unreachable!(),
-                WadType::Monolithic => {
-                    fs::write(
-                        folder.join(format!("{}.wad", self.texture_root.display())),
-                        wad::create_wad(wad.into_iter().map(|(path, image)| (
-                            path
-                                .with_extension("")
-                                .file_name()
-                                .expect("(writing wad) Path does not have a file name, report this!!")
-                                .to_string_lossy()
-                                .into(),
-                            image,
-                        )).collect()),
-                    )?;
-                }
-            }
-        }
-        
         Ok(())
     }
 }

@@ -23,7 +23,7 @@ fn main() {
 
         .add_plugins(TrenchBroomPlugin::new(
             // TODO
-            TrenchBroomConfig::new("bevy_trenchbroom_example").wad(WadType::None).entity_definitions(
+            TrenchBroomConfig::new("bevy_trenchbroom_example").entity_definitions(
                 entity_definitions! {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {
