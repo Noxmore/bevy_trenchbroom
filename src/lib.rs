@@ -6,11 +6,11 @@ compile_error!("can only have one collider backend enabled");
 pub mod brush;
 pub mod config;
 pub mod definitions;
-pub mod loader;
+pub mod load;
 pub mod map_entity;
 pub mod material_properties;
 pub mod prelude;
-pub mod spawning;
+pub mod spawn;
 pub mod util;
 
 pub(crate) use prelude::*;

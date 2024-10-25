@@ -7,7 +7,7 @@ use bevy::ecs::world::Command;
 
 use crate::*;
 
-pub mod brushes;
+pub mod geometry;
 
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum MapEntitySpawnError {
