@@ -31,10 +31,6 @@ impl Plugin for TrenchBroomPlugin {
         app
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
-            .register_type::<MapEntity>()
-            .register_type::<SpawnedMapEntity>()
-            .register_type::<Map>()
-            .register_type::<SpawnedMap>()
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
             .init_asset_loader::<BspLoader>()
@@ -76,14 +72,15 @@ pub struct TrenchBroomServerData {
 }
 
 /// A Quake map loaded from a .map or .bsp file.
-#[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Asset, Reflect, Debug, Clone, Default)]
 pub struct Map {
     /// A title for the map, currently it just mirrors it's path.
     pub name: String,
-    pub entities: Vec<MapEntity>,
+    pub entities: Vec<Arc<MapEntity>>,
     /// Textures embedded in a BSP file.
-    #[serde(skip)]
     pub embedded_textures: HashMap<String, Handle<Image>>,
+    #[reflect(ignore)]
+    pub bsp_data: Option<BspData>,
 }
 
 impl Map {
@@ -94,6 +91,7 @@ impl Map {
         self.entities
             .iter()
             .find(|ent| ent.classname() == Ok("worldspawn"))
+            .map(|v| &**v)
     }
 }
 

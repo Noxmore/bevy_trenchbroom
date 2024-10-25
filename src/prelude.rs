@@ -8,6 +8,7 @@ pub(crate) use serde::*;
 pub(crate) use nil::prelude::*;
 pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;
+pub(crate) use q1bsp::prelude::*;
 
 pub use anyhow;
 pub use indexmap;

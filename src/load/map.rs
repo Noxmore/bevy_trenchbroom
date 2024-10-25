@@ -31,7 +31,7 @@ impl AssetLoader for MapLoader {
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;
 
-            Ok(qmap_to_map(parse_qmap(&bytes)?, load_context.path().to_string_lossy().into(), &self.server.config)?)
+            Ok(qmap_to_map(parse_qmap(&bytes)?, load_context.path().to_string_lossy().into(), &self.server.config, |_| Ok(()))?)
         })
     }
 

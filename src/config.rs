@@ -123,7 +123,7 @@ impl TrenchBroomConfig {
             .attributes([TrenchBroomTagAttribute::Transparent])
     }
 
-    /// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    /// Adds transform via [MapEntityPropertiesView::get_transform], and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
     pub fn default_global_spawner(
         world: &mut World,
         entity: Entity,
@@ -138,7 +138,6 @@ impl TrenchBroomConfig {
             ),
             view.get_transform(),
             GlobalTransform::default(),
-            view.map_entity.clone(),
         ));
 
         trenchbroom_gltf_rotation_fix(world, entity);

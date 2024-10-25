@@ -1,6 +1,5 @@
 use crate::*;
 use super::*;
-use q1bsp::prelude::*;
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d, texture::ImageSampler}, utils::ConditionalSendFuture
@@ -33,8 +32,8 @@ impl AssetLoader for BspLoader {
             
             // TODO cache atlas?
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
-            let mut map = qmap_to_map(parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?, load_context.path().to_string_lossy().into(), &self.server.config)?;
-            map.embedded_textures = data.parse_embedded_textures(&QUAKE_PALETTE)
+
+            let embedded_textures: HashMap<String, Handle<Image>> = data.parse_embedded_textures(&QUAKE_PALETTE)
                 .into_iter()
                 .map(|(name, image)| {
                     let image_handle = load_context.add_labeled_asset(name.clone(), rgb_image_to_bevy_image(&image));
@@ -42,21 +41,25 @@ impl AssetLoader for BspLoader {
                 })
                 .collect();
 
-            for map_entity in &mut map.entities {
+            let qmap = parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?;
+            let mut map = qmap_to_map(qmap, load_context.path().to_string_lossy().into(), &self.server.config, |map_entity| {
                 if map_entity.classname().map_err(invalid_data)? == "worldspawn" {
-                    map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &map.embedded_textures, load_context));
-                    continue;
+                    map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &embedded_textures, load_context));
+                    return Ok(());
                 }
 
-                let Some(model) = map_entity.properties.get("model") else { continue };
+                let Some(model) = map_entity.properties.get("model") else { return Ok(()) };
                 let model_idx = model.trim_start_matches('*');
                 // If there wasn't a * at the start, this is invalid
-                if model_idx == model { continue }
+                if model_idx == model { return Ok(()) }
 
-                let Ok(model_idx) = model_idx.parse::<usize>() else { continue };
+                let Ok(model_idx) = model_idx.parse::<usize>() else { return Ok(()) };
 
-                map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, model_idx, &map.embedded_textures, load_context));
-            }
+                map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, model_idx, &embedded_textures, load_context));
+                Ok(())
+            })?;
+
+            map.embedded_textures = embedded_textures;
 
             Ok(map)
         })

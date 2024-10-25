@@ -1,10 +1,7 @@
 use crate::*;
 
-/// An entity read from a TrenchBroom map, although it can also be created manually.
-///
-/// When put on an entity, it will spawn the contents of this MapEntity into the Bevy world based on your [TrenchBroomConfig].
-#[derive(Component, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
-#[reflect(Component)]
+/// An entity read from a TrenchBroom map, though it can also be created manually.
+#[derive(Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MapEntity {
     /// If this entity was loaded from a [Map], This will be the index of the entity in said map.
     pub ent_index: Option<usize>,

@@ -33,6 +33,15 @@ pub enum MapEntitySpawnError {
 #[reflect(Component)]
 pub struct SpawnedMap;
 
+/// The component for spawning map entities.
+/// Any entity with this component and without [SpawnedMapEntity] will have the containing map entity spawned into the Bevy world.
+#[derive(Component, Reflect, Debug, Clone)]
+#[reflect(Component)]
+pub struct MapEntityRef {
+    pub map_entity: Arc<MapEntity>,
+    pub map_handle: Option<Handle<Map>>,
+}
+
 /// Marker component for a [MapEntity] that has been spawned, to respawn a [MapEntity], remove this component.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -59,8 +68,8 @@ pub fn spawn_maps(world: &mut World) {
     });
 
     let server = world.resource::<TrenchBroomServer>().clone();
-    for (entity, map_entity) in world
-        .query_filtered::<(Entity, &MapEntity), Without<SpawnedMapEntity>>()
+    for (entity, map_entity_ref) in world
+        .query_filtered::<(Entity, &MapEntityRef), Without<SpawnedMapEntity>>()
         .iter(world)
         // I'd really rather not clone this, but the borrow checker has forced my hand
         .map(|(e, h)| (e, h.clone()))
@@ -74,13 +83,13 @@ pub fn spawn_maps(world: &mut World) {
             world,
             entity,
             EntitySpawnView {
-                map_entity: &map_entity,
+                map_entity_ref: &map_entity_ref,
                 server: &server,
             },
         ) {
             error!(
                 "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
-                map_entity.ent_index
+                map_entity_ref.map_entity.ent_index
             );
         }
     }
@@ -110,12 +119,14 @@ impl Map {
         // Just in case we are reloading the level
         DespawnChildrenRecursive { entity }.apply(world);
 
+        let map_handle = world.entity(entity).get::<Handle<Map>>().cloned();
+        
         // Add skeleton entities as children of the Map entity, if this is being called from spawn_maps, they'll be spawned later this update
         let skeleton_entities = self
             .entities
             .iter()
             .cloned()
-            .map(|map_entity| world.spawn(map_entity).id())
+            .map(|map_entity| world.spawn(MapEntityRef { map_entity, map_handle: map_handle.clone() }).id())
             .collect_vec();
 
         world.entity_mut(entity).push_children(&skeleton_entities);
@@ -172,8 +183,14 @@ pub type EntitySpawner = fn(
 /// Gives you access to important things when spawning a [MapEntity].
 #[derive(Clone, Copy)]
 pub struct EntitySpawnView<'w> {
-    pub map_entity: &'w MapEntity,
+    map_entity_ref: &'w MapEntityRef,
     pub server: &'w TrenchBroomServer,
+}
+impl std::ops::Deref for EntitySpawnView<'_> {
+    type Target = MapEntityRef;
+    fn deref(&self) -> &Self::Target {
+        self.map_entity_ref
+    }
 }
 
 impl<'w> EntitySpawnView<'w> {
