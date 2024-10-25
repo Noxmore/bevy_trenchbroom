@@ -295,7 +295,6 @@ impl BrushSpawnSettings {
 
                 let material = BRUSH_TEXTURE_TO_MATERIALS_CACHE
                     .lock()
-                    .unwrap()
                     .entry(mesh_view.texture.name.clone())
                     .or_insert_with(|| {
                         let material = StandardMaterial {

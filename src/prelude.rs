@@ -1,19 +1,13 @@
 pub(crate) use bevy::math::*;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
-// pub(crate) use bevy::utils::hashbrown::HashMap;
-pub(crate) use std::collections::HashMap;
 pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
 pub(crate) use once_cell::sync::Lazy;
 pub(crate) use serde::*;
-pub(crate) use smart_default::*;
-pub(crate) use std::fs;
-pub(crate) use std::io;
-pub(crate) use std::mem;
-pub(crate) use std::path::{Path, PathBuf};
-pub(crate) use std::sync::*;
+pub(crate) use nil::prelude::*;
+pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;
 
 pub use anyhow;
