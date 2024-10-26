@@ -26,7 +26,7 @@ impl TrenchBroomSpecialTexturesPlugin {
         mut last_frame_update: Local<f32>,
     ) {
         while *last_frame_update < time.elapsed_seconds() {
-            *last_frame_update += tb_server.config.texture_animation_speed; // TODO configurable animation speed
+            *last_frame_update += tb_server.config.texture_animation_speed;
 
             for (map_entity_ref, children) in &map_entity_query {
                 let Some(map_handle) = &map_entity_ref.map_handle else { continue };
@@ -54,8 +54,6 @@ impl TrenchBroomSpecialTexturesPlugin {
                     // SAFETY: char is always valid utf-8
                     let frame_str = unsafe { std::str::from_utf8_unchecked(&frame_str) }.trim_end_matches('\0');
     
-                    // println!("parsing {frame_str}: {:?}", frame_str.trim().parse::<u8>());
-                    // println!("parsing {frame_str}: expected: {:?}, found: {:?}", "0".as_bytes(), frame_str.as_bytes());
                     let Ok(mut frame_num) = frame_str.parse::<u8>() else { continue };
                     frame_num += 1;
 
