@@ -48,6 +48,7 @@ pub struct MapEntityRef {
 pub struct SpawnedMapEntity;
 
 impl TrenchBroomPlugin {
+    /// Spawns maps and map entities
     pub fn spawn_maps(world: &mut World) {
         // Spawn maps
         world.resource_scope(|world, maps: Mut<Assets<Map>>| {
@@ -68,6 +69,7 @@ impl TrenchBroomPlugin {
             }
         });
     
+        // Spawn map entities
         let server = world.resource::<TrenchBroomServer>().clone();
         for (entity, map_entity_ref) in world
             .query_filtered::<(Entity, &MapEntityRef), Without<SpawnedMapEntity>>()
@@ -96,6 +98,7 @@ impl TrenchBroomPlugin {
         }
     }
     
+    /// Map hot-reloading
     pub fn reload_maps(
         mut commands: Commands,
         mut asset_events: EventReader<AssetEvent<Map>>,
