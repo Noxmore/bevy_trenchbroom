@@ -32,7 +32,7 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "1.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "6cb7108" }
+q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "6530eff" }
 nil = "0.13.0"
 
 [dev-dependencies.bevy]

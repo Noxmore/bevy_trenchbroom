@@ -33,7 +33,7 @@ impl AssetLoader for BspLoader {
             // TODO cache atlas?
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
 
-            let embedded_textures: HashMap<String, Handle<Image>> = data.parse_embedded_textures(&QUAKE_PALETTE)
+            let embedded_textures: HashMap<String, Handle<Image>> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
                 .into_iter()
                 .map(|(name, image)| {
                     let image_handle = load_context.add_labeled_asset(name.clone(), rgb_image_to_bevy_image(&image));

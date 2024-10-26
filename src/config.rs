@@ -42,13 +42,16 @@ pub struct TrenchBroomConfig {
     #[default("png".into())]
     #[builder(into)]
     pub texture_extension: String,
-    /// The palette file used for WADs. Roots from your assets folder.
-    /// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip).
-    /// Simply put palette.lmp into your assets folder, and it should work. If TrenchBroom can't find this palette file, all WAD textures will be black.
-    /// (Default: "palette.lmp")
+    /// The palette file path and data used for WADs. The path roots from your assets folder.
+    /// 
+    /// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
+    /// and a copy distributed by this library in the form of [QUAKE_PALETTE].
+    /// 
+    /// If TrenchBroom can't find this palette file, all WAD textures will be black.
+    /// (Default: ("palette.lmp", &QUAKE_PALETTE))
     #[builder(into)]
-    #[default("palette.lmp".into())]
-    pub texture_pallette: PathBuf,
+    #[default(("palette.lmp".into(), &QUAKE_PALETTE))] // TODO
+    pub texture_pallette: (PathBuf, &'static Palette),
     /// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
     #[builder(into)]
     #[default(Self::default_texture_exclusions())]
@@ -348,14 +351,14 @@ impl TrenchBroomConfig {
             "name": self.name.clone(),
             "fileformats": self.file_formats.iter().map(|format| json::object! { "format": format.config_str() }).collect::<Vec<_>>(),
             "filesystem": {
-                "searchpath": self.assets_path.to_string_lossy().to_string(),
+                "searchpath": self.assets_path.s(),
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
             "textures": {
-                "root": self.texture_root.to_string_lossy().to_string(),
+                "root": self.texture_root.s(),
                 // .D is required for WADs to work
                 "extensions": [".D", self.texture_extension.clone()],
-                "palette": self.texture_pallette.to_string_lossy().to_string(),
+                "palette": self.texture_pallette.0.s(),
                 "attribute": "wad",
                 "excludes": self.texture_exclusions.clone(),
             },

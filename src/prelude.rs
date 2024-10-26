@@ -13,6 +13,7 @@ pub(crate) use q1bsp::prelude::*;
 pub use anyhow;
 pub use indexmap;
 pub use toml;
+pub use q1bsp::{Palette, QUAKE_PALETTE};
 
 pub use crate::{
     brush::*,
