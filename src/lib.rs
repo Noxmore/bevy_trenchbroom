@@ -37,10 +37,7 @@ impl Plugin for TrenchBroomPlugin {
             .init_asset_loader::<BspLoader>()
             .init_asset::<MaterialProperties>()
             .init_asset_loader::<MaterialPropertiesLoader>()
-            .add_systems(
-                PreUpdate,
-                (reload_maps, spawn_maps),
-            );
+            .add_systems(PreUpdate, (Self::reload_maps, Self::spawn_maps));
     }
 }
 

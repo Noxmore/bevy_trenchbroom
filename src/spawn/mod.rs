@@ -47,67 +47,69 @@ pub struct MapEntityRef {
 #[reflect(Component)]
 pub struct SpawnedMapEntity;
 
-pub fn spawn_maps(world: &mut World) {
-    // Spawn maps
-    world.resource_scope(|world, maps: Mut<Assets<Map>>| {
-        for (entity, map_handle) in world
-            .query_filtered::<(Entity, &Handle<Map>), Without<SpawnedMap>>()
+impl TrenchBroomPlugin {
+    pub fn spawn_maps(world: &mut World) {
+        // Spawn maps
+        world.resource_scope(|world, maps: Mut<Assets<Map>>| {
+            for (entity, map_handle) in world
+                .query_filtered::<(Entity, &Handle<Map>), Without<SpawnedMap>>()
+                .iter(world)
+                .map(|(e, h)| (e, h.clone()))
+                .collect_vec()
+            {
+                let Some(map) = maps.get(&map_handle) else {
+                    continue;
+                };
+    
+                // Lets make sure we don't spawn a map every frame
+                world.entity_mut(entity).insert(SpawnedMap);
+    
+                map.spawn(world, entity);
+            }
+        });
+    
+        let server = world.resource::<TrenchBroomServer>().clone();
+        for (entity, map_entity_ref) in world
+            .query_filtered::<(Entity, &MapEntityRef), Without<SpawnedMapEntity>>()
             .iter(world)
+            // I'd really rather not clone this, but the borrow checker has forced my hand
             .map(|(e, h)| (e, h.clone()))
             .collect_vec()
         {
-            let Some(map) = maps.get(&map_handle) else {
-                continue;
-            };
-
-            // Lets make sure we don't spawn a map every frame
-            world.entity_mut(entity).insert(SpawnedMap);
-
-            map.spawn(world, entity);
-        }
-    });
-
-    let server = world.resource::<TrenchBroomServer>().clone();
-    for (entity, map_entity_ref) in world
-        .query_filtered::<(Entity, &MapEntityRef), Without<SpawnedMapEntity>>()
-        .iter(world)
-        // I'd really rather not clone this, but the borrow checker has forced my hand
-        .map(|(e, h)| (e, h.clone()))
-        .collect_vec()
-    {
-        DespawnChildrenRecursive { entity }.apply(world);
-
-        world.entity_mut(entity).insert(SpawnedMapEntity);
-
-        if let Err(err) = MapEntity::spawn(
-            world,
-            entity,
-            EntitySpawnView {
-                map_entity_ref: &map_entity_ref,
-                server: &server,
-            },
-        ) {
-            error!(
-                "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
-                map_entity_ref.map_entity.ent_index
-            );
+            DespawnChildrenRecursive { entity }.apply(world);
+    
+            world.entity_mut(entity).insert(SpawnedMapEntity);
+    
+            if let Err(err) = MapEntity::spawn(
+                world,
+                entity,
+                EntitySpawnView {
+                    map_entity_ref: &map_entity_ref,
+                    server: &server,
+                },
+            ) {
+                error!(
+                    "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
+                    map_entity_ref.map_entity.ent_index
+                );
+            }
         }
     }
-}
-
-pub fn reload_maps(
-    mut commands: Commands,
-    mut asset_events: EventReader<AssetEvent<Map>>,
-    spawned_map_query: Query<(Entity, &Handle<Map>), With<SpawnedMap>>,
-) {
-    for event in asset_events.read() {
-        let AssetEvent::Modified { id } = event else {
-            continue;
-        };
-
-        for (entity, map_handle) in &spawned_map_query {
-            if &map_handle.id() == id {
-                commands.entity(entity).remove::<SpawnedMap>();
+    
+    pub fn reload_maps(
+        mut commands: Commands,
+        mut asset_events: EventReader<AssetEvent<Map>>,
+        spawned_map_query: Query<(Entity, &Handle<Map>), With<SpawnedMap>>,
+    ) {
+        for event in asset_events.read() {
+            let AssetEvent::Modified { id } = event else {
+                continue;
+            };
+    
+            for (entity, map_handle) in &spawned_map_query {
+                if &map_handle.id() == id {
+                    commands.entity(entity).remove::<SpawnedMap>();
+                }
             }
         }
     }
