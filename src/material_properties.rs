@@ -8,12 +8,12 @@ use crate::*;
 pub static MATERIAL_PROPERTIES_EXTENSION: &str = "toml";
 
 /// Information about an expected field from [MaterialProperties]. Built-in properties are stored in the [MaterialProperties] namespace, such as [MaterialProperties::RENDER].
-pub struct MaterialProperty<T: Deserialize<'static>> {
+pub struct MaterialProperty<T: DeserializeOwned> {
     pub key: Cow<'static, str>,
     pub default_value: T,
 }
 
-impl<T: Deserialize<'static>> MaterialProperty<T> {
+impl<T: DeserializeOwned> MaterialProperty<T> {
     pub const fn new(key: &'static str, default_value: T) -> Self {
         Self {
             key: Cow::Borrowed(key),
@@ -67,12 +67,11 @@ impl MaterialProperties {
     pub const DOUBLE_SIDED: MaterialProperty<bool> = MaterialProperty::new("double_sided", false);
 
     /// Gets a property from these properties, if it isn't defined, uses the supplied [MaterialProperty]'s default.
-    pub fn get<T: Deserialize<'static>>(&self, property: MaterialProperty<T>) -> T {
+    pub fn get<T: DeserializeOwned>(&self, property: MaterialProperty<T>) -> T {
         // I feel like turning the value into a string just to deserialize it again isn't the best way of doing this, but i don't know of another
         self.properties
             .get(property.key.as_ref())
-            .map(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok())
-            .flatten()
+            .and_then(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok())
             .unwrap_or(property.default_value)
     }
 }

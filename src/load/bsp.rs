@@ -5,6 +5,13 @@ use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d, texture::ImageSampler}, utils::ConditionalSendFuture
 };
 
+/// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
+#[derive(Reflect, Debug, Clone, PartialEq, Eq)]
+pub struct BspEmbeddedTexture {
+    pub image_handle: Handle<Image>,
+    pub alpha_mode: AlphaMode,
+}
+
 pub struct BspLoader {
     pub server: TrenchBroomServer,
 }
@@ -30,14 +37,15 @@ impl AssetLoader for BspLoader {
 
             let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
             
-            // TODO cache atlas?
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
 
-            let embedded_textures: HashMap<String, Handle<Image>> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
+            let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
                 .into_iter()
                 .map(|(name, image)| {
-                    let image_handle = load_context.add_labeled_asset(name.clone(), rgb_image_to_bevy_image(&image));
-                    (name, image_handle)
+                    let image = rgb_image_to_bevy_image(&image, &self.server, self.server.config.special_textures.is_some() && name.chars().next() == Some('{'));
+                    let alpha_mode = alpha_mode_from_image(&image);
+                    let image_handle = load_context.add_labeled_asset(name.clone(), image);
+                    (name, BspEmbeddedTexture { image_handle, alpha_mode })
                 })
                 .collect();
 
@@ -70,13 +78,13 @@ impl AssetLoader for BspLoader {
     }
 }
 impl BspLoader {
-    fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, Handle<Image>>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
+    fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, BspEmbeddedTexture>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
         let output = data.mesh_model(model_idx);
         let mut meshes = Vec::with_capacity(output.meshes.len());
     
         let lightmap = output.lightmap_atlas.map(|atlas| {
             // Convert lightmap_atlas grid into image
-            let mut image = rgb_image_to_bevy_image(&atlas);
+            let mut image = rgb_image_to_bevy_image(&atlas, &self.server, false);
     
             image.sampler = ImageSampler::linear();
     
@@ -115,13 +123,15 @@ fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3)
     |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
-fn rgb_image_to_bevy_image(image: &image::RgbImage) -> Image {
+fn rgb_image_to_bevy_image(image: &image::RgbImage, tb_server: &TrenchBroomServer, enable_alphatest: bool) -> Image {
     Image::new(
         Extent3d { width: image.width(), height: image.height(), depth_or_array_layers: 1 },
         bevy::render::render_resource::TextureDimension::D2,
-        image.pixels().map(|pixel| [pixel[0], pixel[1], pixel[2], 255]).flatten().collect(),
+        image.pixels().map(|pixel| {
+            [pixel[0], pixel[1], pixel[2], if enable_alphatest && pixel.0 == tb_server.config.texture_pallette.1.colors[255] { 0 } else { 255 }]
+        }).flatten().collect(),
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::all(), // TODO should this be RENDER_WORLD?
+        tb_server.config.embedded_textures_asset_usages, // TODO read from config
     )
 }
 

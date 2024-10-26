@@ -80,7 +80,7 @@ pub struct Map {
     pub name: String,
     pub entities: Vec<Arc<MapEntity>>,
     /// Textures embedded in a BSP file.
-    pub embedded_textures: HashMap<String, Handle<Image>>,
+    pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
     #[reflect(ignore)]
     pub bsp_data: Option<BspData>,
 }

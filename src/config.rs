@@ -102,6 +102,10 @@ pub struct TrenchBroomConfig {
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub brush_mesh_asset_usages: RenderAssetUsages,
+
+    /// Whether BSP loaded images (textures and lightmaps) are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+    #[default(RenderAssetUsages::RENDER_WORLD)]
+    pub embedded_textures_asset_usages: RenderAssetUsages,
 }
 
 impl TrenchBroomConfig {

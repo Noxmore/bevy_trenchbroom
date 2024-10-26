@@ -70,7 +70,7 @@ impl SpecialTexturesPlugin {
                     // Loop to run this code again if we need to loop back around.
                     for _ in 0..2 {
                         let new_file_name = format!("+{frame_num}{texture_name}");
-                        match map.embedded_textures.get(&new_file_name).cloned().or_else(|| asset_server.get_handle::<Image>(&new_file_name)) {
+                        match map.embedded_textures.get(&new_file_name).map(|embedded| &embedded.image_handle).cloned().or_else(|| asset_server.get_handle::<Image>(&new_file_name)) {
                             Some(new_handle) => {
                                 material.base_color_texture = Some(new_handle);
                                 break;
@@ -87,7 +87,6 @@ impl SpecialTexturesPlugin {
         }
     }
 }
-
 impl TrenchBroomConfig {
     /// Retrieves the special textures config or panics.
     #[inline]
@@ -97,7 +96,7 @@ impl TrenchBroomConfig {
     }
     
     /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
-    /// such as animated textures, liquids, invisible textures like clip and skip, and alphatest textures.
+    /// such as animated textures, liquids, invisible textures like clip and skip.
     pub fn special_textures(mut self, config: SpecialTexturesConfig) -> Self {
         self.special_textures = Some(config);
 

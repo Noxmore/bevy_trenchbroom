@@ -16,15 +16,13 @@ impl<'w> EntitySpawnView<'w> {
 
             
             // Create, or retrieve the meshes from the entity
-            let meshes: HashMap<MapEntityGeometryTexture, Mesh>;
-
-            match &self.map_entity.geometry {
+            let meshes: Vec<(MapEntityGeometryTexture, Mesh)> = match &self.map_entity.geometry {
                 MapEntityGeometry::Bsp(bsp_meshes) => {
-                    meshes = bsp_meshes.iter().map(|(texture, mesh)| {
+                    bsp_meshes.iter().map(|(texture, mesh)| {
                         let mut mesh = mesh.clone();
                         mesh.asset_usage = self.server.config.brush_mesh_asset_usages;
                         (texture.clone(), mesh)
-                    }).collect();
+                    }).collect()
                 }
                 
                 MapEntityGeometry::Map(brushes) => {
@@ -44,11 +42,11 @@ impl<'w> EntitySpawnView<'w> {
                             .push(face);
                     }
 
-                    meshes = grouped_surfaces.into_iter().map(|(texture, polygons)| {
+                    grouped_surfaces.into_iter().map(|(texture, polygons)| {
                         (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), &self.server.config))
-                    }).collect();
+                    }).collect()
                 }
-            }
+            };
 
 
             // Stores BrushSpawnViews, just with a Handle to MaterialProperties instead of a reference, for the borrow checker
@@ -290,8 +288,6 @@ impl BrushSpawnSettings {
             }
 
             for mesh_view in &view.meshes {
-                let asset_server = world.resource::<AssetServer>();
-
                 if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
                     continue;
                 }
@@ -319,52 +315,57 @@ impl BrushSpawnSettings {
                 };
 
                 let material = match &mesh_view.texture.embedded {
-                    Some(handle) => asset_server.add(StandardMaterial {
-                        base_color_texture: Some(handle.clone()),
-                        ..default_material
-                    }),
-                    None => {
-                        view.server.material_cache
-                        .lock()
-                        .entry(mesh_view.texture.name.clone())
-                        .or_insert_with(|| {
-                            macro_rules! load_texture {
-                                ($map:literal) => {{
-                                    let texture_path = format!(
-                                        concat!("{}/{}", $map, ".{}"),
-                                        view.server.config.texture_root.display(),
-                                        mesh_view.texture.name,
-                                        view.server.config.texture_extension
-                                    );
-                                    // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                    if view.server.config.assets_path.join(&texture_path).exists() {
-                                        Some(asset_server.load(texture_path))
-                                    } else {
-                                        None
-                                    }
-                                }};
-                            }
-    
-                            let base_color_texture = load_texture!("");
-                            let normal_map_texture = load_texture!("_normal");
-                            let metallic_roughness_texture = load_texture!("_mr");
-                            let emissive_texture = load_texture!("_emissive");
-                            let depth_texture = load_texture!("_depth");
-    
-                            asset_server.add(StandardMaterial {
-                                base_color_texture,
-                                normal_map_texture,
-                                metallic_roughness_texture,
-                                emissive_texture,
-                                depth_map: depth_texture,
-                                ..default_material
-                            })
+                    Some(embedded) => {
+                        world.resource::<AssetServer>().add(StandardMaterial {
+                            base_color_texture: Some(embedded.image_handle.clone()),
+                            alpha_mode: embedded.alpha_mode,
+                            ..default_material
                         })
-                        .clone()
+                    },
+                    None => {
+                        let asset_server = world.resource::<AssetServer>();
+                        
+                        view.server.material_cache
+                            .lock()
+                            .entry(mesh_view.texture.name.clone())
+                            .or_insert_with(|| {
+                                macro_rules! load_texture {
+                                    ($map:literal) => {{
+                                        let texture_path = format!(
+                                            concat!("{}/{}", $map, ".{}"),
+                                            view.server.config.texture_root.display(),
+                                            mesh_view.texture.name,
+                                            view.server.config.texture_extension
+                                        );
+                                        // TODO This is a lot of file system calls on the critical path, how can we offload this?
+                                        if view.server.config.assets_path.join(&texture_path).exists() {
+                                            Some(asset_server.load(texture_path))
+                                        } else {
+                                            None
+                                        }
+                                    }};
+                                }
+        
+                                let base_color_texture = load_texture!("");
+                                let normal_map_texture = load_texture!("_normal");
+                                let metallic_roughness_texture = load_texture!("_mr");
+                                let emissive_texture = load_texture!("_emissive");
+                                let depth_texture = load_texture!("_depth");
+        
+                                asset_server.add(StandardMaterial {
+                                    base_color_texture,
+                                    normal_map_texture,
+                                    metallic_roughness_texture,
+                                    emissive_texture,
+                                    depth_map: depth_texture,
+                                    ..default_material
+                                })
+                            })
+                            .clone()
                     }
                 };
 
-                let mesh_handle = asset_server.add(mesh_view.mesh.clone());
+                let mesh_handle = world.resource::<AssetServer>().add(mesh_view.mesh.clone());
                 world.entity_mut(mesh_view.entity).insert(PbrBundle {
                     mesh: mesh_handle,
                     material,

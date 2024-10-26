@@ -296,3 +296,19 @@ pub(crate) fn invalid_data(err: impl std::error::Error + Send + Sync + 'static) 
 macro_rules! add_msg {($($args:tt)+) => {
     |err| io::Error::new(err.kind(), format!("{}: {}", format!($($args)+), err.into_inner().map(|err| err.to_string()).unwrap_or_default()))
 };}
+
+pub fn alpha_mode_from_image(image: &Image) -> AlphaMode {
+    let mut cutout = false;
+
+    for color in image.data.chunks_exact(4) {
+        let alpha = color[3];
+
+        if alpha == 0 {
+            cutout = true;
+        } else if alpha != 255 {
+            return AlphaMode::Blend;
+        }
+    }
+
+    if cutout { AlphaMode::Mask(0.5) } else { AlphaMode::Opaque }
+}

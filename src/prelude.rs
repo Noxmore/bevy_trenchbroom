@@ -5,6 +5,7 @@ pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
 pub(crate) use serde::*;
+pub(crate) use serde::de::DeserializeOwned;
 pub(crate) use nil::prelude::*;
 pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;

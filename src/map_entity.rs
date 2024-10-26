@@ -40,9 +40,9 @@ impl Default for MapEntityGeometry {
     }
 }
 
-#[derive(Reflect, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Reflect, Debug, Clone, PartialEq, Eq)]
 pub struct MapEntityGeometryTexture {
     pub name: String,
-    pub embedded: Option<Handle<Image>>,
+    pub embedded: Option<BspEmbeddedTexture>,
     pub lightmap: Option<Handle<Image>>,
 }
