@@ -26,5 +26,6 @@ pub use crate::{
     spawn::geometry::*,
     spawn::*,
     util::*,
+    special_textures::*,
     *,
 };

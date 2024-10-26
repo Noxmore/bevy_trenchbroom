@@ -79,9 +79,13 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
-    #[default(5000.)]
     /// The default lightmap exposure for BSP loaded lightmaps.
+    #[default(5000.)]
     pub default_lightmap_exposure: f32,
+
+    /// Seconds per frame for special animated textures. (Default: 5 FPS)
+    #[default(1. / 5.)]
+    pub texture_animation_speed: f32,
 
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 

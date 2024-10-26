@@ -12,6 +12,7 @@ pub mod material_properties;
 pub mod prelude;
 pub mod spawn;
 pub mod util;
+pub mod special_textures;
 
 pub(crate) use prelude::*;
 

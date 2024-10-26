@@ -71,6 +71,7 @@ fn main() {
                 },
             ),
         ))
+        .add_plugins(TrenchBroomSpecialTexturesPlugin)
         .add_systems(PostStartup, (setup_scene, write_config))
         // .add_systems(Update, visualize_stuff)
         .run();
