@@ -29,6 +29,10 @@ impl TrenchBroomPlugin {
 
 impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
+        if self.config.special_textures.is_some() {
+            app.add_plugins(SpecialTexturesPlugin);
+        }
+        
         app
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))

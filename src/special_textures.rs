@@ -2,18 +2,26 @@ use std::collections::HashSet;
 
 use crate::*;
 
-/// Plugin for supporting quake special textures, such as animated textures and liquid.
-/// 
-/// Add this along with your [TrenchBroomPlugin].
-pub struct TrenchBroomSpecialTexturesPlugin;
-impl Plugin for TrenchBroomSpecialTexturesPlugin {
+/// Config for supporting quake special textures, such as animated textures and liquid.
+#[derive(Debug, Clone, SmartDefault)]
+pub struct SpecialTexturesConfig {
+    /// Seconds per frame for special animated textures. (Default: 5 FPS)
+    #[default(1. / 5.)]
+    pub texture_animation_speed: f32,
+
+    #[default(vec!["clip".s(), "skip".s()])]
+    pub invisible_textures: Vec<String>,
+}
+
+pub(crate) struct SpecialTexturesPlugin;
+impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, Self::animate_textures)
         ;
     }
 }
-impl TrenchBroomSpecialTexturesPlugin {
+impl SpecialTexturesPlugin {
     pub fn animate_textures(
         map_entity_query: Query<(&MapEntityRef, &Children), With<SpawnedMapEntity>>,
         mesh_query: Query<&Handle<StandardMaterial>, With<Handle<Mesh>>>,
@@ -26,7 +34,7 @@ impl TrenchBroomSpecialTexturesPlugin {
         mut last_frame_update: Local<f32>,
     ) {
         while *last_frame_update < time.elapsed_seconds() {
-            *last_frame_update += tb_server.config.texture_animation_speed;
+            *last_frame_update += tb_server.config.special_textures_config().texture_animation_speed;
 
             for (map_entity_ref, children) in &map_entity_query {
                 let Some(map_handle) = &map_entity_ref.map_handle else { continue };
@@ -77,5 +85,30 @@ impl TrenchBroomSpecialTexturesPlugin {
                 }
             }
         }
+    }
+}
+
+impl TrenchBroomConfig {
+    /// Retrieves the special textures config or panics.
+    #[inline]
+    #[track_caller]
+    pub(crate) fn special_textures_config(&self) -> &SpecialTexturesConfig {
+        self.special_textures.as_ref().expect("Special textures config required! This is a bug!")
+    }
+    
+    /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
+    /// such as animated textures, liquids, invisible textures like clip and skip, and alphatest textures.
+    pub fn special_textures(mut self, config: SpecialTexturesConfig) -> Self {
+        self.special_textures = Some(config);
+
+        self.global_brush_spawners.push(|world, _entity, view| {
+            for mesh_view in &view.meshes {
+                if view.server.config.special_textures_config().invisible_textures.contains(&mesh_view.texture.name) {
+                    world.entity_mut(mesh_view.entity).insert(Visibility::Hidden);
+                }
+            }
+        });
+
+        self
     }
 }

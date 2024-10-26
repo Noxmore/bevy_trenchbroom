@@ -112,6 +112,9 @@ impl<'w> EntitySpawnView<'w> {
             for spawner in settings.spawners {
                 spawner(world, entity, &mut view);
             }
+            for spawner in &self.server.config.global_brush_spawners {
+                spawner(world, entity, &mut view);
+            }
         });
 
         // To keep the visibility hierarchy for the possible child meshes when spawning these brushes

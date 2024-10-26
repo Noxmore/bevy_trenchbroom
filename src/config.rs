@@ -83,15 +83,18 @@ pub struct TrenchBroomConfig {
     #[default(5000.)]
     pub default_lightmap_exposure: f32,
 
-    /// Seconds per frame for special animated textures. (Default: 5 FPS)
-    #[default(1. / 5.)]
-    pub texture_animation_speed: f32,
+    /// [TrenchBroomConfig::special_textures]
+    #[builder(skip)]
+    pub special_textures: Option<SpecialTexturesConfig>,
 
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
-    /// Entity spawner that gets run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
-    #[default(Some(Self::default_global_spawner))]
-    pub global_spawner: Option<EntitySpawner>,
+    /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
+    #[default(vec![Self::default_global_spawner])]
+    pub global_spawners: Vec<EntitySpawner>,
+
+    /// Spawner that gets run after an entity spawns brushes, regardless of classname.
+    pub global_brush_spawners: Vec<fn(&mut World, Entity, &mut BrushSpawnView)>,
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]

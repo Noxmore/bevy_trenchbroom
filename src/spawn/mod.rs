@@ -153,7 +153,7 @@ impl MapEntity {
             view,
         )?;
 
-        if let Some(global_spawner) = view.server.config.global_spawner {
+        for global_spawner in &view.server.config.global_spawners {
             global_spawner(world, entity, view)?;
         }
 

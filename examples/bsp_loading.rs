@@ -23,7 +23,7 @@ fn main() {
 
         .add_plugins(TrenchBroomPlugin::new(
             // TODO
-            TrenchBroomConfig::new("bevy_trenchbroom_example").entity_definitions(
+            TrenchBroomConfig::new("bevy_trenchbroom_example").special_textures(SpecialTexturesConfig::default()).entity_definitions(
                 entity_definitions! {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {
@@ -71,7 +71,6 @@ fn main() {
                 },
             ),
         ))
-        .add_plugins(TrenchBroomSpecialTexturesPlugin)
         .add_systems(PostStartup, (setup_scene, write_config))
         // .add_systems(Update, visualize_stuff)
         .run();
