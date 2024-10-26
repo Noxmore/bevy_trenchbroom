@@ -32,8 +32,8 @@ fn main() {
                     }
 
                     // TMP
-                    Solid func_detail {} |world, entity, view| {
-                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
+                    Solid func_wall {} |world, entity, view| {
+                        view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps());
                     }
 
                     // TODO TMP
