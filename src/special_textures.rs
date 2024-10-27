@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use bevy::{pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
+use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
 
 use crate::*;
 
@@ -18,6 +18,9 @@ pub struct SpecialTexturesConfig {
 pub(crate) struct SpecialTexturesPlugin;
 impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
+        embedded_asset!(app, "liquid.wgsl");
+        embedded_asset!(app, "sky.wgsl");
+        
         app
             .add_plugins(MaterialPlugin::<LiquidMaterial>::default())
             .add_plugins(MaterialPlugin::<SkyMaterial>::default())
@@ -151,11 +154,8 @@ pub struct LiquidMaterialExt {
 }
 impl MaterialExtension for LiquidMaterialExt {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
-        "shaders/liquid.wgsl".into()
+        "embedded://bevy_trenchbroom/liquid.wgsl".into()
     }
-    // fn deferred_vertex_shader() -> bevy::render::render_resource::ShaderRef {
-    //     "shaders/liquid.wgsl".into()
-    // }
 }
 
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
@@ -169,7 +169,7 @@ pub struct SkyMaterial {
 }
 impl Material for SkyMaterial {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
-        "shaders/sky.wgsl".into()
+        "embedded://bevy_trenchbroom/sky.wgsl".into()
     }
 
     fn alpha_mode(&self) -> AlphaMode {

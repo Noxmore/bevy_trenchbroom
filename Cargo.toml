@@ -8,11 +8,7 @@ repository = "https://github.com/Noxmore/bevy_trenchbroom"
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
 categories = ["game-development"]
-exclude = [
-    "assets/maps",
-    "assets/textures",
-    "assets/screenshots",
-]
+exclude = ["assets"]
 
 [dependencies]
 anyhow = "1.0"
