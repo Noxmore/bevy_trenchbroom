@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use bevy::{pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
+
 use crate::*;
 
 /// Config for supporting quake special textures, such as animated textures and liquid.
@@ -17,7 +19,10 @@ pub(crate) struct SpecialTexturesPlugin;
 impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Update, Self::animate_textures)
+            .add_plugins(MaterialPlugin::<LiquidMaterial>::default())
+            .add_plugins(MaterialPlugin::<SkyMaterial>::default())
+        
+            .add_systems(Update, (Self::animate_textures, Self::set_liquid_time))
         ;
     }
 }
@@ -86,6 +91,15 @@ impl SpecialTexturesPlugin {
             }
         }
     }
+
+    pub fn set_liquid_time(
+        mut materials: ResMut<Assets<LiquidMaterial>>,
+        time: Res<Time>,
+    ) {
+        for (_, material) in materials.iter_mut() {
+            material.extension.seconds = time.elapsed_seconds();
+        }
+    }
 }
 impl TrenchBroomConfig {
     /// Retrieves the special textures config or panics.
@@ -108,6 +122,57 @@ impl TrenchBroomConfig {
             }
         });
 
+        self.material_application_hook = |material, mesh_view, world, view| {
+            if mesh_view.texture.name.starts_with('*') {
+                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
+                world.entity_mut(mesh_view.entity).insert(handle);
+                return;
+            } else if mesh_view.texture.name.starts_with("sky") {
+                if let Some(texture) = material.base_color_texture {
+                    let handle = world.resource_mut::<Assets<SkyMaterial>>().add(SkyMaterial { texture, speed: 1. });
+                    world.entity_mut(mesh_view.entity).insert(handle);
+                    return;
+                }
+            }
+            
+            TrenchBroomConfig::default_material_application_hook(material, mesh_view, world, view)
+        };
+
         self
+    }
+}
+
+pub type LiquidMaterial = ExtendedMaterial<StandardMaterial, LiquidMaterialExt>;
+
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, Default)]
+pub struct LiquidMaterialExt {
+    #[uniform(100)]
+    pub seconds: f32,
+}
+impl MaterialExtension for LiquidMaterialExt {
+    fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+        "shaders/liquid.wgsl".into()
+    }
+    // fn deferred_vertex_shader() -> bevy::render::render_resource::ShaderRef {
+    //     "shaders/liquid.wgsl".into()
+    // }
+}
+
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
+pub struct SkyMaterial {
+    #[texture(1)]
+    #[sampler(2)]
+    pub texture: Handle<Image>,
+
+    #[uniform(0)]
+    pub speed: f32,
+}
+impl Material for SkyMaterial {
+    fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+        "shaders/sky.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Opaque
     }
 }

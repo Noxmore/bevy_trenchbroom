@@ -45,4 +45,6 @@ pub struct MapEntityGeometryTexture {
     pub name: String,
     pub embedded: Option<BspEmbeddedTexture>,
     pub lightmap: Option<Handle<Image>>,
+    /// If the texture should be full-bright
+    pub special: bool,
 }

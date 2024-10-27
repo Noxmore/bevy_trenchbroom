@@ -8,7 +8,11 @@ repository = "https://github.com/Noxmore/bevy_trenchbroom"
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
 categories = ["game-development"]
-exclude = ["assets"]
+exclude = [
+    "assets/maps",
+    "assets/textures",
+    "assets/screenshots",
+]
 
 [dependencies]
 anyhow = "1.0"
@@ -32,7 +36,8 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "1.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "6530eff" }
+q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "7f5ecbb" }
+# q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" }
 nil = "0.13.0"
 
 [dev-dependencies.bevy]

@@ -79,7 +79,7 @@ fn main() {
 fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut projection_query: Query<&mut Projection>,
+    mut projection_query: Query<(&mut Projection, &mut Camera)>,
 ) {
     commands.spawn(MapBundle {
         map: asset_server.load("maps/ad_crucial.bsp"), // ad_crucial
@@ -87,12 +87,45 @@ fn setup_scene(
     });
 
     // Wide FOV
-    for mut projection in &mut projection_query {
+    for (mut projection, mut camera) in &mut projection_query {
         *projection = Projection::Perspective(PerspectiveProjection {
             fov: 90_f32.to_radians(),
             ..default()
         });
+        camera.clear_color = ClearColorConfig::None;
     }
+
+    /* commands.spawn(MaterialMeshBundle {
+        mesh: asset_server.add(Cuboid::from_length(0.5).mesh().build()),
+        material: asset_server.add(LiquidMaterial {
+            base: StandardMaterial {
+                base_color_texture: Some(asset_server.load("textures/bricks.png")),
+                // emissive: LinearRgba::WHITE / 2.,
+                unlit: true,
+                alpha_mode: AlphaMode::Blend,
+                cull_mode: None,
+                ..default()
+            },
+            extension: LiquidMaterialExt::default(),
+        }),
+        // material: asset_server.add(SkyMaterial {
+        //     texture: asset_server.load("textures/bricks.png"),
+        //     speed: 1.,
+        // }),
+        transform: Transform::from_xyz(0., 5., 0.),
+        ..default()
+    }); */
+    // commands.spawn(MaterialMeshBundle::<StandardMaterial> {
+    //     mesh: meshes.add(Cuboid::from_length(0.5).mesh().build()),
+    //     material: asset_server.add(StandardMaterial {
+    //         base_color_texture: Some(asset_server.load("textures/bricks.png")),
+    //         // emissive: LinearRgba::WHITE / 2.,
+    //         unlit: true,
+    //         ..default()
+    //     }),
+    //     transform: Transform::from_xyz(0., 5., 0.),
+    //     ..default()
+    // });
 }
 
 fn write_config(server: Res<TrenchBroomServer>) {

@@ -99,6 +99,11 @@ pub struct TrenchBroomConfig {
     /// Spawner that gets run after an entity spawns brushes, regardless of classname.
     pub global_brush_spawners: Vec<fn(&mut World, Entity, &mut BrushSpawnView)>,
 
+    // TODO hook stack?
+    /// Called to apply a material to spawned brush geometry. (Default: [TrenchBroomConfig::default_material_application_hook])
+    #[default(Self::default_material_application_hook)]
+    pub material_application_hook: fn(StandardMaterial, &BrushMeshView, &mut World, &BrushSpawnView),
+
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub brush_mesh_asset_usages: RenderAssetUsages,
@@ -157,6 +162,17 @@ impl TrenchBroomConfig {
         trenchbroom_gltf_rotation_fix(world, entity);
 
         Ok(())
+    }
+
+    /// Adds the [StandardMaterial] to the entity.
+    pub fn default_material_application_hook(
+        material: StandardMaterial,
+        mesh_view: &BrushMeshView,
+        world: &mut World,
+        _view: &BrushSpawnView,
+    ) {
+        let handle = world.resource_mut::<Assets<StandardMaterial>>().add(material);
+        world.entity_mut(mesh_view.entity).insert(handle);
     }
 
     /// Gets the default value for the specified entity definition's specified property accounting for entity class hierarchy.

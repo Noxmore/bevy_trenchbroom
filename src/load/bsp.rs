@@ -4,6 +4,7 @@ use super::*;
 use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d, texture::ImageSampler}, utils::ConditionalSendFuture
 };
+use q1bsp::data::BspTexFlags;
 
 /// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
@@ -109,6 +110,7 @@ impl BspLoader {
                 embedded: textures.get(&exported_mesh.texture).cloned(),
                 name: exported_mesh.texture,
                 lightmap: lightmap.clone(),
+                special: exported_mesh.tex_flags != BspTexFlags::Normal,
             };
     
             meshes.push((texture, mesh));

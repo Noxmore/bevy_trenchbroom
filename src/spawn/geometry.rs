@@ -43,7 +43,7 @@ impl<'w> EntitySpawnView<'w> {
                     }
 
                     grouped_surfaces.into_iter().map(|(texture, polygons)| {
-                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None }, generate_mesh_from_brush_polygons(polygons.as_slice(), &self.server.config))
+                        (MapEntityGeometryTexture { name: texture.to_string(), embedded: None, lightmap: None, special: false }, generate_mesh_from_brush_polygons(polygons.as_slice(), &self.server.config))
                     }).collect()
                 }
             };
@@ -314,63 +314,70 @@ impl BrushSpawnSettings {
                     ..default()
                 };
 
-                let material = match &mesh_view.texture.embedded {
+                let mut material = match &mesh_view.texture.embedded {
                     Some(embedded) => {
-                        world.resource::<AssetServer>().add(StandardMaterial {
+                        StandardMaterial {
                             base_color_texture: Some(embedded.image_handle.clone()),
                             alpha_mode: embedded.alpha_mode,
                             ..default_material
-                        })
+                        }
                     },
                     None => {
                         let asset_server = world.resource::<AssetServer>();
                         
-                        view.server.material_cache
-                            .lock()
-                            .entry(mesh_view.texture.name.clone())
-                            .or_insert_with(|| {
-                                macro_rules! load_texture {
-                                    ($map:literal) => {{
-                                        let texture_path = format!(
-                                            concat!("{}/{}", $map, ".{}"),
-                                            view.server.config.texture_root.display(),
-                                            mesh_view.texture.name,
-                                            view.server.config.texture_extension
-                                        );
-                                        // TODO This is a lot of file system calls on the critical path, how can we offload this?
-                                        if view.server.config.assets_path.join(&texture_path).exists() {
-                                            Some(asset_server.load(texture_path))
-                                        } else {
-                                            None
-                                        }
-                                    }};
+                        // view.server.material_cache
+                        //     .lock()
+                        //     .entry(mesh_view.texture.name.clone())
+                        //     .or_insert_with(|| {
+                                
+                        //     })
+                        //     .clone()
+                        // TODO cache is hard because of different material types, do we need it?
+                        //      NOTE: it also makes having multiple maps loaded at once not really work
+                        //      I could use a Handle<Image> as a key
+
+                        macro_rules! load_texture {
+                            ($map:literal) => {{
+                                let texture_path = format!(
+                                    concat!("{}/{}", $map, ".{}"),
+                                    view.server.config.texture_root.display(),
+                                    mesh_view.texture.name,
+                                    view.server.config.texture_extension
+                                );
+                                // TODO This is a lot of file system calls on the critical path, how can we offload this?
+                                if view.server.config.assets_path.join(&texture_path).exists() {
+                                    Some(asset_server.load(texture_path))
+                                } else {
+                                    None
                                 }
-        
-                                let base_color_texture = load_texture!("");
-                                let normal_map_texture = load_texture!("_normal");
-                                let metallic_roughness_texture = load_texture!("_mr");
-                                let emissive_texture = load_texture!("_emissive");
-                                let depth_texture = load_texture!("_depth");
-        
-                                asset_server.add(StandardMaterial {
-                                    base_color_texture,
-                                    normal_map_texture,
-                                    metallic_roughness_texture,
-                                    emissive_texture,
-                                    depth_map: depth_texture,
-                                    ..default_material
-                                })
-                            })
-                            .clone()
+                            }};
+                        }
+
+                        let base_color_texture = load_texture!("");
+                        let normal_map_texture = load_texture!("_normal");
+                        let metallic_roughness_texture = load_texture!("_mr");
+                        let emissive_texture = load_texture!("_emissive");
+                        let depth_texture = load_texture!("_depth");
+
+                        StandardMaterial {
+                            base_color_texture,
+                            normal_map_texture,
+                            metallic_roughness_texture,
+                            emissive_texture,
+                            depth_map: depth_texture,
+                            ..default_material
+                        }
                     }
                 };
 
+                if mesh_view.texture.special {
+                    material.emissive_texture = material.base_color_texture.clone();
+                    material.emissive = LinearRgba::WHITE;
+                }
+
                 let mesh_handle = world.resource::<AssetServer>().add(mesh_view.mesh.clone());
-                world.entity_mut(mesh_view.entity).insert(PbrBundle {
-                    mesh: mesh_handle,
-                    material,
-                    ..default()
-                });
+                world.entity_mut(mesh_view.entity).insert((SpatialBundle::default(), mesh_handle));
+                (view.server.config.material_application_hook)(material, mesh_view, world, view);
             }
         })
     }
@@ -379,6 +386,7 @@ impl BrushSpawnSettings {
     pub fn with_lightmaps(self) -> Self {
         self.spawner(|world, _entity, view| {
             for mesh_view in &view.meshes {
+                if mesh_view.texture.special { continue }
                 let Some(lightmap) = &mesh_view.texture.lightmap else { continue };
                 
                 world.entity_mut(mesh_view.entity)
