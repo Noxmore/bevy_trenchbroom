@@ -31,8 +31,8 @@ fn fragment(
     @builtin(front_facing) is_front: bool,
 ) -> FragmentOutput {
     var in = in_;
-    in.uv += vec2<f32>(sin(material.seconds + in.uv.y * CYCLES + (CYCLES / 2)), sin(material.seconds + in.uv.x * CYCLES)) * vec2<f32>(MAGNITUDE);
-
+    in.uv += vec2f(sin(material.seconds + in.uv.y * CYCLES + (CYCLES / 2)), sin(material.seconds + in.uv.x * CYCLES)) * vec2f(MAGNITUDE);
+    
     var pbr_input = pbr_input_from_standard_material(in, is_front);
 
     pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);

@@ -5,27 +5,36 @@ use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, re
 use crate::*;
 
 /// Config for supporting quake special textures, such as animated textures and liquid.
-#[derive(Debug, Clone, SmartDefault)]
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct SpecialTexturesConfig {
-    /// Seconds per frame for special animated textures. (Default: 5 FPS)
+    /// Seconds per frame for animated textures. (Default: 5 FPS)
     #[default(1. / 5.)]
     pub texture_animation_speed: f32,
 
+    /// List of textures to made made invisible on map load.
     #[default(vec!["clip".s(), "skip".s()])]
     pub invisible_textures: Vec<String>,
+
+    /// Default quake sky material to use for BSP-loaded quake skies.
+    #[default(QuakeSkyMaterial::default)]
+    pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
 }
 
 pub(crate) struct SpecialTexturesPlugin;
 impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "liquid.wgsl");
-        embedded_asset!(app, "sky.wgsl");
+        embedded_asset!(app, "quake_sky.wgsl");
         
         app
             .add_plugins(MaterialPlugin::<LiquidMaterial>::default())
-            .add_plugins(MaterialPlugin::<SkyMaterial>::default())
+            .add_plugins(MaterialPlugin::<QuakeSkyMaterial>::default())
         
-            .add_systems(Update, (Self::animate_textures, Self::set_liquid_time))
+            .add_systems(Update, (
+                Self::animate_textures,
+                Self::set_liquid_time,
+                Self::set_sky_time,
+            ))
         ;
     }
 }
@@ -103,6 +112,14 @@ impl SpecialTexturesPlugin {
             material.extension.seconds = time.elapsed_seconds();
         }
     }
+    pub fn set_sky_time(
+        mut materials: ResMut<Assets<QuakeSkyMaterial>>,
+        time: Res<Time>,
+    ) {
+        for (_, material) in materials.iter_mut() {
+            material.seconds = time.elapsed_seconds();
+        }
+    }
 }
 impl TrenchBroomConfig {
     /// Retrieves the special textures config or panics.
@@ -113,7 +130,7 @@ impl TrenchBroomConfig {
     }
     
     /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
-    /// such as animated textures, liquids, invisible textures like clip and skip.
+    /// such as animated textures, skies, liquids, and invisible textures like clip and skip.
     pub fn special_textures(mut self, config: SpecialTexturesConfig) -> Self {
         self.special_textures = Some(config);
 
@@ -126,15 +143,17 @@ impl TrenchBroomConfig {
         });
 
         self.material_application_hook = |material, mesh_view, world, view| {
-            if mesh_view.texture.name.starts_with('*') {
-                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
-                world.entity_mut(mesh_view.entity).insert(handle);
-                return;
-            } else if mesh_view.texture.name.starts_with("sky") {
-                if let Some(texture) = material.base_color_texture {
-                    let handle = world.resource_mut::<Assets<SkyMaterial>>().add(SkyMaterial { texture, speed: 1. });
+            if let Some(config) = &view.server.config.special_textures {
+                if mesh_view.texture.name.starts_with('*') {
+                    let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
                     world.entity_mut(mesh_view.entity).insert(handle);
                     return;
+                } else if mesh_view.texture.name.starts_with("sky") {
+                    if let Some(texture) = material.base_color_texture {
+                        let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
+                        world.entity_mut(mesh_view.entity).insert(handle);
+                        return;
+                    }
                 }
             }
             
@@ -145,10 +164,12 @@ impl TrenchBroomConfig {
     }
 }
 
+/// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.
 pub type LiquidMaterial = ExtendedMaterial<StandardMaterial, LiquidMaterialExt>;
 
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone, Default)]
 pub struct LiquidMaterialExt {
+    /// Internal uniform for tracking time, set automatically.
     #[uniform(100)]
     pub seconds: f32,
 }
@@ -158,18 +179,38 @@ impl MaterialExtension for LiquidMaterialExt {
     }
 }
 
-#[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
-pub struct SkyMaterial {
+/// Material that emulates the Quake sky.
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, SmartDefault)]
+pub struct QuakeSkyMaterial {
+    /// The speed the foreground layer moves.
+    #[uniform(0)]
+    #[default(0.1)]
+    pub fg_speed: f32,
+    /// The speed the background layer moves.
+    #[uniform(0)]
+    #[default(0.05)]
+    pub bg_speed: f32,
+    /// Internal uniform for tracking time, set automatically.
+    #[uniform(0)]
+    #[default(0.)]
+    pub seconds: f32,
+    /// The scale of the textures.
+    #[uniform(0)]
+    #[default(2.)]
+    pub texture_scale: f32,
+    /// Scales the sphere before it is re-normalized, used to shape it.
+    #[uniform(0)]
+    #[default(vec3(1., 3., 1.))]
+    pub sphere_scale: Vec3,
+    
+    /// Must be twice as wide as it is tall. The left side is the foreground, where any pixels that are black will show the right side -- the background.
     #[texture(1)]
     #[sampler(2)]
     pub texture: Handle<Image>,
-
-    #[uniform(0)]
-    pub speed: f32,
 }
-impl Material for SkyMaterial {
+impl Material for QuakeSkyMaterial {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
-        "embedded://bevy_trenchbroom/sky.wgsl".into()
+        "embedded://bevy_trenchbroom/quake_sky.wgsl".into()
     }
 
     fn alpha_mode(&self) -> AlphaMode {

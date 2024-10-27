@@ -19,6 +19,7 @@ fn main() {
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AmbientLight::NONE)
 
         .add_plugins(TrenchBroomPlugin::new(
@@ -79,7 +80,7 @@ fn main() {
 fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut projection_query: Query<(&mut Projection, &mut Camera)>,
+    mut projection_query: Query<&mut Projection>,
 ) {
     commands.spawn(MapBundle {
         map: asset_server.load("maps/ad_crucial.bsp"), // ad_crucial
@@ -87,12 +88,11 @@ fn setup_scene(
     });
 
     // Wide FOV
-    for (mut projection, mut camera) in &mut projection_query {
+    for mut projection in &mut projection_query {
         *projection = Projection::Perspective(PerspectiveProjection {
             fov: 90_f32.to_radians(),
             ..default()
         });
-        camera.clear_color = ClearColorConfig::None;
     }
 
     /* commands.spawn(MaterialMeshBundle {
