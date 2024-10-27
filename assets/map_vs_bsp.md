@@ -1,14 +1,14 @@
 # Pros and cons of using BSPs over .map files
 ### Pros
-- Optimised Meshes: You don't have to manually set non-visible faces' texture to empty, *and* non-visible *parts* of faces will also be cut out, further reducing overdraw.
-- Lightmaps: You get pre-computed lighting and global illumination for free! Just as long as you're fine foregoing sharp shadows
+- Optimised Meshes: You don't have to manually set non-visible faces' texture to empty. Non-visible parts of faces will also be cut out, further reducing overdraw.
+- Lightmaps: You get pre-computed lighting and global illumination for free! The lightmap resolution is 16 TrenchBroom units per luxel, but if you want sharp shadows, you can also spawn normal lights along with the lightmap.
 - Embedded Textures: You can mix and match using loose files and embedded textures using WADs. The only caveat is that WADs must use the palette defined in your assets folder. (See TrenchBroomConfig::texture_pallette docs)
-- Vis data
+- Vis data: TODO
 
 ### Cons
 - Higher iteration time: Compiling is an extra step before you get to play on your map, though with TrenchBroom's inbuilt compiler utility, it's not that bad.
-- Lightmaps are static: If your scene is highly dynamic, you probably won't want lightmaps, or 
+- Lightmaps are static: If your scene is highly dynamic, you probably won't want lightmaps. You
 
-`bevy_trenchbroom` supports loading BSP2 files with 
+`bevy_trenchbroom` supports loading BSP2 files with [q1bsp](https://github.com/Noxmore/q1bsp).
 
 NOTE: At the time of writing, the latest version of ericw-tools (0.18.1) has a bug relating to writing loose textures into the BSP, so if it hasn't updated yet, [use the master branch](https://github.com/ericwa/ericw-tools/tree/brushbsp?tab=readme-ov-file#compiling).
