@@ -44,8 +44,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
         .entity_definitions(entity_definitions! {
             /// World Entity
             Solid worldspawn {} |world, entity, view| {
-                // This is the code to spawn the entity into the world, note that the TrenchBroomConfig resource is not available in this scope
-                // If you need to access the TrenchBroomConfig, access it via view.tb_config
+                // If you need to access the TrenchBroomConfig, access it via view.server.config
                 view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
                 // Here, we also call smooth_by_default_angle(), which smooths the normals of connected surfaces curving less than a default threshold
             }

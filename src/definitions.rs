@@ -45,7 +45,7 @@ use crate::*;
 /// } => {
 ///     // The closure arguments above give you exclusive access to the Bevy world,
 ///     // the Bevy entity this TrenchBroom entity is being spawned into,
-///     // and a view into the the TrenchBroom entity (as well as the current TrenchBroomConfig).
+///     // and a view into the the TrenchBroom entity (as well as the current TrenchBroomServer, which include TrenchBroomConfig).
 ///     // With this, you can get properties from the TrenchBroom entity with `view.get(key)`.
 /// }
 /// ```
