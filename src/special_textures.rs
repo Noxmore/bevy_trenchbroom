@@ -4,22 +4,6 @@ use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, re
 
 use crate::*;
 
-/// Config for supporting quake special textures, such as animated textures and liquid.
-#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
-pub struct SpecialTexturesConfig {
-    /// Seconds per frame for animated textures. (Default: 5 FPS)
-    #[default(1. / 5.)]
-    pub texture_animation_speed: f32,
-
-    /// List of textures to made made invisible on map load.
-    #[default(vec!["clip".s(), "skip".s()])]
-    pub invisible_textures: Vec<String>,
-
-    /// Default quake sky material to use for BSP-loaded quake skies.
-    #[default(QuakeSkyMaterial::default)]
-    pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
-}
-
 pub(crate) struct SpecialTexturesPlugin;
 impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
@@ -121,6 +105,57 @@ impl SpecialTexturesPlugin {
         }
     }
 }
+
+/// Config for supporting quake special textures, such as animated textures and liquid.
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
+pub struct SpecialTexturesConfig {
+    /// Seconds per frame for animated textures. (Default: 5 FPS)
+    #[default(1. / 5.)]
+    pub texture_animation_speed: f32,
+
+    /// List of textures to made made invisible on map load.
+    #[default(vec!["clip".s(), "skip".s()])]
+    pub invisible_textures: Vec<String>,
+
+    /// Default quake sky material to use for BSP-loaded quake skies.
+    #[default(QuakeSkyMaterial::default)]
+    pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
+}
+impl SpecialTexturesConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds a new invisible texture.
+    pub fn invisible_texture(mut self, texture: impl ToString) -> Self {
+        self.invisible_textures.push(texture.to_string());
+        self
+    }
+
+    pub fn default_material_application_hook(
+        material: StandardMaterial,
+        mesh_view: &BrushMeshView,
+        world: &mut World,
+        view: &BrushSpawnView,
+    ) {
+        if let Some(config) = &view.server.config.special_textures {
+            if mesh_view.texture.name.starts_with('*') {
+                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
+                world.entity_mut(mesh_view.entity).insert(handle);
+                return;
+            } else if mesh_view.texture.name.starts_with("sky") {
+                if let Some(texture) = material.base_color_texture {
+                    let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
+                    world.entity_mut(mesh_view.entity).insert(handle);
+                    return;
+                }
+            }
+        }
+        
+        TrenchBroomConfig::default_material_application_hook(material, mesh_view, world, view)
+    }
+}
+
 impl TrenchBroomConfig {
     /// Retrieves the special textures config or panics.
     #[inline]
@@ -142,23 +177,7 @@ impl TrenchBroomConfig {
             }
         });
 
-        self.material_application_hook = |material, mesh_view, world, view| {
-            if let Some(config) = &view.server.config.special_textures {
-                if mesh_view.texture.name.starts_with('*') {
-                    let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
-                    world.entity_mut(mesh_view.entity).insert(handle);
-                    return;
-                } else if mesh_view.texture.name.starts_with("sky") {
-                    if let Some(texture) = material.base_color_texture {
-                        let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
-                        world.entity_mut(mesh_view.entity).insert(handle);
-                        return;
-                    }
-                }
-            }
-            
-            TrenchBroomConfig::default_material_application_hook(material, mesh_view, world, view)
-        };
+        self.material_application_hook = SpecialTexturesConfig::default_material_application_hook;
 
         self
     }

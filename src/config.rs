@@ -143,19 +143,27 @@ impl TrenchBroomConfig {
     }
 
     /// Adds transform via [MapEntityPropertiesView::get_transform], and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    /// 
+    /// If the entity is a brush entity, no rotation is applied.
     pub fn default_global_spawner(
         world: &mut World,
         entity: Entity,
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
-        let classname = view.map_entity.classname()?.to_string();
+        let classname = view.map_entity.classname()?.s();
+
+        let mut transform = view.get_transform();
+        if view.server.config.get_definition(&classname)?.class_type == EntDefClassType::Solid {
+            transform.rotation = Quat::IDENTITY;
+        }
+        
         world.entity_mut(entity).insert((
             Name::new(
                 view.get::<String>("targetname")
                     .map(|name| format!("{classname} ({name})"))
                     .unwrap_or(classname),
             ),
-            view.get_transform(),
+            transform,
             GlobalTransform::default(),
         ));
 

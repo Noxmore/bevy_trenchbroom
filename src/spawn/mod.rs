@@ -219,19 +219,16 @@ impl<'w> EntitySpawnView<'w> {
         })
     }
 
-    /// Extracts a transform from this entity using the properties `angles`, `origin`, and `scale`.
+    /// Extracts a transform from this entity using the properties `angles`, `mangle`, or `angle` for rotation, `origin` for translation, and `scale` for scale.
     /// If you are not using those for your transform, you probably shouldn't use this function.
     pub fn get_transform(&self) -> Transform {
-        let rotation = match self.get::<Vec3>("angles") {
-            Ok(rot) => Quat::from_euler(
-                // Honestly, i don't know why this works, i got here through hours of trial and error
-                EulerRot::default(),
-                (rot.y - 90.).to_radians(),
-                -rot.x.to_radians(),
-                -rot.z.to_radians(),
-            ),
-            Err(_) => Quat::default(),
-        };
+        let rotation = self.get::<Vec3>("angles").map(angles_to_quat)
+            .or_else(|_| self.get::<Vec3>("mangle")
+            // According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
+            // “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
+            .map(if self.map_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {mangle_to_quat} else {angles_to_quat}))
+            .or_else(|_| self.get::<f32>("angle").map(angle_to_quat))
+            .unwrap_or_default();
 
         Transform {
             translation: self.server.config.to_bevy_space(self

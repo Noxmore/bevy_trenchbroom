@@ -24,7 +24,7 @@ impl MapEntity {
 }
 
 /// The geometry that might be stored in a [MapEntity].
-#[derive(Reflect, Debug, Clone, Serialize, Deserialize)]
+#[derive(Reflect, Clone, Serialize, Deserialize)]
 pub enum MapEntityGeometry {
     /// Raw brush data that still needs to be computed into meshes.
     Map(Vec<Brush>),
@@ -37,6 +37,14 @@ pub enum MapEntityGeometry {
 impl Default for MapEntityGeometry {
     fn default() -> Self {
         Self::Map(Vec::new())
+    }
+}
+impl fmt::Debug for MapEntityGeometry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Map(brushes) => write!(f, "Map(... len: {})", brushes.len()),
+            Self::Bsp(meshes) => write!(f, "Bsp(... len: {})", meshes.len()),
+        }
     }
 }
 

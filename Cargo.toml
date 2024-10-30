@@ -34,7 +34,7 @@ toml = "0.8"
 disjoint-sets = "0.4.2"
 q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "7f5ecbb" }
 # q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" }
-nil = "0.13.0"
+nil = "0.13.1"
 
 [dev-dependencies.bevy]
 version = "0.14"
