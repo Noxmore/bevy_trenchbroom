@@ -1,6 +1,7 @@
 pub(crate) use bevy::math::*;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
+pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
 pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
@@ -14,7 +15,7 @@ pub(crate) use q1bsp::prelude::*;
 pub use anyhow;
 pub use indexmap;
 pub use toml;
-pub use q1bsp::{Palette, QUAKE_PALETTE};
+pub use q1bsp::{Palette, QUAKE_PALETTE, data::{LightmapStyle, Lightmaps}};
 
 pub use crate::{
     brush::*,
@@ -29,5 +30,6 @@ pub use crate::{
     spawn::*,
     util::*,
     special_textures::*,
+    bsp_lighting::*,
     *,
 };

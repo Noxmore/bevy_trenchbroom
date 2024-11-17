@@ -357,7 +357,7 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
     //     -angles.x.to_radians(),
     //     -angles.z.to_radians(),
     // )
-    let yaw = Quat::from_rotation_y((angles.y - 90.).to_radians());
+    let yaw = Quat::from_rotation_y((angles.y - 90.).to_radians()); // We must be east-pointing
     let pitch = Quat::from_rotation_x(-angles.x.to_radians());
     let roll = Quat::from_rotation_z(-angles.z.to_radians());
     yaw * pitch * roll
@@ -368,7 +368,7 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
 /// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”.
 #[inline]
 pub fn mangle_to_quat(mangle: Vec3) -> Quat {
-    let yaw = Quat::from_rotation_y((mangle.x - 90.).to_radians());
+    let yaw = Quat::from_rotation_y((mangle.x - 90.).to_radians()); // We must be east-pointing
     let pitch = Quat::from_rotation_x(mangle.y.to_radians());
     let roll = Quat::from_rotation_z(-mangle.z.to_radians());
     yaw * pitch * roll

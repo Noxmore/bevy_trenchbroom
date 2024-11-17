@@ -31,7 +31,7 @@ pub struct TrenchBroomConfig {
     #[default(vec![MapFileFormat::Valve])]
     pub file_formats: Vec<MapFileFormat>,
     /// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
-    #[builder(skip)] // bevy_trenchbroom currently *only* support loose files
+    #[builder(skip)] // bevy_trenchbroom currently *only* supports loose files
     package_format: AssetPackageFormat,
 
     /// The root directory to look for textures in the [assets_path](Self::assets_path). (Default: "textures")
@@ -90,6 +90,20 @@ pub struct TrenchBroomConfig {
     #[builder(skip)]
     pub special_textures: Option<SpecialTexturesConfig>,
 
+    /// Provides animation for different lightmap styles.
+    /// 
+    /// See docs for [LightmapStyle] and [LightmapAnimator].
+    /// 
+    /// (Default: TODO)
+    #[default(HashMap::from([
+        (LightmapStyle(0), LightmapAnimator::Function(|_| [1.; 3])),
+        // (LightmapStyle(1), LightmapAnimator::Function(|_| [fastrand::f32(); 3])),
+        (LightmapStyle(1), LightmapAnimator::Function(|t| [t.sin().abs() / 1.5 + 0.5; 3])),
+        // (LightmapStyle(1), LightmapAnimator::Function(|t| [t.sin().abs(), (t * 2.).sin().abs(), (t * 3.).sin().abs()])),
+        (LightmapStyle(2), LightmapAnimator::Function(|t| [(t * 2.).sin(); 3])),
+    ]))]
+    pub lightmap_animators: HashMap<LightmapStyle, LightmapAnimator>,
+
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
     /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
@@ -108,7 +122,7 @@ pub struct TrenchBroomConfig {
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub brush_mesh_asset_usages: RenderAssetUsages,
 
-    /// Whether BSP loaded images (textures and lightmaps) are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+    /// Whether BSP loaded textures are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub embedded_textures_asset_usages: RenderAssetUsages,
 }
@@ -222,6 +236,24 @@ impl TrenchBroomConfig {
     /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
     pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
         vec.z_up_to_y_up() / self.scale as f64
+    }
+}
+
+/// Provides the animation of animated lightmaps.
+#[derive(Debug, Clone)]
+pub enum LightmapAnimator {
+    /// Function that takes in the current time in seconds, and outputs a multiplier for the R, G, and B channels respectively.
+    Function(fn(f32) -> [f32; 3]),
+    /// A cubic curve that the current time in seconds is passed to to provide a color multiplier.
+    Curve(CubicCurve<f32>),
+}
+impl LightmapAnimator {
+    #[must_use]
+    pub fn sample(&self, seconds: f32) -> [f32; 3] {
+        match self {
+            Self::Function(f) => f(seconds),
+            Self::Curve(curve) => [curve.position(seconds); 3],
+        }
     }
 }
 

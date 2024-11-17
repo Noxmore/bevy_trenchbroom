@@ -117,9 +117,11 @@ pub struct SpecialTexturesConfig {
     #[default(vec!["clip".s(), "skip".s()])]
     pub invisible_textures: Vec<String>,
 
-    /// Default quake sky material to use for BSP-loaded quake skies.
     #[default(QuakeSkyMaterial::default)]
     pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
+
+    #[default(LiquidMaterialExt::default)]
+    pub default_liquid_material: fn() -> LiquidMaterialExt,
 }
 impl SpecialTexturesConfig {
     pub fn new() -> Self {
@@ -140,7 +142,7 @@ impl SpecialTexturesConfig {
     ) {
         if let Some(config) = &view.server.config.special_textures {
             if mesh_view.texture.name.starts_with('*') {
-                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: LiquidMaterialExt::default() });
+                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: (config.default_liquid_material)() });
                 world.entity_mut(mesh_view.entity).insert(handle);
                 return;
             } else if mesh_view.texture.name.starts_with("sky") {
@@ -186,8 +188,15 @@ impl TrenchBroomConfig {
 /// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.
 pub type LiquidMaterial = ExtendedMaterial<StandardMaterial, LiquidMaterialExt>;
 
-#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, Default)]
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone, SmartDefault)]
 pub struct LiquidMaterialExt {
+    #[uniform(100)]
+    #[default(0.1)]
+    pub magnitude: f32,
+    #[uniform(100)]
+    #[default(PI)]
+    pub cycles: f32,
+    
     /// Internal uniform for tracking time, set automatically.
     #[uniform(100)]
     pub seconds: f32,

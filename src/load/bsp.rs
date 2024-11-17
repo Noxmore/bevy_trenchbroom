@@ -2,7 +2,7 @@ use crate::*;
 use super::*;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d, texture::ImageSampler}, utils::ConditionalSendFuture
+    asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d}, utils::ConditionalSendFuture
 };
 use q1bsp::data::BspTexFlags;
 
@@ -39,6 +39,9 @@ impl AssetLoader for BspLoader {
             let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
             
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
+            // use pre-computed one
+            // let mut aabb = Aabb::enclosing(data.vertices.iter().map(|x| Vec3::from_array(x.to_array())));
+            // data.
 
             let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
                 .into_iter()
@@ -82,20 +85,54 @@ impl BspLoader {
     fn convert_q1bsp_mesh(&self, data: &BspData, model_idx: usize, textures: &HashMap<String, BspEmbeddedTexture>, load_context: &mut LoadContext) -> Vec<(MapEntityGeometryTexture, Mesh)> {
         let output = data.mesh_model(model_idx);
         let mut meshes = Vec::with_capacity(output.meshes.len());
-    
-        let lightmap = output.lightmap_atlas.map(|atlas| {
-            // Convert lightmap_atlas grid into image
-            let mut image = rgb_image_to_bevy_image(&atlas, &self.server, false);
-    
-            image.sampler = ImageSampler::linear();
-    
-            // TODO
-            // image.clone().try_into_dynamic().unwrap().save_with_format(format!("target/lightmap_{model_idx}.png"), image::ImageFormat::Png).ok();
-    
-            load_context.add_labeled_asset(format!("model_{model_idx}_lightmap"), image)
+
+        const WRITE_DEBUG_FILES: bool = false;
+
+        let atlas_size = output.lightmap_atlas.as_ref().map(|atlas| atlas.size().to_array());
+        let lightmap: Option<Handle<AnimatedLightmap>> = output.lightmap_atlas.map(|images| {
+            if WRITE_DEBUG_FILES {
+                fs::create_dir("target/lightmaps").ok();
+                for (style, image) in images.map() {
+                    image.clone().save_with_format(format!("target/lightmaps/{model_idx}_{style}.png"), image::ImageFormat::Png).ok();
+                }
+            }
+            // let atlas_output = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas"), if let Some(image) = output.lightmap_atlas.get(&LightmapStyle::NORMAL) {
+            //     rgb_image_to_bevy_image(image, &self.server, false)
+            // } else { new_lightmap_image(width, height) });
+            let atlas_output = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas"), new_lightmap_image(images.size().x, images.size().y));
+            /* let images = images.map().iter().map(|(style, image)| {
+                (*style, load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas_{}", style.0), rgb_image_to_bevy_image(image, &self.server, false)))
+            }).collect(); */
+            load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_animator"), AnimatedLightmap {
+                output: atlas_output,
+                images,
+            })
         });
+
     
-        for exported_mesh in output.meshes {
+        if WRITE_DEBUG_FILES {
+            fs::create_dir("target/uvs").ok();
+        }
+        for (mesh_idx, exported_mesh) in output.meshes.into_iter().enumerate() {
+            if WRITE_DEBUG_FILES {
+                if let Some([width, height]) = atlas_size {
+                    let size_factor = 4.;
+                    let atlas_size = q1bsp::glam::uvec2(width, height).as_vec2() * size_factor;
+                    let uvs = exported_mesh.lightmap_uvs.as_ref().unwrap();
+                    let mut image = image::RgbImage::from_pixel(width * size_factor as u32, height * size_factor as u32, image::Rgb([0; 3]));
+    
+                    for tri in &exported_mesh.indices {
+                        for (i, idx) in tri.iter().copied().enumerate() {
+                            let current = uvs[idx as usize] * atlas_size;
+                            let next = uvs[tri[(i + 1) % 3] as usize] * atlas_size;
+                            imageproc::drawing::draw_line_segment_mut(&mut image, (current.x, current.y), (next.x, next.y), image::Rgb([255, 0, 0]));
+                        }
+                    }
+    
+                    image.save_with_format(format!("target/uvs/{model_idx}_{mesh_idx}.png"), image::ImageFormat::Png).ok();
+                }
+            }
+            
             let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
     
             mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3(&self.server)).collect_vec());
@@ -105,6 +142,7 @@ impl BspLoader {
                 mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
             }
             mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
+            // image::RgbImage::
     
             let texture = MapEntityGeometryTexture {
                 embedded: textures.get(&exported_mesh.texture).cloned(),

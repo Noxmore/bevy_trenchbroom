@@ -16,7 +16,6 @@ bevy = { version = "0.14", default-features = false, features = [
     "bevy_asset",
     "bevy_render",
     "bevy_pbr",
-    "serialize",
 ] }
 bevy_reflect = { version = "0.14", features = ["documentation"] }
 bevy_rapier3d = { version = "0.27", optional = true }
@@ -29,12 +28,14 @@ itertools = "0.13"
 json = "0.12"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
 serde = { version = "1.0", features = ["derive"] } # serde isn't optional because MaterialProperties requires to be deserialized
-thiserror = "1.0"
+thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "7f5ecbb" }
-# q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" }
-nil = "0.13.1"
+# q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "9c3bbd9" }
+q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
+nil = "0.13"
+imageproc = "0.25.0" # TODO tmp
+fastrand = "2.2.0" # TODO tmp
 
 [dev-dependencies.bevy]
 version = "0.14"

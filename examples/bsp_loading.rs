@@ -29,6 +29,9 @@ fn main() {
                     Solid worldspawn {} |world, entity, view| {
                         // The order here matters, we want to smooth out curved surfaces *before* spawning the mesh with `pbr_mesh`.
                         view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps());
+                        // bevy::pbr::irradiance_volume
+                        // bevy::pbr::environment_map
+                        // Light
 
                         /* if let Ok(fog_settings) = (|| -> Result<FogSettings, MapEntitySpawnError> {
                             let fog = view.get::<Vec4>("fog");
@@ -115,19 +118,28 @@ fn main() {
 fn setup_scene(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut projection_query: Query<&mut Projection>,
+    mut projection_query: Query<(Entity, &mut Projection)>,
 ) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/ad_crucial.bsp"), // ad_crucial
+        map: asset_server.load("maps/example.bsp"),
         ..default()
     });
 
     // Wide FOV
-    for mut projection in &mut projection_query {
+    for (entity, mut projection) in &mut projection_query {
         *projection = Projection::Perspective(PerspectiveProjection {
             fov: 90_f32.to_radians(),
             ..default()
         });
+
+        let gi_tester = commands.spawn(PbrBundle {
+            mesh: asset_server.add(Sphere::new(0.1).mesh().build()),
+            material: asset_server.add(StandardMaterial::default()),
+            transform: Transform::from_xyz(0., -0.2, -0.3),
+            ..default()
+        }).id();
+
+        commands.entity(entity).add_child(gi_tester);
     }
 
     /* commands.spawn(MaterialMeshBundle {

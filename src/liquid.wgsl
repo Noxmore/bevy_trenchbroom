@@ -16,14 +16,13 @@
 #endif
 
 struct LiquidMaterial {
+    magnitude: f32,
+    cycles: f32,
+    
     seconds: f32,
 }
 
 @group(2) @binding(100) var<uniform> material: LiquidMaterial;
-
-// TODO Should these be uniforms?
-const MAGNITUDE: f32 = 0.05;
-const CYCLES: f32 = 6.28;
 
 @fragment
 fn fragment(
@@ -31,7 +30,7 @@ fn fragment(
     @builtin(front_facing) is_front: bool,
 ) -> FragmentOutput {
     var in = in_;
-    in.uv += vec2f(sin(material.seconds + in.uv.y * CYCLES + (CYCLES / 2)), sin(material.seconds + in.uv.x * CYCLES)) * vec2f(MAGNITUDE);
+    in.uv += vec2f(sin(material.seconds + in.uv.y * material.cycles + (material.cycles / 2)), sin(material.seconds + in.uv.x * material.cycles)) * vec2f(material.magnitude);
     
     var pbr_input = pbr_input_from_standard_material(in, is_front);
 

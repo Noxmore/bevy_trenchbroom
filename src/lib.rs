@@ -13,6 +13,7 @@ pub mod prelude;
 pub mod spawn;
 pub mod util;
 pub mod special_textures;
+pub mod bsp_lighting;
 
 pub(crate) use prelude::*;
 
@@ -34,6 +35,7 @@ impl Plugin for TrenchBroomPlugin {
         }
         
         app
+            .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset::<Map>()
@@ -83,6 +85,7 @@ pub struct Map {
     pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
     #[reflect(ignore)]
     pub bsp_data: Option<BspData>,
+    pub irradiance_volume: Option<(IrradianceVolume, Transform)>,
 }
 
 impl Map {

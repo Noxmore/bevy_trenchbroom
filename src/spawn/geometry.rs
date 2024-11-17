@@ -384,13 +384,18 @@ impl BrushSpawnSettings {
 
     /// Inserts lightmaps if available.
     pub fn with_lightmaps(self) -> Self {
-        self.spawner(|world, _entity, view| {
+        self.spawner(|world, entity, view| {
             for mesh_view in &view.meshes {
                 if mesh_view.texture.special { continue }
-                let Some(lightmap) = &mesh_view.texture.lightmap else { continue };
+                let Some(animated_lightmap_handle) = &mesh_view.texture.lightmap else { continue };
+                let Some(animated_lightmap) = world.resource::<Assets<AnimatedLightmap>>().get(animated_lightmap_handle) else {
+                    error!("Animated lightmap for entity {entity} (index {:?}) doesn't exist!", view.map_entity.ent_index);
+                    continue;
+                };
+                let lightmap_handle = animated_lightmap.output.clone();
                 
                 world.entity_mut(mesh_view.entity)
-                    .insert(Lightmap { image: lightmap.clone(), uv_rect: Rect::new(0., 0., 1., 1.) });
+                    .insert(Lightmap { image: lightmap_handle.clone(), uv_rect: Rect::new(0., 0., 1., 1.) });
             }
         })
     }
