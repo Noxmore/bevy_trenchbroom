@@ -121,7 +121,7 @@ fn setup_scene(
     mut projection_query: Query<(Entity, &mut Projection)>,
 ) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/example.bsp"),
+        map: asset_server.load("maps/ad_crucial.bsp"),
         ..default()
     });
 

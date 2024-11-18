@@ -2,7 +2,7 @@ use crate::*;
 use super::*;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::Extent3d}, utils::ConditionalSendFuture
+    asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}, settings::WgpuFeatures}, utils::ConditionalSendFuture
 };
 use q1bsp::data::BspTexFlags;
 
@@ -99,13 +99,31 @@ impl BspLoader {
             // let atlas_output = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas"), if let Some(image) = output.lightmap_atlas.get(&LightmapStyle::NORMAL) {
             //     rgb_image_to_bevy_image(image, &self.server, false)
             // } else { new_lightmap_image(width, height) });
-            let atlas_output = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas"), new_lightmap_image(images.size().x, images.size().y));
-            /* let images = images.map().iter().map(|(style, image)| {
-                (*style, load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas_{}", style.0), rgb_image_to_bevy_image(image, &self.server, false)))
-            }).collect(); */
+            let output = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas"), new_lightmap_output_image(images.size().x, images.size().y));
+
+            let mut input_data = Vec::with_capacity(images.size().element_product() as usize * images.map().len());
+
+            for (_style, image) in images.map() {
+                for rgb in image.chunks_exact(3) {
+                    input_data.extend(rgb);
+                    input_data.push(255);
+                }
+            }
+            
+            // let images = images.map().iter().map(|(style, image)| {
+            //     (*style, load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas_{}", style.0), rgb_image_to_bevy_image(image, &self.server, false)))
+            // }).collect();
+            let input = load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_atlas_input"), Image::new(
+                Extent3d { width: images.size().x, height: images.size().y, depth_or_array_layers: images.map().len() as u32 },
+                TextureDimension::D3,
+                input_data,
+                TextureFormat::Rgba8Unorm,
+                RenderAssetUsages::RENDER_WORLD,
+            ));
             load_context.add_labeled_asset(format!("model_{model_idx}_lightmap_animator"), AnimatedLightmap {
-                output: atlas_output,
-                images,
+                output,
+                input,
+                layers: images.map().len() as u32,
             })
         });
 
