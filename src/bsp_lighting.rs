@@ -1,6 +1,6 @@
-use std::{num::{NonZeroU32, NonZeroU64}, ops::Deref};
+use std::num::NonZeroU64;
 
-use bevy::{asset::embedded_asset, render::{extract_resource::{ExtractResource, ExtractResourcePlugin}, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::RenderDevice, texture::{GpuImage, ImageSampler}, Render, RenderApp, RenderSet}};
+use bevy::{asset::embedded_asset, render::{extract_resource::ExtractResource, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::RenderDevice, texture::{GpuImage, ImageSampler}, Render, RenderApp, RenderSet}};
 
 use crate::*;
 
@@ -28,6 +28,7 @@ impl Plugin for BspLightingPlugin {
 
         let mut render_graph = render_app.world_mut().resource_mut::<RenderGraph>();
         render_graph.add_node(AnimatedLightmapsLabel, AnimatedLightmapsNode);
+        
         render_graph.add_node_edge(AnimatedLightmapsLabel, bevy::render::graph::CameraDriverLabel);
     }
 
@@ -170,7 +171,7 @@ pub struct AnimatedLightmapPipeline {
     texture_bind_group_layout: BindGroupLayout,
     pipeline: CachedRenderPipelineId,
     sampler: Sampler,
-    // tmp_vertex_buffer: Buffer,
+    // tmp_vertex_buffer: Buffer, // TODO
 }
 impl FromWorld for AnimatedLightmapPipeline {
     fn from_world(world: &mut World) -> Self {

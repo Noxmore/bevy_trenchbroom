@@ -132,6 +132,7 @@ fn setup_scene(
             ..default()
         });
 
+        // TODO tmp
         let gi_tester = commands.spawn(PbrBundle {
             mesh: asset_server.add(Sphere::new(0.1).mesh().build()),
             material: asset_server.add(StandardMaterial::default()),
