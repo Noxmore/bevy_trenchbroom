@@ -179,7 +179,11 @@ fn rgb_image_to_bevy_image(image: &image::RgbImage, tb_server: &TrenchBroomServe
         Extent3d { width: image.width(), height: image.height(), depth_or_array_layers: 1 },
         bevy::render::render_resource::TextureDimension::D2,
         image.pixels().map(|pixel| {
-            [pixel[0], pixel[1], pixel[2], if enable_alphatest && pixel.0 == tb_server.config.texture_pallette.1.colors[255] { 0 } else { 255 }]
+            if enable_alphatest && pixel.0 == tb_server.config.texture_pallette.1.colors[255] {
+                [0; 4]
+            } else {
+                [pixel[0], pixel[1], pixel[2], 255]
+            }
         }).flatten().collect(),
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
         tb_server.config.embedded_textures_asset_usages, // TODO read from config
