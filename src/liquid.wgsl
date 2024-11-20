@@ -1,6 +1,7 @@
 #import bevy_pbr::{
     pbr_fragment::pbr_input_from_standard_material,
     pbr_functions::alpha_discard,
+    mesh_view_bindings::globals,
 }
 
 #ifdef PREPASS_PIPELINE
@@ -18,8 +19,6 @@
 struct LiquidMaterial {
     magnitude: f32,
     cycles: f32,
-    
-    seconds: f32,
 }
 
 @group(2) @binding(100) var<uniform> material: LiquidMaterial;
@@ -30,7 +29,7 @@ fn fragment(
     @builtin(front_facing) is_front: bool,
 ) -> FragmentOutput {
     var in = in_;
-    in.uv += vec2f(sin(material.seconds + in.uv.y * material.cycles + (material.cycles / 2)), sin(material.seconds + in.uv.x * material.cycles)) * vec2f(material.magnitude);
+    in.uv += vec2f(sin(globals.time + in.uv.y * material.cycles + (material.cycles / 2)), sin(globals.time + in.uv.x * material.cycles)) * vec2f(material.magnitude);
     
     var pbr_input = pbr_input_from_standard_material(in, is_front);
 

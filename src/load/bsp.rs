@@ -53,7 +53,7 @@ impl AssetLoader for BspLoader {
                 })
                 .collect();
 
-            let lightmap = match data.compute_lightmap_atlas([0; 3]) {
+            let lightmap = match data.compute_lightmap_atlas(self.server.config.compute_lightmap_settings) {
                 Ok(atlas) => {
                     // TODO tmp
                     const WRITE_DEBUG_FILES: bool = false;
@@ -70,12 +70,14 @@ impl AssetLoader for BspLoader {
                     let output = load_context.add_labeled_asset("lightmap_atlas".s(), new_lightmap_output_image(atlas.images.size().x, atlas.images.size().y));
         
                     let mut input_data = Vec::with_capacity(atlas.images.size().element_product() as usize * atlas.images.inner().len());
+                    let mut styles = Vec::new();
         
-                    for (_style, image) in atlas.images.inner() {
+                    for (style, image) in atlas.images.inner() {
                         for rgb in image.chunks_exact(3) {
                             input_data.extend(rgb);
                             input_data.push(255);
                         }
+                        styles.push(*style);
                     }
                     
                     // let images = images.map().iter().map(|(style, image)| {
@@ -92,7 +94,7 @@ impl AssetLoader for BspLoader {
                     let handle = load_context.add_labeled_asset("lightmap_atlas_animator".s(), AnimatedLightmap {
                         output,
                         input,
-                        layers: atlas.images.inner().len() as u32,
+                        styles,
                     });
 
                     Some((handle, atlas))
@@ -101,7 +103,7 @@ impl AssetLoader for BspLoader {
                 Err(err) => return Err(io::Error::other(err)),
             };
 
-            let qmap = parse_qmap(data.entities.as_bytes()).map_err(add_msg!("Parsing entities"))?;
+            let qmap = parse_qmap(data.entities.as_bytes()).map_err(io_add_msg!("Parsing entities"))?;
             let mut map = qmap_to_map(qmap, load_context.path().to_string_lossy().into(), &self.server.config, |map_entity| {
                 if map_entity.classname().map_err(invalid_data)? == "worldspawn" {
                     map_entity.geometry = MapEntityGeometry::Bsp(self.convert_q1bsp_mesh(&data, 0, &embedded_textures, &lightmap));

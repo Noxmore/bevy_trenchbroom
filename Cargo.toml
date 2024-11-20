@@ -31,11 +31,13 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "f12b322" }
+q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "e2c52ab" }
 # q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
 nil = "0.13"
 imageproc = "0.25.0" # TODO tmp
 fastrand = "2.2.0" # TODO tmp
+# bytemuck = "1.20.0"
+# encase = { version = "0.10.0", features = ["glam"] }
 
 [dev-dependencies.bevy]
 version = "0.14"

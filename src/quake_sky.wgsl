@@ -1,10 +1,10 @@
 #import bevy_pbr::forward_io::VertexOutput
 #import bevy_pbr::pbr_fragment::pbr_input_from_vertex_output
+#import bevy_pbr::mesh_view_bindings::globals
 
 struct QuakeSkyMaterial {
     fg_speed: f32,
     bg_speed: f32,
-    seconds: f32,
     texture_scale: f32,
     sphere_scale: vec3f,
 }
@@ -31,7 +31,7 @@ fn fragment(
     let uv = vec2f(dot(normal, vec3f(0, 0, 1)), dot(normal, vec3f(1, 0, 0)));
 
     // Starting offset so we don't see negative offset in the sky
-    let scroll = material.seconds + material.texture_scale; // TODO
+    let scroll = globals.time + material.texture_scale; // TODO
 
     let fg_uv = abs(half_uv(uv * material.texture_scale + scroll * material.fg_speed));
     let fg = textureSample(color_texture, color_sampler, fg_uv);

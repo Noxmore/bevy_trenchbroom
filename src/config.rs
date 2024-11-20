@@ -90,19 +90,8 @@ pub struct TrenchBroomConfig {
     #[builder(skip)]
     pub special_textures: Option<SpecialTexturesConfig>,
 
-    /// Provides animation for different lightmap styles.
-    /// 
-    /// See docs for [LightmapStyle] and [LightmapAnimator].
-    /// 
-    /// (Default: TODO)
-    #[default(HashMap::from([
-        (LightmapStyle(0), LightmapAnimator::Function(|_| [1.; 3])),
-        // (LightmapStyle(1), LightmapAnimator::Function(|_| [fastrand::f32(); 3])),
-        (LightmapStyle(1), LightmapAnimator::Function(|t| [t.sin().abs() / 1.5 + 0.5; 3])),
-        // (LightmapStyle(1), LightmapAnimator::Function(|t| [t.sin().abs(), (t * 2.).sin().abs(), (t * 3.).sin().abs()])),
-        (LightmapStyle(2), LightmapAnimator::Function(|t| [(t * 2.).sin(); 3])),
-    ]))]
-    pub lightmap_animators: HashMap<LightmapStyle, LightmapAnimator>,
+    /// How lightmaps atlas' are computed when loading BSP files.
+    pub compute_lightmap_settings: ComputeLightmapSettings,
 
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
@@ -236,24 +225,6 @@ impl TrenchBroomConfig {
     /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
     pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
         vec.z_up_to_y_up() / self.scale as f64
-    }
-}
-
-/// Provides the animation of animated lightmaps.
-#[derive(Debug, Clone)]
-pub enum LightmapAnimator {
-    /// Function that takes in the current time in seconds, and outputs a multiplier for the R, G, and B channels respectively.
-    Function(fn(f32) -> [f32; 3]),
-    /// A cubic curve that the current time in seconds is passed to to provide a color multiplier.
-    Curve(CubicCurve<f32>),
-}
-impl LightmapAnimator {
-    #[must_use]
-    pub fn sample(&self, seconds: f32) -> [f32; 3] {
-        match self {
-            Self::Function(f) => f(seconds),
-            Self::Curve(curve) => [curve.position(seconds); 3],
-        }
     }
 }
 

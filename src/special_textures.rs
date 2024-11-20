@@ -14,11 +14,7 @@ impl Plugin for SpecialTexturesPlugin {
             .add_plugins(MaterialPlugin::<LiquidMaterial>::default())
             .add_plugins(MaterialPlugin::<QuakeSkyMaterial>::default())
         
-            .add_systems(Update, (
-                Self::animate_textures,
-                Self::set_liquid_time,
-                Self::set_sky_time,
-            ))
+            .add_systems(Update, Self::animate_textures)
         ;
     }
 }
@@ -85,23 +81,6 @@ impl SpecialTexturesPlugin {
                     updated_materials.insert(material_handle);
                 }
             }
-        }
-    }
-
-    pub fn set_liquid_time(
-        mut materials: ResMut<Assets<LiquidMaterial>>,
-        time: Res<Time>,
-    ) {
-        for (_, material) in materials.iter_mut() {
-            material.extension.seconds = time.elapsed_seconds();
-        }
-    }
-    pub fn set_sky_time(
-        mut materials: ResMut<Assets<QuakeSkyMaterial>>,
-        time: Res<Time>,
-    ) {
-        for (_, material) in materials.iter_mut() {
-            material.seconds = time.elapsed_seconds();
         }
     }
 }
@@ -196,10 +175,6 @@ pub struct LiquidMaterialExt {
     #[uniform(100)]
     #[default(PI)]
     pub cycles: f32,
-    
-    /// Internal uniform for tracking time, set automatically.
-    #[uniform(100)]
-    pub seconds: f32,
 }
 impl MaterialExtension for LiquidMaterialExt {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
@@ -218,10 +193,6 @@ pub struct QuakeSkyMaterial {
     #[uniform(0)]
     #[default(0.05)]
     pub bg_speed: f32,
-    /// Internal uniform for tracking time, set automatically.
-    #[uniform(0)]
-    #[default(0.)]
-    pub seconds: f32,
     /// The scale of the textures.
     #[uniform(0)]
     #[default(2.)]

@@ -1,17 +1,19 @@
-const LIGHTSTYLE_COUNT: u32 = 254;
+// Must match const value in `bsp_lighting.rs`
+const MAX_ANIMATORS: u32 = 254;
 
-// struct LightstyleInfo {
-//     active: bool,
-// }
+struct Animator {
+    sequence: array<vec3f, 64>,
+    sequence_len: u32,
+    speed: f32,
+    interpolate: u32,
+}
 
-// @group(0) @binding(1) var lightmap_textures: array<texture_2d<f32>, LIGHTSTYLE_COUNT>;
 @group(0) @binding(0) var input_texture: texture_3d<f32>;
 @group(0) @binding(1) var input_sampler: sampler;
 @group(0) @binding(2) var<uniform> layers: u32;
-// @group(0) @binding(3) var<uniform> infos: array<LightstyleInfo>;
-// @group(0) @binding(1) var lightmap_textures: array<texture_storage_2d<rgba8unorm, read>, LIGHTSTYLE_COUNT>;
-// @group(0) @binding(1) var lightmap_textures: texture_storage_2d_array<rgba8unorm, read>;
-// @group(0) @binding(2) var outout_texture: texture_storage_2d<f32, write>;
+@group(0) @binding(3) var<uniform> animators: array<Animator, MAX_ANIMATORS>;
+
+@group(1) @binding(0) var<uniform> seconds: f32;
 
 struct VertexOutput {
     @builtin(position) position: vec4f,
@@ -30,11 +32,9 @@ fn vertex(
 
     return output;
 }
-// @vertex
-// fn vertex(
-//     @location(0) position: vec2f,
-// ) -> @builtin(position) vec4f {
-//     return vec4f(position.x, position.y, 1, 1);
+
+// fn get_anim_multiplier(i: u32) -> vec3f {
+//     return animators[i].sequence[u32(seconds * animators[i].speed) % animators[i].sequence_len];
 // }
 
 @fragment
@@ -45,7 +45,12 @@ fn fragment(
     var color = vec4f(0, 0, 0, 1);
 
     for (var i: u32 = 0; i < layers; i++) {
-        color += textureSample(input_texture, input_sampler, vec3f(input.uv, f32(i) / f32(layers)));
+        var mul = animators[i].sequence[u32(seconds * animators[i].speed) % animators[i].sequence_len];
+        if animators[i].interpolate != 0 {
+            mul = mix(mul, animators[i].sequence[(u32(seconds * animators[i].speed) + 1) % animators[i].sequence_len], (seconds * animators[i].speed) % 1);
+        }
+
+        color += textureSample(input_texture, input_sampler, vec3f(input.uv, f32(i) / f32(layers))) * vec4(mul, 1);
     }
 
     return color;
