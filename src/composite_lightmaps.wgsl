@@ -50,7 +50,8 @@ fn fragment(
             mul = mix(mul, animators[i].sequence[(u32(seconds * animators[i].speed) + 1) % animators[i].sequence_len], (seconds * animators[i].speed) % 1);
         }
 
-        color += textureSample(input_texture, input_sampler, vec3f(input.uv, f32(i) / f32(layers))) * vec4(mul, 1);
+        // 0.5 is being added to i here because it was sampling layer 0 twice, and not sampling the last layer at all -- probably floating point imprecision.
+        color += textureSample(input_texture, input_sampler, vec3f(input.uv, (f32(i) + 0.5) / f32(layers))) * vec4(mul, 1);
     }
 
     return color;
