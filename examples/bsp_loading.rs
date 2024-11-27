@@ -6,7 +6,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins
             .set(ImagePlugin {
-                default_sampler: repeating_image_sampler(false),
+                default_sampler: repeating_image_sampler(true),
             })
         )
 
@@ -32,14 +32,14 @@ fn main() {
                     Solid worldspawn {} |world, entity, view| {
                         // The order here matters, we want to smooth out curved surfaces *before* spawning the mesh with `pbr_mesh`.
                         view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps());
-                        // Light
+
                         /* if let Ok(fog_settings) = (|| -> Result<FogSettings, MapEntitySpawnError> {
                             let fog = view.get::<Vec4>("fog");
                             Ok(FogSettings {
                                 color: Color::srgb_from_array(fog.clone().map(|fog| fog.yzw()).or_else(|_| view.get("fog_colour")).or_else(|_| view.get("fog_color"))?.to_array()),
                                 // TODO this doesn't quite match
-                                // falloff: FogFalloff::ExponentialSquared { density: 0.0005 },
-                                falloff: FogFalloff::ExponentialSquared { density: fog.map(|fog| fog.x).or_else(|_| view.get("fog_density"))? / 2. },
+                                falloff: FogFalloff::Linear { start: 0., end: 100. },
+                                // falloff: FogFalloff::ExponentialSquared { density: fog.map(|fog| fog.x).or_else(|_| view.get("fog_density"))? / 2. },
                                 ..default()
                             })
                         })() {
@@ -131,7 +131,7 @@ fn setup_scene(
     // lightmap_animators.values.clear();
     
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/arcane/ad_tears.bsp"),
+        map: asset_server.load("maps/arcane/ad_test1.bsp"),
         ..default()
     });
 

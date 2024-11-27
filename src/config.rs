@@ -85,7 +85,7 @@ pub struct TrenchBroomConfig {
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
     /// The default lightmap exposure for BSP loaded lightmaps.
-    #[default(6000.)]
+    #[default(10000.)]
     pub default_lightmap_exposure: f32,
 
     /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
@@ -118,9 +118,9 @@ pub struct TrenchBroomConfig {
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub brush_mesh_asset_usages: RenderAssetUsages,
 
-    /// Whether BSP loaded textures are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+    /// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
-    pub embedded_textures_asset_usages: RenderAssetUsages,
+    pub bsp_textures_asset_usages: RenderAssetUsages,
 }
 
 impl TrenchBroomConfig {

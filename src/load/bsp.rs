@@ -46,8 +46,24 @@ impl AssetLoader for BspLoader {
             let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
                 .into_iter()
                 .map(|(name, image)| {
-                    let image = rgb_image_to_bevy_image(&image, &self.server, self.server.config.special_textures.is_some() && name.chars().next() == Some('{'));
+                    // let image = rgb_image_to_bevy_image(&image, &self.server, self.server.config.special_textures.is_some() && name.chars().next() == Some('{'));
+                    let image = Image::new(
+                        Extent3d { width: image.width(), height: image.height(), ..default() },
+                        TextureDimension::D2,
+                        image.pixels().map(|pixel| {
+                            if self.server.config.special_textures.is_some() && name.chars().next() == Some('{') && pixel.0 == self.server.config.texture_pallette.1.colors[255] {
+                                [0; 4]
+                            } else {
+                                [pixel[0], pixel[1], pixel[2], 255]
+                            }
+                        }).flatten().collect(),
+                        // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
+                        TextureFormat::Rgba8UnormSrgb,
+                        self.server.config.bsp_textures_asset_usages,
+                    );
+                    
                     let alpha_mode = alpha_mode_from_image(&image);
+                    
                     let image_handle = load_context.add_labeled_asset(name.clone(), image);
                     (name, BspEmbeddedTexture { image_handle, alpha_mode })
                 })
@@ -87,7 +103,17 @@ impl AssetLoader for BspLoader {
                     
                     let mut i = 0;
                     let input = slots.map(|image| {
-                        let handle = load_context.add_labeled_asset(format!("input_{i}"), rgb_image_to_bevy_image(&image, &self.server, false));
+                        let handle = load_context.add_labeled_asset(format!("input_{i}"), Image::new(
+                            Extent3d { width: image.width(), height: image.height(), ..default() },
+                            TextureDimension::D2,
+                            image.pixels().map(|pixel| {
+                                [pixel[0], pixel[1], pixel[2], 255]
+                            }).flatten().collect(),
+                            // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
+                            TextureFormat::Rgba8UnormSrgb,
+                            self.server.config.bsp_textures_asset_usages,
+                        ));
+
                         i += 1;
                         handle
                     });
@@ -192,23 +218,6 @@ impl BspLoader {
 #[inline]
 fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + 'a {
     |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
-}
-
-fn rgb_image_to_bevy_image(image: &image::RgbImage, tb_server: &TrenchBroomServer, enable_alphatest: bool) -> Image {
-    Image::new(
-        Extent3d { width: image.width(), height: image.height(), depth_or_array_layers: 1 },
-        bevy::render::render_resource::TextureDimension::D2,
-        image.pixels().map(|pixel| {
-            if enable_alphatest && pixel.0 == tb_server.config.texture_pallette.1.colors[255] {
-                [0; 4]
-            } else {
-                [pixel[0], pixel[1], pixel[2], 255]
-            }
-        }).flatten().collect(),
-        // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
-        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
-        tb_server.config.embedded_textures_asset_usages,
-    )
 }
 
 #[test]

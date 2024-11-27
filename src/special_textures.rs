@@ -121,9 +121,10 @@ impl SpecialTexturesConfig {
     ) {
         if let Some(config) = &view.server.config.special_textures {
             if mesh_view.texture.name.starts_with('*') {
-                if mesh_view.texture.name.contains("water") {
+                let water_alpha = view.get("water_alpha").unwrap_or(1.);
+                if water_alpha != 1. {
                     material.alpha_mode = AlphaMode::Blend;
-                    material.base_color = Color::linear_rgba(1., 1., 1., view.get("water_alpha").unwrap_or(1.));
+                    material.base_color = Color::linear_rgba(1., 1., 1., water_alpha);
                 }
                 let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: (config.default_liquid_material)() });
                 world.entity_mut(mesh_view.entity).insert(handle);
