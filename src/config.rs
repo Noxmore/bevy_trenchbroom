@@ -2,6 +2,8 @@ use bevy::render::render_asset::RenderAssetUsages;
 
 use crate::*;
 
+// TODO look through here for things that should be able to be changed during gameplay.
+
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
@@ -83,14 +85,19 @@ pub struct TrenchBroomConfig {
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
     /// The default lightmap exposure for BSP loaded lightmaps.
-    #[default(5000.)]
+    #[default(6000.)]
     pub default_lightmap_exposure: f32,
+
+    /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
+    pub ignore_invalid_entity_definitions: bool,
 
     /// [TrenchBroomConfig::special_textures]
     #[builder(skip)]
     pub special_textures: Option<SpecialTexturesConfig>,
 
     /// How lightmaps atlas' are computed when loading BSP files.
+    /// 
+    /// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
     pub compute_lightmap_settings: ComputeLightmapSettings,
 
     pub entity_definitions: IndexMap<String, EntityDefinition>,

@@ -438,6 +438,8 @@ impl BrushSpawnSettings {
         })
     }
 
+    // TODO convex colliders with BSPs
+
     #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
     pub fn convex_collider(self) -> Self {

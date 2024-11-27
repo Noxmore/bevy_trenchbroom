@@ -15,7 +15,7 @@ pub(crate) use q1bsp::prelude::*;
 pub use anyhow;
 pub use indexmap;
 pub use toml;
-pub use q1bsp::{Palette, QUAKE_PALETTE, data::LightmapStyle, mesh::{Lightmaps, LightmapAtlas}};
+pub use q1bsp::{Palette, QUAKE_PALETTE, data::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas}};
 // pub use q1bsp::{Palette, QUAKE_PALETTE, data::{LightmapStyle, Lightmaps}}; // TODO
 
 pub use crate::{

@@ -33,11 +33,13 @@ fn fragment(
     // Starting offset so we don't see negative offset in the sky
     let scroll = globals.time + material.texture_scale; // TODO
 
+    // TODO weird overflows when texture filtering
     let fg_uv = abs(half_uv(uv * material.texture_scale + scroll * material.fg_speed));
     let fg = textureSample(color_texture, color_sampler, fg_uv);
 
     // If the foreground is black, render the background.
     if fg.r == 0 && fg.g == 0 && fg.b == 0 {
+        // TODO black borders, store alpha channel?
         let bg_uv = abs(half_uv(uv * material.texture_scale + scroll * material.bg_speed)) + vec2f(0.5, 0);
         return textureSample(color_texture, color_sampler, bg_uv);
     } else {

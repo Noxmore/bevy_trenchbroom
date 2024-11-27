@@ -4,10 +4,7 @@
 /.cargo
 /assets/maps/autosave
 # TODO
-/assets/maps/ad_tears.bsp
-/assets/maps/ad_crucial.bsp
-/assets/maps/ad_end.bsp
-/assets/maps/ad_azad.bsp
+/assets/maps/arcane
 /assets/maps/e1m1.bsp
 # /TMP
 /assets/maps/*.log

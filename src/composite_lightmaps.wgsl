@@ -1,5 +1,7 @@
+#import bevy_render::globals::Globals
+
 // Must match const value in `bsp_lighting.rs`
-const MAX_ANIMATORS: u32 = 254;
+const MAX_ANIMATORS: u32 = 255;
 
 struct Animator {
     sequence: array<vec3f, 64>,
@@ -8,12 +10,15 @@ struct Animator {
     interpolate: u32,
 }
 
-@group(0) @binding(0) var input_texture: texture_3d<f32>;
-@group(0) @binding(1) var input_sampler: sampler;
-@group(0) @binding(2) var<uniform> layers: u32;
-@group(0) @binding(3) var<uniform> animators: array<Animator, MAX_ANIMATORS>;
+@group(0) @binding(0) var input_texture_0: texture_2d<f32>;
+@group(0) @binding(1) var input_texture_1: texture_2d<f32>;
+@group(0) @binding(2) var input_texture_2: texture_2d<f32>;
+@group(0) @binding(3) var input_texture_3: texture_2d<f32>;
+@group(0) @binding(4) var input_texture_mapping: texture_2d<u32>;
+@group(0) @binding(5) var input_sampler: sampler;
+@group(0) @binding(6) var<uniform> animators: array<Animator, MAX_ANIMATORS>;
 
-@group(1) @binding(0) var<uniform> seconds: f32;
+@group(1) @binding(0) var<uniform> globals: Globals;
 
 struct VertexOutput {
     @builtin(position) position: vec4f,
@@ -33,26 +38,27 @@ fn vertex(
     return output;
 }
 
-// fn get_anim_multiplier(i: u32) -> vec3f {
-//     return animators[i].sequence[u32(seconds * animators[i].speed) % animators[i].sequence_len];
-// }
+fn sample_atlas(input: texture_2d<f32>, animator_idx: u32, uv: vec2f) -> vec4f {
+    var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
+    if animators[animator_idx].interpolate != 0 {
+        mul = mix(mul, animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len], (globals.time * animators[animator_idx].speed) % 1);
+    }
+
+    return textureSample(input, input_sampler, uv) * vec4f(mul, 1);
+}
 
 @fragment
 fn fragment(
     input: VertexOutput,
 ) -> @location(0) vec4f {
-    // return position;
     var color = vec4f(0, 0, 0, 1);
 
-    for (var i: u32 = 0; i < layers; i++) {
-        var mul = animators[i].sequence[u32(seconds * animators[i].speed) % animators[i].sequence_len];
-        if animators[i].interpolate != 0 {
-            mul = mix(mul, animators[i].sequence[(u32(seconds * animators[i].speed) + 1) % animators[i].sequence_len], (seconds * animators[i].speed) % 1);
-        }
+    let mapping: vec4u = textureLoad(input_texture_mapping, vec2u(input.uv * vec2f(textureDimensions(input_texture_mapping))), 0);
 
-        // 0.5 is being added to i here because it was sampling layer 0 twice, and not sampling the last layer at all -- probably floating point imprecision.
-        color += textureSample(input_texture, input_sampler, vec3f(input.uv, (f32(i) + 0.5) / f32(layers))) * vec4(mul, 1);
-    }
+    color += sample_atlas(input_texture_0, mapping.x, input.uv);
+    color += sample_atlas(input_texture_1, mapping.y, input.uv);
+    color += sample_atlas(input_texture_2, mapping.z, input.uv);
+    color += sample_atlas(input_texture_3, mapping.w, input.uv);
 
     return color;
 }

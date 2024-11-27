@@ -31,8 +31,8 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "e2c52ab" }
-# q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
+# q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "2f6665b" }
+q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
 nil = "0.13"
 imageproc = "0.25.0" # TODO tmp
 fastrand = "2.2.0" # TODO tmp

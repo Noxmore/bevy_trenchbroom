@@ -90,6 +90,10 @@ impl TrenchBroomPlugin {
                     server: &server,
                 },
             ) {
+                if matches!(err, MapEntitySpawnError::DefinitionNotFound { classname: _ }) && server.config.ignore_invalid_entity_definitions {
+                    continue;
+                }
+
                 error!(
                     "Problem occurred while spawning MapEntity {entity} (index {:?}): {err}",
                     map_entity_ref.map_entity.ent_index
