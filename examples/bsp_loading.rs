@@ -6,7 +6,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins
             .set(ImagePlugin {
-                default_sampler: repeating_image_sampler(true),
+                default_sampler: repeating_image_sampler(false),
             })
         )
 
@@ -16,7 +16,7 @@ fn main() {
             sensitivity: 0.00005,
             speed: 20.,
         })
-        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
@@ -128,6 +128,7 @@ fn setup_scene(
 ) {
     // TODO TMP: For tears of the false god
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
+    // lightmap_animators.values.clear();
     
     commands.spawn(MapBundle {
         map: asset_server.load("maps/arcane/ad_tears.bsp"),

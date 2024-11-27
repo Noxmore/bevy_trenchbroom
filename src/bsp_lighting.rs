@@ -6,6 +6,20 @@ use crate::*;
 pub const MAX_ANIMATORS: usize = 255;
 pub const MAX_LIGHTMAP_FRAMES: usize = 64;
 
+pub(crate) const LIGHTMAP_OUTPUT_TEXTURE_FORMAT: TextureFormat = TextureFormat::Rgba32Float;
+pub(crate) fn new_lightmap_output_image(width: u32, height: u32) -> Image {
+    let mut image = Image::new_fill(
+        Extent3d { width, height, ..default() },
+        TextureDimension::D2,
+        [0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
+        LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
+        RenderAssetUsages::RENDER_WORLD,
+    );
+    image.texture_descriptor.usage |= TextureUsages::RENDER_ATTACHMENT; // We need to render to this from a shader
+    image.sampler = ImageSampler::linear();
+    image
+}
+
 pub struct BspLightingPlugin;
 impl Plugin for BspLightingPlugin {
     fn build(&self, app: &mut App) {
@@ -102,19 +116,6 @@ impl BspLightingPlugin {
     }
 }
 
-pub(crate) fn new_lightmap_output_image(width: u32, height: u32) -> Image {
-    let mut image = Image::new_fill(
-        Extent3d { width, height, ..default() },
-        TextureDimension::D2,
-        [0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
-        TextureFormat::Rgba32Float,
-        RenderAssetUsages::RENDER_WORLD,
-    );
-    image.texture_descriptor.usage |= TextureUsages::RENDER_ATTACHMENT; // We need to render to this from a shader
-    image.sampler = ImageSampler::linear();
-    image
-}
-
 /// Provides the *animation* of animated lightmaps.
 #[derive(ShaderType, Reflect, Debug, Clone, Copy)]
 pub struct LightmapAnimator {
@@ -172,7 +173,7 @@ impl Default for LightmapAnimators {
     fn default() -> Self {
         Self { values: HashMap::from([
             // TODO copy quake's default animators?
-            (LightmapStyle(1), LightmapAnimator::new(6., true, [0.8, 0.7, 1., 0.5, 0.8, 0.4, 0.9, 0.7, 0.6, 0.7, 0.6, 1., 0.7].map(Vec3::splat))),
+            (LightmapStyle(1), LightmapAnimator::new(6., true, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat))),
             (LightmapStyle(2), LightmapAnimator::new(0.5, true, [0., 1.].map(Vec3::splat))),
         ]) }
     }
@@ -273,7 +274,7 @@ impl FromWorld for AnimatedLightmapPipeline {
             fragment: Some(FragmentState {
                 shader,shader_defs: vec![],
                 entry_point: "fragment".into(),
-                targets: vec![Some(TextureFormat::Rgba32Float.into())],
+                targets: vec![Some(LIGHTMAP_OUTPUT_TEXTURE_FORMAT.into())],
             }),
         });
 

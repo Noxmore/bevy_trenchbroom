@@ -205,6 +205,7 @@ fn rgb_image_to_bevy_image(image: &image::RgbImage, tb_server: &TrenchBroomServe
                 [pixel[0], pixel[1], pixel[2], 255]
             }
         }).flatten().collect(),
+        // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
         tb_server.config.embedded_textures_asset_usages,
     )
