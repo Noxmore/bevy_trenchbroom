@@ -10,4 +10,3 @@
 /assets/maps/*.log
 /assets/maps/*.prt
 /assets/maps/*.lit
-Cargo.lock
