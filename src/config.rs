@@ -87,6 +87,8 @@ pub struct TrenchBroomConfig {
     /// The default lightmap exposure for BSP loaded lightmaps.
     #[default(10000.)]
     pub default_lightmap_exposure: f32,
+    #[default(500.)]
+    pub default_irradiance_volume_intensity: f32,
 
     /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
     pub ignore_invalid_entity_definitions: bool,

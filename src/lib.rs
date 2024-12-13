@@ -85,7 +85,7 @@ pub struct Map {
     pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
     #[reflect(ignore)]
     pub bsp_data: Option<BspData>,
-    pub irradiance_volume: Option<(IrradianceVolume, Transform)>,
+    pub irradiance_volumes: Vec<(IrradianceVolume, Transform)>,
 }
 
 impl Map {

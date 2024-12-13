@@ -4,7 +4,8 @@ use super::*;
 use bevy::{
     asset::{io::Reader, AssetLoader, AsyncReadExt, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}, utils::ConditionalSendFuture
 };
-use q1bsp::{data::BspTexFlags, mesh::lighting::ComputeLightmapAtlasError};
+use ndshape::*;
+use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, glam::Vec3Swizzles, mesh::lighting::ComputeLightmapAtlasError};
 
 /// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
@@ -39,9 +40,6 @@ impl AssetLoader for BspLoader {
             let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
             
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) }).map_err(io::Error::other)?;
-            // use pre-computed one
-            // let mut aabb = Aabb::enclosing(data.vertices.iter().map(|x| Vec3::from_array(x.to_array())));
-            // data.
 
             let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.server.config.texture_pallette.1)
                 .into_iter()
@@ -165,6 +163,60 @@ impl AssetLoader for BspLoader {
 
             map.embedded_textures = embedded_textures;
 
+            // Calculate irradiance volumes for light grids.
+            // Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
+            // TODO In the future, it'd be better to split these up, cutting out big areas outside the map.
+            if let Some(light_grid) = data.bspx.parse_light_grid_octree(&data.parse_ctx) {
+                let mut light_grid = light_grid.map_err(io::Error::other)?;
+                light_grid.mins = self.server.config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
+                // We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
+                light_grid.size = light_grid.size.xzy() + 1;
+                light_grid.step = self.server.config.to_bevy_space(light_grid.step.to_array().into()).to_array().into();
+
+                let mut builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255]);
+                
+                for mut leaf in light_grid.leafs {
+                    leaf.mins = leaf.mins.xzy();
+                    let size = leaf.size().xzy();
+                    
+                    for x in 0..size.x {
+                        for y in 0..size.y {
+                            for z in 0..size.z {
+                                let LightGridCell::Filled(samples) = leaf.get_cell(x, z, y) else { continue };
+                                let mut color: [u8; 4] = [0, 0, 0, 255];
+
+                                for sample in samples {
+                                    // println!("{sample:?}");
+                                    for i in 0..3 {
+                                        color[i] = color[i].saturating_add(sample.color[i]);
+                                    }
+                                }
+                                
+                                let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
+                                builder.put_all([dst_x, dst_y, dst_z], color);
+                            }
+                        }
+                    }
+                }
+
+                // This is pretty much instructed by FTE docs
+                builder.flood_non_filled();
+
+                let mut image = builder.build();
+                image.sampler = bevy::render::texture::ImageSampler::linear();
+
+                let image_handle = load_context.add_labeled_asset("IrradianceVolume".s(), image);
+
+                let mins: Vec3 = light_grid.mins.to_array().into();
+                let scale: Vec3 = (light_grid.size.as_vec3() * light_grid.step).to_array().into();
+
+                map.irradiance_volumes.push((IrradianceVolume { voxels: image_handle, intensity: self.server.config.default_irradiance_volume_intensity }, Transform {
+                    translation: mins + scale / 2. - Vec3::from_array(light_grid.step.to_array()) / 2.,
+                    scale,
+                    ..default()
+                }));
+            }
+
             Ok(map)
         })
     }
@@ -199,7 +251,6 @@ impl BspLoader {
                 mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
             }
             mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
-            // image::RgbImage::
     
             let texture = MapEntityGeometryTexture {
                 embedded: embedded_textures.get(&exported_mesh.texture).cloned(),
@@ -219,6 +270,143 @@ impl BspLoader {
 fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + 'a {
     |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
+
+struct IrradianceVolumeBuilder {
+    size: UVec3,
+    full_shape: RuntimeShape<u32, 3>,
+    data: Vec<[u8; 4]>,
+    filled: Vec<bool>,
+}
+impl IrradianceVolumeBuilder {
+    pub fn new(size: impl Into<UVec3>, default_color: [u8; 4]) -> Self {
+        let size: UVec3 = size.into();
+        let shape = RuntimeShape::<u32, 3>::new([
+            size.x,
+            size.y * 2,
+            size.z * 3,
+        ]);
+        let vec_size = shape.usize();
+        Self {
+            size,
+            full_shape: shape,
+            data: vec![default_color; vec_size],
+            filled: vec![false; vec_size],
+        }
+    }
+
+    pub fn delinearize(&self, idx: usize) -> (UVec3, IrradianceVolumeDirection) {
+        let pos = UVec3::from_array(Shape::delinearize(&self.full_shape, idx as u32));
+        let grid_offset = uvec3(0, pos.y / self.size.y, pos.z / self.size.z);
+        let dir = IrradianceVolumeDirection::from_offset(grid_offset).expect("idx out of bounds");
+
+        (pos - grid_offset * self.size, dir)
+    }
+
+    pub fn linearize(&self, pos: impl Into<UVec3>, dir: IrradianceVolumeDirection) -> usize {
+        let mut pos: UVec3 = pos.into();
+        pos += dir.offset() * self.size;
+        Shape::linearize(&self.full_shape, [pos.x, pos.y, pos.z]) as usize
+    }
+
+    #[inline]
+    #[track_caller]
+    pub fn put(&mut self, pos: impl Into<UVec3>, dir: IrradianceVolumeDirection, color: [u8; 4]) {
+        let idx = self.linearize(pos, dir);
+
+        self.data[idx] = color;
+        self.filled[idx] = true;
+    }
+
+    // TODO Right now we waste the directionality of irradiance volumes when using light grids. Not quite show how yet, but we should fix this in the future.
+
+    #[inline]
+    #[track_caller]
+    pub fn put_all(&mut self, pos: impl Into<UVec3>, color: [u8; 4]) {
+        let pos = pos.into();
+        self.put(pos, IrradianceVolumeDirection::X, color);
+        self.put(pos, IrradianceVolumeDirection::Y, color);
+        self.put(pos, IrradianceVolumeDirection::Z, color);
+        self.put(pos, IrradianceVolumeDirection::NEG_X, color);
+        self.put(pos, IrradianceVolumeDirection::NEG_Y, color);
+        self.put(pos, IrradianceVolumeDirection::NEG_Z, color);
+    }
+
+    /// For any non-filled color, get replace with neighboring filled colors.
+    pub fn flood_non_filled(&mut self) {
+        for (i, filled) in self.filled.iter().copied().enumerate() {
+            if filled { continue }
+
+            let (pos, dir) = self.delinearize(i);
+            let min = pos.saturating_sub(UVec3::splat(1));
+            let max = (pos + 1).min(self.size - 1);
+
+            let mut color = [0_u16; 4];
+            let mut contributors: u16 = 0;
+
+            for x in min.x..=max.x {
+                for y in min.y..=max.y {
+                    for z in min.z..=max.z {
+                        let offset_idx = self.linearize([x, y, z], dir);
+
+                        if self.filled[offset_idx] {
+                            contributors += 1;
+                            for color_channel in 0..4 {
+                                color[color_channel] += self.data[offset_idx][color_channel] as u16;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if contributors == 0 { continue }
+            // Average 'em
+            self.data[i] = color.map(|v| (v / contributors) as u8)
+        }
+    }
+
+    pub fn build(self) -> Image {
+        Image::new(
+            Extent3d { width: self.size.x, height: self.size.y * 2, depth_or_array_layers: self.size.z * 3 },
+            TextureDimension::D3,
+            self.data.into_flattened(),
+            TextureFormat::Rgba8UnormSrgb,
+            RenderAssetUsages::RENDER_WORLD,
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct IrradianceVolumeDirection(UVec3);
+impl IrradianceVolumeDirection {
+    pub fn from_offset(offset: UVec3) -> Option<Self> {
+        if offset.x != 0 || !(0..=1).contains(&offset.y) || !(0..=2).contains(&offset.z) {
+            None
+        } else {
+            Some(Self(offset))
+        }
+    }
+
+    #[inline]
+    pub fn offset(&self) -> UVec3 {
+        self.0
+    }
+    
+    pub const X: Self = Self(uvec3(0, 1, 0));
+    pub const Y: Self = Self(uvec3(0, 1, 1));
+    pub const Z: Self = Self(uvec3(0, 1, 2));
+    pub const NEG_X: Self = Self(uvec3(0, 0, 0));
+    pub const NEG_Y: Self = Self(uvec3(0, 0, 1));
+    pub const NEG_Z: Self = Self(uvec3(0, 0, 2));
+}
+
+// enum IrradianceVolumeDirection {
+//     X,
+//     Y,
+//     Z,
+//     NegX,
+//     NegY,
+//     NegZ,
+// }
 
 #[test]
 fn bsp_loading() {

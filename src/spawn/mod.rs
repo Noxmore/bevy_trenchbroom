@@ -64,6 +64,13 @@ impl TrenchBroomPlugin {
     
                 // Lets make sure we don't spawn a map every frame
                 world.entity_mut(entity).insert(SpawnedMap);
+
+                for (irradiance_volume, transform) in &map.irradiance_volumes {
+                    world.spawn(SpatialBundle::default())
+                        .insert(irradiance_volume.clone())
+                        .insert(LightProbe)
+                        .insert(*transform);
+                }
     
                 map.spawn(world, entity);
             }

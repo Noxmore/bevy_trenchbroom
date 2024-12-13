@@ -1,12 +1,13 @@
-use bevy::prelude::*;
+use bevy::{pbr::irradiance_volume::IrradianceVolume, prelude::*};
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
+use bevy::math::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins
             .set(ImagePlugin {
-                default_sampler: repeating_image_sampler(true),
+                default_sampler: repeating_image_sampler(false),
             })
         )
 
@@ -14,9 +15,9 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00005,
-            speed: 20.,
+            speed: 6.,
         })
-        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
@@ -26,8 +27,11 @@ fn main() {
         .insert_resource(AmbientLight::NONE)
 
         .add_plugins(TrenchBroomPlugin::new(
-            TrenchBroomConfig::new("bevy_trenchbroom_example").special_textures(SpecialTexturesConfig::new()).ignore_invalid_entity_definitions(true).entity_definitions(
-                entity_definitions! {
+            TrenchBroomConfig::new("bevy_trenchbroom_example")
+                .compute_lightmap_settings(ComputeLightmapSettings { no_lighting_color: [0, 255, 0], default_color: [0, 0, 255], ..default() })
+                .special_textures(SpecialTexturesConfig::new())
+                .ignore_invalid_entity_definitions(true)
+                .entity_definitions(entity_definitions! {
                     /// World Entity
                     Solid worldspawn {} |world, entity, view| {
                         // The order here matters, we want to smooth out curved surfaces *before* spawning the mesh with `pbr_mesh`.
@@ -112,11 +116,10 @@ fn main() {
                         //     ..default()
                         // });
                     }
-                },
-            ),
+                }),
         ))
         .add_systems(PostStartup, (setup_scene, write_config))
-        // .add_systems(Update, visualize_stuff)
+        .add_systems(Update, visualize)
         .run();
 }
 
@@ -131,27 +134,44 @@ fn setup_scene(
     // lightmap_animators.values.clear();
     
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/arcane/ad_test1.bsp"),
+        map: asset_server.load("maps/example.bsp"),
         ..default()
     });
+    
+    let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
+    let material = asset_server.add(StandardMaterial::default());
 
     // Wide FOV
-    for (_entity, mut projection) in &mut projection_query {
+    for (entity, mut projection) in &mut projection_query {
         *projection = Projection::Perspective(PerspectiveProjection {
             fov: 90_f32.to_radians(),
             ..default()
         });
 
         // TODO tmp
-        /* let gi_tester = commands.spawn(PbrBundle {
-            mesh: asset_server.add(Sphere::new(0.1).mesh().build()),
-            material: asset_server.add(StandardMaterial::default()),
+        let gi_tester = commands.spawn(PbrBundle {
+            mesh: sphere_mesh.clone(),
+            material: material.clone(),
             transform: Transform::from_xyz(0., -0.2, -0.3),
             ..default()
         }).id();
 
-        commands.entity(entity).add_child(gi_tester); */
+        commands.entity(entity).add_child(gi_tester);
     }
+
+    // TODO tmp
+    /* for x in 1..=9 {
+        for y in 1..=7 {
+            for z in 0..9 {
+                commands.spawn(PbrBundle {
+                    mesh: sphere_mesh.clone(),
+                    material: material.clone(),
+                    transform: Transform::from_translation(vec3(x as f32, y as f32, z as f32 - 1.) * vec3(0.8128, 0.8128, -0.8128) + vec3(-1.6256, 0., 1.6256) - 0.8128),
+                    ..default()
+                });
+            }
+        }
+    } */
 
     /* commands.spawn(MaterialMeshBundle {
         mesh: asset_server.add(Cuboid::from_length(0.5).mesh().build()),
@@ -186,51 +206,18 @@ fn setup_scene(
     // });
 }
 
+fn visualize(
+    mut gizmos: Gizmos,
+    irradiance_volume_query: Query<&Transform, With<IrradianceVolume>>,
+) {
+    for transform in &irradiance_volume_query {
+        gizmos.cuboid(*transform, Color::WHITE);
+    }
+}
+
 fn write_config(server: Res<TrenchBroomServer>) {
     #[cfg(not(target_arch = "wasm32"))] {
         std::fs::create_dir("target/example_config").ok();
         server.config.write_folder("target/example_config").unwrap();
     }
 }
-
-// fn visualize_stuff(mut gizmos: Gizmos) {
-//     let tmp_debug = TMP_DEBUG.lock().unwrap();
-    
-//     for vertex in &tmp_debug.0 {
-//         gizmos.sphere(*vertex, default(), 0.03, Color::WHITE);
-//     }
-
-//     for edge in tmp_debug.1.iter().take(12) {
-//         gizmos.line(tmp_debug.0[edge.a as usize], tmp_debug.0[edge.b as usize], Color::WHITE);
-//     }
-// }
-
-/* 
-/// Spawnpoint for players. Emits a signal to `target` when someone has spawned, and toggles enabled when receiving a signal.
-#[derive(Component, Reflect, PointClass)]
-// Targetable and Targets give the `targetname` and `target`/`killtarget` properties respectively, still not 100% on the names though.
-#[require(Transform, Targetable, Targets, ParentedToName)]
-// Convention seems to be snake_case for quake entities, so it'll probably be converted automatically, with an optional attribute to disable such functionality.
-#[classname(PascalCase)]
-#[model("models/info_player_start.glb")]
-pub struct InfoPlayerStart {
-    /// Whether or not to start being able to spawn players.
-    #[default(true)] // This is identical to how `smart-default` does things, we should probably read from the `Default` implementation instead
-    pub start_enabled: bool,
-}
-
-#[derive(Component, Reflect, SolidClass)]
-#[require(Transform, Targetable, ParentedToName)]
-// We'll probably have a default BrushSpawnSettings for this.
-#[geometry(BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh().with_lightmaps())]
-pub struct FuncDoor {
-    /// Door speed in m/s.
-    #[default(3.)]
-    pub speed: f32,
-}
-
-#[derive(Component, Reflect, BaseClass)]
-pub struct ParentedToName {
-    pub parent: String,
-} */
-
