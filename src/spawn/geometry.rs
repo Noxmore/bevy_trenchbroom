@@ -387,12 +387,12 @@ impl BrushSpawnSettings {
         self.spawner(|world, entity, view| {
             for mesh_view in &view.meshes {
                 if mesh_view.texture.special { continue }
-                let Some(animated_lightmap_handle) = &mesh_view.texture.lightmap else { continue };
-                let Some(animated_lightmap) = world.resource::<Assets<AnimatedLightmap>>().get(animated_lightmap_handle) else {
-                    error!("Animated lightmap for entity {entity} (index {:?}) doesn't exist!", view.map_entity.ent_index);
+                let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
+                let Some(animated_lighting) = world.resource::<Assets<AnimatedLighting>>().get(animated_lighting_handle) else {
+                    error!("Animated lighting for entity {entity} (index {:?}) doesn't exist!", view.map_entity.ent_index);
                     continue;
                 };
-                let lightmap_handle = animated_lightmap.output.clone();
+                let lightmap_handle = animated_lighting.output.clone();
                 
                 world.entity_mut(mesh_view.entity)
                     .insert(Lightmap { image: lightmap_handle.clone(), uv_rect: Rect::new(0., 0., 1., 1.) });

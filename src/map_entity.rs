@@ -52,7 +52,7 @@ impl fmt::Debug for MapEntityGeometry {
 pub struct MapEntityGeometryTexture {
     pub name: String,
     pub embedded: Option<BspEmbeddedTexture>,
-    pub lightmap: Option<Handle<AnimatedLightmap>>,
+    pub lightmap: Option<Handle<AnimatedLighting>>,
     /// If the texture should be full-bright
     pub special: bool,
 }

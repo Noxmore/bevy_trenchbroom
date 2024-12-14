@@ -131,7 +131,8 @@ impl AssetLoader for BspLoader {
                         RenderAssetUsages::RENDER_WORLD,
                     ));
 
-                    let handle = load_context.add_labeled_asset("lightmap_atlas_animator".s(), AnimatedLightmap {
+                    let handle = load_context.add_labeled_asset("lightmap_atlas_animator".s(), AnimatedLighting {
+                        ty: AnimatedLightingType::Lightmap,
                         output,
                         input,
                         styles,
@@ -231,7 +232,7 @@ impl BspLoader {
         data: &BspData,
         model_idx: usize,
         embedded_textures: &HashMap<String, BspEmbeddedTexture>,
-        lightmap: Option<&(Handle<AnimatedLightmap>, LightmapUvMap)>,
+        lightmap: Option<&(Handle<AnimatedLighting>, LightmapUvMap)>,
     ) -> Vec<(MapEntityGeometryTexture, Mesh)> {
         let (animated_lightmap, lightmap_uvs) = match lightmap {
             Some((animated_lightmap, lightmap_uvs)) => (Some(animated_lightmap), Some(lightmap_uvs)),

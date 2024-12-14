@@ -24,56 +24,55 @@ pub struct BspLightingPlugin;
 impl Plugin for BspLightingPlugin {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "composite_lightmaps.wgsl");
+        embedded_asset!(app, "composite_irradiance_volumes.wgsl");
         
         app
-            .add_plugins(RenderAssetPlugin::<AnimatedLightmap>::default())
+            .add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
             .add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
 
             .init_resource::<LightmapAnimators>()
         
-            .init_asset::<AnimatedLightmap>()
+            .init_asset::<AnimatedLighting>()
         ;
 
         let render_app = app.sub_app_mut(RenderApp);
 
-        render_app.init_resource::<AnimatedLightmapBindGroups>();
+        render_app.init_resource::<AnimatedLightingBindGroups>();
 
-        render_app.add_systems(Render, Self::prepare_animated_lightmaps_bind_groups.in_set(RenderSet::PrepareBindGroups));
+        render_app.add_systems(Render, Self::prepare_animated_lighting_bind_groups.in_set(RenderSet::PrepareBindGroups));
 
         let mut render_graph = render_app.world_mut().resource_mut::<RenderGraph>();
-        render_graph.add_node(AnimatedLightmapsLabel, AnimatedLightmapsNode);
+        render_graph.add_node(AnimatedLightingLabel, AnimatedLightingNode);
         
-        render_graph.add_node_edge(AnimatedLightmapsLabel, bevy::render::graph::CameraDriverLabel);
+        render_graph.add_node_edge(AnimatedLightingLabel, bevy::render::graph::CameraDriverLabel);
     }
 
     fn finish(&self, app: &mut App) {
-        app.sub_app_mut(RenderApp).init_resource::<AnimatedLightmapPipeline>();
+        app.sub_app_mut(RenderApp).init_resource::<AnimatedLightingPipeline>();
     }
 }
 impl BspLightingPlugin {
-    pub fn prepare_animated_lightmaps_bind_groups(
-        animated_lightmaps: Res<RenderAssets<AnimatedLightmap>>,
-        mut bind_groups: ResMut<AnimatedLightmapBindGroups>,
+    pub fn prepare_animated_lighting_bind_groups(
+        animated_lighting_assets: Res<RenderAssets<AnimatedLighting>>,
+        mut bind_groups: ResMut<AnimatedLightingBindGroups>,
         gpu_images: Res<RenderAssets<GpuImage>>,
         render_device: Res<RenderDevice>,
-        pipeline: Res<AnimatedLightmapPipeline>,
+        pipeline: Res<AnimatedLightingPipeline>,
         animators: Res<LightmapAnimators>,
         render_queue: Res<RenderQueue>,
         globals: Res<GlobalsBuffer>,
     ) {
-        bind_groups.seconds = Some(render_device.create_bind_group(None, &pipeline.seconds_bind_group_layout, &[
+        bind_groups.globals = Some(render_device.create_bind_group(None, &pipeline.globals_bind_group_layout, &[
             BindGroupEntry {
                 binding: 0,
                 resource: globals.buffer.into_binding(),
             },
         ]));
         
-        if !animated_lightmaps.is_changed() && !animators.is_changed() { return }
+        if !animated_lighting_assets.is_changed() && !animators.is_changed() { return }
         bind_groups.values.clear();
         
-        for (id, animated_lightmap) in animated_lightmaps.iter() {
-            // let texture_views = animated_lightmap.images.iter().flat_map(|(_, image)| gpu_images.get(image)).map(|gpu_image| gpu_image.texture_view.deref()).collect_vec();
-            
+        for (id, animated_lighting) in animated_lighting_assets.iter() {
             let mut target_animators = [LightmapAnimator::default(); MAX_ANIMATORS];
             for (style, animator) in &animators.values {
                 target_animators[style.0 as usize] = *animator;
@@ -82,36 +81,37 @@ impl BspLightingPlugin {
             target_animators_buffer.set_label(Some("animators"));
             target_animators_buffer.write_buffer(&render_device, &render_queue);
             
-            bind_groups.values.insert(id, render_device.create_bind_group(None, &pipeline.bind_group_layout, &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: BindingResource::TextureView(&gpu_images.get(&animated_lightmap.input[0]).unwrap().texture_view),
-                },
-                BindGroupEntry {
-                    binding: 1,
-                    resource: BindingResource::TextureView(&gpu_images.get(&animated_lightmap.input[1]).unwrap().texture_view),
-                },
-                BindGroupEntry {
-                    binding: 2,
-                    resource: BindingResource::TextureView(&gpu_images.get(&animated_lightmap.input[2]).unwrap().texture_view),
-                },
-                BindGroupEntry {
-                    binding: 3,
-                    resource: BindingResource::TextureView(&gpu_images.get(&animated_lightmap.input[3]).unwrap().texture_view),
-                },
-                BindGroupEntry {
-                    binding: 4,
-                    resource: BindingResource::TextureView(&gpu_images.get(&animated_lightmap.styles).unwrap().texture_view),
-                },
-                BindGroupEntry {
-                    binding: 5,
-                    resource: BindingResource::Sampler(&pipeline.sampler),
-                },
-                BindGroupEntry {
-                    binding: 6,
-                    resource: target_animators_buffer.into_binding(),
-                },
-            ]));
+            match animated_lighting.ty {
+                AnimatedLightingType::Lightmap => {
+                    bind_groups.values.insert(id, render_device.create_bind_group(None, &pipeline.lightmap_bind_group_layout, &BindGroupEntries::sequential((
+                        &gpu_images.get(&animated_lighting.input[0]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[1]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[2]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[3]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.styles).unwrap().texture_view,
+                        &pipeline.sampler,
+                        target_animators_buffer.into_binding(),
+                    ))));
+                }
+                AnimatedLightingType::IrradianceVolume => {
+                    // TODO Currently, GpuImage doesn't store its size in 3D, so we won't animated irradiance volumes until either that's fixed,
+                    //      or i decide to get a work-around going.
+                    let size: UVec3 = UVec3::ONE; // gpu_images.get(&animated_lighting.output).unwrap().size
+                    let size_buffer = UniformBuffer::from(size);
+                    target_animators_buffer.set_label(Some("size"));
+                    target_animators_buffer.write_buffer(&render_device, &render_queue);
+                    
+                    bind_groups.values.insert(id, render_device.create_bind_group(None, &pipeline.irradiance_volume_bind_group_layout, &BindGroupEntries::sequential((
+                        &gpu_images.get(&animated_lighting.input[0]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[1]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[2]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.input[3]).unwrap().texture_view,
+                        &gpu_images.get(&animated_lighting.styles).unwrap().texture_view,
+                        size_buffer.into_binding(),
+                        target_animators_buffer.into_binding(),
+                    ))));
+                }
+            }
         }
     }
 }
@@ -184,19 +184,23 @@ pub struct BspIrradianceVolume {
     pub owner: Handle<Map>,
 }
 
-/// Contains multiple lightmaps that are composited together in `output` using the current [TrenchBroomConfig]'s lightmap animators.
+/// Contains multiple images that are composited together in `output` using the current [TrenchBroomConfig]'s lightmap animators. Used for both lightmaps an irradiance volumes.
 #[derive(Asset, TypePath, Clone)]
-pub struct AnimatedLightmap {
-    /// The image to output the composited lightmap atlas to.
+pub struct AnimatedLighting {
+    pub ty: AnimatedLightingType,
+
+    /// The image to output the composited image to.
     pub output: Handle<Image>,
 
-    /// A lightmap input image for each lightmap style slot globally.
+    /// An input image for each lightmap style slot globally.
     pub input: [Handle<Image>; 4],
 
     /// An image containing the [LightmapStyle]s to use for each pixel.
+    /// 
+    /// 4 8-bit color channels refer to 4 lightmap style slots, each channel being the animator to use to composite.
     pub styles: Handle<Image>,
 }
-impl RenderAsset for AnimatedLightmap {
+impl RenderAsset for AnimatedLighting {
     type SourceAsset = Self;
     type Param = ();
     
@@ -208,28 +212,38 @@ impl RenderAsset for AnimatedLightmap {
     }
 }
 
+#[derive(Reflect, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnimatedLightingType {
+    /// 2D textures, if textures differ in size they will be stretched.
+    Lightmap,
+    /// 3D textures, if texture differ in size they will repeat, this allows for non-directional volumes to store a 6th of the required data.
+    IrradianceVolume,
+}
+
 
 #[derive(Resource, Default)]
-pub struct AnimatedLightmapBindGroups {
-    pub values: HashMap<AssetId<AnimatedLightmap>, BindGroup>,
-    pub seconds: Option<BindGroup>,
+pub struct AnimatedLightingBindGroups {
+    pub values: HashMap<AssetId<AnimatedLighting>, BindGroup>,
+    pub globals: Option<BindGroup>,
 }
 
 
 #[derive(Resource, ExtractResource, Clone)]
-pub struct AnimatedLightmapPipeline {
-    bind_group_layout: BindGroupLayout,
-    // Time is split into another bind group, so i don't have to update the main bind group every frame.
-    // Does this help with performance? No idea, i don't even know how to profile it.
-    seconds_bind_group_layout: BindGroupLayout,
-    pipeline: CachedRenderPipelineId,
+pub struct AnimatedLightingPipeline {
+    lightmap_bind_group_layout: BindGroupLayout,
+    irradiance_volume_bind_group_layout: BindGroupLayout,
+    // Globals (for time) is split into another bind group, so i don't have to update the main bind group every frame.
+    // Does this help with performance? No idea, I don't even know how to profile it.
+    globals_bind_group_layout: BindGroupLayout,
+    lightmap_pipeline: CachedRenderPipelineId,
+    irradiance_volume_pipeline: CachedRenderPipelineId,
     sampler: Sampler,
 }
-impl FromWorld for AnimatedLightmapPipeline {
+impl FromWorld for AnimatedLightingPipeline {
     fn from_world(world: &mut World) -> Self {
         let render_device = world.resource::<RenderDevice>();
         
-        let bind_group_layout = render_device.create_bind_group_layout("LightmapCompositeImages", &BindGroupLayoutEntries::sequential(
+        let lightmap_bind_group_layout = render_device.create_bind_group_layout("LightmapCompositeImages", &BindGroupLayoutEntries::sequential(
             ShaderStages::FRAGMENT,
             (
                 texture_2d(TextureSampleType::Float { filterable: false }),
@@ -242,41 +256,75 @@ impl FromWorld for AnimatedLightmapPipeline {
             ),
         ));
 
+        let irradiance_volume_bind_group_layout = render_device.create_bind_group_layout("IrradianceVolumeCompositeImages", &BindGroupLayoutEntries::sequential(
+            ShaderStages::VERTEX_FRAGMENT,
+            (
+                texture_3d(TextureSampleType::Float { filterable: false }),
+                texture_3d(TextureSampleType::Float { filterable: false }),
+                texture_3d(TextureSampleType::Float { filterable: false }),
+                texture_3d(TextureSampleType::Float { filterable: false }),
+                texture_3d(TextureSampleType::Uint),
+                uniform_buffer_sized(false, Some(UVec3::SHADER_SIZE)),
+                uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+            ),
+        ));
+
         let globals_bind_group_layout = render_device.create_bind_group_layout(None, &BindGroupLayoutEntries::single(
             ShaderStages::FRAGMENT,
             uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE)),
         ));
 
-        let shader = world.load_asset("embedded://bevy_trenchbroom/composite_lightmaps.wgsl");
         let pipeline_cache = world.resource::<PipelineCache>();
 
-        let pipeline = pipeline_cache.queue_render_pipeline(RenderPipelineDescriptor {
-            label: Some("Composite Lightmap Images Pipeline".into()),
-            layout: vec![bind_group_layout.clone(), globals_bind_group_layout.clone()],
-            push_constant_ranges: vec![],
-            vertex: VertexState {
-                shader: shader.clone(),
-                shader_defs: vec![],
-                entry_point: "vertex".into(),
-                buffers: vec![],
-            },
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleStrip,
-                strip_index_format: Some(IndexFormat::Uint16),
-                front_face: FrontFace::Cw,
-                cull_mode: None,
-                unclipped_depth: false,
-                polygon_mode: PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: default(), // Do not multisample
-            fragment: Some(FragmentState {
-                shader,shader_defs: vec![],
-                entry_point: "fragment".into(),
-                targets: vec![Some(LIGHTMAP_OUTPUT_TEXTURE_FORMAT.into())],
-            }),
-        });
+        // For things shared across both pipelines
+        fn create_pipeline_descriptor(
+            shader: Handle<Shader>,
+            label: &'static str,
+            bind_group_layout: BindGroupLayout,
+            globals_bind_group_layout: BindGroupLayout,
+        ) -> RenderPipelineDescriptor {
+            RenderPipelineDescriptor {
+                label: Some(label.into()),
+                layout: vec![bind_group_layout, globals_bind_group_layout],
+                push_constant_ranges: vec![],
+                vertex: VertexState {
+                    shader: shader.clone(),
+                    shader_defs: vec![],
+                    entry_point: "vertex".into(),
+                    buffers: vec![],
+                },
+                primitive: PrimitiveState {
+                    topology: PrimitiveTopology::TriangleStrip,
+                    strip_index_format: None,
+                    front_face: FrontFace::Cw,
+                    cull_mode: None,
+                    unclipped_depth: false,
+                    polygon_mode: PolygonMode::Fill,
+                    conservative: false,
+                },
+                depth_stencil: None,
+                multisample: default(), // Do not multisample
+                fragment: Some(FragmentState {
+                    shader,
+                    shader_defs: vec![],
+                    entry_point: "fragment".into(),
+                    targets: vec![Some(LIGHTMAP_OUTPUT_TEXTURE_FORMAT.into())],
+                }),
+            }
+        }
+
+        let lightmap_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
+            world.load_asset("embedded://bevy_trenchbroom/composite_lightmaps.wgsl"),
+            "Composite Lightmap Images Pipeline",
+            lightmap_bind_group_layout.clone(),
+            globals_bind_group_layout.clone(),
+        ));
+        let irradiance_volume_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
+            world.load_asset("embedded://bevy_trenchbroom/composite_irradiance_volumes.wgsl"),
+            "Composite Irradiance Volume Images Pipeline",
+            irradiance_volume_bind_group_layout.clone(),
+            globals_bind_group_layout.clone(),
+        ));
 
         let sampler = render_device.create_sampler(&SamplerDescriptor {
             mag_filter: FilterMode::Nearest,
@@ -284,43 +332,48 @@ impl FromWorld for AnimatedLightmapPipeline {
             ..default()
         });
 
-        // let tmp_vertex_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor { label: None, contents: [0.0_f32, 0.,  1., 0.,  0., 1.,  1., 1.].map(|f| f.to_ne_bytes()).as_flattened(), usage: BufferUsages::VERTEX });
-
-        Self { bind_group_layout, seconds_bind_group_layout: globals_bind_group_layout, pipeline, sampler }
+        Self {
+            lightmap_bind_group_layout,
+            irradiance_volume_bind_group_layout,
+            globals_bind_group_layout,
+            lightmap_pipeline,
+            irradiance_volume_pipeline,
+            sampler,
+        }
     }
 }
 
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-struct AnimatedLightmapsLabel;
+struct AnimatedLightingLabel;
 
 // TODO Would a compute shader give more performance? Should we care?
 //      It does seem like vkQuake uses a compute shader, and it does get more performance
 //      We also need to think about compatibility, currently, wgpu doesn't support compute shaders on the web
 
-pub struct AnimatedLightmapsNode;
+pub struct AnimatedLightingNode;
 
-impl bevy::render::render_graph::Node for AnimatedLightmapsNode {
+impl bevy::render::render_graph::Node for AnimatedLightingNode {
     fn run<'w>(
         &self,
         _graph: &mut bevy::render::render_graph::RenderGraphContext,
         render_context: &mut bevy::render::renderer::RenderContext<'w>,
         world: &'w World,
     ) -> Result<(), bevy::render::render_graph::NodeRunError> {
-        let bind_groups = world.resource::<AnimatedLightmapBindGroups>();
-        let Some(seconds_bind_group) = &bind_groups.seconds else { return Ok(()) };
+        let bind_groups = world.resource::<AnimatedLightingBindGroups>();
+        let Some(globals_bind_group) = &bind_groups.globals else { return Ok(()) };
         let pipeline_cache = world.resource::<PipelineCache>();
-        let pipeline = world.resource::<AnimatedLightmapPipeline>();
-        let animated_lightmaps = world.resource::<RenderAssets<AnimatedLightmap>>();
+        let pipeline = world.resource::<AnimatedLightingPipeline>();
+        let animated_lighting_assets = world.resource::<RenderAssets<AnimatedLighting>>();
         let gpu_images = world.resource::<RenderAssets<GpuImage>>();
 
         for (id, bind_group) in &bind_groups.values {
-            let Some(animated_lightmap) = animated_lightmaps.get(*id) else { continue };
-            let Some(output_image) = gpu_images.get(&animated_lightmap.output) else { continue };
+            let Some(animated_lighting) = animated_lighting_assets.get(*id) else { continue };
+            let Some(output_image) = gpu_images.get(&animated_lighting.output) else { continue };
             // TODO if there is only unanimated styles, and it's already run once, we don't need to run it again!
             
             let mut pass = render_context.command_encoder().begin_render_pass(&RenderPassDescriptor {
-                label: Some("Composite Lightmap Images"),
+                label: Some("Composite Lighting"),
                 color_attachments: &[Some(RenderPassColorAttachment {
                     view: &output_image.texture_view,
                     resolve_target: None,
@@ -333,12 +386,21 @@ impl bevy::render::render_graph::Node for AnimatedLightmapsNode {
                 ..default()
             });
             
-            let Some(render_pipeline) = pipeline_cache.get_render_pipeline(pipeline.pipeline) else { return Ok(()) };
+            let pipeline_id = match animated_lighting.ty {
+                AnimatedLightingType::Lightmap => pipeline.lightmap_pipeline,
+                AnimatedLightingType::IrradianceVolume => pipeline.irradiance_volume_pipeline,
+            };
+            let Some(render_pipeline) = pipeline_cache.get_render_pipeline(pipeline_id) else { return Ok(()) };
             pass.set_pipeline(render_pipeline);
 
             pass.set_bind_group(0, bind_group, &[]);
-            pass.set_bind_group(1, seconds_bind_group, &[]);
-            pass.draw(0..4, 0..1);
+            pass.set_bind_group(1, globals_bind_group, &[]);
+
+            match animated_lighting.ty {
+                AnimatedLightingType::Lightmap => pass.draw(0..4, 0..1),
+                // AnimatedLightingType::IrradianceVolume => pass.draw(0..4 * output_image.size.depth_or_array_layers, 0..1),
+                AnimatedLightingType::IrradianceVolume => todo!(),
+            }
         }
             
         Ok(())
