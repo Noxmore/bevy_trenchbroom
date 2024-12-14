@@ -448,12 +448,8 @@ impl BrushSpawnSettings {
 
             let mut colliders = Vec::new();
 
-            for faces in view.computed_polygons.iter() {
-                let mesh = generate_mesh_from_brush_polygons(
-                    &faces.iter().collect::<Vec<_>>(),
-                    view.tb_config,
-                );
-                let Some(collider) = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::ConvexHull) else {
+            for mesh_view in view.meshes.iter() {
+                let Some(collider) = Collider::from_bevy_mesh(&mesh_view.mesh, &ComputedColliderShape::ConvexHull) else {
                     error!("MapEntity {entity} has an invalid (non-convex) brush, and a collider could not be computed for it!");
                     continue;
                 };
@@ -473,13 +469,11 @@ impl BrushSpawnSettings {
     pub fn convex_collider(self) -> Self {
         self.spawner(|world, entity, view| {
             use avian3d::prelude::*;
+            
             let mut colliders = Vec::new();
-            for faces in view.computed_polygons.iter() {
-                let mesh = generate_mesh_from_brush_polygons(
-                    &faces.iter().collect::<Vec<_>>(),
-                    view.tb_config,
-                );
-                if let Some(collider) = Collider::convex_hull_from_mesh(&mesh) {
+
+            for mesh_view in view.meshes.iter() {
+                if let Some(collider) = Collider::convex_hull_from_mesh(&mesh_view.mesh) {
                     colliders.push((Vec3::ZERO, Quat::IDENTITY, collider))
                 }
             }
