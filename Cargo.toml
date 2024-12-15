@@ -35,6 +35,7 @@ q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "7b52b00" }
 # q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
 nil = "0.13"
 ndshape = "0.3.0"
+inventory = { version = "0.3", optional = true }
 
 [dev-dependencies.bevy]
 version = "0.14"
@@ -45,5 +46,7 @@ bevy_flycam = "0.14"
 bevy-inspector-egui = "0.27" # TODO TMP
 
 [features]
+default = ["auto_register"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
+auto_register = ["dep:inventory"]

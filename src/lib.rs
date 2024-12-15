@@ -14,6 +14,7 @@ pub mod spawn;
 pub mod util;
 pub mod special_textures;
 pub mod bsp_lighting;
+pub mod class;
 
 pub(crate) use prelude::*;
 

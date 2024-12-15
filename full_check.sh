@@ -5,6 +5,9 @@ set -e
 echo cargo c --all-targets
 cargo c --all-targets
 
+echo cargo c --no-default-features --all-targets
+cargo c --no-default-features --all-targets
+
 echo cargo c --features rapier --all-targets
 cargo c --features rapier --all-targets
 
