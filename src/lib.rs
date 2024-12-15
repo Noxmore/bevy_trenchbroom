@@ -6,12 +6,14 @@ compile_error!("can only have one collider backend enabled");
 pub mod brush;
 pub mod config;
 pub mod definitions;
-pub mod loader;
+pub mod load;
 pub mod map_entity;
 pub mod material_properties;
 pub mod prelude;
-pub mod spawning;
+pub mod spawn;
 pub mod util;
+pub mod special_textures;
+pub mod bsp_lighting;
 
 pub(crate) use prelude::*;
 
@@ -28,34 +30,62 @@ impl TrenchBroomPlugin {
 
 impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
+        if self.config.special_textures.is_some() {
+            app.add_plugins(SpecialTexturesPlugin);
+        }
+        
         app
+            .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
-            .insert_resource(self.config.clone())
-            .register_type::<MapEntity>()
-            .register_type::<SpawnedMapEntity>()
-            .register_type::<Map>()
-            .register_type::<SpawnedMap>()
+            .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset::<Map>()
             .init_asset_loader::<MapLoader>()
+            .init_asset_loader::<BspLoader>()
             .init_asset::<MaterialProperties>()
             .init_asset_loader::<MaterialPropertiesLoader>()
-            .add_systems(
-                PreUpdate,
-                (mirror_trenchbroom_config, reload_maps, spawn_maps),
-            );
-
-        // Mirror before any schedule is run, so it won't crash on startup systems. (https://github.com/Noxmore/bevy_trenchbroom/issues/1)
-        *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() =
-            Some(TrenchBroomConfigMirror::new(&self.config));
+            .add_systems(PreUpdate, (Self::reload_maps, Self::spawn_maps));
     }
 }
 
-/// A TrenchBroom map loaded from a .map file.
-#[derive(Asset, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
+/// The main hub of `bevy_trenchbroom`-related data. Similar to [AssetServer], all data this stores is reference counted and can be easily cloned.
+#[derive(Resource, Debug, Clone)]
+pub struct TrenchBroomServer {
+    data: Arc<TrenchBroomServerData>,
+}
+impl TrenchBroomServer {
+    pub fn new(config: TrenchBroomConfig) -> Self {
+        Self {
+            data: Arc::new(TrenchBroomServerData {
+                config,
+                material_cache: default(),
+            }),
+        }
+    }
+}
+impl std::ops::Deref for TrenchBroomServer {
+    type Target = TrenchBroomServerData;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+#[derive(Debug)]
+pub struct TrenchBroomServerData {
+    pub config: TrenchBroomConfig,
+    /// Caches textures used on brushes to [StandardMaterial] handles.
+    pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
+}
+
+/// A Quake map loaded from a .map or .bsp file.
+#[derive(Asset, Reflect, Debug, Clone, Default)]
 pub struct Map {
     /// A title for the map, currently it just mirrors it's path.
     pub name: String,
-    pub entities: Vec<MapEntity>,
+    pub entities: Vec<Arc<MapEntity>>,
+    /// Textures embedded in a BSP file.
+    pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
+    #[reflect(ignore)]
+    pub bsp_data: Option<BspData>,
+    pub irradiance_volumes: Vec<(IrradianceVolume, Transform)>,
 }
 
 impl Map {
@@ -66,6 +96,7 @@ impl Map {
         self.entities
             .iter()
             .find(|ent| ent.classname() == Ok("worldspawn"))
+            .map(|v| &**v)
     }
 }
 

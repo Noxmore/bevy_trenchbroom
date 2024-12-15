@@ -2,43 +2,10 @@ use bevy::render::render_asset::RenderAssetUsages;
 
 use crate::*;
 
-/// Mirrors certain variables of the any active app's [TrenchBroomConfig].
-///
-/// If multiple apps/subapps both have [TrenchBroomPlugin], and their configs have different values for these variables, the resulting mirror will be whichever config changed most recently.
-pub static TRENCHBROOM_CONFIG_MIRROR: Lazy<RwLock<Option<TrenchBroomConfigMirror>>> =
-    Lazy::new(default);
+// TODO look through here for things that should be able to be changed during gameplay.
 
-/// Unlocks [TRENCHBROOM_CONFIG_MIRROR] with appropriate error messages.
-#[macro_export]
-macro_rules! trenchbroom_config_mirror {
-    () => {
-        TRENCHBROOM_CONFIG_MIRROR
-            .read()
-            .expect("TrenchBroomConfig mirror poisoned")
-            .as_ref()
-            .expect("No TrenchBroomConfig mirrored, please add a TrenchBroomPlugin to your app.")
-    };
-}
-
-/// See [TRENCHBROOM_CONFIG_MIRROR]
-pub struct TrenchBroomConfigMirror {
-    pub scale: f32,
-    pub texture_root: PathBuf,
-    pub assets_path: PathBuf,
-}
-
-impl TrenchBroomConfigMirror {
-    pub fn new(config: &TrenchBroomConfig) -> Self {
-        Self {
-            scale: config.scale,
-            texture_root: config.texture_root.clone(),
-            assets_path: config.assets_path.clone(),
-        }
-    }
-}
-
-/// The complete TrenchBroom configuration, it is recommended to set this in the plugin, where it will be put into [CURRENT_CONFIG], and to not change it afterwards.
-#[derive(Resource, Debug, Clone, SmartDefault, DefaultBuilder)]
+/// The main configuration structure of bevy_trenchbroom.
+#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
     /// The format version of the TrenchBroom config file, you almost certainly should not change this.
     #[default(8)]
@@ -66,9 +33,10 @@ pub struct TrenchBroomConfig {
     #[default(vec![MapFileFormat::Valve])]
     pub file_formats: Vec<MapFileFormat>,
     /// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
-    pub package_format: AssetPackageFormat,
+    #[builder(skip)] // bevy_trenchbroom currently *only* supports loose files
+    package_format: AssetPackageFormat,
 
-    /// The root directory to look for textures. (Default: "textures")
+    /// The root directory to look for textures in the [assets_path](Self::assets_path). (Default: "textures")
     #[default("textures".into())]
     #[builder(into)]
     pub texture_root: PathBuf,
@@ -76,9 +44,16 @@ pub struct TrenchBroomConfig {
     #[default("png".into())]
     #[builder(into)]
     pub texture_extension: String,
-    /// An optional pallette file to use for textures.
+    /// The palette file path and data used for WADs. The path roots from your assets folder.
+    /// 
+    /// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
+    /// and a copy distributed by this library in the form of [QUAKE_PALETTE].
+    /// 
+    /// If TrenchBroom can't find this palette file, all WAD textures will be black.
+    /// (Default: ("palette.lmp", &QUAKE_PALETTE))
     #[builder(into)]
-    pub texture_pallette: Option<String>,
+    #[default(("palette.lmp".into(), &QUAKE_PALETTE))] // TODO
+    pub texture_pallette: (PathBuf, &'static Palette),
     /// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
     #[builder(into)]
     #[default(Self::default_texture_exclusions())]
@@ -103,22 +78,51 @@ pub struct TrenchBroomConfig {
     pub face_tags: Vec<TrenchBroomTag>,
 
     /// The optional bounding box enclosing the map to draw in the 2d viewports.
-    /// This doesn't use [Aabb] because at the time of writing it does not implement `Serialize`.
     ///
     /// The two values are the bounding box min, and max respectively.
     ///
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
+    /// The default lightmap exposure for BSP loaded lightmaps.
+    #[default(10000.)]
+    pub default_lightmap_exposure: f32,
+    #[default(500.)]
+    pub default_irradiance_volume_intensity: f32,
+
+    /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
+    pub ignore_invalid_entity_definitions: bool,
+
+    /// [TrenchBroomConfig::special_textures]
+    #[builder(skip)]
+    pub special_textures: Option<SpecialTexturesConfig>,
+
+    /// How lightmaps atlas' are computed when loading BSP files.
+    /// 
+    /// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
+    pub compute_lightmap_settings: ComputeLightmapSettings,
+
     pub entity_definitions: IndexMap<String, EntityDefinition>,
 
-    /// Entity spawner that gets run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
-    #[default(Some(Self::default_global_spawner))]
-    pub global_spawner: Option<EntitySpawner>,
+    /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
+    #[default(vec![Self::default_global_spawner])]
+    pub global_spawners: Vec<EntitySpawner>,
+
+    /// Spawner that gets run after an entity spawns brushes, regardless of classname.
+    pub global_brush_spawners: Vec<fn(&mut World, Entity, &mut BrushSpawnView)>,
+
+    // TODO hook stack?
+    /// Called to apply a material to spawned brush geometry. (Default: [TrenchBroomConfig::default_material_application_hook])
+    #[default(Self::default_material_application_hook)]
+    pub material_application_hook: fn(StandardMaterial, &BrushMeshView, &mut World, &BrushSpawnView),
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
     pub brush_mesh_asset_usages: RenderAssetUsages,
+
+    /// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+    #[default(RenderAssetUsages::RENDER_WORLD)]
+    pub bsp_textures_asset_usages: RenderAssetUsages,
 }
 
 impl TrenchBroomConfig {
@@ -150,27 +154,45 @@ impl TrenchBroomConfig {
             .attributes([TrenchBroomTagAttribute::Transparent])
     }
 
-    /// Adds transform via [MapEntityPropertiesView::get_transform], the [MapEntity] itself, and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    /// Adds transform via [MapEntityPropertiesView::get_transform], and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    /// 
+    /// If the entity is a brush entity, no rotation is applied.
     pub fn default_global_spawner(
         world: &mut World,
         entity: Entity,
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
-        let classname = view.map_entity.classname()?.to_string();
+        let classname = view.map_entity.classname()?.s();
+
+        let mut transform = view.get_transform();
+        if view.server.config.get_definition(&classname)?.class_type == EntDefClassType::Solid {
+            transform.rotation = Quat::IDENTITY;
+        }
+        
         world.entity_mut(entity).insert((
             Name::new(
                 view.get::<String>("targetname")
                     .map(|name| format!("{classname} ({name})"))
                     .unwrap_or(classname),
             ),
-            view.get_transform(),
+            transform,
             GlobalTransform::default(),
-            view.map_entity.clone(),
         ));
 
         trenchbroom_gltf_rotation_fix(world, entity);
 
         Ok(())
+    }
+
+    /// Adds the [StandardMaterial] to the entity.
+    pub fn default_material_application_hook(
+        material: StandardMaterial,
+        mesh_view: &BrushMeshView,
+        world: &mut World,
+        _view: &BrushSpawnView,
+    ) {
+        let handle = world.resource_mut::<Assets<StandardMaterial>>().add(material);
+        world.entity_mut(mesh_view.entity).insert(handle);
     }
 
     /// Gets the default value for the specified entity definition's specified property accounting for entity class hierarchy.
@@ -202,6 +224,16 @@ impl TrenchBroomConfig {
                 classname: classname.into(),
             }
         })
+    }
+
+    /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
+    pub fn to_bevy_space(&self, vec: Vec3) -> Vec3 {
+        vec.z_up_to_y_up() / self.scale
+    }
+
+    /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
+    pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
+        vec.z_up_to_y_up() / self.scale as f64
     }
 }
 
@@ -338,8 +370,6 @@ impl TrenchBroomTagAttribute {
 
 impl TrenchBroomConfig {
     /// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
-    ///
-    /// NOTE: If you are using [CURRENT_CONFIG], make sure to apply this AFTER your app gets built, otherwise you will be writing [TrenchBroomConfig]'s default value.
     pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
         if self.name.is_empty() {
             return Err(io::Error::new(
@@ -361,13 +391,15 @@ impl TrenchBroomConfig {
             "name": self.name.clone(),
             "fileformats": self.file_formats.iter().map(|format| json::object! { "format": format.config_str() }).collect::<Vec<_>>(),
             "filesystem": {
-                "searchpath": self.assets_path.to_string_lossy().to_string(),
+                "searchpath": self.assets_path.s(),
                 "packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
             },
             "textures": {
-                "root": self.texture_root.to_string_lossy().to_string(),
-                "format": { "extension": self.texture_extension.clone(), "format": "image" },
-                "attribute": "_tb_textures",
+                "root": self.texture_root.s(),
+                // .D is required for WADs to work
+                "extensions": [".D", self.texture_extension.clone()],
+                "palette": self.texture_pallette.0.s(),
+                "attribute": "wad",
                 "excludes": self.texture_exclusions.clone(),
             },
             "entities": {
@@ -381,15 +413,16 @@ impl TrenchBroomConfig {
                 "brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
             }
         };
+        
 
         if let Some(icon) = &self.icon {
             fs::write(folder.join("Icon.png"), icon)?;
             json.insert("icon", "Icon.png").unwrap();
         }
 
-        if let Some(palette) = &self.texture_pallette {
-            json["textures"].insert("palette", palette.clone()).unwrap();
-        }
+        // if let Some(palette) = &self.texture_pallette {
+        //     json["textures"].insert("palette", palette.clone()).unwrap();
+        // }
 
         if let Some(bounds) = self.soft_map_bounds {
             json.insert("softMapBounds", bounds.tb_to_string()).unwrap();
@@ -420,12 +453,4 @@ impl TrenchBroomConfig {
 
         Ok(())
     }
-}
-
-/// Mirrors [TrenchBroomConfig::scale] to [TRENCHBROOM_SCALE] if it changes.
-pub fn mirror_trenchbroom_config(config: Res<TrenchBroomConfig>) {
-    if !config.is_changed() {
-        return;
-    }
-    *TRENCHBROOM_CONFIG_MIRROR.write().unwrap() = Some(TrenchBroomConfigMirror::new(&config));
 }

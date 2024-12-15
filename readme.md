@@ -3,7 +3,9 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-Full Bevy integration with TrenchBroom, supporting loading .map files, defining a TrenchBroom game configuration and entities definitions with code, and more!
+Integration and support for the following workflows:
+- TrenchBroom -> .map -> Bevy
+- TrenchBroom -> .map -> ericw-tools -> .bsp -> Bevy
 
 <img src="assets/screenshots/rune_proto.png">
 <label>(A testing map i made, loaded with bevy_trenchbroom)</label>
@@ -44,8 +46,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
         .entity_definitions(entity_definitions! {
             /// World Entity
             Solid worldspawn {} |world, entity, view| {
-                // This is the code to spawn the entity into the world, note that the TrenchBroomConfig resource is not available in this scope
-                // If you need to access the TrenchBroomConfig, access it via view.tb_config
+                // If you need to access the TrenchBroomConfig, access it via view.server.config
                 view.spawn_brushes(world, entity, BrushSpawnSettings::new().smooth_by_default_angle().pbr_mesh());
                 // Here, we also call smooth_by_default_angle(), which smooths the normals of connected surfaces curving less than a default threshold
             }
@@ -84,6 +85,8 @@ fn trenchbroom_config() -> TrenchBroomConfig {
             } |world, entity, view| {
                 let scene = world.resource::<AssetServer>().load(format!("{}#Scene0", view.get::<String>("model")?));
 
+                // (skin, collision type, and shadows not implemented here)
+
                 world.entity_mut(entity).insert((
                     SceneBundle {
                         scene,
@@ -104,8 +107,8 @@ use bevy_trenchbroom::prelude::*;
 
 // app.add_systems(Startup, write_trenchbroom_config)
 
-fn write_trenchbroom_config(config: Res<TrenchBroomConfig>) {
-    if let Err(err) = config.write_folder("<folder_path>") {
+fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
+    if let Err(err) = server.config.write_folder("<folder_path>") {
         error!("Could not write TrenchBroom config: {err}");
     }
 
@@ -143,13 +146,14 @@ use bevy_trenchbroom::prelude::*;
 
 fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(MapBundle {
-        map: asset_server.load("maps/test.map"),
+        map: asset_server.load("maps/test.map"), // Or test.bsp if you're loading BSPs
         ..default()
     });
 }
 ```
 
-Maps support asset hot-reloading, meaning that iteration times are pretty much instant.
+## BSP loading
+// TODO
 
 ## Multiplayer
 
@@ -173,9 +177,6 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 - Reduce the amount of filesystem calls being done synchronously
 - Entity IO
 - Map GLTF exporting
-- BSP loading
-
-If you want to try to tackle, or have an idea of how to approach any of these, a PR/issue would be greatly appreciated!
 
 # Supported Bevy && TrenchBroom Versions
 | Bevy | bevy_trenchbroom | TrenchBroom |

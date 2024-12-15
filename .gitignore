@@ -3,4 +3,10 @@
 /.idea
 /.cargo
 /assets/maps/autosave
-Cargo.lock
+# TODO
+/assets/maps/arcane
+/assets/maps/e1m1.bsp
+# /TMP
+/assets/maps/*.log
+/assets/maps/*.prt
+/assets/maps/*.lit

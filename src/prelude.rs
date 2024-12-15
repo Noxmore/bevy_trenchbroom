@@ -1,31 +1,36 @@
 pub(crate) use bevy::math::*;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
-pub(crate) use bevy::utils::hashbrown::HashMap;
+pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
 pub(crate) use default_struct_builder::*;
 pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
-pub(crate) use once_cell::sync::Lazy;
 pub(crate) use serde::*;
-pub(crate) use smart_default::*;
-pub(crate) use std::fs;
-pub(crate) use std::io;
-pub(crate) use std::mem;
-pub(crate) use std::path::{Path, PathBuf};
-pub(crate) use std::sync::*;
+pub(crate) use serde::de::DeserializeOwned;
+pub(crate) use nil::prelude::*;
+pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;
+pub(crate) use q1bsp::prelude::*;
 
 pub use anyhow;
 pub use indexmap;
 pub use toml;
+pub use q1bsp::{Palette, QUAKE_PALETTE, data::bsp::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas, ComputeLightmapSettings}};
+// pub use q1bsp::{Palette, QUAKE_PALETTE, data::{LightmapStyle, Lightmaps}}; // TODO
 
-pub use crate::brush::*;
-pub use crate::config::*;
-pub use crate::definitions::*;
-pub use crate::loader::*;
-pub use crate::map_entity::*;
-pub use crate::material_properties::*;
-pub use crate::spawning::brushes::*;
-pub use crate::spawning::*;
-pub use crate::util::*;
-pub use crate::*;
+pub use crate::{
+    brush::*,
+    config::*,
+    definitions::*,
+    load::*,
+    load::bsp::*,
+    load::map::*,
+    map_entity::*,
+    material_properties::*,
+    spawn::geometry::*,
+    spawn::*,
+    util::*,
+    special_textures::*,
+    bsp_lighting::*,
+    *,
+};
