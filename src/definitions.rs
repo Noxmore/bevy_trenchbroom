@@ -34,7 +34,7 @@ use crate::*;
 ///
 /// You can also specify the property's title and description via documentation comment, the `" : "` string separating them.
 ///
-/// The type here is also different, you can use just a regular type, as long as it implements [TrenchBroomValue], or you could set it to a custom type by using a string in place of the type. (e.g. using `"studio"` for a model)
+/// The type here is also different, you can use just a regular type, as long as it implements [FgdType], or you could set it to a custom type by using a string in place of the type. (e.g. using `"studio"` for a model)
 ///
 /// You can also set it to a `choices` type by using this syntax: `[ <key> : <title>, .. ]` That tells the user for the value to be one of the `<key>`s, although its not guaranteed.
 ///
@@ -98,7 +98,7 @@ macro_rules! entity_definitions {
                             ty: entity_definitions!(@PROPERTY_TYPE $prop_type),
                             title: docs.next(),
                             description: docs.next(),
-                            $(default_value: Some(($default).tb_to_string_quoted()),)?
+                            $(default_value: Some(($default).fgd_to_string_quoted()),)?
                             ..Default::default()
                         }
                     })),*
@@ -113,7 +113,7 @@ macro_rules! entity_definitions {
     }};
 
     (@PROPERTY_TYPE [$($choice:literal : $title:literal),+ $(,)?]) => {
-        EntDefPropertyType::Choices(vec![$((($choice).tb_to_string_quoted(), $title.to_string())),+])
+        EntDefPropertyType::Choices(vec![$((($choice).fgd_to_string_quoted(), $title.to_string())),+])
     };
     (@PROPERTY_TYPE $ty:ty) => {
         <$ty>::fgd_type()

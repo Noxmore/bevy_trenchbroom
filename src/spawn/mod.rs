@@ -212,7 +212,7 @@ impl std::ops::Deref for EntitySpawnView<'_> {
 impl<'w> EntitySpawnView<'w> {
     /// Gets a property from this entity accounting for entity class hierarchy.
     /// If the property is not defined, it attempts to get its default.
-    pub fn get<T: TrenchBroomValue>(&self, key: &str) -> Result<T, MapEntitySpawnError> {
+    pub fn get<T: FgdType>(&self, key: &str) -> Result<T, MapEntitySpawnError> {
         let Some(value_str) = self.map_entity.properties.get(key).or(self
             .server.config
             .get_entity_property_default(self.map_entity.classname()?, key))
@@ -221,7 +221,7 @@ impl<'w> EntitySpawnView<'w> {
                 property: key.into(),
             });
         };
-        T::tb_parse(value_str.trim_matches('"')).map_err(|err| {
+        T::fgd_parse(value_str.trim_matches('"')).map_err(|err| {
             MapEntitySpawnError::PropertyParseError {
                 property: key.into(),
                 required_type: std::any::type_name::<T>(),

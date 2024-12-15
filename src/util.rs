@@ -124,32 +124,32 @@ impl ConvertZeroToOne for Vec2 {
     }
 }
 
-/// Contains TrenchBroom-specific parsing and stringification functions.
-pub trait TrenchBroomValue: Sized {
-    /// If quotes should be put around this value when writing out an `fgd` file.
-    const TB_IS_QUOTED: bool = true;
+/// Contains Quake/TrenchBroom-specific parsing and stringification functions.
+pub trait FgdType: Sized {
+    /// If quotes should be put around this value when writing out an FGD file.
+    const FGD_IS_QUOTED: bool = true;
 
-    /// Parses a string into `Self` TrenchBroom-style, used for parsing entity properties.
-    fn tb_parse(input: &str) -> anyhow::Result<Self>;
-    /// Converts this value into a string TrenchBroom-style, used for writing `fgd`s.
-    fn tb_to_string(&self) -> String;
-    /// Calls `tb_to_string`, but if `TB_IS_QUOTED` is true, surrounds the output with quotes.
-    fn tb_to_string_quoted(&self) -> String {
-        if Self::TB_IS_QUOTED {
-            format!("\"{}\"", self.tb_to_string())
+    /// Parses a string into `Self` FGD-style. Used for parsing entity properties.
+    fn fgd_parse(input: &str) -> anyhow::Result<Self>;
+    /// Converts this value into a string used for writing FGDs.
+    fn fgd_to_string(&self) -> String;
+    /// Calls `fgd_to_string`, but if `FGD_IS_QUOTED` is true, surrounds the output with quotes.
+    fn fgd_to_string_quoted(&self) -> String {
+        if Self::FGD_IS_QUOTED {
+            format!("\"{}\"", self.fgd_to_string())
         } else {
-            self.tb_to_string()
+            self.fgd_to_string()
         }
     }
 
     fn fgd_type() -> EntDefPropertyType;
 }
 
-impl TrenchBroomValue for String {
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
+impl FgdType for String {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         Ok(input.to_string())
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         self.clone()
     }
     fn fgd_type() -> EntDefPropertyType {
@@ -157,12 +157,12 @@ impl TrenchBroomValue for String {
     }
 }
 
-impl TrenchBroomValue for &str {
-    fn tb_parse(_input: &str) -> anyhow::Result<Self> {
+impl FgdType for &str {
+    fn fgd_parse(_input: &str) -> anyhow::Result<Self> {
         // Lifetimes don't allow me to just return Some(input) unfortunately.
-        unimplemented!("use String::tb_parse instead");
+        unimplemented!("use String::fgd_parse instead");
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         self.to_string()
     }
     fn fgd_type() -> EntDefPropertyType {
@@ -172,13 +172,13 @@ impl TrenchBroomValue for &str {
 
 macro_rules! simple_trenchbroom_value_impl {
     ($ty:ty, $quoted:expr, $fgd_type:ident $fgd_type_value:expr) => {
-        impl TrenchBroomValue for $ty {
-            const TB_IS_QUOTED: bool = $quoted;
+        impl FgdType for $ty {
+            const FGD_IS_QUOTED: bool = $quoted;
 
-            fn tb_parse(input: &str) -> anyhow::Result<Self> {
+            fn fgd_parse(input: &str) -> anyhow::Result<Self> {
                 Ok(input.parse()?)
             }
-            fn tb_to_string(&self) -> String {
+            fn fgd_to_string(&self) -> String {
                 self.to_string()
             }
             fn fgd_type() -> EntDefPropertyType {
@@ -199,22 +199,22 @@ simple_trenchbroom_value_impl!(i32, false, Value "integer");
 simple_trenchbroom_value_impl!(i64, false, Value "integer");
 simple_trenchbroom_value_impl!(isize, false, Value "integer");
 
-simple_trenchbroom_value_impl!(bool, true, Choices [("true".tb_to_string_quoted(), "true".into()), ("false".tb_to_string_quoted(), "false".into())]);
+simple_trenchbroom_value_impl!(bool, true, Choices [("true".fgd_to_string_quoted(), "true".into()), ("false".fgd_to_string_quoted(), "false".into())]);
 
 simple_trenchbroom_value_impl!(f32, true, Value "float");
 simple_trenchbroom_value_impl!(f64, true, Value "float");
 
-impl TrenchBroomValue for Aabb {
-    const TB_IS_QUOTED: bool = false;
+impl FgdType for Aabb {
+    const FGD_IS_QUOTED: bool = false;
 
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        let values = <[f32; 6]>::tb_parse(input)?;
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        let values = <[f32; 6]>::fgd_parse(input)?;
         Ok(Aabb::from_min_max(
             Vec3::from_slice(&values[0..=3]),
             Vec3::from_slice(&values[3..=6]),
         ))
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         let min = self.min();
         let max = self.max();
         format!(
@@ -227,33 +227,33 @@ impl TrenchBroomValue for Aabb {
     }
 }
 
-impl TrenchBroomValue for Vec4 {
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        <[f32; 4]>::tb_parse(input).map(Vec4::from)
+impl FgdType for Vec4 {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        <[f32; 4]>::fgd_parse(input).map(Vec4::from)
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         format!("{} {} {} {}", self.x, self.y, self.z, self.w)
     }
     fn fgd_type() -> EntDefPropertyType {
         EntDefPropertyType::Value("vec4".into())
     }
 }
-impl TrenchBroomValue for Vec3 {
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        <[f32; 3]>::tb_parse(input).map(Vec3::from)
+impl FgdType for Vec3 {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        <[f32; 3]>::fgd_parse(input).map(Vec3::from)
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         format!("{} {} {}", self.x, self.y, self.z)
     }
     fn fgd_type() -> EntDefPropertyType {
         EntDefPropertyType::Value("vector".into())
     }
 }
-impl TrenchBroomValue for Vec2 {
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        <[f32; 2]>::tb_parse(input).map(Vec2::from)
+impl FgdType for Vec2 {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        <[f32; 2]>::fgd_parse(input).map(Vec2::from)
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         format!("{} {}", self.x, self.y)
     }
     fn fgd_type() -> EntDefPropertyType {
@@ -261,14 +261,13 @@ impl TrenchBroomValue for Vec2 {
     }
 }
 
-// Should this use linear or srgb? VDC doesn't specify the color space. It probably doesn't matter anyway.
-impl TrenchBroomValue for Color {
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        <[f32; 3]>::tb_parse(input)
+impl FgdType for Color {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        <[f32; 3]>::fgd_parse(input)
             .map(Color::srgb_from_array)
-            .or(<[f32; 4]>::tb_parse(input).map(|[r, g, b, a]| Color::srgba(r, g, b, a)))
+            .or(<[f32; 4]>::fgd_parse(input).map(|[r, g, b, a]| Color::srgba(r, g, b, a)))
     }
-    fn tb_to_string(&self) -> String {
+    fn fgd_to_string(&self) -> String {
         let col = self.to_srgba();
         format!("{} {} {} {}", col.red, col.green, col.blue, col.alpha)
     }
@@ -278,24 +277,22 @@ impl TrenchBroomValue for Color {
 }
 
 // God i love rust's trait system
-impl<T: TrenchBroomValue + Default + Copy, const COUNT: usize> TrenchBroomValue for [T; COUNT] {
-    // const TB_IS_QUOTED: bool = T::TB_IS_QUOTED;
-
-    fn tb_parse(input: &str) -> anyhow::Result<Self> {
-        // This might be a problem for TrenchBroomValues that use spaces in their parsing. Oh well!
-        let mut out = [T::default(); COUNT];
+impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        // This might be a problem for FgdTypes that use spaces in their parsing. Oh well!
+        let mut out = [T::default(); N];
 
         for (i, input) in input.split_ascii_whitespace().enumerate() {
             if i >= out.len() {
-                return Err(anyhow::anyhow!("Too many elements! Expected: {COUNT}"));
+                return Err(anyhow::anyhow!("Too many elements! Expected: {N}"));
             }
-            out[i] = T::tb_parse(input)?;
+            out[i] = T::fgd_parse(input)?;
         }
 
         Ok(out)
     }
-    fn tb_to_string(&self) -> String {
-        self.iter().map(T::tb_to_string).join(" ")
+    fn fgd_to_string(&self) -> String {
+        self.iter().map(T::fgd_to_string).join(" ")
     }
     fn fgd_type() -> EntDefPropertyType {
         T::fgd_type()
