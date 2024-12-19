@@ -1,6 +1,10 @@
 use std::collections::HashSet;
 
-use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
+use bevy::{
+    asset::embedded_asset,
+    pbr::{ExtendedMaterial, MaterialExtension},
+    render::render_resource::AsBindGroup,
+};
 
 use crate::*;
 
@@ -9,19 +13,16 @@ impl Plugin for SpecialTexturesPlugin {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "liquid.wgsl");
         embedded_asset!(app, "quake_sky.wgsl");
-        
-        app
-            .add_plugins(MaterialPlugin::<LiquidMaterial>::default())
+
+        app.add_plugins(MaterialPlugin::<LiquidMaterial>::default())
             .add_plugins(MaterialPlugin::<QuakeSkyMaterial>::default())
-        
-            .add_systems(Update, Self::animate_textures)
-        ;
+            .add_systems(Update, Self::animate_textures);
     }
 }
 impl SpecialTexturesPlugin {
     pub fn animate_textures(
         map_entity_query: Query<(&MapEntityRef, &Children), With<SpawnedMapEntity>>,
-        mesh_query: Query<&Handle<StandardMaterial>, With<Handle<Mesh>>>,
+        mesh_query: Query<&MeshMaterial3d<StandardMaterial>, With<Mesh3d>>,
         maps: Res<Assets<Map>>,
         asset_server: Res<AssetServer>,
         mut materials: ResMut<Assets<StandardMaterial>>, // TODO support other user-made materials?
@@ -30,55 +31,88 @@ impl SpecialTexturesPlugin {
         time: Res<Time>,
         mut last_frame_update: Local<f32>,
     ) {
-        while *last_frame_update < time.elapsed_seconds() {
-            *last_frame_update += tb_server.config.special_textures_config().texture_animation_speed;
+        while *last_frame_update < time.elapsed_secs() {
+            *last_frame_update += tb_server
+                .config
+                .special_textures_config()
+                .texture_animation_speed;
 
             for (map_entity_ref, children) in &map_entity_query {
-                let Some(map_handle) = &map_entity_ref.map_handle else { continue };
-                let Some(map) = maps.get(map_handle) else { continue };
+                let Some(map_handle) = &map_entity_ref.map_handle else {
+                    continue;
+                };
+                let Some(map) = maps.get(map_handle) else {
+                    continue;
+                };
 
                 let mut updated_materials = HashSet::new();
-    
-                for material_handle in mesh_query.iter_many(children) {
-                    if updated_materials.contains(material_handle) { continue }
 
-                    let Some(material) = materials.get_mut(material_handle) else { continue };
-                    let Some(image_handle) = &material.base_color_texture else { continue };
-                    let Some(image_path) = image_handle.path() else { continue };
+                for material_handle in mesh_query.iter_many(children) {
+                    if updated_materials.contains(&material_handle.0) {
+                        continue;
+                    }
+
+                    let Some(material) = materials.get_mut(material_handle) else {
+                        continue;
+                    };
+                    let Some(image_handle) = &material.base_color_texture else {
+                        continue;
+                    };
+                    let Some(image_path) = image_handle.path() else {
+                        continue;
+                    };
                     // We check the label first, because if it was loaded from a BSP, the path will be the BSP file's path
                     // If there is no label, the image was probably loaded from a loose file
-                    let Some(file_name) = image_path.label().or_else(|| image_path.path().file_name().map(|x| x.to_str()).flatten()) else { continue };
+                    let Some(file_name) = image_path
+                        .label()
+                        .or_else(|| image_path.path().file_name().map(|x| x.to_str()).flatten())
+                    else {
+                        continue;
+                    };
                     let file_name = file_name.to_string();
-                    
+
                     let mut chars = file_name.chars();
-                    if chars.next() != Some('+') { continue }
+                    if chars.next() != Some('+') {
+                        continue;
+                    }
                     let mut frame_str = [0; 4];
-                    let Some(frame_char) = chars.next() else { continue };
+                    let Some(frame_char) = chars.next() else {
+                        continue;
+                    };
                     frame_char.encode_utf8(&mut frame_str);
                     // Trim trailing null bytes because `frame_str` has a size of 4 for safety.
                     // SAFETY: char is always valid utf-8
-                    let frame_str = unsafe { std::str::from_utf8_unchecked(&frame_str) }.trim_end_matches('\0');
-    
-                    let Ok(mut frame_num) = frame_str.parse::<u8>() else { continue };
+                    let frame_str =
+                        unsafe { std::str::from_utf8_unchecked(&frame_str) }.trim_end_matches('\0');
+
+                    let Ok(mut frame_num) = frame_str.parse::<u8>() else {
+                        continue;
+                    };
                     frame_num += 1;
 
                     let texture_name = chars.collect::<String>();
-    
+
                     // Loop to run this code again if we need to loop back around.
                     for _ in 0..2 {
                         let new_file_name = format!("+{frame_num}{texture_name}");
-                        match map.embedded_textures.get(&new_file_name).map(|embedded| &embedded.image_handle).cloned().or_else(|| asset_server.get_handle::<Image>(&new_file_name)) {
+                        match map
+                            .embedded_textures
+                            .get(&new_file_name)
+                            .map(|embedded| &embedded.image_handle)
+                            .cloned()
+                            .or_else(|| asset_server.get_handle::<Image>(&new_file_name))
+                        {
                             Some(new_handle) => {
                                 material.base_color_texture = Some(new_handle);
                                 break;
-                            },
+                            }
                             None => {
                                 frame_num = 0;
                             }
                         }
                     }
 
-                    updated_materials.insert(material_handle);
+                    updated_materials.insert(material_handle.0.clone());
                 }
             }
         }
@@ -126,18 +160,33 @@ impl SpecialTexturesConfig {
                     material.alpha_mode = AlphaMode::Blend;
                     material.base_color = Color::linear_rgba(1., 1., 1., water_alpha);
                 }
-                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: (config.default_liquid_material)() });
-                world.entity_mut(mesh_view.entity).insert(handle);
+                let handle = world
+                    .resource_mut::<Assets<LiquidMaterial>>()
+                    .add(LiquidMaterial {
+                        base: material,
+                        extension: (config.default_liquid_material)(),
+                    });
+                world
+                    .entity_mut(mesh_view.entity)
+                    .insert(MeshMaterial3d(handle));
                 return;
             } else if mesh_view.texture.name.starts_with("sky") {
                 if let Some(texture) = material.base_color_texture {
-                    let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
-                    world.entity_mut(mesh_view.entity).insert(handle);
+                    let handle =
+                        world
+                            .resource_mut::<Assets<QuakeSkyMaterial>>()
+                            .add(QuakeSkyMaterial {
+                                texture,
+                                ..(config.default_quake_sky_material)()
+                            });
+                    world
+                        .entity_mut(mesh_view.entity)
+                        .insert(MeshMaterial3d(handle));
                     return;
                 }
             }
         }
-        
+
         TrenchBroomConfig::default_material_application_hook(material, mesh_view, world, view)
     }
 }
@@ -147,9 +196,11 @@ impl TrenchBroomConfig {
     #[inline]
     #[track_caller]
     pub(crate) fn special_textures_config(&self) -> &SpecialTexturesConfig {
-        self.special_textures.as_ref().expect("Special textures config required! This is a bug!")
+        self.special_textures
+            .as_ref()
+            .expect("Special textures config required! This is a bug!")
     }
-    
+
     /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
     /// such as animated textures, skies, liquids, and invisible textures like clip and skip.
     pub fn special_textures(mut self, config: SpecialTexturesConfig) -> Self {
@@ -157,8 +208,16 @@ impl TrenchBroomConfig {
 
         self.global_brush_spawners.push(|world, _entity, view| {
             for mesh_view in &view.meshes {
-                if view.server.config.special_textures_config().invisible_textures.contains(&mesh_view.texture.name) {
-                    world.entity_mut(mesh_view.entity).insert(Visibility::Hidden);
+                if view
+                    .server
+                    .config
+                    .special_textures_config()
+                    .invisible_textures
+                    .contains(&mesh_view.texture.name)
+                {
+                    world
+                        .entity_mut(mesh_view.entity)
+                        .insert(Visibility::Hidden);
                 }
             }
         });
@@ -206,7 +265,7 @@ pub struct QuakeSkyMaterial {
     #[uniform(0)]
     #[default(vec3(1., 3., 1.))]
     pub sphere_scale: Vec3,
-    
+
     /// Must be twice as wide as it is tall. The left side is the foreground, where any pixels that are black will show the right side -- the background.
     #[texture(1)]
     #[sampler(2)]

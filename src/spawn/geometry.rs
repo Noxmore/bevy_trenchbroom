@@ -376,7 +376,7 @@ impl BrushSpawnSettings {
                 }
 
                 let mesh_handle = world.resource::<AssetServer>().add(mesh_view.mesh.clone());
-                world.entity_mut(mesh_view.entity).insert((SpatialBundle::default(), mesh_handle));
+                world.entity_mut(mesh_view.entity).insert(Mesh3d(mesh_handle));
                 (view.server.config.material_application_hook)(material, mesh_view, world, view);
             }
         })

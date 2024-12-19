@@ -45,10 +45,10 @@ pub struct TrenchBroomConfig {
     #[builder(into)]
     pub texture_extension: String,
     /// The palette file path and data used for WADs. The path roots from your assets folder.
-    /// 
+    ///
     /// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
     /// and a copy distributed by this library in the form of [QUAKE_PALETTE].
-    /// 
+    ///
     /// If TrenchBroom can't find this palette file, all WAD textures will be black.
     /// (Default: ("palette.lmp", &QUAKE_PALETTE))
     #[builder(into)]
@@ -98,7 +98,7 @@ pub struct TrenchBroomConfig {
     pub special_textures: Option<SpecialTexturesConfig>,
 
     /// How lightmaps atlas' are computed when loading BSP files.
-    /// 
+    ///
     /// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
     pub compute_lightmap_settings: ComputeLightmapSettings,
 
@@ -114,7 +114,8 @@ pub struct TrenchBroomConfig {
     // TODO hook stack?
     /// Called to apply a material to spawned brush geometry. (Default: [TrenchBroomConfig::default_material_application_hook])
     #[default(Self::default_material_application_hook)]
-    pub material_application_hook: fn(StandardMaterial, &BrushMeshView, &mut World, &BrushSpawnView),
+    pub material_application_hook:
+        fn(StandardMaterial, &BrushMeshView, &mut World, &BrushSpawnView),
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
@@ -155,7 +156,7 @@ impl TrenchBroomConfig {
     }
 
     /// Adds transform via [MapEntityPropertiesView::get_transform], and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
-    /// 
+    ///
     /// If the entity is a brush entity, no rotation is applied.
     pub fn default_global_spawner(
         world: &mut World,
@@ -168,7 +169,7 @@ impl TrenchBroomConfig {
         if view.server.config.get_definition(&classname)?.class_type == EntDefClassType::Solid {
             transform.rotation = Quat::IDENTITY;
         }
-        
+
         world.entity_mut(entity).insert((
             Name::new(
                 view.get::<String>("targetname")
@@ -191,8 +192,12 @@ impl TrenchBroomConfig {
         world: &mut World,
         _view: &BrushSpawnView,
     ) {
-        let handle = world.resource_mut::<Assets<StandardMaterial>>().add(material);
-        world.entity_mut(mesh_view.entity).insert(handle);
+        let handle = world
+            .resource_mut::<Assets<StandardMaterial>>()
+            .add(material);
+        world
+            .entity_mut(mesh_view.entity)
+            .insert(MeshMaterial3d(handle));
     }
 
     /// Gets the default value for the specified entity definition's specified property accounting for entity class hierarchy.
@@ -413,7 +418,6 @@ impl TrenchBroomConfig {
                 "brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
             }
         };
-        
 
         if let Some(icon) = &self.icon {
             fs::write(folder.join("Icon.png"), icon)?;
@@ -425,7 +429,8 @@ impl TrenchBroomConfig {
         // }
 
         if let Some(bounds) = self.soft_map_bounds {
-            json.insert("softMapBounds", bounds.fgd_to_string()).unwrap();
+            json.insert("softMapBounds", bounds.fgd_to_string())
+                .unwrap();
         }
 
         let mut buf = json.pretty(4);

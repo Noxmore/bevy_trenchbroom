@@ -1,6 +1,9 @@
 use std::{borrow::Cow, future::Future};
 
-use bevy::{asset::{AssetLoader, AsyncReadExt}, utils::ConditionalSendFuture};
+use bevy::{
+    asset::{AssetLoader, AsyncReadExt},
+    utils::ConditionalSendFuture,
+};
 
 use crate::*;
 
@@ -62,7 +65,8 @@ impl MaterialProperties {
     pub const ALPHA_MODE: MaterialProperty<MaterialPropertiesAlphaMode> =
         MaterialProperty::new("alpha_mode", MaterialPropertiesAlphaMode::Opaque);
     /// The amount of emissive light given off from the surface. Used for [StandardMaterial::emissive].
-    pub const EMISSIVE: MaterialProperty<LinearRgba> = MaterialProperty::new("emissive", LinearRgba::BLACK);
+    pub const EMISSIVE: MaterialProperty<LinearRgba> =
+        MaterialProperty::new("emissive", LinearRgba::BLACK);
     /// Whether to cull back faces.
     pub const DOUBLE_SIDED: MaterialProperty<bool> = MaterialProperty::new("double_sided", false);
 
@@ -71,7 +75,9 @@ impl MaterialProperties {
         // I feel like turning the value into a string just to deserialize it again isn't the best way of doing this, but i don't know of another
         self.properties
             .get(property.key.as_ref())
-            .and_then(|value| T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok())
+            .and_then(|value| {
+                T::deserialize(toml::de::ValueDeserializer::new(&value.to_string())).ok()
+            })
             .unwrap_or(property.default_value)
     }
 }
@@ -85,12 +91,14 @@ impl AssetLoader for MaterialPropertiesLoader {
     type Settings = ();
     type Error = io::Error;
 
-    fn load<'a>(
-        &'a self,
-        reader: &'a mut bevy::asset::io::Reader,
-        _settings: &'a Self::Settings,
-        _load_context: &'a mut bevy::asset::LoadContext,
-    ) -> impl ConditionalSendFuture + Future<Output = Result<<Self as AssetLoader>::Asset, <Self as AssetLoader>::Error>> {
+    fn load(
+        &self,
+        reader: &mut dyn bevy::asset::io::Reader,
+        _settings: &Self::Settings,
+        _load_context: &mut bevy::asset::LoadContext,
+    ) -> impl ConditionalSendFuture
+           + Future<Output = Result<<Self as AssetLoader>::Asset, <Self as AssetLoader>::Error>>
+    {
         Box::pin(async move {
             let mut buf = String::new();
             reader.read_to_string(&mut buf).await?;

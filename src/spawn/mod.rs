@@ -52,30 +52,31 @@ impl TrenchBroomPlugin {
     pub fn spawn_maps(world: &mut World) {
         // Spawn maps
         world.resource_scope(|world, maps: Mut<Assets<Map>>| {
-            for (entity, map_handle) in world
-                .query_filtered::<(Entity, &Handle<Map>), Without<SpawnedMap>>()
+            let stuff = world
+                .query_filtered::<(Entity, &MapHandle), Without<SpawnedMap>>()
                 .iter(world)
                 .map(|(e, h)| (e, h.clone()))
-                .collect_vec()
-            {
-                let Some(map) = maps.get(&map_handle) else {
+                .collect_vec();
+            for (entity, map_handle) in stuff {
+                let Some(map) = maps.get(&map_handle.0) else {
                     continue;
                 };
-    
+
                 // Lets make sure we don't spawn a map every frame
                 world.entity_mut(entity).insert(SpawnedMap);
 
                 for (irradiance_volume, transform) in &map.irradiance_volumes {
-                    world.spawn(SpatialBundle::default())
+                    world
+                        .spawn(Visibility::default())
                         .insert(irradiance_volume.clone())
                         .insert(LightProbe)
                         .insert(*transform);
                 }
-    
+
                 map.spawn(world, entity);
             }
         });
-    
+
         // Spawn map entities
         let server = world.resource::<TrenchBroomServer>().clone();
         for (entity, map_entity_ref) in world
@@ -85,10 +86,14 @@ impl TrenchBroomPlugin {
             .map(|(e, h)| (e, h.clone()))
             .collect_vec()
         {
-            DespawnChildrenRecursive { entity }.apply(world);
-    
+            DespawnChildrenRecursive {
+                entity,
+                warn: false,
+            }
+            .apply(world);
+
             world.entity_mut(entity).insert(SpawnedMapEntity);
-    
+
             if let Err(err) = MapEntity::spawn(
                 world,
                 entity,
@@ -97,7 +102,11 @@ impl TrenchBroomPlugin {
                     server: &server,
                 },
             ) {
-                if matches!(err, MapEntitySpawnError::DefinitionNotFound { classname: _ }) && server.config.ignore_invalid_entity_definitions {
+                if matches!(
+                    err,
+                    MapEntitySpawnError::DefinitionNotFound { classname: _ }
+                ) && server.config.ignore_invalid_entity_definitions
+                {
                     continue;
                 }
 
@@ -108,20 +117,20 @@ impl TrenchBroomPlugin {
             }
         }
     }
-    
+
     /// Map hot-reloading
     pub fn reload_maps(
         mut commands: Commands,
         mut asset_events: EventReader<AssetEvent<Map>>,
-        spawned_map_query: Query<(Entity, &Handle<Map>), With<SpawnedMap>>,
+        spawned_map_query: Query<(Entity, &MapHandle), With<SpawnedMap>>,
     ) {
         for event in asset_events.read() {
             let AssetEvent::Modified { id } = event else {
                 continue;
             };
-    
+
             for (entity, map_handle) in &spawned_map_query {
-                if &map_handle.id() == id {
+                if &map_handle.0.id() == id {
                     commands.entity(entity).remove::<SpawnedMap>();
                 }
             }
@@ -133,19 +142,30 @@ impl Map {
     /// Spawns this map into the Bevy world through the specified entity. The map will not be fully spawned until [spawn_maps] has ran.
     pub fn spawn(&self, world: &mut World, entity: Entity) {
         // Just in case we are reloading the level
-        DespawnChildrenRecursive { entity }.apply(world);
+        DespawnChildrenRecursive {
+            entity,
+            warn: false,
+        }
+        .apply(world);
 
-        let map_handle = world.entity(entity).get::<Handle<Map>>().cloned();
-        
+        let map_handle = world.entity(entity).get::<MapHandle>().cloned();
+
         // Add skeleton entities as children of the Map entity, if this is being called from spawn_maps, they'll be spawned later this update
         let skeleton_entities = self
             .entities
             .iter()
             .cloned()
-            .map(|map_entity| world.spawn(MapEntityRef { map_entity, map_handle: map_handle.clone() }).id())
+            .map(|map_entity| {
+                world
+                    .spawn(MapEntityRef {
+                        map_entity,
+                        map_handle: map_handle.as_ref().map(|h| h.0.clone()),
+                    })
+                    .id()
+            })
             .collect_vec();
 
-        world.entity_mut(entity).push_children(&skeleton_entities);
+        world.entity_mut(entity).add_children(&skeleton_entities);
     }
 }
 
@@ -157,7 +177,8 @@ impl MapEntity {
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
         Self::spawn_class(
-            view.server.config
+            view.server
+                .config
                 .get_definition(view.map_entity.classname()?)?,
             world,
             entity,
@@ -178,7 +199,12 @@ impl MapEntity {
         view: EntitySpawnView,
     ) -> Result<(), MapEntitySpawnError> {
         for base in &definition.base {
-            Self::spawn_class(view.server.config.get_definition(base)?, world, entity, view)?;
+            Self::spawn_class(
+                view.server.config.get_definition(base)?,
+                world,
+                entity,
+                view,
+            )?;
         }
 
         if let Some(spawner) = definition.spawner {
@@ -214,7 +240,8 @@ impl<'w> EntitySpawnView<'w> {
     /// If the property is not defined, it attempts to get its default.
     pub fn get<T: FgdType>(&self, key: &str) -> Result<T, MapEntitySpawnError> {
         let Some(value_str) = self.map_entity.properties.get(key).or(self
-            .server.config
+            .server
+            .config
             .get_entity_property_default(self.map_entity.classname()?, key))
         else {
             return Err(MapEntitySpawnError::RequiredPropertyNotFound {
@@ -233,18 +260,29 @@ impl<'w> EntitySpawnView<'w> {
     /// Extracts a transform from this entity using the properties `angles`, `mangle`, or `angle` for rotation, `origin` for translation, and `scale` for scale.
     /// If you are not using those for your transform, you probably shouldn't use this function.
     pub fn get_transform(&self) -> Transform {
-        let rotation = self.get::<Vec3>("angles").map(angles_to_quat)
-            .or_else(|_| self.get::<Vec3>("mangle")
-            // According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
-            // “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
-            .map(if self.map_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {mangle_to_quat} else {angles_to_quat}))
+        let rotation = self
+            .get::<Vec3>("angles")
+            .map(angles_to_quat)
+            .or_else(|_| {
+                self.get::<Vec3>("mangle")
+                    // According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
+                    // “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
+                    .map(
+                        if self.map_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
+                            mangle_to_quat
+                        } else {
+                            angles_to_quat
+                        },
+                    )
+            })
             .or_else(|_| self.get::<f32>("angle").map(angle_to_quat))
             .unwrap_or_default();
 
         Transform {
-            translation: self.server.config.to_bevy_space(self
-                .get::<Vec3>("origin")
-                .unwrap_or(Vec3::ZERO)),
+            translation: self
+                .server
+                .config
+                .to_bevy_space(self.get::<Vec3>("origin").unwrap_or(Vec3::ZERO)),
             rotation,
             scale: match self.get::<f32>("scale") {
                 Ok(scale) => Vec3::splat(scale),

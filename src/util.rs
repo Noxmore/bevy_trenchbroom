@@ -1,4 +1,4 @@
-use bevy::render::texture::{ImageAddressMode, ImageSamplerDescriptor};
+use bevy_image::{ImageAddressMode, ImageSamplerDescriptor};
 
 use crate::*;
 
@@ -50,9 +50,9 @@ impl AlmostEqual<f32> for f32 {
 impl AlmostEqual<Vec3> for Vec3 {
     type Margin = f32;
     fn almost_eq(self, other: Vec3, margin: Self::Margin) -> bool {
-        self.x.almost_eq(other.x, margin) &&
-        self.y.almost_eq(other.y, margin) &&
-        self.z.almost_eq(other.z, margin)
+        self.x.almost_eq(other.x, margin)
+            && self.y.almost_eq(other.y, margin)
+            && self.z.almost_eq(other.z, margin)
     }
 }
 
@@ -65,19 +65,19 @@ impl AlmostEqual<f64> for f64 {
 impl AlmostEqual<DVec3> for DVec3 {
     type Margin = f64;
     fn almost_eq(self, other: DVec3, margin: Self::Margin) -> bool {
-        self.x.almost_eq(other.x, margin) &&
-        self.y.almost_eq(other.y, margin) &&
-        self.z.almost_eq(other.z, margin)
+        self.x.almost_eq(other.x, margin)
+            && self.y.almost_eq(other.y, margin)
+            && self.z.almost_eq(other.z, margin)
     }
 }
 
 impl AlmostEqual<Quat> for Quat {
     type Margin = f32;
     fn almost_eq(self, other: Quat, margin: Self::Margin) -> bool {
-        self.x.almost_eq(other.x, margin) &&
-        self.y.almost_eq(other.y, margin) &&
-        self.z.almost_eq(other.z, margin) &&
-        self.w.almost_eq(other.w, margin)
+        self.x.almost_eq(other.x, margin)
+            && self.y.almost_eq(other.y, margin)
+            && self.z.almost_eq(other.z, margin)
+            && self.w.almost_eq(other.w, margin)
     }
 }
 
@@ -334,7 +334,11 @@ pub fn alpha_mode_from_image(image: &Image) -> AlphaMode {
         }
     }
 
-    if cutout { AlphaMode::Mask(0.5) } else { AlphaMode::Opaque }
+    if cutout {
+        AlphaMode::Mask(0.5)
+    } else {
+        AlphaMode::Opaque
+    }
 }
 
 /// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
@@ -354,7 +358,7 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
 }
 
 /// `mangle` is yaw, pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
-/// 
+///
 /// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”.
 #[inline]
 pub fn mangle_to_quat(mangle: Vec3) -> Quat {
@@ -379,7 +383,7 @@ pub fn angle_to_quat(angle: f32) -> Quat {
 
 pub const QUAKE_LIGHT_TO_LUX_DIVISOR: f32 = 50_000.;
 /// Quake light (such as the `light` property used in light entities) conversion to lux (lumens per square meter).
-/// 
+///
 /// NOTE: This is only a rough estimation, based on what i've personally found looks right.
 #[inline]
 pub fn quake_light_to_lux(light: f32) -> f32 {
@@ -406,24 +410,60 @@ fn rotation_property_to_quat() {
     assert_almost_eq!(angle_to_quat(-2.) * Vec3::Y, Vec3::NEG_Z, MARGIN);
 
     // mangle
-    assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::X, MARGIN);
+    assert_almost_eq!(
+        mangle_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z,
+        Vec3::X,
+        MARGIN
+    );
     assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
 
-    assert_almost_eq!(mangle_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
-    assert_almost_eq!(mangle_to_quat(vec3(0., -90., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
-    assert_almost_eq!(mangle_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::Y, MARGIN);
+    assert_almost_eq!(
+        mangle_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z,
+        Vec3::NEG_Z,
+        MARGIN
+    );
+    assert_almost_eq!(
+        mangle_to_quat(vec3(0., -90., 0.)) * Vec3::NEG_Z,
+        Vec3::NEG_Y,
+        MARGIN
+    );
+    assert_almost_eq!(
+        mangle_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z,
+        Vec3::Y,
+        MARGIN
+    );
     assert_almost_eq!(mangle_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::Z, MARGIN);
     // assert_eq!((mangle_to_quat(vec3(45., 45., 0.)) * Vec3::NEG_Z - vec3(1., 1., -1.).normalize()).length(), 0.);
     // almost 0.17 in precision loss??? how??
-    assert_almost_eq!(mangle_to_quat(vec3(45., 45., 0.)) * Vec3::NEG_Z, vec3(1., 1., -1.).normalize(), 0.2);
+    assert_almost_eq!(
+        mangle_to_quat(vec3(45., 45., 0.)) * Vec3::NEG_Z,
+        vec3(1., 1., -1.).normalize(),
+        0.2
+    );
 
     // angles
-    assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::X, MARGIN);
+    assert_almost_eq!(
+        angles_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z,
+        Vec3::X,
+        MARGIN
+    );
     assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
-    
-    assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
-    assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+
+    assert_almost_eq!(
+        angles_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z,
+        Vec3::NEG_Z,
+        MARGIN
+    );
+    assert_almost_eq!(
+        angles_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z,
+        Vec3::NEG_Y,
+        MARGIN
+    );
     assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::Z, MARGIN);
     // Margin adjusted for bogus precision loss
-    assert_almost_eq!(angles_to_quat(vec3(-45., -45., 0.)) * Vec3::NEG_Z, vec3(1., 1., 1.).normalize(), 0.2);
+    assert_almost_eq!(
+        angles_to_quat(vec3(-45., -45., 0.)) * Vec3::NEG_Z,
+        vec3(1., 1., 1.).normalize(),
+        0.2
+    );
 }

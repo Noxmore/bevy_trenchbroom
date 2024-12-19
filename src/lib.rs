@@ -4,6 +4,8 @@
 compile_error!("can only have one collider backend enabled");
 
 pub mod brush;
+pub mod bsp_lighting;
+pub mod class;
 pub mod config;
 pub mod definitions;
 pub mod load;
@@ -11,10 +13,8 @@ pub mod map_entity;
 pub mod material_properties;
 pub mod prelude;
 pub mod spawn;
-pub mod util;
 pub mod special_textures;
-pub mod bsp_lighting;
-pub mod class;
+pub mod util;
 
 pub(crate) use prelude::*;
 
@@ -34,9 +34,8 @@ impl Plugin for TrenchBroomPlugin {
         if self.config.special_textures.is_some() {
             app.add_plugins(SpecialTexturesPlugin);
         }
-        
-        app
-            .add_plugins(BspLightingPlugin)
+
+        app.add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset::<Map>()
@@ -76,6 +75,10 @@ pub struct TrenchBroomServerData {
     pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
 }
 
+#[derive(Component, Clone, Reflect, Debug)]
+#[require(Transform, Visibility)]
+pub struct MapHandle(Handle<Map>);
+
 /// A Quake map loaded from a .map or .bsp file.
 #[derive(Asset, Reflect, Debug, Clone, Default)]
 pub struct Map {
@@ -99,14 +102,4 @@ impl Map {
             .find(|ent| ent.classname() == Ok("worldspawn"))
             .map(|v| &**v)
     }
-}
-
-#[derive(Bundle, Default)]
-pub struct MapBundle {
-    pub map: Handle<Map>,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
 }
