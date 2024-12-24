@@ -95,9 +95,8 @@ fn main() {
                         let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
                         let material = asset_server.add(StandardMaterial::default());
                         world.entity_mut(entity).insert((
-                            cube,
-                            material,
-                            VisibilityBundle::default(),
+                            Mesh3d(cube),
+                            MeshMaterial3d(material),
                         ));
                     }
 
@@ -133,10 +132,7 @@ fn setup_scene(
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
     // lightmap_animators.values.clear();
     
-    commands.spawn(MapBundle {
-        map: asset_server.load("maps/example.bsp"),
-        ..default()
-    });
+    commands.spawn(MapHandle(asset_server.load("maps/example.bsp")));
     
     let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
     let material = asset_server.add(StandardMaterial::default());
@@ -149,12 +145,11 @@ fn setup_scene(
         });
 
         // TODO tmp
-        let gi_tester = commands.spawn(PbrBundle {
-            mesh: sphere_mesh.clone(),
-            material: material.clone(),
-            transform: Transform::from_xyz(0., -0.2, -0.3),
-            ..default()
-        }).id();
+        let gi_tester = commands.spawn((
+            Mesh3d(sphere_mesh.clone()),
+            MeshMaterial3d(material.clone()),
+            Transform::from_xyz(0., -0.2, -0.3),
+        )).id();
 
         commands.entity(entity).add_child(gi_tester);
     }

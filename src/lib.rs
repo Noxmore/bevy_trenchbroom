@@ -77,7 +77,7 @@ pub struct TrenchBroomServerData {
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[require(Transform, Visibility)]
-pub struct MapHandle(Handle<Map>);
+pub struct MapHandle(pub Handle<Map>);
 
 /// A Quake map loaded from a .map or .bsp file.
 #[derive(Asset, Reflect, Debug, Clone, Default)]

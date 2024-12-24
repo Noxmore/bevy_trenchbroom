@@ -88,10 +88,7 @@ fn trenchbroom_config() -> TrenchBroomConfig {
                 // (skin, collision type, and shadows not implemented here)
 
                 world.entity_mut(entity).insert((
-                    SceneBundle {
-                        scene,
-                        ..default()
-                    },
+                    SceneRoot(scene)
                     TrenchBroomGltfRotationFix,
                 ));
             }
@@ -135,9 +132,7 @@ This will make any face without a texture get ignored when creating a brush's me
 
 ## Loading maps
 
-Now that you have your environment setup, and have assumedly created your map, loading it is pretty easy: simply put a `Handle<Map>` component in an entity, and it will spawn the map with the `spawn_maps` system.
-<br>
-You can also more easily do this with a `MapBundle`.
+Now that you have your environment setup, and have assumedly created your map, loading it is pretty easy: simply put a `MapHandle` component in an entity, and it will spawn the map with the `spawn_maps` system.
 ```rust
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
@@ -145,10 +140,7 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, spawn_test_map)
 
 fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(MapBundle {
-        map: asset_server.load("maps/test.map"), // Or test.bsp if you're loading BSPs
-        ..default()
-    });
+    commands.spawn(MapHandle(asset_server.load("maps/test.map")); // Or test.bsp if you're loading BSPs
 }
 ```
 
