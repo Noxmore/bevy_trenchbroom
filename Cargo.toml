@@ -18,7 +18,7 @@ bevy = { version = "0.15", default-features = false, features = [
     "bevy_pbr",
 ] }
 bevy_reflect = { version = "0.15", features = ["documentation"] }
-bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "2446f58" }
+bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "f0689b6" }
 bevy_rapier3d = { version = "0.28", optional = true }
 avian3d = { version = "0.1", optional = true }
 default-struct-builder = "0.5.0"

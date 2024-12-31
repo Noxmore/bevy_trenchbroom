@@ -89,6 +89,7 @@ impl AssetLoader for BspLoader {
                         self.tb_server.config.bsp_textures_asset_usages,
                     );
                     
+                    // TODO
                     let alpha_mode = alpha_mode_from_image(&image);
                     
                     let image_handle = load_context.add_labeled_asset(format!("Texture_{name}"), image);
@@ -98,7 +99,7 @@ impl AssetLoader for BspLoader {
                         type_registry: &self.type_registry,
                         tb_config: &self.tb_server.config,
                         load_context,
-                    }, image_handle);
+                    }, image_handle.clone());
 
                     (name, BspEmbeddedTexture { image: image_handle, material })
                 })
@@ -162,8 +163,8 @@ impl AssetLoader for BspLoader {
                 Err(err) => return Err(anyhow::anyhow!(err)),
             };
 
-            let qmap = parse_qmap(data.entities.as_bytes()).map_err(io_add_msg!("Parsing entities"))?;
-            let map = QuakeMap::from_quake_util(qmap, &self.tb_server.config);
+            let quake_util_map = parse_qmap(data.entities.as_bytes()).map_err(io_add_msg!("Parsing entities"))?;
+            let map = QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config);
 
             // Calculate models
             let mut models: Vec<BspModel> = (0..data.models.len())
@@ -205,8 +206,12 @@ impl AssetLoader for BspLoader {
                 
                 class.apply_insert_fn_recursive(&self.tb_server.config, map_entity, &mut entity)?;
 
-                if let Some(brush_spawn_settings) = (class.geometry_provider_fn)(map_entity) {
+                if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
                     
+                }
+
+                for global_spawner in &self.tb_server.config.global_spawners {
+                    global_spawner(&self.tb_server.config, map_entity, &mut entity);
                 }
             }
 

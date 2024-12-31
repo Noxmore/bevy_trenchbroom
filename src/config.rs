@@ -1,7 +1,8 @@
 use bevy::{asset::LoadContext, render::render_asset::RenderAssetUsages};
 use bevy_reflect::TypeRegistry;
-use class::{ErasedQuakeClass, GLOBAL_CLASS_REGISTRY};
+use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use geometry::{GeometryProviderMeshView, GeometryProviderView};
+use qmap::QuakeMapEntity;
 
 use crate::*;
 
@@ -115,10 +116,7 @@ pub struct TrenchBroomConfig {
 
     /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
     #[default(vec![Self::default_global_spawner])]
-    pub global_spawners: Vec<EntitySpawner>,
-
-    /// Spawner that gets run after an entity spawns brushes, regardless of classname.
-    pub global_brush_spawners: Vec<fn(&mut World, Entity, &mut BrushSpawnView)>,
+    pub global_spawners: Vec<fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut)>,
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
@@ -151,31 +149,29 @@ impl TrenchBroomConfig {
             .attributes([TrenchBroomTagAttribute::Transparent])
     }
 
-    /// Adds transform via [MapEntityPropertiesView::get_transform], and names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+    /// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
     /// 
-    /// If the entity is a brush entity, no rotation is applied.
+    /// If the entity is a brush entity, rotation is reset.
     pub fn default_global_spawner(
-        world: &mut World,
-        entity: Entity,
-        view: EntitySpawnView,
-    ) -> Result<(), MapEntitySpawnError> {
-        let classname = view.map_entity.classname()?.s();
+        config: &TrenchBroomConfig,
+        src_entity: &QuakeMapEntity,
+        entity: &mut EntityWorldMut,
+    ) -> anyhow::Result<()> {
+        let classname = src_entity.classname()?.s();
 
-        let mut transform = view.get_transform();
-        if view.server.config.get_definition(&classname)?.class_type == EntDefClassType::Solid {
-            transform.rotation = Quat::IDENTITY;
+        if let Some(mut transform) = entity.get_mut::<Transform>() {
+            if config.get_class(&classname).map(|class| class.info.ty) == Some(QuakeClassType::Solid) {
+                transform.rotation = Quat::IDENTITY;
+            }
         }
         
-        world.entity_mut(entity).insert((
-            Name::new(
-                view.get::<String>("targetname")
-                    .map(|name| format!("{classname} ({name})"))
-                    .unwrap_or(classname),
-            ),
-            transform,
+        entity.insert(Name::new(
+            src_entity.get::<String>("targetname")
+                .map(|name| format!("{classname} ({name})"))
+                .unwrap_or(classname),
         ));
 
-        trenchbroom_gltf_rotation_fix(world, entity);
+        trenchbroom_gltf_rotation_fix(entity);
 
         Ok(())
     }
@@ -232,11 +228,11 @@ impl TrenchBroomConfig {
     }
 }
 
-pub struct TextureLoadView<'a> {
+pub struct TextureLoadView<'a, 'b> {
     pub name: &'a str,
     pub type_registry: &'a AppTypeRegistry,
     pub tb_config: &'a TrenchBroomConfig,
-    pub load_context: &'a mut LoadContext<'a>,
+    pub load_context: &'a mut LoadContext<'b>,
 }
 
 // TODO use this instead of basic function pointers?

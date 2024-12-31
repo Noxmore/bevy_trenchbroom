@@ -49,15 +49,13 @@ impl Plugin for TrenchBroomPlugin {
 
         #[cfg(any(feature = "rapier", feature = "avian"))]
         app.add_plugins(PhysicsPlugin);
-        
+
         app
             .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset_loader::<QuakeMapLoader>()
-            .init_asset_loader::<BspLoader>()
-            .init_asset::<MaterialProperties>()
-            .init_asset_loader::<MaterialPropertiesLoader>();
+            .init_asset_loader::<BspLoader>();
     }
 }
 

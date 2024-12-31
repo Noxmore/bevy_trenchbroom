@@ -132,12 +132,9 @@ impl ConvertZeroToOne for Vec2 {
 pub struct TrenchBroomGltfRotationFix;
 
 /// See docs on [TrenchBroomGltfRotationFix]
-pub(crate) fn trenchbroom_gltf_rotation_fix(world: &mut World, entity: Entity) {
-    if world
-        .entity(entity)
-        .contains::<TrenchBroomGltfRotationFix>()
-    {
-        if let Some(mut transform) = world.entity_mut(entity).get_mut::<Transform>() {
+pub(crate) fn trenchbroom_gltf_rotation_fix(entity: &mut EntityWorldMut) {
+    if entity.contains::<TrenchBroomGltfRotationFix>() {
+        if let Some(mut transform) = entity.get_mut::<Transform>() {
             transform.rotate_local_y(std::f32::consts::PI / 2.);
         }
     }
