@@ -5,18 +5,30 @@ compile_error!("can only have one collider backend enabled");
 
 pub mod brush;
 pub mod config;
-pub mod definitions;
 pub mod load;
-pub mod map_entity;
-pub mod material_properties;
 pub mod prelude;
-pub mod spawn;
 pub mod util;
 pub mod special_textures;
 pub mod bsp_lighting;
 pub mod class;
+pub mod bsp;
+pub mod qmap;
+pub mod geometry;
+pub mod fgd;
+#[cfg(any(feature = "rapier", feature = "avian"))]
+pub mod physics;
 
+use bsp::BspLoader;
+use physics::PhysicsPlugin;
 pub(crate) use prelude::*;
+
+// Re-exports
+pub use anyhow;
+pub use indexmap;
+pub use toml;
+#[cfg(feature = "auto_register")]
+pub use inventory;
+pub use bevy_materialize;
 
 pub struct TrenchBroomPlugin {
     pub config: TrenchBroomConfig,
@@ -34,17 +46,18 @@ impl Plugin for TrenchBroomPlugin {
         if self.config.special_textures.is_some() {
             app.add_plugins(SpecialTexturesPlugin);
         }
+
+        #[cfg(any(feature = "rapier", feature = "avian"))]
+        app.add_plugins(PhysicsPlugin);
         
         app
             .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
-            .init_asset::<Map>()
-            .init_asset_loader::<MapLoader>()
+            .init_asset_loader::<QuakeMapLoader>()
             .init_asset_loader::<BspLoader>()
             .init_asset::<MaterialProperties>()
-            .init_asset_loader::<MaterialPropertiesLoader>()
-            .add_systems(PreUpdate, (Self::reload_maps, Self::spawn_maps));
+            .init_asset_loader::<MaterialPropertiesLoader>();
     }
 }
 
@@ -72,41 +85,7 @@ impl std::ops::Deref for TrenchBroomServer {
 #[derive(Debug)]
 pub struct TrenchBroomServerData {
     pub config: TrenchBroomConfig,
+    // TODO remove?
     /// Caches textures used on brushes to [StandardMaterial] handles.
     pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
-}
-
-/// A Quake map loaded from a .map or .bsp file.
-#[derive(Asset, Reflect, Debug, Clone, Default)]
-pub struct Map {
-    /// A title for the map, currently it just mirrors it's path.
-    pub name: String,
-    pub entities: Vec<Arc<MapEntity>>,
-    /// Textures embedded in a BSP file.
-    pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
-    #[reflect(ignore)]
-    pub bsp_data: Option<BspData>,
-    pub irradiance_volumes: Vec<(IrradianceVolume, Transform)>,
-}
-
-impl Map {
-    /// Gets the worldspawn of this map, this will return `Some` on any valid map.
-    ///
-    /// worldspawn should be the first entity, so normally this will be an `O(1)` operation
-    pub fn worldspawn(&self) -> Option<&MapEntity> {
-        self.entities
-            .iter()
-            .find(|ent| ent.classname() == Ok("worldspawn"))
-            .map(|v| &**v)
-    }
-}
-
-#[derive(Bundle, Default)]
-pub struct MapBundle {
-    pub map: Handle<Map>,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
 }

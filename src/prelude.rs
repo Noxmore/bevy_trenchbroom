@@ -11,24 +11,15 @@ pub(crate) use nil::prelude::*;
 pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;
 pub(crate) use q1bsp::prelude::*;
+pub(crate) use bevy_materialize::{prelude::*, ErasedMaterialHandle};
 
-pub use anyhow;
-pub use indexmap;
-pub use toml;
-pub use q1bsp::{Palette, QUAKE_PALETTE, data::bsp::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas, ComputeLightmapSettings}};
-// pub use q1bsp::{Palette, QUAKE_PALETTE, data::{LightmapStyle, Lightmaps}}; // TODO
+pub use q1bsp::{self, Palette, QUAKE_PALETTE, data::bsp::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas, ComputeLightmapSettings}};
 
+// TODO prelude should probably be more specific with what it re-exports
 pub use crate::{
     brush::*,
     config::*,
-    definitions::*,
     load::*,
-    load::bsp::*,
-    load::map::*,
-    map_entity::*,
-    material_properties::*,
-    spawn::geometry::*,
-    spawn::*,
     util::*,
     special_textures::*,
     bsp_lighting::*,

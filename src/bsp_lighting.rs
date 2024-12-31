@@ -1,4 +1,4 @@
-use bevy::{asset::embedded_asset, render::{extract_resource::{ExtractResource, ExtractResourcePlugin}, globals::{GlobalsBuffer, GlobalsUniform}, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::{RenderDevice, RenderQueue}, texture::{GpuImage, ImageSampler}, Render, RenderApp, RenderSet}};
+use bevy::{asset::embedded_asset, image::ImageSampler, render::{extract_resource::{ExtractResource, ExtractResourcePlugin}, globals::{GlobalsBuffer, GlobalsUniform}, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::{RenderDevice, RenderQueue}, texture::GpuImage, Render, RenderApp, RenderSet}};
 
 use crate::*;
 
@@ -179,11 +179,6 @@ impl Default for LightmapAnimators {
     }
 }
 
-#[derive(Component)]
-pub struct BspIrradianceVolume {
-    pub owner: Handle<Map>,
-}
-
 /// Contains multiple images that are composited together in `output` using the current [TrenchBroomConfig]'s lightmap animators. Used for both lightmaps an irradiance volumes.
 #[derive(Asset, TypePath, Clone)]
 pub struct AnimatedLighting {
@@ -310,6 +305,7 @@ impl FromWorld for AnimatedLightingPipeline {
                     entry_point: "fragment".into(),
                     targets: vec![Some(LIGHTMAP_OUTPUT_TEXTURE_FORMAT.into())],
                 }),
+                zero_initialize_workgroup_memory: true,
             }
         }
 

@@ -1,4 +1,7 @@
-use bevy::render::render_asset::RenderAssetUsages;
+use bevy::{asset::LoadContext, render::render_asset::RenderAssetUsages};
+use bevy_reflect::TypeRegistry;
+use class::{ErasedQuakeClass, GLOBAL_CLASS_REGISTRY};
+use geometry::{GeometryProviderMeshView, GeometryProviderView};
 
 use crate::*;
 
@@ -90,6 +93,7 @@ pub struct TrenchBroomConfig {
     #[default(500.)]
     pub default_irradiance_volume_intensity: f32,
 
+    // TODO rename
     /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
     pub ignore_invalid_entity_definitions: bool,
 
@@ -97,12 +101,17 @@ pub struct TrenchBroomConfig {
     #[builder(skip)]
     pub special_textures: Option<SpecialTexturesConfig>,
 
+    #[default(Self::default_load_embedded_texture)]
+    pub load_embedded_texture: fn(TextureLoadView, Handle<Image>) -> Handle<GenericMaterial>,
+    #[default(Self::default_load_loose_texture)]
+    pub load_loose_texture: fn(TextureLoadView) -> Handle<GenericMaterial>,
+
     /// How lightmaps atlas' are computed when loading BSP files.
     /// 
     /// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
     pub compute_lightmap_settings: ComputeLightmapSettings,
 
-    pub entity_definitions: IndexMap<String, EntityDefinition>,
+    entity_classes: HashMap<String, ErasedQuakeClass>,
 
     /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
     #[default(vec![Self::default_global_spawner])]
@@ -110,11 +119,6 @@ pub struct TrenchBroomConfig {
 
     /// Spawner that gets run after an entity spawns brushes, regardless of classname.
     pub global_brush_spawners: Vec<fn(&mut World, Entity, &mut BrushSpawnView)>,
-
-    // TODO hook stack?
-    /// Called to apply a material to spawned brush geometry. (Default: [TrenchBroomConfig::default_material_application_hook])
-    #[default(Self::default_material_application_hook)]
-    pub material_application_hook: fn(StandardMaterial, &BrushMeshView, &mut World, &BrushSpawnView),
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
@@ -129,13 +133,6 @@ impl TrenchBroomConfig {
     /// Creates a new TrenchBroom config. It is recommended to use this over [TrenchBroomConfig::default]
     pub fn new(name: impl Into<String>) -> Self {
         Self::default().name(name)
-    }
-
-    /// Adds an entity to `entity_definitions`. (deprecated, use `entity_definitions()` with the [entity_definitions!] macro instead)
-    #[deprecated = "Use the `entity_definitions!` macro instead"]
-    pub fn define_entity(mut self, id: impl Into<String>, definition: EntityDefinition) -> Self {
-        self.entity_definitions.insert(id.into(), definition);
-        self
     }
 
     /// Excludes "\*_normal", "\*_mr" (Metallic and roughness), "\*_emissive", and "\*_depth".
@@ -176,7 +173,6 @@ impl TrenchBroomConfig {
                     .unwrap_or(classname),
             ),
             transform,
-            GlobalTransform::default(),
         ));
 
         trenchbroom_gltf_rotation_fix(world, entity);
@@ -184,46 +180,45 @@ impl TrenchBroomConfig {
         Ok(())
     }
 
-    /// Adds the [StandardMaterial] to the entity.
-    pub fn default_material_application_hook(
-        material: StandardMaterial,
-        mesh_view: &BrushMeshView,
-        world: &mut World,
-        _view: &BrushSpawnView,
-    ) {
-        let handle = world.resource_mut::<Assets<StandardMaterial>>().add(material);
-        world.entity_mut(mesh_view.entity).insert(handle);
-    }
-
-    /// Gets the default value for the specified entity definition's specified property accounting for entity class hierarchy.
-    pub fn get_entity_property_default(&self, classname: &str, property: &str) -> Option<&String> {
-        let definition = self.entity_definitions.get(classname)?;
-
-        if let Some(prop) = definition.properties.get(property) {
-            if let Some(default) = &prop.default_value {
-                return Some(default);
-            }
-        }
-
-        for base in &definition.base {
-            if let Some(default) = self.get_entity_property_default(base, property) {
-                return Some(default);
-            }
-        }
-
-        None
-    }
-
-    /// Gets and entity definition from this config, or if none is found, returns [MapEntitySpawnError::DefinitionNotFound].
-    pub fn get_definition(
-        &self,
-        classname: &str,
-    ) -> Result<&EntityDefinition, MapEntitySpawnError> {
-        self.entity_definitions.get(classname).ok_or_else(|| {
-            MapEntitySpawnError::DefinitionNotFound {
-                classname: classname.into(),
-            }
+    pub fn default_load_embedded_texture(view: TextureLoadView, image: Handle<Image>) -> Handle<GenericMaterial> {
+        let material = view.load_context.add_labeled_asset(format!("Material_{}", view.name), StandardMaterial {
+            base_color_texture: Some(image),
+            perceptual_roughness: 1.,
+            ..default()
+        });
+        
+        view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), GenericMaterial {
+            material: material.into(),
+            properties: default(),
+            type_registry: view.type_registry.clone(),
         })
+    }
+
+    pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
+        view.load_context.load(view.tb_config.texture_root.join(view.name).join(".material"))
+    }
+
+
+    /// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [GLOBAL_CLASS_REGISTRY].
+    pub fn get_class(&self, classname: &str) -> Option<&ErasedQuakeClass> {
+        #[cfg(not(feature = "auto_register"))] {
+            self.entity_classes.get(classname)
+        }
+
+        #[cfg(feature = "auto_register")] {
+            self.entity_classes.get(classname).or_else(|| GLOBAL_CLASS_REGISTRY.get(classname).copied())
+        }
+    }
+
+    /// A list of all registered classes. If the `auto_register` feature is enabled, also includes [GLOBAL_CLASS_REGISTRY].
+    pub fn class_iter(&self) -> impl Iterator<Item = &ErasedQuakeClass> {
+        #[cfg(not(feature = "auto_register"))] {
+            self.entity_classes.values()
+        }
+
+        #[cfg(feature = "auto_register")] {
+            self.entity_classes.values().chain(GLOBAL_CLASS_REGISTRY.values().copied())
+        }
     }
 
     /// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
@@ -236,6 +231,16 @@ impl TrenchBroomConfig {
         vec.z_up_to_y_up() / self.scale as f64
     }
 }
+
+pub struct TextureLoadView<'a> {
+    pub name: &'a str,
+    pub type_registry: &'a AppTypeRegistry,
+    pub tb_config: &'a TrenchBroomConfig,
+    pub load_context: &'a mut LoadContext<'a>,
+}
+
+// TODO use this instead of basic function pointers?
+// pub struct Hook<F: ?Sized>(pub Option<Box<F>>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum AssetPackageFormat {
@@ -440,16 +445,10 @@ impl TrenchBroomConfig {
         fs::write(folder.join("GameConfig.cfg"), buf)?;
 
         //////////////////////////////////////////////////////////////////////////////////
-        //// ENTITY DEFINITIONS
+        //// FGD
         //////////////////////////////////////////////////////////////////////////////////
 
-        fs::write(
-            folder.join(format!("{}.fgd", self.name)),
-            self.entity_definitions
-                .iter()
-                .map(|(name, def)| def.to_fgd(name, self))
-                .join("\n\n"),
-        )?;
+        fs::write(folder.join(format!("{}.fgd", self.name)), self.to_fgd())?;
 
         Ok(())
     }

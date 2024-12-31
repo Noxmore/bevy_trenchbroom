@@ -1,7 +1,7 @@
 [package]
 name = "bevy_trenchbroom"
 description = "Bevy integration with TrenchBroom"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -12,13 +12,14 @@ exclude = ["assets"]
 
 [dependencies]
 anyhow = "1.0"
-bevy = { version = "0.14", default-features = false, features = [
+bevy = { version = "0.15", default-features = false, features = [
     "bevy_asset",
     "bevy_render",
     "bevy_pbr",
 ] }
-bevy_reflect = { version = "0.14", features = ["documentation"] }
-bevy_rapier3d = { version = "0.27", optional = true }
+bevy_reflect = { version = "0.15", features = ["documentation"] }
+bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "2446f58" }
+bevy_rapier3d = { version = "0.28", optional = true }
 avian3d = { version = "0.1", optional = true }
 default-struct-builder = "0.5.0"
 float-ord = "0.3"
@@ -31,19 +32,19 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "7b52b00" }
+q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "cf1d768" }
 # q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
 nil = "0.13"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
 
 [dev-dependencies.bevy]
-version = "0.14"
+version = "0.15"
 features = ["bevy_scene"]
 
 [dev-dependencies]
-bevy_flycam = "0.14"
-bevy-inspector-egui = "0.27" # TODO TMP
+bevy_flycam = "0.15"
+bevy-inspector-egui = "0.28" # TODO TMP
 
 [features]
 default = ["auto_register"]

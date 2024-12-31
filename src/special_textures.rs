@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
+use geometry::GeometryProviderView;
 
 use crate::*;
 
@@ -21,7 +22,7 @@ impl Plugin for SpecialTexturesPlugin {
 impl SpecialTexturesPlugin {
     pub fn animate_textures(
         map_entity_query: Query<(&MapEntityRef, &Children), With<SpawnedMapEntity>>,
-        mesh_query: Query<&Handle<StandardMaterial>, With<Handle<Mesh>>>,
+        mesh_query: Query<&MeshMaterial3d<StandardMaterial>, With<Mesh3d>>,
         maps: Res<Assets<Map>>,
         asset_server: Res<AssetServer>,
         mut materials: ResMut<Assets<StandardMaterial>>, // TODO support other user-made materials?
@@ -30,19 +31,19 @@ impl SpecialTexturesPlugin {
         time: Res<Time>,
         mut last_frame_update: Local<f32>,
     ) {
-        while *last_frame_update < time.elapsed_seconds() {
+        while *last_frame_update < time.elapsed_secs() {
             *last_frame_update += tb_server.config.special_textures_config().texture_animation_speed;
 
             for (map_entity_ref, children) in &map_entity_query {
                 let Some(map_handle) = &map_entity_ref.map_handle else { continue };
                 let Some(map) = maps.get(map_handle) else { continue };
 
-                let mut updated_materials = HashSet::new();
+                let mut updated_materials: HashSet<&Handle<StandardMaterial>> = HashSet::new();
     
-                for material_handle in mesh_query.iter_many(children) {
-                    if updated_materials.contains(material_handle) { continue }
+                for material3d in mesh_query.iter_many(children) {
+                    if updated_materials.contains(&material3d.0) { continue }
 
-                    let Some(material) = materials.get_mut(material_handle) else { continue };
+                    let Some(material) = materials.get_mut(material3d) else { continue };
                     let Some(image_handle) = &material.base_color_texture else { continue };
                     let Some(image_path) = image_handle.path() else { continue };
                     // We check the label first, because if it was loaded from a BSP, the path will be the BSP file's path
@@ -78,7 +79,7 @@ impl SpecialTexturesPlugin {
                         }
                     }
 
-                    updated_materials.insert(material_handle);
+                    updated_materials.insert(&material3d.0);
                 }
             }
         }
@@ -115,24 +116,24 @@ impl SpecialTexturesConfig {
 
     pub fn default_material_application_hook(
         mut material: StandardMaterial,
-        mesh_view: &BrushMeshView,
-        world: &mut World,
-        view: &BrushSpawnView,
+        view: &mut GeometryProviderView,
+        mesh_idx: usize,
     ) {
-        if let Some(config) = &view.server.config.special_textures {
+        let mesh_view = &view.meshes[mesh_idx];
+        if let Some(config) = &view.tb_server.config.special_textures {
             if mesh_view.texture.name.starts_with('*') {
-                let water_alpha = view.get("water_alpha").unwrap_or(1.);
+                let water_alpha = view.map_entity.get("water_alpha").unwrap_or(1.);
                 if water_alpha != 1. {
                     material.alpha_mode = AlphaMode::Blend;
                     material.base_color = Color::linear_rgba(1., 1., 1., water_alpha);
                 }
                 let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: (config.default_liquid_material)() });
-                world.entity_mut(mesh_view.entity).insert(handle);
+                world.entity_mut(mesh_view.entity).insert(MeshMaterial3d(handle));
                 return;
             } else if mesh_view.texture.name.starts_with("sky") {
                 if let Some(texture) = material.base_color_texture {
                     let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
-                    world.entity_mut(mesh_view.entity).insert(handle);
+                    world.entity_mut(mesh_view.entity).insert(MeshMaterial3d(handle));
                     return;
                 }
             }
