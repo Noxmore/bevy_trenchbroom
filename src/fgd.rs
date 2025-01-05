@@ -1,4 +1,4 @@
-use class::{QuakeClassProperties, QuakeClassPropertyType};
+use class::QuakeClassPropertyType;
 
 use crate::*;
 
@@ -36,17 +36,15 @@ impl TrenchBroomConfig {
                 write!(" : \"{description}\"");
             }
             write!("\n[\n");
-    
-            let mut properties = QuakeClassProperties::new();
-            (class.properties_fn)(self, &mut properties);
 
-            for (property_name, property) in properties.values.into_iter() {
-                write!("\t{property_name}({}): \"{}\" : {} : \"{}\"",
+            for property in class.info.properties {
+                write!("\t{}({}): \"{}\" : {} : \"{}\"",
+                    property.name,
                     match &property.ty {
                         QuakeClassPropertyType::Value(ty) => ty,
                         QuakeClassPropertyType::Choices(_) => "choices",
                     },
-                    property.title.unwrap_or(property_name.clone()),
+                    property.title.unwrap_or(property.name),
                     property.default_value.unwrap_or_default(),
                     property.description.unwrap_or_default(),
                 );
@@ -73,6 +71,7 @@ impl TrenchBroomConfig {
 pub trait FgdType: Sized {
     /// If quotes should be put around this value when writing out an FGD file.
     const FGD_IS_QUOTED: bool = true;
+    const PROPERTY_TYPE: QuakeClassPropertyType;
 
     /// Parses a string into `Self` FGD-style. Used for parsing entity properties.
     fn fgd_parse(input: &str) -> anyhow::Result<Self>; // TODO do we want to keep anyhow?
@@ -86,23 +85,22 @@ pub trait FgdType: Sized {
             self.fgd_to_string()
         }
     }
-
-    fn fgd_type() -> QuakeClassPropertyType;
 }
 
 impl FgdType for String {
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("string");
+    
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         Ok(input.to_string())
     }
     fn fgd_to_string(&self) -> String {
         self.clone()
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("string".s())
-    }
 }
 
 impl FgdType for &str {
+    const PROPERTY_TYPE: QuakeClassPropertyType = String::PROPERTY_TYPE;
+    
     fn fgd_parse(_input: &str) -> anyhow::Result<Self> {
         // Lifetimes don't allow me to just return Some(input) unfortunately.
         unimplemented!("use String::fgd_parse instead");
@@ -110,24 +108,19 @@ impl FgdType for &str {
     fn fgd_to_string(&self) -> String {
         self.to_string()
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("string".s())
-    }
 }
 
 macro_rules! simple_fgd_type_impl {
     ($ty:ty, $quoted:expr, $fgd_type:ident $fgd_type_value:expr) => {
         impl FgdType for $ty {
             const FGD_IS_QUOTED: bool = $quoted;
+            const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::$fgd_type($fgd_type_value);
 
             fn fgd_parse(input: &str) -> anyhow::Result<Self> {
                 Ok(input.parse()?)
             }
             fn fgd_to_string(&self) -> String {
                 self.to_string()
-            }
-            fn fgd_type() -> QuakeClassPropertyType {
-                QuakeClassPropertyType::$fgd_type($fgd_type_value.into())
             }
         }
     };
@@ -144,13 +137,14 @@ simple_fgd_type_impl!(i32, false, Value "integer");
 simple_fgd_type_impl!(i64, false, Value "integer");
 simple_fgd_type_impl!(isize, false, Value "integer");
 
-simple_fgd_type_impl!(bool, true, Choices [("true".fgd_to_string_quoted(), "true".s()), ("false".fgd_to_string_quoted(), "false".s())]);
+simple_fgd_type_impl!(bool, true, Choices &[("\"true\"", "true"), ("\"false\"", "false")]);
 
 simple_fgd_type_impl!(f32, true, Value "float");
 simple_fgd_type_impl!(f64, true, Value "float");
 
 impl FgdType for Aabb {
     const FGD_IS_QUOTED: bool = false;
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("aabb");
 
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         let values = <[f32; 6]>::fgd_parse(input)?;
@@ -167,46 +161,42 @@ impl FgdType for Aabb {
             min.x, min.y, min.z, max.x, max.y, max.z
         )
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("aabb".s())
-    }
 }
 
 impl FgdType for Vec4 {
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("vec4");
+
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         <[f32; 4]>::fgd_parse(input).map(Vec4::from)
     }
     fn fgd_to_string(&self) -> String {
         format!("{} {} {} {}", self.x, self.y, self.z, self.w)
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("vec4".s())
-    }
 }
 impl FgdType for Vec3 {
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("vector");
+
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         <[f32; 3]>::fgd_parse(input).map(Vec3::from)
     }
     fn fgd_to_string(&self) -> String {
         format!("{} {} {}", self.x, self.y, self.z)
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("vector".s())
-    }
 }
 impl FgdType for Vec2 {
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("vec2");
+
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         <[f32; 2]>::fgd_parse(input).map(Vec2::from)
     }
     fn fgd_to_string(&self) -> String {
         format!("{} {}", self.x, self.y)
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("vec2".s())
-    }
 }
 
 impl FgdType for Color {
+    const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
+
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         <[f32; 3]>::fgd_parse(input)
             .map(Color::srgb_from_array)
@@ -216,13 +206,12 @@ impl FgdType for Color {
         let col = self.to_srgba();
         format!("{} {} {} {}", col.red, col.green, col.blue, col.alpha)
     }
-    fn fgd_type() -> QuakeClassPropertyType {
-        QuakeClassPropertyType::Value("color1".s())
-    }
 }
 
 // God i love rust's trait system
 impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
+    const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
+
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         // This might be a problem for FgdTypes that use spaces in their parsing. Oh well!
         let mut out = [T::default(); N];
@@ -238,8 +227,5 @@ impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
     }
     fn fgd_to_string(&self) -> String {
         self.iter().map(T::fgd_to_string).join(" ")
-    }
-    fn fgd_type() -> QuakeClassPropertyType {
-        T::fgd_type()
     }
 }

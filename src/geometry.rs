@@ -1,6 +1,5 @@
 use bevy::{asset::LoadContext, pbr::Lightmap, render::{mesh::VertexAttributeValues, render_resource::Face}};
 use bsp::BspEmbeddedTexture;
-use physics::{TrimeshCollision, ConvexCollision};
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -219,6 +218,7 @@ impl GeometryProvider {
     }
 
     /// Inserts trimesh colliders on each mesh of this entity. This means that brushes will be hollow. Not recommended to use on physics objects.
+    #[cfg(any(feature = "rapier", feature = "avian"))]
     pub fn trimesh_collider(self) -> Self {
         self.push(|view| {
             for mesh_view in &view.meshes {
@@ -227,18 +227,18 @@ impl GeometryProvider {
                 //     continue;
                 // }
 
-                view.world.entity_mut(mesh_view.entity).insert(TrimeshCollision);
+                view.world.entity_mut(mesh_view.entity).insert(physics::TrimeshCollision);
             }
         })
     }
 
-    // TODO convex colliders with BSPs
+    // TODO convex colliders with BSPs/hull collision
 
-    #[cfg(feature = "rapier")]
     /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
+    #[cfg(any(feature = "rapier", feature = "avian"))]
     pub fn convex_collider(self) -> Self {
         self.push(|view| {
-            view.world.entity_mut(view.entity).insert(ConvexCollision);
+            view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
         })
     }
 }

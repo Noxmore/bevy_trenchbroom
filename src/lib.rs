@@ -19,7 +19,6 @@ pub mod fgd;
 pub mod physics;
 
 use bsp::BspLoader;
-use physics::PhysicsPlugin;
 pub(crate) use prelude::*;
 
 // Re-exports
@@ -49,7 +48,7 @@ impl Plugin for TrenchBroomPlugin {
         }
 
         #[cfg(any(feature = "rapier", feature = "avian"))]
-        app.add_plugins(PhysicsPlugin);
+        app.add_plugins(physics::PhysicsPlugin);
 
         app
             .add_plugins(BspLightingPlugin)

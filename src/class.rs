@@ -17,18 +17,19 @@ pub enum QuakeClassType {
 }
 
 /// A property for an entity definition. the property type (`ty`) doesn't have a set of different options, it more just tells users what kind of data you are expecting.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuakeClassProperty {
     pub ty: QuakeClassPropertyType,
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub default_value: Option<String>,
+    pub name: &'static str,
+    pub title: Option<&'static str>,
+    pub description: Option<&'static str>,
+    pub default_value: Option<&'static str>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QuakeClassPropertyType {
-    Value(String),
-    Choices(Vec<(String, String)>),
+    Value(&'static str),
+    Choices(&'static [(&'static str, &'static str)]),
 }
 
 impl Default for QuakeClassPropertyType {
@@ -52,22 +53,13 @@ pub struct QuakeClassInfo {
     pub iconsprite: Option<&'static str>,
     /// The size of the bounding box of the entity in the editor.
     pub size: Option<&'static str>,
-}
 
-#[derive(Debug, Clone, Default, Deref, DerefMut)]
-pub struct QuakeClassProperties {
-    pub values: IndexMap<String, QuakeClassProperty>,
-}
-impl QuakeClassProperties {
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub properties: &'static [QuakeClassProperty],
 }
 
 pub trait QuakeClass: Component + Reflect + Default {
     const CLASS_INFO: QuakeClassInfo;
 
-    fn class_properties(server: &TrenchBroomConfig, properties: &mut QuakeClassProperties);
     fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
     fn geometry_provider(src_entity: &QuakeMapEntity) -> Option<GeometryProvider> {
         let _ = src_entity;
@@ -78,7 +70,6 @@ pub trait QuakeClass: Component + Reflect + Default {
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
     pub info: QuakeClassInfo,
-    pub properties_fn: fn(&TrenchBroomConfig, &mut QuakeClassProperties),
     pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
     pub geometry_provider_fn: fn(&QuakeMapEntity) -> Option<GeometryProvider>,
 }
@@ -86,7 +77,6 @@ impl ErasedQuakeClass {
     pub const fn of<T: QuakeClass>() -> Self {
         Self {
             info: T::CLASS_INFO,
-            properties_fn: T::class_properties,
             spawn_fn: T::class_spawn,
             geometry_provider_fn: T::geometry_provider,
         }
@@ -131,30 +121,31 @@ impl QuakeClass for Transform {
         color: None,
         iconsprite: None,
         size: None, // TODO should this be Some("size")?
-    };
 
-    fn class_properties(_config: &TrenchBroomConfig, properties: &mut QuakeClassProperties) {
-        // TODO what about brush entities?
-        // TODO use fgd_type
-        properties.values.insert("origin".s(), QuakeClassProperty {
-            ty: Vec3::fgd_type(),
-            title: Some("Translation".s()),
-            description: None,
-            default_value: Some("0 0 0".s()),
-        });
-        properties.values.insert("angles".s(), QuakeClassProperty {
-            ty: Vec3::fgd_type(),
-            title: Some("Rotation (pitch yaw roll) in degrees".s()),
-            description: None,
-            default_value: Some("0 0 0".s()),
-        });
-        properties.values.insert("scale".s(), QuakeClassProperty {
-            ty: Vec3::fgd_type(),
-            title: Some("Scale".s()),
-            description: None,
-            default_value: Some("1 1 1".s()),
-        });
-    }
+        properties: &[
+            QuakeClassProperty {
+                ty: Vec3::PROPERTY_TYPE,
+                name: "origin",
+                title: Some("Translation/Origin"),
+                description: None,
+                default_value: Some("0 0 0"),
+            },
+            QuakeClassProperty {
+                ty: Vec3::PROPERTY_TYPE,
+                name: "angles",
+                title: Some("Rotation (pitch yaw roll) in degrees"),
+                description: None,
+                default_value: Some("0 0 0"),
+            },
+            QuakeClassProperty {
+                ty: Vec3::PROPERTY_TYPE,
+                name: "scale",
+                title: Some("Scale"),
+                description: None,
+                default_value: Some("1 1 1"),
+            },
+        ],
+    };
 
     fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         let rotation = src_entity.get::<Vec3>("angles").map(angles_to_quat)
@@ -193,20 +184,21 @@ impl QuakeClass for Visibility {
         color: None,
         iconsprite: None,
         size: None,
-    };
 
-    fn class_properties(_config: &TrenchBroomConfig, properties: &mut QuakeClassProperties) {
-        properties.values.insert("visibility".s(), QuakeClassProperty {
-            ty: QuakeClassPropertyType::Choices(vec![
-                ("inherited".fgd_to_string_quoted(), "inherited".s()),
-                ("hidden".fgd_to_string_quoted(), "hidden".s()),
-                ("visible".fgd_to_string_quoted(), "visible".s()),
-            ]),
-            title: Some("Visibility".s()),
-            description: None,
-            default_value: Some("inherited".s()),
-        });
-    }
+        properties: &[
+            QuakeClassProperty {
+                ty: QuakeClassPropertyType::Choices(&[
+                    ("\"inherited\"", "inherited"),
+                    ("\"hidden\"", "hidden"),
+                    ("\"visible\"", "visible"),
+                ]),
+                name: "visibility",
+                title: Some("Visibility"),
+                description: None,
+                default_value: Some("inherited"),
+            },
+        ],
+    };
 
     fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         let visibility = match src_entity.properties.get("visibility").map(String::as_str) {
