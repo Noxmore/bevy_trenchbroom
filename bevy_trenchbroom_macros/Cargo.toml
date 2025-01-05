@@ -1,0 +1,16 @@
+[package]
+name = "bevy_trenchbroom_macros"
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+proc-macro2 = "1.0.92"
+quote = "1.0.38"
+syn = "2.0.94"
+
+[dev-dependencies]
+bevy_trenchbroom = { path = ".." }

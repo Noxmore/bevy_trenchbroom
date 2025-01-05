@@ -1,16 +1,31 @@
-[package]
-name = "bevy_trenchbroom"
-description = "Bevy integration with TrenchBroom"
+[workspace]
+members = [
+    "bevy_trenchbroom_macros",
+]
+
+[workspace.package]
 version = "0.6.0"
 edition = "2021"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
-readme = "readme.md"
 license = "MIT OR Apache-2.0"
+
+[package]
+name = "bevy_trenchbroom"
+description = "Bevy integration with TrenchBroom"
+readme = "readme.md"
 categories = ["game-development"]
 exclude = ["assets"]
 
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+
 [dependencies]
+bevy_trenchbroom_macros = { path = "bevy_trenchbroom_macros" }
+
 anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
     "bevy_asset",
