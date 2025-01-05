@@ -23,7 +23,7 @@ pub struct QuakeClassProperty {
     pub name: &'static str,
     pub title: Option<&'static str>,
     pub description: Option<&'static str>,
-    pub default_value: Option<&'static str>,
+    pub default_value: Option<fn() -> String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -128,21 +128,21 @@ impl QuakeClass for Transform {
                 name: "origin",
                 title: Some("Translation/Origin"),
                 description: None,
-                default_value: Some("0 0 0"),
+                default_value: Some(|| Vec3::ZERO.fgd_to_string()),
             },
             QuakeClassProperty {
                 ty: Vec3::PROPERTY_TYPE,
                 name: "angles",
                 title: Some("Rotation (pitch yaw roll) in degrees"),
                 description: None,
-                default_value: Some("0 0 0"),
+                default_value: Some(|| Vec3::ZERO.fgd_to_string()),
             },
             QuakeClassProperty {
                 ty: Vec3::PROPERTY_TYPE,
                 name: "scale",
                 title: Some("Scale"),
                 description: None,
-                default_value: Some("1 1 1"),
+                default_value: Some(|| Vec3::ONE.fgd_to_string()),
             },
         ],
     };
@@ -188,14 +188,14 @@ impl QuakeClass for Visibility {
         properties: &[
             QuakeClassProperty {
                 ty: QuakeClassPropertyType::Choices(&[
-                    ("\"inherited\"", "inherited"),
-                    ("\"hidden\"", "hidden"),
-                    ("\"visible\"", "visible"),
+                    ("\"Inherited\"", "Inherited"),
+                    ("\"Hidden\"", "Hidden"),
+                    ("\"Visible\"", "Visible"),
                 ]),
                 name: "visibility",
                 title: Some("Visibility"),
                 description: None,
-                default_value: Some("inherited"),
+                default_value: Some(|| "Inherited".s()),
             },
         ],
     };
