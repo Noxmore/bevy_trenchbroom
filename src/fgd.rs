@@ -7,38 +7,41 @@ impl TrenchBroomConfig {
     pub fn to_fgd(&self) -> String {
         use fmt::Write;
         let mut s = String::new();
+        macro_rules! write {($($arg:tt)*) => {
+            s.write_fmt(format_args!($($arg)*)).ok()
+        };}
 
         for class in self.class_iter() {
-            write!(s, "@{:?}Class ", class.info.ty);
+            write!("@{:?}Class ", class.info.ty);
     
             if !class.info.base.is_empty() {
-                write!(s, "base({}) ", class.info.base.join(", "));
+                write!("base({}) ", class.info.base.join(", "));
             }
     
             if let Some(value) = class.info.color {
-                write!(s, "color({value})");
+                write!("color({value})");
             }
             if let Some(value) = class.info.iconsprite {
-                write!(s, "iconsprite({value})");
+                write!("iconsprite({value})");
             }
             if let Some(value) = class.info.size {
-                write!(s, "size({value})");
+                write!("size({value})");
             }
             if let Some(value) = class.info.model {
-                write!(s, "model({value})");
+                write!("model({value})");
             }
     
-            write!(s, "= {}", class.info.name);
+            write!("= {}", class.info.name);
             if let Some(description) = class.info.description {
-                write!(s, " : \"{description}\"");
+                write!(" : \"{description}\"");
             }
-            write!(s, "\n[\n");
+            write!("\n[\n");
     
             let mut properties = QuakeClassProperties::new();
             (class.properties_fn)(self, &mut properties);
 
             for (property_name, property) in properties.values.into_iter() {
-                write!(s, "\t{property_name}({}): \"{}\" : {} : \"{}\"",
+                write!("\t{property_name}({}): \"{}\" : {} : \"{}\"",
                     match &property.ty {
                         QuakeClassPropertyType::Value(ty) => ty,
                         QuakeClassPropertyType::Choices(_) => "choices",
@@ -49,17 +52,17 @@ impl TrenchBroomConfig {
                 );
 
                 if let QuakeClassPropertyType::Choices(choices) = property.ty {
-                    write!(s, " = \n\t[\n");
+                    write!(" = \n\t[\n");
                     for (key, title) in choices {
-                        write!(s, "\t\t{key} : \"{title}\"\n");
+                        write!("\t\t{key} : \"{title}\"\n");
                     }
-                    write!(s, "\t]");
+                    write!("\t]");
                 }
 
-                write!(s, "\n");
+                write!("\n");
             }
 
-            write!(s, "]\n\n");
+            write!("]\n\n");
         }
         
         s
