@@ -25,6 +25,7 @@ pub(crate) use prelude::*;
 // Re-exports
 pub use anyhow;
 pub use indexmap;
+use qmap::QuakeMapLoader;
 pub use toml;
 #[cfg(feature = "auto_register")]
 pub use inventory;

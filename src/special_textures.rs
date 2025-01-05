@@ -21,6 +21,31 @@ impl Plugin for SpecialTexturesPlugin {
 }
 impl SpecialTexturesPlugin {
     pub fn animate_textures(
+        mut commands: Commands,
+        mesh_query: Query<(Entity, &GenericMaterial3d), With<Mesh3d>>,
+        asset_server: Res<AssetServer>,
+        materials: Res<Assets<GenericMaterial>>,
+
+        tb_server: Res<TrenchBroomServer>,
+        time: Res<Time>,
+        mut last_frame_update: Local<f32>,
+    ) {
+        let Some(special_textures_config) = &tb_server.config.special_textures else { return };
+        
+        while *last_frame_update < time.elapsed_secs() {
+            *last_frame_update += special_textures_config.texture_animation_speed;
+
+            for (entity, material) in &mesh_query {
+                let Some(path) = material.0.path() else { continue };
+                // TODO
+                eprintln!("{path}");
+                
+                // commands.insert(GenericMaterial3d());
+            }
+        }
+    }
+    
+    /* pub fn animate_textures(
         map_entity_query: Query<(&MapEntityRef, &Children), With<SpawnedMapEntity>>,
         mesh_query: Query<&MeshMaterial3d<StandardMaterial>, With<Mesh3d>>,
         maps: Res<Assets<Map>>,
@@ -83,7 +108,7 @@ impl SpecialTexturesPlugin {
                 }
             }
         }
-    }
+    } */
 }
 
 /// Config for supporting quake special textures, such as animated textures and liquid.
@@ -113,61 +138,50 @@ impl SpecialTexturesConfig {
         self.invisible_textures.push(texture.to_string());
         self
     }
-
-    pub fn default_material_application_hook(
-        mut material: StandardMaterial,
-        view: &mut GeometryProviderView,
-        mesh_idx: usize,
-    ) {
-        let mesh_view = &view.meshes[mesh_idx];
-        if let Some(config) = &view.tb_server.config.special_textures {
-            if mesh_view.texture.name.starts_with('*') {
-                let water_alpha = view.map_entity.get("water_alpha").unwrap_or(1.);
-                if water_alpha != 1. {
-                    material.alpha_mode = AlphaMode::Blend;
-                    material.base_color = Color::linear_rgba(1., 1., 1., water_alpha);
-                }
-                let handle = world.resource_mut::<Assets<LiquidMaterial>>().add(LiquidMaterial { base: material, extension: (config.default_liquid_material)() });
-                world.entity_mut(mesh_view.entity).insert(MeshMaterial3d(handle));
-                return;
-            } else if mesh_view.texture.name.starts_with("sky") {
-                if let Some(texture) = material.base_color_texture {
-                    let handle = world.resource_mut::<Assets<QuakeSkyMaterial>>().add(QuakeSkyMaterial { texture, ..(config.default_quake_sky_material)() });
-                    world.entity_mut(mesh_view.entity).insert(MeshMaterial3d(handle));
-                    return;
-                }
-            }
-        }
-        
-        TrenchBroomConfig::default_material_application_hook(material, mesh_view, world, view)
-    }
 }
 
-impl TrenchBroomConfig {
-    /// Retrieves the special textures config or panics.
-    #[inline]
-    #[track_caller]
-    pub(crate) fn special_textures_config(&self) -> &SpecialTexturesConfig {
-        self.special_textures.as_ref().expect("Special textures config required! This is a bug!")
-    }
-    
-    /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
-    /// such as animated textures, skies, liquids, and invisible textures like clip and skip.
-    pub fn special_textures(mut self, config: SpecialTexturesConfig) -> Self {
-        self.special_textures = Some(config);
+/// If a [SpecialTexturesConfig] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
+pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
+    let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
+    // We save a teeny tiny bit of time by only cloning if we need to :)
+    let mut material = material.clone();
 
-        self.global_brush_spawners.push(|world, _entity, view| {
-            for mesh_view in &view.meshes {
-                if view.server.config.special_textures_config().invisible_textures.contains(&mesh_view.texture.name) {
-                    world.entity_mut(mesh_view.entity).insert(Visibility::Hidden);
-                }
-            }
+    if view.name.starts_with('*') {
+        let water_alpha: f32 = view.map.worldspawn()
+            .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
+            .unwrap_or(1.);
+
+        if water_alpha < 1. {
+            material.alpha_mode = AlphaMode::Blend;
+            material.base_color = Color::srgba(0., 0., 0., water_alpha);
+        }
+
+        let handle = view.add_material(LiquidMaterial {
+            base: material,
+            extension: (special_textures_config.default_liquid_material)(),
+        });
+        
+        return Some(GenericMaterial {
+            material: handle.into(),
+            properties: default(),
+            type_registry: view.type_registry.clone(),
+        });
+    } else if view.name.starts_with("sky") {
+        let Some(texture) = material.base_color_texture else { return None };
+
+        let handle = view.add_material(QuakeSkyMaterial {
+            texture,
+            ..(special_textures_config.default_quake_sky_material)()
         });
 
-        self.material_application_hook = SpecialTexturesConfig::default_material_application_hook;
-
-        self
+        return Some(GenericMaterial {
+            material: handle.into(),
+            properties: default(),
+            type_registry: view.type_registry.clone(),
+        });
     }
+
+    None
 }
 
 /// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.

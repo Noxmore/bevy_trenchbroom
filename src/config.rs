@@ -1,12 +1,17 @@
 use bevy::{asset::LoadContext, render::render_asset::RenderAssetUsages};
 use bevy_reflect::TypeRegistry;
 use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
-use geometry::{GeometryProviderMeshView, GeometryProviderView};
-use qmap::QuakeMapEntity;
+use fgd::FgdType;
+use geometry::{GeometryProviderFn, GeometryProviderMeshView, GeometryProviderView};
+use qmap::{QuakeMap, QuakeMapEntity};
 
 use crate::*;
 
 // TODO look through here for things that should be able to be changed during gameplay.
+
+pub type LoadEmbeddedTextureFn = dyn Fn(TextureLoadView, Handle<Image>) -> Handle<GenericMaterial> + Send + Sync;
+pub type LoadLooseTextureFn = dyn Fn(TextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
+pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
 
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
@@ -98,14 +103,16 @@ pub struct TrenchBroomConfig {
     /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
     pub ignore_invalid_entity_definitions: bool,
 
-    /// [TrenchBroomConfig::special_textures]
-    #[builder(skip)]
+    /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
+    /// such as animated textures, skies, liquids, and invisible textures like clip and skip.
     pub special_textures: Option<SpecialTexturesConfig>,
 
-    #[default(Self::default_load_embedded_texture)]
-    pub load_embedded_texture: fn(TextureLoadView, Handle<Image>) -> Handle<GenericMaterial>,
-    #[default(Self::default_load_loose_texture)]
-    pub load_loose_texture: fn(TextureLoadView) -> Handle<GenericMaterial>,
+    #[builder(skip)]
+    #[default(Hook(Arc::new(Self::default_load_embedded_texture)))]
+    pub load_embedded_texture: Hook<LoadEmbeddedTextureFn>,
+    #[builder(skip)]
+    #[default(Hook(Arc::new(Self::default_load_loose_texture)))]
+    pub load_loose_texture: Hook<LoadLooseTextureFn>,
 
     /// How lightmaps atlas' are computed when loading BSP files.
     /// 
@@ -115,8 +122,13 @@ pub struct TrenchBroomConfig {
     entity_classes: HashMap<String, ErasedQuakeClass>,
 
     /// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
-    #[default(vec![Self::default_global_spawner])]
-    pub global_spawners: Vec<fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut)>,
+    #[builder(skip)]
+    #[default(Hook(Arc::new(Self::default_global_spawner)))]
+    pub global_spawner: Hook<SpawnFn>,
+
+    #[builder(skip)]
+    #[default(Hook(Arc::new(|_| {})))]
+    pub global_geometry_provider: Hook<GeometryProviderFn>,
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
     #[default(RenderAssetUsages::RENDER_WORLD)]
@@ -176,20 +188,33 @@ impl TrenchBroomConfig {
         Ok(())
     }
 
-    pub fn default_load_embedded_texture(view: TextureLoadView, image: Handle<Image>) -> Handle<GenericMaterial> {
-        let material = view.load_context.add_labeled_asset(format!("Material_{}", view.name), StandardMaterial {
+    pub fn load_embedded_texture_fn(mut self, provider: impl FnOnce(Arc<LoadEmbeddedTextureFn>) -> Arc<LoadEmbeddedTextureFn>) -> Self {
+        self.load_embedded_texture.push(provider);
+        self
+    }
+    pub fn default_load_embedded_texture(mut view: TextureLoadView, image: Handle<Image>) -> Handle<GenericMaterial> {
+        let mut material = StandardMaterial {
             base_color_texture: Some(image),
             perceptual_roughness: 1.,
             ..default()
-        });
+        };
+
+        let generic_material = match load_special_texture(&mut view, &mut material) {
+            Some(v) => v,
+            None => GenericMaterial {
+                material: view.add_material(material).into(),
+                properties: default(),
+                type_registry: view.type_registry.clone(),
+            }
+        };
         
-        view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), GenericMaterial {
-            material: material.into(),
-            properties: default(),
-            type_registry: view.type_registry.clone(),
-        })
+        view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), generic_material)
     }
 
+    pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
+        self.load_loose_texture.push(provider);
+        self
+    }
     pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
         view.load_context.load(view.tb_config.texture_root.join(view.name).join(".material"))
     }
@@ -228,15 +253,78 @@ impl TrenchBroomConfig {
     }
 }
 
+/// Various inputs available when loading textures.
 pub struct TextureLoadView<'a, 'b> {
     pub name: &'a str,
     pub type_registry: &'a AppTypeRegistry,
     pub tb_config: &'a TrenchBroomConfig,
     pub load_context: &'a mut LoadContext<'b>,
+    pub map: &'a QuakeMap,
+}
+impl TextureLoadView<'_, '_> {
+    /// Shorthand for adding a material asset with the correct label.
+    pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
+        self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
+    }
 }
 
-// TODO use this instead of basic function pointers?
-// pub struct Hook<F: ?Sized>(pub Option<Box<F>>);
+// TODO I wish this was bit more encapsulated and ergonomic
+/// Wrapper for storing a stack of dynamic functions. Use [Hook::push] to push a new function onto the stack.
+#[derive(Deref)]
+pub struct Hook<F: ?Sized>(pub Arc<F>);
+impl<F: ?Sized + Send + Sync> fmt::Debug for Hook<F> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Hook<{}>", type_name::<F>())
+    }
+}
+impl<F: ?Sized> Clone for Hook<F> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+impl<F: ?Sized> Hook<F> {
+    /// Pushes a new hook onto the stack using a function that takes the previous hook for the new hook to optionally call.
+    pub fn push(&mut self, provider: impl FnOnce(Arc<F>) -> Arc<F>) {
+        // SAFETY: When this is done, self.0 will be valid again.
+        unsafe {
+            let mut prev: Arc<F> = mem::zeroed();
+            mem::swap(&mut prev, &mut self.0);
+            self.0 = provider(prev);
+        }
+    }
+}
+
+/* /// Macro that produces a Hook type with less boilerplate.
+#[macro_export]
+macro_rules! Hook {(($($arg:ty),* $(,)?) $(-> $return:ty)?) => {
+    Hook<dyn Fn($($arg),*) $(-> $return)? + Send + Sync>
+};} */
+
+/* impl<F: ?Sized + HookClone<F = F>> Clone for Hook<F> {
+    fn clone(&self) -> Self {
+        F::clone_hook(self)
+    }
+} */
+
+/* pub trait DynClone<T: ?Sized> {
+    fn dyn_clone(&self) -> Box<T>;
+}
+impl<T: Clone> DynClone<T> for T {
+    fn dyn_clone(&self) -> Box<T> {
+        Box::new(self.clone())
+    }
+} */
+
+/* pub trait HookClone {
+    type F: ?Sized;
+    fn clone_hook(&self) -> Hook<Self::F>;
+}
+impl<F: Clone> HookClone for F {
+    type F = F;
+    fn clone_hook(&self) -> Hook<Self::F> {
+        Hook(Box::new(self.clone()))
+    }
+} */
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum AssetPackageFormat {
@@ -448,4 +536,12 @@ impl TrenchBroomConfig {
 
         Ok(())
     }
+}
+
+#[test]
+fn hook_stack() {
+    let mut hook: Hook<dyn Fn() -> i32> = Hook(Arc::new(|| 2));
+    assert_eq!(hook(), 2);
+    hook.push(|prev| Arc::new(move || prev() + 1));
+    assert_eq!(hook(), 3);
 }

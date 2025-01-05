@@ -1,3 +1,4 @@
+use fgd::FgdType;
 use geometry::GeometryProvider;
 use qmap::{QuakeEntityError, QuakeMapEntity};
 
@@ -67,7 +68,7 @@ pub trait QuakeClass: Component + Reflect + Default {
     const CLASS_INFO: QuakeClassInfo;
 
     fn class_properties(server: &TrenchBroomConfig, properties: &mut QuakeClassProperties);
-    fn class_insert(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
+    fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
     fn geometry_provider(src_entity: &QuakeMapEntity) -> Option<GeometryProvider> {
         let _ = src_entity;
         None
@@ -78,7 +79,7 @@ pub trait QuakeClass: Component + Reflect + Default {
 pub struct ErasedQuakeClass {
     pub info: QuakeClassInfo,
     pub properties_fn: fn(&TrenchBroomConfig, &mut QuakeClassProperties),
-    pub insert_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
+    pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
     pub geometry_provider_fn: fn(&QuakeMapEntity) -> Option<GeometryProvider>,
 }
 impl ErasedQuakeClass {
@@ -86,21 +87,21 @@ impl ErasedQuakeClass {
         Self {
             info: T::CLASS_INFO,
             properties_fn: T::class_properties,
-            insert_fn: T::class_insert,
+            spawn_fn: T::class_spawn,
             geometry_provider_fn: T::geometry_provider,
         }
     }
 
-    pub fn apply_insert_fn_recursive(&self, config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+    pub fn apply_spawn_fn_recursive(&self, config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         for base in self.info.base {
             let Some(class) = config.get_class(*base) else {
                 return Err(anyhow::anyhow!("Class `{}` has invalid base class `{base}`, class does not exist.", self.info.name));
             };
 
-            class.apply_insert_fn_recursive(config, src_entity, entity)?;
+            class.apply_spawn_fn_recursive(config, src_entity, entity)?;
         }
 
-        (self.insert_fn)(config, src_entity, entity)?;
+        (self.spawn_fn)(config, src_entity, entity)?;
         
         Ok(())
     }
@@ -155,7 +156,7 @@ impl QuakeClass for Transform {
         });
     }
 
-    fn class_insert(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+    fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         let rotation = src_entity.get::<Vec3>("angles").map(angles_to_quat)
             .or_else(|_| src_entity.get::<Vec3>("mangle")
             // According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
@@ -207,7 +208,7 @@ impl QuakeClass for Visibility {
         });
     }
 
-    fn class_insert(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+    fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         let visibility = match src_entity.properties.get("visibility").map(String::as_str) {
             Some("inherited") => Visibility::Inherited,
             Some("hidden") => Visibility::Hidden,

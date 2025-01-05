@@ -12,6 +12,7 @@ pub(crate) use nil::std_prelude::*;
 pub(crate) use thiserror::Error;
 pub(crate) use q1bsp::prelude::*;
 pub(crate) use bevy_materialize::{prelude::*, ErasedMaterialHandle};
+pub(crate) use anyhow::{anyhow, Context};
 
 pub use q1bsp::{self, Palette, QUAKE_PALETTE, data::bsp::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas, ComputeLightmapSettings}};
 

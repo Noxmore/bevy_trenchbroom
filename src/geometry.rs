@@ -42,7 +42,7 @@ impl std::ops::Deref for BrushList {
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
 pub struct MapGeometryTexture<'w> {
     pub name: String,
-    pub embedded: Option<&'w BspEmbeddedTexture>,
+    pub material: Handle<GenericMaterial>,
     pub lightmap: Option<&'w Handle<AnimatedLighting>>,
     /// If the texture should be full-bright
     pub special: bool,
@@ -52,30 +52,26 @@ pub struct GeometryProviderMeshView<'w> {
     pub entity: Entity,
     pub mesh: Mesh,
     pub texture: MapGeometryTexture<'w>,
-    pub mat_properties: &'w MaterialProperties,
 }
 
-pub struct GeometryProviderView<'w, 'l> {
+pub struct GeometryProviderView<'w, 'l, 'lc> {
     pub world: &'w mut World,
     pub entity: Entity,
     pub tb_server: &'w TrenchBroomServer,
     /// The main world's asset server, this is here for things you can't do with `load_context`'s abstraction. So use `load_context` for asset-related things unless you *have* to use this.
+    /// TODO remove
     pub asset_server: &'w AssetServer,
     pub map_entity: &'w QuakeMapEntity,
     pub map_entity_idx: usize,
     pub meshes: Vec<GeometryProviderMeshView<'w>>,
-    pub load_context: &'l mut LoadContext<'l>,
+    pub load_context: &'l mut LoadContext<'lc>,
 }
-impl GeometryProviderView<'_, '_> {
-    /// Shorthand for adding a labled
-    pub fn add_material<M: Material>(&mut self, mesh_idx: usize, material: M) -> Handle<M> {
-        self.load_context.add_labeled_asset(format!("Entity{}Material{mesh_idx}", self.map_entity_idx), material)
-    }
-}
+
+pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
 
 #[derive(Default)]
 pub struct GeometryProvider {
-    providers: Vec<Box<dyn Fn(&mut GeometryProviderView)>>,
+    pub providers: Vec<Box<GeometryProviderFn>>,
 }
 
 impl GeometryProvider {
@@ -86,7 +82,7 @@ impl GeometryProvider {
     /// Add a function to the settings' spawner stack.
     pub fn push(
         mut self,
-        provider: impl Fn(&mut GeometryProviderView) + 'static,
+        provider: impl Fn(&mut GeometryProviderView) + Send + Sync + 'static,
     ) -> Self {
         self.providers.push(Box::new(provider));
         self
@@ -119,9 +115,10 @@ impl GeometryProvider {
             let ent_index = view.map_entity_idx; // Borrow checker
             // We go through all the meshes and add all their normals into vertex_map
             for mesh_view in &mut view.meshes {
-                if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
-                    continue;
-                }
+                // TODO replace with bevy_materialize integration for qmap loading
+                // if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
+                //     continue;
+                // }
 
                 // SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
                 let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
@@ -189,100 +186,16 @@ impl GeometryProvider {
         })
     }
 
-    /// Spawns child entities with meshes per each material used, loading said materials in the process.
+    /// Puts materials on mesh entities.
     /// Will do nothing is your config is specified to be a server.
-    pub fn pbr_mesh(self) -> Self {
+    pub fn render(self) -> Self {
         self.push(|view| {
             if view.tb_server.config.is_server {
                 return;
             }
 
-            // Borrow checker
-            let mut texture_applications = Vec::with_capacity(view.meshes.len());
-
-            for (mesh_idx, mesh_view) in view.meshes.iter().enumerate() {
-                if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
-                    continue;
-                }
-
-                let default_material = StandardMaterial {
-                    perceptual_roughness: mesh_view
-                        .mat_properties
-                        .get(MaterialProperties::ROUGHNESS),
-                    metallic: mesh_view.mat_properties.get(MaterialProperties::METALLIC),
-                    alpha_mode: mesh_view
-                        .mat_properties
-                        .get(MaterialProperties::ALPHA_MODE)
-                        .into(),
-                    emissive: mesh_view.mat_properties.get(MaterialProperties::EMISSIVE),
-                    cull_mode: if mesh_view
-                        .mat_properties
-                        .get(MaterialProperties::DOUBLE_SIDED)
-                    {
-                        None
-                    } else {
-                        Some(Face::Back)
-                    },
-                    lightmap_exposure: view.tb_server.config.default_lightmap_exposure,
-                    ..default()
-                };
-
-                let mut material = match &mesh_view.texture.embedded {
-                    Some(embedded) => {
-                        // TODO Should PBR be supported here? We probably shouldn't read from loose files, maybe from other embedded textures?
-                        StandardMaterial {
-                            base_color_texture: Some(embedded.image.clone()),
-                            alpha_mode: embedded.alpha_mode,
-                            ..default_material
-                        }
-                    },
-                    None => {
-                        macro_rules! load_texture {
-                            ($map:literal) => {{
-                                let texture_path = format!(
-                                    concat!("{}/{}", $map, ".{}"),
-                                    view.tb_server.config.texture_root.display(),
-                                    mesh_view.texture.name,
-                                    view.tb_server.config.texture_extension
-                                );
-                                // TODO this good?
-                                if view.asset_server.get_source(texture_path.clone()).is_ok() {
-                                    Some(view.load_context.load(texture_path))
-                                } else {
-                                    None
-                                }
-                            }};
-                        }
-
-                        let base_color_texture = load_texture!("");
-                        let normal_map_texture = load_texture!("_normal");
-                        let metallic_roughness_texture = load_texture!("_mr");
-                        let emissive_texture = load_texture!("_emissive");
-                        let depth_texture = load_texture!("_depth");
-
-                        StandardMaterial {
-                            base_color_texture,
-                            normal_map_texture,
-                            metallic_roughness_texture,
-                            emissive_texture,
-                            depth_map: depth_texture,
-                            ..default_material
-                        }
-                    }
-                };
-
-                if mesh_view.texture.special {
-                    material.emissive_texture = material.base_color_texture.clone();
-                    material.emissive = LinearRgba::WHITE;
-                }
-
-                let mesh_handle = view.load_context.add_labeled_asset(format!("Entity{}Mesh{mesh_idx}", view.map_entity_idx), mesh_view.mesh.clone());
-                view.world.entity_mut(mesh_view.entity).insert(Mesh3d(mesh_handle));
-                texture_applications.push((material, mesh_idx));
-            }
-            
-            for (material, mesh_idx) in texture_applications {
-                (view.tb_server.config.material_application_hook)(material, view, mesh_idx);
+            for mesh_view in &view.meshes {
+                view.world.entity_mut(mesh_view.entity).insert(GenericMaterial3d(mesh_view.texture.material.clone()));
             }
         })
     }
@@ -309,9 +222,10 @@ impl GeometryProvider {
     pub fn trimesh_collider(self) -> Self {
         self.push(|view| {
             for mesh_view in &view.meshes {
-                if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
-                    continue;
-                }
+                // TODO
+                // if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
+                //     continue;
+                // }
 
                 view.world.entity_mut(mesh_view.entity).insert(TrimeshCollision);
             }

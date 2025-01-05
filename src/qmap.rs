@@ -1,8 +1,9 @@
-use bevy::asset::AssetLoader;
+use bevy::asset::{AssetLoader, AsyncReadExt};
+use fgd::FgdType;
 
 use crate::*;
 
-#[derive(Reflect, Debug, Clone, Default)]
+#[derive(Reflect, Asset, Debug, Clone, Default)]
 pub struct QuakeMap {
     pub entities: Vec<QuakeMapEntity>,
 }
@@ -84,20 +85,35 @@ pub enum QuakeEntityError {
     },
 }
 
-pub struct QuakeMapLoader;
+pub struct QuakeMapLoader {
+    pub tb_server: TrenchBroomServer,
+}
+impl FromWorld for QuakeMapLoader {
+    fn from_world(world: &mut World) -> Self {
+        Self {
+            tb_server: world.resource::<TrenchBroomServer>().clone(),
+        }
+    }
+}
 impl AssetLoader for QuakeMapLoader {
+    // TODO this should be some asset version of QuakeMap
     type Asset = QuakeMap;
     type Settings = ();
-    type Error = io::Error;
+    type Error = anyhow::Error;
     
     fn load(
         &self,
         reader: &mut dyn bevy::asset::io::Reader,
-        settings: &Self::Settings,
-        load_context: &mut bevy::asset::LoadContext,
+        _settings: &Self::Settings,
+        _load_context: &mut bevy::asset::LoadContext,
     ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
-        Box::pin(|| {
-            
+        Box::pin(async {
+            let mut input = String::new();
+            reader.read_to_string(&mut input).await?;
+
+            let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(input))?;
+
+            Ok(QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config))
         })
     }
 

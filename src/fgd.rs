@@ -37,13 +37,13 @@ impl TrenchBroomConfig {
             let mut properties = QuakeClassProperties::new();
             (class.properties_fn)(self, &mut properties);
 
-            for (property_name, property) in properties.into_iter() {
+            for (property_name, property) in properties.values.into_iter() {
                 write!(s, "\t{property_name}({}): \"{}\" : {} : \"{}\"",
-                    match property.ty {
-                        QuakeClassPropertyType::Value(ty) => &ty,
+                    match &property.ty {
+                        QuakeClassPropertyType::Value(ty) => ty,
                         QuakeClassPropertyType::Choices(_) => "choices",
                     },
-                    property.title.unwrap_or(property_name),
+                    property.title.unwrap_or(property_name.clone()),
                     property.default_value.unwrap_or_default(),
                     property.description.unwrap_or_default(),
                 );
