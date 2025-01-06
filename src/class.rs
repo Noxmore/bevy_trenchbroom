@@ -58,7 +58,7 @@ pub struct QuakeClassInfo {
     pub properties: &'static [QuakeClassProperty],
 }
 
-pub trait QuakeClass: Component + Reflect + Default {
+pub trait QuakeClass: Component + Reflect {
     const ERASED_CLASS_INSTANCE: &ErasedQuakeClass;
     const CLASS_INFO: QuakeClassInfo;
 
