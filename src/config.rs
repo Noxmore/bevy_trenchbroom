@@ -105,6 +105,7 @@ pub struct TrenchBroomConfig {
 
     /// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
     /// such as animated textures, skies, liquids, and invisible textures like clip and skip.
+    #[builder(into)]
     pub special_textures: Option<SpecialTexturesConfig>,
 
     #[builder(skip)]
