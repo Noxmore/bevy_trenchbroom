@@ -17,7 +17,7 @@ pub enum QuakeClassType {
 }
 
 /// A property for an entity definition. the property type (`ty`) doesn't have a set of different options, it more just tells users what kind of data you are expecting.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct QuakeClassProperty {
     pub ty: QuakeClassPropertyType,
     pub name: &'static str,
@@ -26,7 +26,7 @@ pub struct QuakeClassProperty {
     pub default_value: Option<fn() -> String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QuakeClassPropertyType {
     Value(&'static str),
     Choices(&'static [(&'static str, &'static str)]),
@@ -39,12 +39,13 @@ impl Default for QuakeClassPropertyType {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct QuakeClassInfo {
     pub ty: QuakeClassType,
+    /// The name of the class, this is usually the snake_case version of the type's name.
     pub name: &'static str,
     pub description: Option<&'static str>,
-    pub base: &'static [&'static str],
+    pub base: &'static [&'static ErasedQuakeClass],
     
     /// A model that the entity shows up as in the editor. See the page on the [TrenchBroom docs](https://trenchbroom.github.io/manual/latest/#display-models-for-entities) for more info.
     pub model: Option<&'static str>,
@@ -58,6 +59,7 @@ pub struct QuakeClassInfo {
 }
 
 pub trait QuakeClass: Component + Reflect + Default {
+    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass;
     const CLASS_INFO: QuakeClassInfo;
 
     fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
@@ -84,11 +86,7 @@ impl ErasedQuakeClass {
 
     pub fn apply_spawn_fn_recursive(&self, config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
         for base in self.info.base {
-            let Some(class) = config.get_class(*base) else {
-                return Err(anyhow::anyhow!("Class `{}` has invalid base class `{base}`, class does not exist.", self.info.name));
-            };
-
-            class.apply_spawn_fn_recursive(config, src_entity, entity)?;
+            base.apply_spawn_fn_recursive(config, src_entity, entity)?;
         }
 
         (self.spawn_fn)(config, src_entity, entity)?;
@@ -98,11 +96,11 @@ impl ErasedQuakeClass {
 }
 
 #[cfg(feature = "auto_register")]
-inventory::collect!(ErasedQuakeClass);
+inventory::collect!(&'static ErasedQuakeClass);
 
 #[cfg(feature = "auto_register")]
 pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuakeClass>> = Lazy::new(|| {
-    inventory::iter::<ErasedQuakeClass>.into_iter().map(|class| (class.info.name, class)).collect()
+    inventory::iter::<&'static ErasedQuakeClass>.into_iter().copied().map(|class| (class.info.name, class)).collect()
 });
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -111,9 +109,10 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 
 
 impl QuakeClass for Transform {
+    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
         ty: QuakeClassType::Base,
-        name: "Transform",
+        name: "transform",
         description: None,
         base: &[],
 
@@ -172,11 +171,14 @@ impl QuakeClass for Transform {
         Ok(())
     }
 }
+#[cfg(feature = "auto_register")]
+inventory::submit! { Transform::ERASED_CLASS_INSTANCE }
 
 impl QuakeClass for Visibility {
+    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
         ty: QuakeClassType::Base,
-        name: "Visibility",
+        name: "visibility",
         description: None,
         base: &[],
 
@@ -218,3 +220,5 @@ impl QuakeClass for Visibility {
         Ok(())
     }
 }
+#[cfg(feature = "auto_register")]
+inventory::submit! { Visibility::ERASED_CLASS_INSTANCE }

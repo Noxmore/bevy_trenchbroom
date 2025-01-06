@@ -11,11 +11,12 @@ impl TrenchBroomConfig {
             s.write_fmt(format_args!($($arg)*)).ok()
         };}
 
+        // TODO don't write hanging base classes
         for class in self.class_iter() {
             write!("@{:?}Class ", class.info.ty);
     
             if !class.info.base.is_empty() {
-                write!("base({}) ", class.info.base.join(", "));
+                write!("base({}) ", class.info.base.iter().map(|base| base.info.name).join(", "));
             }
     
             if let Some(value) = class.info.color {
