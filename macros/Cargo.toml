@@ -7,10 +7,20 @@ authors.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
+darling = "0.20.10"
+heck = "0.5.0"
 proc-macro2 = "1.0.92"
 quote = "1.0.38"
 syn = "2.0.94"
 
 [dev-dependencies]
 bevy_trenchbroom = { path = ".." }
+# bevy_ecs = "0.15"
+# bevy = { version = "0.15", default-features = true }
+
+[features]
+auto_register = []

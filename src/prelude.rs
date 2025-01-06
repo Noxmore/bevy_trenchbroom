@@ -26,3 +26,5 @@ pub use crate::{
     bsp_lighting::*,
     *,
 };
+
+pub use bevy_trenchbroom_macros::*;

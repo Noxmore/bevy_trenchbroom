@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "bevy_trenchbroom_macros",
+    "macros",
 ]
 
 [workspace.package]
@@ -24,7 +24,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-bevy_trenchbroom_macros = { path = "bevy_trenchbroom_macros" }
+bevy_trenchbroom_macros = { path = "macros" }
 
 anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
@@ -65,4 +65,4 @@ bevy-inspector-egui = "0.28" # TODO TMP
 default = ["auto_register"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
-auto_register = ["dep:inventory"]
+auto_register = ["dep:inventory", "bevy_trenchbroom_macros/auto_register"]
