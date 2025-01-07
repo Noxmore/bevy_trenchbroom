@@ -18,7 +18,7 @@ pub mod fgd;
 #[cfg(any(feature = "rapier", feature = "avian"))]
 pub mod physics;
 
-use bsp::BspLoader;
+use bsp::{Bsp, BspLoader};
 pub(crate) use prelude::*;
 
 // Re-exports
@@ -55,6 +55,7 @@ impl Plugin for TrenchBroomPlugin {
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset_loader::<QuakeMapLoader>()
+            .init_asset::<Bsp>()
             .init_asset_loader::<BspLoader>();
     }
 }
