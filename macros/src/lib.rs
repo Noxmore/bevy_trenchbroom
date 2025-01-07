@@ -151,7 +151,7 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
                 let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
 
                 field_constructors.push(quote! {
-                    #setter src_entity.get(stringify!(#field_name))?,
+                    #setter src_entity.get(#field_name)?,
                 });
             }
 
