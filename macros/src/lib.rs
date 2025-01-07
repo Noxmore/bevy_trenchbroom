@@ -21,7 +21,7 @@ struct Opts {
     geometry: Option<TokenStream>,
     classname: Option<TokenStream>,
 
-    required: Option<TokenStream>,
+    require: Option<TokenStream>,
     doc: Option<String>,
 }
 
@@ -84,8 +84,8 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
                     opts.geometry = Some(meta.tokens);
                 } else if compare_path(&meta.path, "classname") {
                     opts.classname = Some(meta.tokens);
-                } else if compare_path(&meta.path, "required") {
-                    opts.required = Some(meta.tokens);
+                } else if compare_path(&meta.path, "require") {
+                    opts.require = Some(meta.tokens);
                 }
             }
             Meta::Path(_) => {}
@@ -189,7 +189,7 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
     let description = option(opts.doc);
 
     // This is a naive approach, but the Component macro should handle making sure the input is valid anyway.
-    let bases = opts.required.unwrap_or_default().into_iter().filter(|tree| matches!(tree, TokenTree::Ident(_)));
+    let bases = opts.require.unwrap_or_default().into_iter().filter(|tree| matches!(tree, TokenTree::Ident(_)));
 
     let model = option(opts.model.map(|model| quote! { stringify!(#model) }));
     let color = option(opts.color.map(|color| quote! { stringify!(#color) }));
