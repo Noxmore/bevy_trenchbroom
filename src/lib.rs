@@ -50,6 +50,15 @@ impl Plugin for TrenchBroomPlugin {
         #[cfg(any(feature = "rapier", feature = "avian"))]
         app.add_plugins(physics::PhysicsPlugin);
 
+        #[cfg(feature = "auto_register")] {
+            let type_registry = app.world().resource::<AppTypeRegistry>();
+            let mut type_registry = type_registry.write();
+            for class in self.config.class_iter() {
+                type_registry.add_registration((class.get_type_registration)());
+                (class.register_type_dependencies)(&mut type_registry);
+            }
+        }
+
         app
             .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self

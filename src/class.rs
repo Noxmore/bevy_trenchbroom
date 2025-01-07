@@ -1,3 +1,4 @@
+use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use fgd::FgdType;
 use geometry::GeometryProvider;
 use qmap::{QuakeEntityError, QuakeMapEntity};
@@ -58,7 +59,7 @@ pub struct QuakeClassInfo {
     pub properties: &'static [QuakeClassProperty],
 }
 
-pub trait QuakeClass: Component + Reflect {
+pub trait QuakeClass: Component + GetTypeRegistration {
     const ERASED_CLASS_INSTANCE: &ErasedQuakeClass;
     const CLASS_INFO: QuakeClassInfo;
 
@@ -74,6 +75,8 @@ pub struct ErasedQuakeClass {
     pub info: QuakeClassInfo,
     pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
     pub geometry_provider_fn: fn(&QuakeMapEntity) -> Option<GeometryProvider>,
+    pub get_type_registration: fn() -> TypeRegistration,
+    pub register_type_dependencies: fn(&mut TypeRegistry),
 }
 impl ErasedQuakeClass {
     pub const fn of<T: QuakeClass>() -> Self {
@@ -81,6 +84,8 @@ impl ErasedQuakeClass {
             info: T::CLASS_INFO,
             spawn_fn: T::class_spawn,
             geometry_provider_fn: T::geometry_provider,
+            get_type_registration: T::get_type_registration,
+            register_type_dependencies: T::register_type_dependencies,
         }
     }
 
