@@ -255,10 +255,11 @@ impl AssetLoader for BspLoader {
                                 (self.tb_server.config.global_geometry_provider)(&mut view);
 
                                 *model_options.get_mut(model_idx).ok_or_else(|| anyhow::anyhow!("invalid model index {model_idx}"))? = Some(BspModel {
-                                    meshes: view.meshes.into_iter().enumerate().map(|(mesh_idx, view)| {
-                                        // TODO asset added via geometry providers?
-                                        let mesh_handle = load_context.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), view.mesh);
-                                        (view.texture.name, mesh_handle)
+                                    meshes: view.meshes.into_iter().enumerate().map(|(mesh_idx, mesh_view)| {
+                                        let mesh_handle = view.load_context.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), mesh_view.mesh);
+                                        view.world.entity_mut(mesh_view.entity).insert(Mesh3d(mesh_handle.clone()));
+                                        
+                                        (mesh_view.texture.name, mesh_handle)
                                     }).collect(),
                                 });
                             }
