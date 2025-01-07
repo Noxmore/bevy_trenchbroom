@@ -158,7 +158,7 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
     // let inventory_import = cfg!(feature = "auto_register").then(|| Ident::new("inventory", Span::mixed_site()));
 
     let inventory_submit = cfg!(feature = "auto_register").then(|| quote! {
-        ::bevy_trenchbroom::inventory::submit! { <#ident as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS_INSTANCE }
+        ::bevy_trenchbroom::inventory::submit! { <#ident as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS }
     });
 
     let name = opts.classname
@@ -202,7 +202,7 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
                 ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident,
                 name: #name,
                 description: #description,
-                base: &[#(<#bases as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS_INSTANCE),*],
+                base: &[#(<#bases as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS),*],
         
                 model: #model,
                 color: #color,

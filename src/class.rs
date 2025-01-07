@@ -63,7 +63,7 @@ pub trait QuakeClass: Component + GetTypeRegistration + Sized {
     /// A global [ErasedQuakeClass] of this type. Used for base classes and registration.
     /// 
     /// NOTE: Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
-    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
+    const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo;
 
     fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
@@ -179,7 +179,7 @@ impl QuakeClass for Transform {
     }
 }
 #[cfg(feature = "auto_register")]
-inventory::submit! { Transform::ERASED_CLASS_INSTANCE }
+inventory::submit! { Transform::ERASED_CLASS }
 
 impl QuakeClass for Visibility {
     const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
@@ -227,4 +227,4 @@ impl QuakeClass for Visibility {
     }
 }
 #[cfg(feature = "auto_register")]
-inventory::submit! { Visibility::ERASED_CLASS_INSTANCE }
+inventory::submit! { Visibility::ERASED_CLASS }
