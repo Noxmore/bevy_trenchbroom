@@ -10,8 +10,6 @@ enum QuakeClassType {
     Solid,
 }
 
-// #[derive(FromDeriveInput, Default)]
-// #[darling(default, attributes(model, color, iconsprite, size, classname, geometry), forward_attrs(doc))]
 #[derive(Default)]
 struct Opts {
     model: Option<TokenStream>,
@@ -111,25 +109,18 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
                 let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
                 
                 let mut doc = None;
-                // let mut default = None;
                 
                 for attr in field.attrs {
                     match attr.meta {
-                        Meta::Path(_) => {}
-                        Meta::List(_) => {
-                            // if compare_path(&meta.path, "default") {
-                            //     default = Some(meta.tokens);
-                            // }
-                        }
                         Meta::NameValue(meta) => {
                             if compare_path(&meta.path, "doc") {
                                 doc = Some(meta.value);
                             }
                         }
+                        _ => {}
                     }
                 }
                 
-                // let default = option(default.map(|default| quote! { Some(|| (#default).fgd_to_string()) }));
                 let doc = doc.and_then(|expr| match expr {
                     Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) => Some(lit.value().trim().to_string()),
                     _ => None,

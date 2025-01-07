@@ -1908,7 +1908,6 @@ name = "bevy_trenchbroom_macros"
 version = "0.6.0"
 dependencies = [
  "bevy_trenchbroom",
- "darling",
  "heck",
  "proc-macro2",
  "quote",
