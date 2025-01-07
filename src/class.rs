@@ -59,8 +59,11 @@ pub struct QuakeClassInfo {
     pub properties: &'static [QuakeClassProperty],
 }
 
-pub trait QuakeClass: Component + GetTypeRegistration {
-    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass;
+pub trait QuakeClass: Component + GetTypeRegistration + Sized {
+    /// A global [ErasedQuakeClass] of this type. Used for base classes and registration.
+    /// 
+    /// NOTE: Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
+    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo;
 
     fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
@@ -114,7 +117,6 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 
 
 impl QuakeClass for Transform {
-    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
         ty: QuakeClassType::Base,
         name: "transform",
@@ -180,7 +182,6 @@ impl QuakeClass for Transform {
 inventory::submit! { Transform::ERASED_CLASS_INSTANCE }
 
 impl QuakeClass for Visibility {
-    const ERASED_CLASS_INSTANCE: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
     const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
         ty: QuakeClassType::Base,
         name: "visibility",

@@ -198,7 +198,6 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
     
     quote! {
         impl ::bevy_trenchbroom::class::QuakeClass for #ident {
-            const ERASED_CLASS_INSTANCE: &::bevy_trenchbroom::class::ErasedQuakeClass = &::bevy_trenchbroom::class::ErasedQuakeClass::of::<Self>();
             const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
                 ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident,
                 name: #name,
