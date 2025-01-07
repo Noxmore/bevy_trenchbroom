@@ -4,29 +4,34 @@ use bevy_trenchbroom::prelude::*;
 use bevy::math::*;
 use geometry::GeometryProvider;
 
-#[derive(SolidClass, Component)]
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn;
 
-#[derive(SolidClass, Component)]
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncDoor;
 
-#[derive(SolidClass, Component)]
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncWall;
 
-#[derive(SolidClass, Component)]
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
 
-#[derive(PointClass, Component)]
+#[derive(PointClass, Component, Reflect)]
+#[reflect(Component)]
 #[require(Transform)]
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {
     fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
-        let asset_server = world.resource::<AssetServer>();
+        let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
         let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
         let material = asset_server.add(StandardMaterial::default());
 
@@ -37,11 +42,12 @@ impl Cube {
     }
 }
 
-#[derive(PointClass, Component, Default)]
+#[derive(PointClass, Component, Reflect, Default)]
+#[reflect(Component)]
 #[require(Transform)]
 pub struct Light {
-    pub color: Color,
-    pub intensity: f32,
+    // pub color: Color,
+    // pub intensity: f32,
 }
 
 fn main() {
@@ -67,6 +73,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AmbientLight::NONE)
 
+        .add_plugins(MaterializePlugin::new(TomlMaterialDeserializer))
         .add_plugins(TrenchBroomPlugin::new(
             TrenchBroomConfig::new("bevy_trenchbroom_example")
                 .compute_lightmap_settings(ComputeLightmapSettings { no_lighting_color: [0, 255, 0], default_color: [0, 0, 255], ..default() })
