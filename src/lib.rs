@@ -59,6 +59,10 @@ impl Plugin for TrenchBroomPlugin {
             }
         }
 
+        if self.config.lightmap_exposure.is_some() {
+            app.add_systems(Update, Self::set_lightmap_exposure);
+        }
+
         app
             .add_plugins(BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
@@ -66,6 +70,21 @@ impl Plugin for TrenchBroomPlugin {
             .init_asset_loader::<QuakeMapLoader>()
             .init_asset::<Bsp>()
             .init_asset_loader::<BspLoader>();
+    }
+}
+impl TrenchBroomPlugin {
+    pub fn set_lightmap_exposure(
+        mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
+        mut standard_materials: ResMut<Assets<StandardMaterial>>,
+        tb_server: Res<TrenchBroomServer>,
+    ) {
+        let Some(exposure) = tb_server.config.lightmap_exposure else { return };
+        
+        for event in asset_events.read() {
+            let AssetEvent::Added { id } = event else { continue };
+
+            standard_materials.get_mut(*id).expect("Bevy reports asset added but it doesn't exist!").lightmap_exposure = exposure;
+        }
     }
 }
 

@@ -93,9 +93,9 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
-    /// The default lightmap exposure for BSP loaded lightmaps.
-    #[default(10000.)]
-    pub default_lightmap_exposure: f32,
+    /// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10000))
+    #[default(Some(10000.))]
+    pub lightmap_exposure: Option<f32>,
     #[default(500.)]
     pub default_irradiance_volume_intensity: f32,
 
