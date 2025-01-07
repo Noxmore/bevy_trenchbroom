@@ -1327,7 +1327,7 @@ dependencies = [
 [[package]]
 name = "bevy_materialize"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/bevy_materialize.git?rev=f08a01c#f08a01c1cd4ed8f6c09dc739dca20da7aad3589c"
+source = "git+https://github.com/Noxmore/bevy_materialize.git?rev=311415a#311415a9227ea72602939c0375bf9a1a02c35ca5"
 dependencies = [
  "bevy 0.15.1",
  "serde",
