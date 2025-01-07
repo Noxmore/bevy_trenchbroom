@@ -1,4 +1,4 @@
-use bevy::{asset::embedded_asset, image::ImageSampler, render::{extract_resource::{ExtractResource, ExtractResourcePlugin}, globals::{GlobalsBuffer, GlobalsUniform}, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::{RenderDevice, RenderQueue}, texture::GpuImage, Render, RenderApp, RenderSet}};
+use bevy::{asset::embedded_asset, image::ImageSampler, pbr::Lightmap, render::{extract_resource::{ExtractResource, ExtractResourcePlugin}, globals::{GlobalsBuffer, GlobalsUniform}, mesh::PrimitiveTopology, render_asset::{RenderAsset, RenderAssetPlugin, RenderAssetUsages, RenderAssets}, render_graph::{RenderGraph, RenderLabel}, render_resource::{binding_types::*, *}, renderer::{RenderDevice, RenderQueue}, texture::GpuImage, Render, RenderApp, RenderSet}};
 
 use crate::*;
 
@@ -30,9 +30,13 @@ impl Plugin for BspLightingPlugin {
             .add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
             .add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
 
+            .register_type::<AnimatedLightmap>()
+            
             .init_resource::<LightmapAnimators>()
         
             .init_asset::<AnimatedLighting>()
+
+            .add_systems(PreUpdate, Self::insert_animated_lightmaps)
         ;
 
         let render_app = app.sub_app_mut(RenderApp);
@@ -52,6 +56,21 @@ impl Plugin for BspLightingPlugin {
     }
 }
 impl BspLightingPlugin {
+    pub fn insert_animated_lightmaps(
+        mut commands: Commands,
+        query: Query<(Entity, &AnimatedLightmap), Without<Lightmap>>,
+        animated_lighting_assets: Res<Assets<AnimatedLighting>>,
+    ) {
+        for (entity, animated_lightmap) in &query {
+            let Some(animated_lighting) = animated_lighting_assets.get(&animated_lightmap.0) else { continue };
+
+            commands.entity(entity).insert(Lightmap {
+                image: animated_lighting.output.clone(),
+                uv_rect: Rect::new(0., 0., 1., 1.),
+            });
+        }
+    }
+    
     pub fn prepare_animated_lighting_bind_groups(
         animated_lighting_assets: Res<RenderAssets<AnimatedLighting>>,
         mut bind_groups: ResMut<AnimatedLightingBindGroups>,
@@ -206,6 +225,11 @@ impl RenderAsset for AnimatedLighting {
         Ok(source_asset)
     }
 }
+
+/// Holds an [AnimatedLighting] handle and automatically inserts the output lightmap onto the entity.
+#[derive(Component, Reflect, Debug, Clone, Default, PartialEq, Eq, Deref, DerefMut)]
+#[reflect(Component, Default)]
+pub struct AnimatedLightmap(pub Handle<AnimatedLighting>);
 
 #[derive(Reflect, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnimatedLightingType {

@@ -203,16 +203,10 @@ impl GeometryProvider {
     pub fn with_lightmaps(self) -> Self {
         self.push(|view| {
             for mesh_view in &view.meshes {
-                if mesh_view.texture.special { continue }
-                let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
-                let Some(animated_lighting) = view.world.resource::<Assets<AnimatedLighting>>().get(*animated_lighting_handle) else {
-                    error!("Animated lighting for entity {} (index {:?}) doesn't exist!", view.entity, view.map_entity_idx);
-                    continue;
-                };
-                let lightmap_handle = animated_lighting.output.clone();
+                // if mesh_view.texture.special { continue }
+                let Some(animated_lighting_handle) = mesh_view.texture.lightmap else { continue };
                 
-                view.world.entity_mut(mesh_view.entity)
-                    .insert(Lightmap { image: lightmap_handle.clone(), uv_rect: Rect::new(0., 0., 1., 1.) });
+                view.world.entity_mut(mesh_view.entity).insert(AnimatedLightmap(animated_lighting_handle.clone()));
             }
         })
     }
