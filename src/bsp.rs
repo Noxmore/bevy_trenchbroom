@@ -187,11 +187,12 @@ impl AssetLoader for BspLoader {
                 let entity_id = entity.id();
                 
                 class.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
-                    .with_context(|| format!("spawning entity {map_entity_idx} ({classname})"))?;
+                    .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
                 // Nesting hell, TODO fix this
                 if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
-                    if let Ok(model) = map_entity.get::<String>("model") {
+                    // TODO dumb worldspawn fix
+                    if let Ok(model) = map_entity.get::<String>("model").or_else(|err| if class.info.name == "worldspawn" { Ok("*0".s()) } else { Err(err) }) {
                         let model_idx = model.trim_start_matches('*');
                         // If there wasn't a * at the start, this is invalid
                         if model_idx != model {
@@ -262,15 +263,13 @@ impl AssetLoader for BspLoader {
                                 });
                             }
                         }
-
-                        // 
                     }
                 }
 
                 let mut entity = world.entity_mut(entity_id);
 
                 (self.tb_server.config.global_spawner)(&self.tb_server.config, map_entity, &mut entity)
-                    .with_context(|| format!("spawning entity {map_entity_idx} ({classname}) with global spawner"))?;
+                    .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
             }
 
             let mut models = Vec::with_capacity(model_options.len());
