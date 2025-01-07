@@ -15,6 +15,7 @@ pub(crate) use bevy_materialize::{prelude::*, ErasedMaterialHandle};
 pub(crate) use anyhow::{anyhow, Context};
 
 pub use q1bsp::{self, Palette, QUAKE_PALETTE, data::bsp::LightmapStyle, mesh::lighting::{Lightmaps, LightmapAtlas, ComputeLightmapSettings}};
+pub use bevy_materialize::prelude::*;
 
 // TODO prelude should probably be more specific with what it re-exports
 pub use crate::{
