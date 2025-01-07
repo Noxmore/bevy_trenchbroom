@@ -190,7 +190,7 @@ impl TrenchBroomConfig {
     }
 
     pub fn load_embedded_texture_fn(mut self, provider: impl FnOnce(Arc<LoadEmbeddedTextureFn>) -> Arc<LoadEmbeddedTextureFn>) -> Self {
-        self.load_embedded_texture.push(provider);
+        self.load_embedded_texture.set(provider);
         self
     }
     pub fn default_load_embedded_texture(mut view: TextureLoadView, image: Handle<Image>) -> Handle<GenericMaterial> {
@@ -213,7 +213,7 @@ impl TrenchBroomConfig {
     }
 
     pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
-        self.load_loose_texture.push(provider);
+        self.load_loose_texture.set(provider);
         self
     }
     pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
@@ -284,14 +284,9 @@ impl<F: ?Sized> Clone for Hook<F> {
     }
 }
 impl<F: ?Sized> Hook<F> {
-    /// Pushes a new hook onto the stack using a function that takes the previous hook for the new hook to optionally call.
-    pub fn push(&mut self, provider: impl FnOnce(Arc<F>) -> Arc<F>) {
-        // SAFETY: When this is done, self.0 will be valid again.
-        unsafe {
-            let mut prev: Arc<F> = mem::zeroed();
-            mem::swap(&mut prev, &mut self.0);
-            self.0 = provider(prev);
-        }
+    /// Sets the function in the hook using a function that takes the hook's previous function for the new function to optionally call.
+    pub fn set(&mut self, provider: impl FnOnce(Arc<F>) -> Arc<F>) {
+        self.0 = provider(self.0.clone());
     }
 }
 
@@ -543,6 +538,6 @@ impl TrenchBroomConfig {
 fn hook_stack() {
     let mut hook: Hook<dyn Fn() -> i32> = Hook(Arc::new(|| 2));
     assert_eq!(hook(), 2);
-    hook.push(|prev| Arc::new(move || prev() + 1));
+    hook.set(|prev| Arc::new(move || prev() + 1));
     assert_eq!(hook(), 3);
 }
