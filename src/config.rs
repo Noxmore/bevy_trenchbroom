@@ -217,7 +217,7 @@ impl TrenchBroomConfig {
         self
     }
     pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
-        view.load_context.load(view.tb_config.texture_root.join(view.name).join(".material"))
+        view.load_context.load(view.tb_config.texture_root.join(format!("{}.material", view.name)))
     }
 
 
