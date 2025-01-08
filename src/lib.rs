@@ -5,7 +5,6 @@ compile_error!("can only have one collider backend enabled");
 
 pub mod brush;
 pub mod config;
-pub mod load;
 pub mod prelude;
 pub mod util;
 pub mod special_textures;

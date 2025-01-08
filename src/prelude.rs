@@ -21,7 +21,6 @@ pub use bevy_materialize::prelude::*;
 pub use crate::{
     brush::*,
     config::*,
-    load::*,
     util::*,
     special_textures::*,
     bsp_lighting::*,

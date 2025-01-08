@@ -74,7 +74,8 @@ impl AssetLoader for BspLoader {
             
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) })?;
 
-            let quake_util_map = parse_qmap(data.entities.as_bytes()).map_err(io_add_msg!("Parsing entities"))?;
+            let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes()))
+                .map_err(|err| anyhow!("Parsing entities: {err}"))?;
             let map = QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config);
 
             let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.tb_server.config.texture_pallette.1)
