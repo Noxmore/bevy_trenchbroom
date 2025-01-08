@@ -39,18 +39,18 @@ impl std::ops::Deref for BrushList {
 
 
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
-pub struct MapGeometryTexture<'w> {
+pub struct MapGeometryTexture {
     pub name: String,
     pub material: Handle<GenericMaterial>,
-    pub lightmap: Option<&'w Handle<AnimatedLighting>>,
+    pub lightmap: Option<Handle<AnimatedLighting>>,
     /// If the texture should be full-bright
     pub special: bool,
 }
 
-pub struct GeometryProviderMeshView<'w> {
+pub struct GeometryProviderMeshView<'l> {
     pub entity: Entity,
-    pub mesh: Mesh,
-    pub texture: MapGeometryTexture<'w>,
+    pub mesh: &'l mut Mesh,
+    pub texture: &'l mut MapGeometryTexture,
 }
 
 pub struct GeometryProviderView<'w, 'l, 'lc> {
@@ -62,7 +62,7 @@ pub struct GeometryProviderView<'w, 'l, 'lc> {
     pub asset_server: &'w AssetServer,
     pub map_entity: &'w QuakeMapEntity,
     pub map_entity_idx: usize,
-    pub meshes: Vec<GeometryProviderMeshView<'w>>,
+    pub meshes: Vec<GeometryProviderMeshView<'l>>,
     pub load_context: &'l mut LoadContext<'lc>,
 }
 
@@ -204,7 +204,7 @@ impl GeometryProvider {
         self.push(|view| {
             for mesh_view in &view.meshes {
                 // if mesh_view.texture.special { continue }
-                let Some(animated_lighting_handle) = mesh_view.texture.lightmap else { continue };
+                let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
                 
                 view.world.entity_mut(mesh_view.entity).insert(AnimatedLightmap(animated_lighting_handle.clone()));
             }

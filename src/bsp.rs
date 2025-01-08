@@ -1,8 +1,9 @@
 use bevy::{asset::{AssetLoader, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
+use class::ErasedQuakeClass;
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use ndshape::{RuntimeShape, Shape};
 use q1bsp::{data::bsp::BspTexFlags, mesh::lighting::ComputeLightmapAtlasError};
-use qmap::QuakeMap;
+use qmap::{QuakeMap, QuakeMapEntity};
 
 use crate::*;
 
@@ -170,9 +171,65 @@ impl AssetLoader for BspLoader {
                 Err(err) => return Err(anyhow::anyhow!(err)),
             };
             
-            let mut model_options = repeat_n((), data.models.len()).map(|_| None).collect_vec();
             let mut world = World::new();
 
+            // Load models into Bevy format
+            #[derive(Default)]
+            struct Model {
+                meshes: Vec<ModelMesh>,
+            }
+
+            struct ModelMesh {
+                texture: MapGeometryTexture,
+                mesh: Mesh,
+                /// Entity to apply Mesh3d to. Should probably only be one of these.
+                entity: Option<Entity>,
+            }
+
+            let mut models = Vec::with_capacity(data.models.len());
+
+            for model_idx in 0..data.models.len() {
+                let model_output = data.mesh_model(model_idx, lightmap.as_ref().map(|(_, uvs)| uvs));
+                let mut model = Model::default();
+                
+                for exported_mesh in model_output.meshes {
+                    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
+
+                    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());
+                    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());
+                    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, exported_mesh.uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
+                    if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
+                        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
+                    }
+                    mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
+                    
+                    let material = embedded_textures.get(&exported_mesh.texture)
+                        .map(|texture| texture.material.clone())
+                        .unwrap_or_else(|| (self.tb_server.config.load_loose_texture)(TextureLoadView {
+                            name: &exported_mesh.texture,
+                            type_registry: &self.type_registry,
+                            tb_config: &self.tb_server.config,
+                            load_context,
+                            map: &map,
+                        }));
+
+                    model.meshes.push(ModelMesh {
+                        texture: MapGeometryTexture {
+                            material,
+                            lightmap: lightmap.as_ref().map(|(handle, _)| handle.clone()),
+                            name: exported_mesh.texture,
+                            // TODO this makes some things pitch black maybe?
+                            special: exported_mesh.tex_flags != BspTexFlags::Normal,
+                        },
+                        mesh,
+                        entity: None,
+                    });
+                }
+
+                models.push(model);
+            }
+
+            // Spawn entities into scene
             for (map_entity_idx, map_entity) in map.entities.iter().enumerate() {
                 let Some(classname) = map_entity.properties.get("classname") else { continue };
                 let Some(class) = self.tb_server.config.get_class(classname) else {
@@ -188,82 +245,45 @@ impl AssetLoader for BspLoader {
                 
                 class.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
                     .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
-
-                // Nesting hell, TODO fix this
+                
                 if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
-                    // TODO dumb worldspawn fix
-                    if let Ok(model) = map_entity.get::<String>("model").or_else(|err| if class.info.name == "worldspawn" { Ok("*0".s()) } else { Err(err) }) {
-                        let model_idx = model.trim_start_matches('*');
-                        // If there wasn't a * at the start, this is invalid
-                        if model_idx != model {
-                            if let Ok(model_idx) = model_idx.parse::<usize>() {
-                                let model_output = data.mesh_model(model_idx, lightmap.as_ref().map(|(_, uvs)| uvs));
-                                let mut meshes = Vec::new();
-                                
-                                for exported_mesh in model_output.meshes {
-                                    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
+                    // println!("{}: {:?}", class.info.name, map_entity.get::<String>("model"));
+                    if let Some(model_idx) = get_model_idx(map_entity, class) {
+                        let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
+                        let mut meshes = Vec::with_capacity(model.meshes.len());
+                        
+                        for model_mesh in &mut model.meshes {
+                            let mesh_entity = world.spawn(Name::new(model_mesh.texture.name.clone())).id();
+                            world.entity_mut(entity_id).add_child(mesh_entity);
+                            
+                            meshes.push(GeometryProviderMeshView {
+                                entity: mesh_entity,
+                                mesh: &mut model_mesh.mesh,
+                                texture: &mut model_mesh.texture,
+                            });
 
-                                    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());
-                                    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());
-                                    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, exported_mesh.uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
-                                    if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
-                                        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
-                                    }
-                                    mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
-                                    
-                                    let mesh_entity = world.spawn_empty().id();
-                                    world.entity_mut(entity_id).add_child(mesh_entity);
-                                    
-                                    let material = embedded_textures.get(&exported_mesh.texture)
-                                        .map(|texture| texture.material.clone())
-                                        .unwrap_or_else(|| (self.tb_server.config.load_loose_texture)(TextureLoadView {
-                                            name: &exported_mesh.texture,
-                                            type_registry: &self.type_registry,
-                                            tb_config: &self.tb_server.config,
-                                            load_context,
-                                            map: &map,
-                                        }));
-
-                                    meshes.push(GeometryProviderMeshView {
-                                        entity: mesh_entity,
-                                        mesh,
-                                        texture: MapGeometryTexture {
-                                            material,
-                                            lightmap: lightmap.as_ref().map(|(handle, _)| handle),
-                                            name: exported_mesh.texture,
-                                            // TODO this makes some things pitch black maybe?
-                                            special: exported_mesh.tex_flags != BspTexFlags::Normal,
-                                        },
-                                    });
-                                }
-
-                                let mut view = GeometryProviderView {
-                                    world: &mut world,
-                                    entity: entity_id,
-                                    tb_server: &self.tb_server,
-                                    asset_server: &self.asset_server,
-                                    map_entity,
-                                    map_entity_idx,
-                                    meshes,
-                                    load_context,
-                                };
-                                
-                                for provider in geometry_provider.providers {
-                                    provider(&mut view);
-                                }
-
-                                (self.tb_server.config.global_geometry_provider)(&mut view);
-
-                                *model_options.get_mut(model_idx).ok_or_else(|| anyhow::anyhow!("invalid model index {model_idx}"))? = Some(BspModel {
-                                    meshes: view.meshes.into_iter().enumerate().map(|(mesh_idx, mesh_view)| {
-                                        let mesh_handle = view.load_context.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), mesh_view.mesh);
-                                        view.world.entity_mut(mesh_view.entity).insert(Mesh3d(mesh_handle.clone()));
-                                        
-                                        (mesh_view.texture.name, mesh_handle)
-                                    }).collect(),
-                                });
+                            if model_mesh.entity.is_some() {
+                                error!("Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!", class.info.name);
                             }
+                            model_mesh.entity = Some(mesh_entity);
                         }
+
+                        let mut view = GeometryProviderView {
+                            world: &mut world,
+                            entity: entity_id,
+                            tb_server: &self.tb_server,
+                            asset_server: &self.asset_server,
+                            map_entity,
+                            map_entity_idx,
+                            meshes,
+                            load_context,
+                        };
+                        
+                        for provider in geometry_provider.providers {
+                            provider(&mut view);
+                        }
+
+                        (self.tb_server.config.global_geometry_provider)(&mut view);
                     }
                 }
 
@@ -273,21 +293,26 @@ impl AssetLoader for BspLoader {
                     .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
             }
 
-            let mut models = Vec::with_capacity(model_options.len());
+            let bsp_models = models.into_iter().enumerate().map(|(model_idx, model)| {
+                BspModel {
+                    meshes: model.meshes.into_iter().enumerate().map(|(mesh_idx, model_mesh)| {
+                        let mesh_handle = load_context.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), model_mesh.mesh);
 
-            for (model_idx, model) in model_options.into_iter().enumerate() {
-                match model {
-                    Some(model) => models.push(model),
-                    None => return Err(anyhow::anyhow!("model {model_idx} not used by any entities")),
+                        if let Some(mesh_entity) = model_mesh.entity {
+                            world.entity_mut(mesh_entity).insert(Mesh3d(mesh_handle.clone()));
+                        }
+
+                        (model_mesh.texture.name, mesh_handle)
+                    }).collect(),
                 }
-            }
+            }).collect();
 
             Ok(Bsp {
                 scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
                 embedded_textures,
                 lightmap: lightmap.map(|(handle, _)| handle),
                 irradiance_volume: None, // TODO
-                models,
+                models: bsp_models,
 
                 data,
                 qmap: map,
@@ -303,6 +328,17 @@ impl AssetLoader for BspLoader {
 #[inline]
 fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + 'a {
     |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
+}
+
+fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Option<usize> {
+    // Worldspawn always has model 0
+    if class.info.name == "worldspawn" { return Some(0) }
+    
+    let model_property = map_entity.get::<String>("model").ok()?;
+    let model_property_trimmed = model_property.trim_start_matches('*');
+    // If there wasn't a * at the start, this is invalid
+    if model_property_trimmed == model_property { return None }
+    model_property_trimmed.parse::<usize>().ok()
 }
 
 struct IrradianceVolumeBuilder {
