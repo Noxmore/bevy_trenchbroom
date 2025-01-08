@@ -81,8 +81,10 @@ impl TrenchBroomPlugin {
         
         for event in asset_events.read() {
             let AssetEvent::Added { id } = event else { continue };
+            // Sometimes this is called even when the asset doesn't exist?? TODO
+            let Some(material) = standard_materials.get_mut(*id) else { continue };
 
-            standard_materials.get_mut(*id).expect("Bevy reports asset added but it doesn't exist!").lightmap_exposure = exposure;
+            material.lightmap_exposure = exposure;
         }
     }
 }
