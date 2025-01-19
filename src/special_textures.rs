@@ -92,17 +92,11 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
     } else if view.name.starts_with('+') {
         let Some(embedded_textures) = view.embedded_textures else { return None };
         
-        let mut chars = view.name.char_indices();
+        let mut chars = view.name.chars();
         chars.next();
 
-        let mut number_end = 0;
-        while let Some((i, chr)) = chars.next() {
-            number_end = i;
-            if !chr.is_numeric() { break }
-        }
-
-        let Ok(texture_frame_idx) = view.name[..number_end].parse::<usize>() else { return None };
-        let name_content = &view.name[number_end..];
+        let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
+        let name_content = &view.name[2..];
         
         let mut frames = Vec::new();
         let mut frame_num = 0;
@@ -123,7 +117,7 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
                     ("base_color_texture".s(), frames),
                 ]),
                 state: GenericMaterialAnimationState {
-                    current_frame: texture_frame_idx.wrapping_sub(1),
+                    current_frame: texture_frame_idx.wrapping_sub(1) as usize,
                     next_frame_time: Instant::now(),
                 },
             }),
