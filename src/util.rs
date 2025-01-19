@@ -140,26 +140,6 @@ pub(crate) fn trenchbroom_gltf_rotation_fix(entity: &mut EntityWorldMut) {
     }
 }
 
-pub(crate) fn invalid_data(err: impl std::error::Error + Send + Sync + 'static) -> io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, err)
-}
-
-pub fn alpha_mode_from_image(image: &Image) -> AlphaMode {
-    let mut cutout = false;
-
-    for color in image.data.chunks_exact(4) {
-        let alpha = color[3];
-
-        if alpha == 0 {
-            cutout = true;
-        } else if alpha != 255 {
-            return AlphaMode::Blend;
-        }
-    }
-
-    if cutout { AlphaMode::Mask(0.5) } else { AlphaMode::Opaque }
-}
-
 /// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
