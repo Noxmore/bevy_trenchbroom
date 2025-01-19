@@ -4,6 +4,7 @@ use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderMeshView, GeometryProviderView};
 use qmap::{QuakeMap, QuakeMapEntity};
+use bsp::GENERIC_MATERIAL_PREFIX;
 
 use crate::*;
 
@@ -200,16 +201,19 @@ impl TrenchBroomConfig {
             ..default()
         };
 
+        if let Some(alpha_mode) = view.alpha_mode {
+            material.alpha_mode = alpha_mode;
+        }
+
         let generic_material = match load_special_texture(&mut view, &mut material) {
             Some(v) => v,
             None => GenericMaterial {
-                material: view.add_material(material).into(),
+                handle: view.add_material(material).into(),
                 properties: default(),
-                type_registry: view.type_registry.clone(),
             }
         };
         
-        view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), generic_material)
+        view.load_context.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
     }
 
     pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
@@ -257,10 +261,14 @@ impl TrenchBroomConfig {
 /// Various inputs available when loading textures.
 pub struct TextureLoadView<'a, 'b> {
     pub name: &'a str,
-    pub type_registry: &'a AppTypeRegistry,
     pub tb_config: &'a TrenchBroomConfig,
     pub load_context: &'a mut LoadContext<'b>,
     pub map: &'a QuakeMap,
+    /// `Some` if it is determined that a specific alpha mode should be used for a material, such as in embedded textures.
+    pub alpha_mode: Option<AlphaMode>,
+    /// If the map contains embedded textures, this will be a map of texture names to image handles.
+    /// This is useful for things like animated textures.
+    pub embedded_textures: Option<&'a HashMap<&'a str, Handle<Image>>>,
 }
 impl TextureLoadView<'_, '_> {
     /// Shorthand for adding a material asset with the correct label.

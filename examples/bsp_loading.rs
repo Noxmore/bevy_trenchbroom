@@ -63,7 +63,7 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00005,
-            speed: 6.,
+            speed: 12.,
         })
         .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
@@ -99,7 +99,8 @@ fn setup_scene(
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
     // lightmap_animators.values.clear();
     
-    commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
+    // commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
+    commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_crucial.bsp#Scene")));
     
     let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
     let material = asset_server.add(StandardMaterial::default());

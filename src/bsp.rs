@@ -7,6 +7,8 @@ use qmap::{QuakeMap, QuakeMapEntity};
 
 use crate::*;
 
+pub static GENERIC_MATERIAL_PREFIX: &str = "GenericMaterial_";
+
 #[derive(Asset, Reflect, Debug)]
 pub struct Bsp {
     pub scene: Handle<Scene>,
@@ -41,14 +43,12 @@ pub struct BspEmbeddedTexture {
 pub struct BspLoader {
     pub tb_server: TrenchBroomServer,
     pub asset_server: AssetServer,
-    pub type_registry: AppTypeRegistry,
 }
 impl FromWorld for BspLoader {
     fn from_world(world: &mut World) -> Self {
         Self {
             tb_server: world.resource::<TrenchBroomServer>().clone(),
             asset_server: world.resource::<AssetServer>().clone(),
-            type_registry: world.resource::<AppTypeRegistry>().clone(),
         }
     }
 }
@@ -78,15 +78,17 @@ impl AssetLoader for BspLoader {
                 .map_err(|err| anyhow!("Parsing entities: {err}"))?;
             let map = QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config);
 
-            let embedded_textures: HashMap<String, BspEmbeddedTexture> = data.parse_embedded_textures(self.tb_server.config.texture_pallette.1)
-                .into_iter()
+            // Need to store this separately for animation.
+            // We can't use the `next` animation property because we need the handle to create the assets to create the handles.
+            let embedded_texture_images: HashMap<&str, Handle<Image>> = data.parse_embedded_textures(self.tb_server.config.texture_pallette.1)
                 .map(|(name, image)| {
-                    // let image = rgb_image_to_bevy_image(&image, &self.server, self.server.config.special_textures.is_some() && name.chars().next() == Some('{'));
+                    let is_cutout_texture = name.chars().next() == Some('{');
+
                     let image = Image::new(
                         Extent3d { width: image.width(), height: image.height(), ..default() },
                         TextureDimension::D2,
                         image.pixels().map(|pixel| {
-                            if self.tb_server.config.special_textures.is_some() && name.chars().next() == Some('{') && pixel.0 == self.tb_server.config.texture_pallette.1.colors[255] {
+                            if self.tb_server.config.special_textures.is_some() && is_cutout_texture && pixel.0 == self.tb_server.config.texture_pallette.1.colors[255] {
                                 [0; 4]
                             } else {
                                 [pixel[0], pixel[1], pixel[2], 255]
@@ -97,20 +99,26 @@ impl AssetLoader for BspLoader {
                         self.tb_server.config.bsp_textures_asset_usages,
                     );
                     
-                    // TODO
-                    let alpha_mode = alpha_mode_from_image(&image);
-                    
                     let image_handle = load_context.add_labeled_asset(format!("Texture_{name}"), image);
 
+                    (name, image_handle)
+                })
+                .collect();
+
+            let embedded_textures: HashMap<String, BspEmbeddedTexture> = embedded_texture_images.iter()
+                .map(|(name, image_handle)| {
+                    let is_cutout_texture = name.chars().next() == Some('{');
+
                     let material = (self.tb_server.config.load_embedded_texture)(TextureLoadView {
-                        name: &name,
-                        type_registry: &self.type_registry,
+                        name,
                         tb_config: &self.tb_server.config,
                         load_context,
                         map: &map,
+                        alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
+                        embedded_textures: Some(&embedded_texture_images),
                     }, image_handle.clone());
 
-                    (name, BspEmbeddedTexture { image: image_handle, material })
+                    (name.to_string(), BspEmbeddedTexture { image: image_handle.clone(), material })
                 })
                 .collect();
 
@@ -127,9 +135,9 @@ impl AssetLoader for BspLoader {
                     if WRITE_DEBUG_FILES {
                         fs::create_dir("target/lightmaps").ok();
                         for (i, image) in slots.iter().enumerate() {
-                            image.clone().save_with_format(format!("target/lightmaps/{i}.png"), image::ImageFormat::Png).ok();
+                            image.save_with_format(format!("target/lightmaps/{i}.png"), image::ImageFormat::Png).ok();
                         }
-                        styles.clone().save_with_format(format!("target/lightmaps/styles.png"), image::ImageFormat::Png).ok();
+                        styles.save_with_format(format!("target/lightmaps/styles.png"), image::ImageFormat::Png).ok();
                     }
                     
                     let output = load_context.add_labeled_asset("LightmapOutput".s(), new_lightmap_output_image(size.x, size.y));
@@ -208,10 +216,11 @@ impl AssetLoader for BspLoader {
                         .map(|texture| texture.material.clone())
                         .unwrap_or_else(|| (self.tb_server.config.load_loose_texture)(TextureLoadView {
                             name: &exported_mesh.texture,
-                            type_registry: &self.type_registry,
                             tb_config: &self.tb_server.config,
                             load_context,
                             map: &map,
+                            alpha_mode: None,
+                            embedded_textures: Some(&embedded_texture_images),
                         }));
 
                     model.meshes.push(ModelMesh {

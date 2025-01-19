@@ -1327,7 +1327,7 @@ dependencies = [
 [[package]]
 name = "bevy_materialize"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/bevy_materialize.git?rev=311415a#311415a9227ea72602939c0375bf9a1a02c35ca5"
+source = "git+https://github.com/Noxmore/bevy_materialize.git?rev=db0774a#db0774a7eb4a930eacb66305e152ada84f5b11d5"
 dependencies = [
  "bevy 0.15.1",
  "serde",
@@ -4104,9 +4104,9 @@ dependencies = [
 
 [[package]]
 name = "nil"
-version = "0.13.3"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4db5ce0aaa0512cd3a005b438b8f6ba607e469d159492e8b7beab3387af74f0b"
+checksum = "938f4258a799d3cfdb439f8ef43fcb4e40233eee72024c222db9aea3de614ba0"
 dependencies = [
  "once_cell",
  "parking_lot",
@@ -4797,7 +4797,7 @@ checksum = "afbdc74edc00b6f6a218ca6a5364d6226a259d4b8ea1af4a0ea063f27e179f4d"
 [[package]]
 name = "q1bsp"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/q1bsp.git?rev=cf1d768#cf1d76840b3c512983a4ba8fda86aaabc91bf192"
+source = "git+https://github.com/Noxmore/q1bsp.git?rev=24c5049#24c50499ab54008d2116bbfb2f48523cc2f9c786"
 dependencies = [
  "derive_more 1.0.0",
  "glam 0.29.2",
@@ -4812,7 +4812,7 @@ dependencies = [
 [[package]]
 name = "q1bsp_macros"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/q1bsp.git?rev=cf1d768#cf1d76840b3c512983a4ba8fda86aaabc91bf192"
+source = "git+https://github.com/Noxmore/q1bsp.git?rev=24c5049#24c50499ab54008d2116bbfb2f48523cc2f9c786"
 dependencies = [
  "proc-macro2",
  "quote",
