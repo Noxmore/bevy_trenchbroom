@@ -1,8 +1,8 @@
-use bevy::{asset::{AssetLoader, LoadContext}, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
+use bevy::{asset::{AssetLoader, LoadContext}, image::ImageSampler, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
 use class::ErasedQuakeClass;
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use ndshape::{RuntimeShape, Shape};
-use q1bsp::{data::bsp::BspTexFlags, mesh::lighting::ComputeLightmapAtlasError};
+use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, mesh::lighting::ComputeLightmapAtlasError};
 use qmap::{QuakeMap, QuakeMapEntity};
 
 use crate::*;
@@ -317,11 +317,84 @@ impl AssetLoader for BspLoader {
                 }
             }).collect();
 
+            // TODO
+            let irradiance_volume = None;
+            
+            // Calculate irradiance volumes for light grids.
+            // Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
+            if let Some(light_grid) = data.bspx.parse_light_grid_octree(&data.parse_ctx) {
+                let mut light_grid = light_grid.map_err(io::Error::other)?;
+                light_grid.mins = self.tb_server.config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
+                // We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
+                light_grid.size = light_grid.size.xzy() + 1;
+                light_grid.step = self.tb_server.config.to_bevy_space(light_grid.step.to_array().into()).to_array().into();
+
+                let mut builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255]);
+                
+                for mut leaf in light_grid.leafs {
+                    leaf.mins = leaf.mins.xzy();
+                    let size = leaf.size().xzy();
+                    
+                    for x in 0..size.x {
+                        for y in 0..size.y {
+                            for z in 0..size.z {
+                                let LightGridCell::Filled(samples) = leaf.get_cell(x, z, y) else { continue };
+                                let mut color: [u8; 4] = [0, 0, 0, 255];
+
+                                for sample in samples {
+                                    // println!("{sample:?}");
+                                    for i in 0..3 {
+                                        color[i] = color[i].saturating_add(sample.color[i]);
+                                    }
+                                }
+                                
+                                let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
+                                builder.put_all([dst_x, dst_y, dst_z], color);
+                            }
+                        }
+                    }
+                }
+
+                // This is pretty much instructed by FTE docs
+                builder.flood_non_filled();
+
+                let mut image = builder.build();
+                image.sampler = ImageSampler::linear();
+
+                let image_handle = load_context.add_labeled_asset("IrradianceVolume".s(), image);
+
+                // TODO animated irradiance volumes
+                // let animated_lighting_handle = load_context.add_labeled_asset("LightmapAnimator".s(), AnimatedLighting {
+                //     ty: AnimatedLightingType::Lightmap,
+                //     output: image_handle.clone(),
+                //     input: [Handle::default(), Handle::default(), Handle::default(), Handle::default()],
+                //     styles: Handle::default(),
+                // });
+
+                let mins: Vec3 = light_grid.mins.to_array().into();
+                let scale: Vec3 = (light_grid.size.as_vec3() * light_grid.step).to_array().into();
+
+                world.spawn((
+                    Name::new("Light Grid Irradiance Volume"),
+                    LightProbe,
+                    IrradianceVolume { 
+                        voxels: image_handle,
+                        intensity: self.tb_server.config.default_irradiance_volume_intensity,
+                    },
+                    Transform {
+                    translation: mins + scale / 2. - Vec3::from_array(light_grid.step.to_array()) / 2.,
+                    scale,
+                    ..default()
+                }));
+
+                // irradiance_volume = Some(animated_lighting_handle);
+            }
+
             Ok(Bsp {
                 scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
                 embedded_textures,
                 lightmap: lightmap.map(|(handle, _)| handle),
-                irradiance_volume: None, // TODO
+                irradiance_volume,
                 models: bsp_models,
 
                 data,
@@ -351,11 +424,13 @@ fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Optio
     model_property_trimmed.parse::<usize>().ok()
 }
 
+/// Little helper API to create irradiance volumes for BSPs.
 struct IrradianceVolumeBuilder {
     size: UVec3,
     full_shape: RuntimeShape<u32, 3>,
     data: Vec<[u8; 4]>,
     filled: Vec<bool>,
+    // TODO perhaps for some directionality we could make a global configurable multiplier to, say, make the downward direction slightly darker.
 }
 impl IrradianceVolumeBuilder {
     pub fn new(size: impl Into<UVec3>, default_color: [u8; 4]) -> Self {
@@ -411,7 +486,7 @@ impl IrradianceVolumeBuilder {
         self.put(pos, IrradianceVolumeDirection::NEG_Z, color);
     }
 
-    /// For any non-filled color, get replace with neighboring filled colors.
+    /// For any non-filled color, get replaced with neighboring filled colors.
     pub fn flood_non_filled(&mut self) {
         for (i, filled) in self.filled.iter().copied().enumerate() {
             if filled { continue }
