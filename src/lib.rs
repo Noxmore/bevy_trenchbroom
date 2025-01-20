@@ -16,13 +16,11 @@ pub mod fgd;
 #[cfg(any(feature = "rapier", feature = "avian"))]
 pub mod physics;
 
-use bsp::{Bsp, BspLoader};
 pub(crate) use prelude::*;
 
 // Re-exports
 pub use anyhow;
 pub use indexmap;
-use qmap::QuakeMapLoader;
 pub use toml;
 #[cfg(feature = "auto_register")]
 pub use inventory;
@@ -42,7 +40,7 @@ impl TrenchBroomPlugin {
 impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
         if self.config.special_textures.is_some() {
-            app.add_plugins(SpecialTexturesPlugin);
+            app.add_plugins(special_textures::SpecialTexturesPlugin);
         }
 
         #[cfg(any(feature = "rapier", feature = "avian"))]
@@ -62,12 +60,12 @@ impl Plugin for TrenchBroomPlugin {
         }
 
         app
-            .add_plugins(BspLightingPlugin)
+            .add_plugins(bsp::lighting::BspLightingPlugin)
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
-            .init_asset_loader::<QuakeMapLoader>()
-            .init_asset::<Bsp>()
-            .init_asset_loader::<BspLoader>();
+            .init_asset_loader::<qmap::QuakeMapLoader>()
+            .init_asset::<bsp::Bsp>()
+            .init_asset_loader::<bsp::BspLoader>();
     }
 }
 impl TrenchBroomPlugin {

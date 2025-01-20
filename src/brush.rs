@@ -2,6 +2,7 @@
 
 use crate::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
+use util::{AlmostEqual, ConvertZeroToOne};
 
 /// Represents an infinitely large plane in 3d space, used for defining convex hulls like [Brush]es.
 #[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]

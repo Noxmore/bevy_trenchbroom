@@ -2,7 +2,6 @@ use bevy::{ecs::{component::ComponentId, world::DeferredWorld}, pbr::irradiance_
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use bevy::math::*;
-use geometry::GeometryProvider;
 use std::sync::Arc;
 
 #[derive(SolidClass, Component, Reflect)]
@@ -65,7 +64,7 @@ fn main() {
             sensitivity: 0.00005,
             speed: 6.,
         })
-        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })

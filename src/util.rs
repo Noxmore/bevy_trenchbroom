@@ -1,5 +1,4 @@
-use bevy::{asset::{LoadContext, UntypedAssetId}, image::{ImageAddressMode, ImageSamplerDescriptor}};
-use class::QuakeClassPropertyType;
+use bevy::image::{ImageAddressMode, ImageSamplerDescriptor};
 
 use crate::*;
 

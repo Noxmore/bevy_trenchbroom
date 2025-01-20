@@ -2,8 +2,7 @@ use std::collections::HashSet;
 
 use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
 use bevy_materialize::animation::{GenericMaterialAnimationState, MaterialAnimation, MaterialAnimations};
-use bsp::GENERIC_MATERIAL_PREFIX;
-use geometry::GeometryProviderView;
+use config::TextureLoadView;
 
 use crate::*;
 

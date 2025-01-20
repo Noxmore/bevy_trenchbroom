@@ -2,6 +2,7 @@ use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use fgd::FgdType;
 use geometry::GeometryProvider;
 use qmap::{QuakeEntityError, QuakeMapEntity};
+use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 
 use crate::*;
 

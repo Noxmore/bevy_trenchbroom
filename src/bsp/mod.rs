@@ -3,8 +3,9 @@ pub mod util;
 
 use bevy::{asset::{AssetLoader, LoadContext}, image::ImageSampler, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
 use class::ErasedQuakeClass;
+use config::TextureLoadView;
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
-use ndshape::{RuntimeShape, Shape};
+use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
 use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, mesh::lighting::ComputeLightmapAtlasError};
 use qmap::{QuakeMap, QuakeMapEntity};
 use util::IrradianceVolumeBuilder;

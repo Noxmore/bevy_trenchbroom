@@ -1,4 +1,5 @@
 use bevy::asset::{AssetLoader, AsyncReadExt};
+use brush::Brush;
 use fgd::FgdType;
 
 use crate::*;

@@ -1,10 +1,11 @@
 use bevy::{asset::LoadContext, render::render_asset::RenderAssetUsages};
-use bevy_reflect::TypeRegistry;
 use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use fgd::FgdType;
-use geometry::{GeometryProviderFn, GeometryProviderMeshView, GeometryProviderView};
+use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMap, QuakeMapEntity};
 use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
+use special_textures::load_special_texture;
+use util::{trenchbroom_gltf_rotation_fix, ZUpToYUp};
 
 use crate::*;
 
