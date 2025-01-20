@@ -8,7 +8,6 @@ pub mod config;
 pub mod prelude;
 pub mod util;
 pub mod special_textures;
-pub mod bsp_lighting;
 pub mod class;
 pub mod bsp;
 pub mod qmap;

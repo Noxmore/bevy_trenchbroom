@@ -334,13 +334,13 @@ impl FromWorld for AnimatedLightingPipeline {
         }
 
         let lightmap_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
-            world.load_asset("embedded://bevy_trenchbroom/composite_lightmaps.wgsl"),
+            world.load_asset("embedded://bevy_trenchbroom/bsp/composite_lightmaps.wgsl"),
             "Composite Lightmap Images Pipeline",
             lightmap_bind_group_layout.clone(),
             globals_bind_group_layout.clone(),
         ));
         let irradiance_volume_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
-            world.load_asset("embedded://bevy_trenchbroom/composite_irradiance_volumes.wgsl"),
+            world.load_asset("embedded://bevy_trenchbroom/bsp/composite_irradiance_volumes.wgsl"),
             "Composite Irradiance Volume Images Pipeline",
             irradiance_volume_bind_group_layout.clone(),
             globals_bind_group_layout.clone(),

@@ -1,3 +1,5 @@
+pub mod lighting;
+
 use bevy::{asset::{AssetLoader, LoadContext}, image::ImageSampler, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
 use class::ErasedQuakeClass;
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
@@ -257,7 +259,6 @@ impl AssetLoader for BspLoader {
                     .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
                 
                 if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
-                    // println!("{}: {:?}", class.info.name, map_entity.get::<String>("model"));
                     if let Some(model_idx) = get_model_idx(map_entity, class) {
                         let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
                         let mut meshes = Vec::with_capacity(model.meshes.len());

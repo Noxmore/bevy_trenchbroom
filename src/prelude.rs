@@ -23,7 +23,7 @@ pub use crate::{
     config::*,
     util::*,
     special_textures::*,
-    bsp_lighting::*,
+    bsp::lighting::*,
     *,
 };
 
