@@ -140,8 +140,9 @@ pub struct TrenchBroomConfig {
     #[default(Hook(Arc::new(Self::default_global_spawner)))]
     pub global_spawner: Hook<SpawnFn>,
 
+    /// Geometry provider run after all others for all entities regardless of classname. (Default: [TrenchBroomConfig::default_global_geometry_provider])
     #[builder(skip)]
-    #[default(Hook(Arc::new(|_| {})))]
+    #[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
     pub global_geometry_provider: Hook<GeometryProviderFn>,
 
     /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
@@ -202,6 +203,18 @@ impl TrenchBroomConfig {
         Ok(())
     }
 
+    /// Adds [Visibility] and [Transform] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
+    pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
+        let mut ent = view.world.entity_mut(view.entity);
+
+        if !ent.contains::<Visibility>() {
+            ent.insert(Visibility::default());
+        }
+        if !ent.contains::<Transform>() {
+            ent.insert(Transform::default());
+        }
+    }
+
     pub fn load_embedded_texture_fn(mut self, provider: impl FnOnce(Arc<LoadEmbeddedTextureFn>) -> Arc<LoadEmbeddedTextureFn>) -> Self {
         self.load_embedded_texture.set(provider);
         self
@@ -235,7 +248,6 @@ impl TrenchBroomConfig {
     pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
         view.load_context.load(view.tb_config.texture_root.join(format!("{}.material", view.name)))
     }
-
 
     /// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [GLOBAL_CLASS_REGISTRY].
     pub fn get_class(&self, classname: &str) -> Option<&ErasedQuakeClass> {
