@@ -63,21 +63,21 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00005,
-            speed: 12.,
+            speed: 6.,
         })
-        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
         // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
         // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
         // .insert_resource(bevy::pbr::DefaultOpaqueRendererMethod::deferred()) // TODO
         
-        .insert_resource(ClearColor(Color::srgb_from_array([0.5; 3])))
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AmbientLight::NONE)
 
         .add_plugins(MaterializePlugin::new(TomlMaterialDeserializer))
         .add_plugins(TrenchBroomPlugin::new(
             TrenchBroomConfig::new("bevy_trenchbroom_example")
-                .special_textures(SpecialTexturesConfig::new().invisible_textures(["skybal".into(), "skybal1".into(), "skybal2".into(), "skybal3".into()]))
+                .special_textures(SpecialTexturesConfig::new())
                 .ignore_invalid_entity_definitions(true)
                 .load_loose_texture_fn(|_| Arc::new(|view| {
                     view.load_context.load(view.tb_config.texture_root.join(format!("{}.png", view.name)))
@@ -98,8 +98,8 @@ fn setup_scene(
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
     // lightmap_animators.values.clear();
     
-    // commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
-    commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tears.bsp#Scene")));
+    commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
+    // commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_crucial.bsp#Scene")));
     
     let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
     let material = asset_server.add(StandardMaterial::default());
@@ -107,7 +107,7 @@ fn setup_scene(
     // Wide FOV
     for (entity, mut projection) in &mut projection_query {
         *projection = Projection::Perspective(PerspectiveProjection {
-            fov: 60_f32.to_radians(),
+            fov: 90_f32.to_radians(),
             ..default()
         });
 
@@ -116,14 +116,9 @@ fn setup_scene(
             Mesh3d(sphere_mesh.clone()),
             MeshMaterial3d(material.clone()),
             Transform::from_xyz(0., -0.2, -0.3),
-            Visibility::Hidden,
         )).id();
 
-        commands.entity(entity).add_child(gi_tester).insert(bevy::pbr::DistanceFog {
-            color: Color::WHITE,
-            falloff: FogFalloff::ExponentialSquared { density: 0.005 },
-            ..default()
-        });
+        commands.entity(entity).add_child(gi_tester);
     }
 
     // TODO tmp
