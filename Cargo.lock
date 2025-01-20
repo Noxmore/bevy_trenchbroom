@@ -4797,7 +4797,7 @@ checksum = "afbdc74edc00b6f6a218ca6a5364d6226a259d4b8ea1af4a0ea063f27e179f4d"
 [[package]]
 name = "q1bsp"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/q1bsp.git?rev=24c5049#24c50499ab54008d2116bbfb2f48523cc2f9c786"
+source = "git+https://github.com/Noxmore/q1bsp.git?rev=df60a98#df60a9827f9919b20f5217de7227871a20dcfaa3"
 dependencies = [
  "derive_more 1.0.0",
  "glam 0.29.2",
@@ -4812,7 +4812,7 @@ dependencies = [
 [[package]]
 name = "q1bsp_macros"
 version = "0.1.0"
-source = "git+https://github.com/Noxmore/q1bsp.git?rev=24c5049#24c50499ab54008d2116bbfb2f48523cc2f9c786"
+source = "git+https://github.com/Noxmore/q1bsp.git?rev=df60a98#df60a9827f9919b20f5217de7227871a20dcfaa3"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -94,8 +94,9 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
-    /// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10000))
-    #[default(Some(10000.))]
+    /// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
+    #[default(Some(10_000.))]
+    #[builder(into)]
     pub lightmap_exposure: Option<f32>,
     #[default(500.)]
     pub default_irradiance_volume_intensity: f32,
@@ -119,6 +120,9 @@ pub struct TrenchBroomConfig {
     /// How lightmaps atlas' are computed when loading BSP files.
     /// 
     /// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
+    /// 
+    /// NOTE: `special_lighting_color` is set to gray (`75`) by default instead of white (`255`), because otherwise all textures with it look way too bright and washed out, not sure why.
+    #[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
     pub compute_lightmap_settings: ComputeLightmapSettings,
 
     entity_classes: HashMap<String, ErasedQuakeClass>,

@@ -59,13 +59,14 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
     }
 
     if view.name.starts_with('*') {
+        // TODO i think this should be 
         let water_alpha: f32 = view.map.worldspawn()
             .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
             .unwrap_or(1.);
 
         if water_alpha < 1. {
             material.alpha_mode = AlphaMode::Blend;
-            material.base_color = Color::srgba(0., 0., 0., water_alpha);
+            material.base_color = Color::srgba(1., 1., 1., water_alpha);
         }
 
         let handle = view.add_material(LiquidMaterial {

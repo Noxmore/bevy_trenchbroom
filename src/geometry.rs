@@ -203,7 +203,6 @@ impl GeometryProvider {
     pub fn with_lightmaps(self) -> Self {
         self.push(|view| {
             for mesh_view in &view.meshes {
-                // if mesh_view.texture.special { continue }
                 let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
                 
                 view.world.entity_mut(mesh_view.entity).insert(AnimatedLightmap(animated_lighting_handle.clone()));

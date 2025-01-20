@@ -77,7 +77,6 @@ fn main() {
         .add_plugins(MaterializePlugin::new(TomlMaterialDeserializer))
         .add_plugins(TrenchBroomPlugin::new(
             TrenchBroomConfig::new("bevy_trenchbroom_example")
-                .compute_lightmap_settings(ComputeLightmapSettings { no_lighting_color: [0, 255, 0], default_color: [0, 0, 255], ..default() })
                 .special_textures(SpecialTexturesConfig::new())
                 .ignore_invalid_entity_definitions(true)
                 .load_loose_texture_fn(|_| Arc::new(|view| {
@@ -99,8 +98,8 @@ fn setup_scene(
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
     // lightmap_animators.values.clear();
     
-    commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
-    // commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_crucial.bsp#Scene")));
+    // commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
+    commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tears.bsp#Scene")));
     
     let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
     let material = asset_server.add(StandardMaterial::default());
