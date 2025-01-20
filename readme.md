@@ -7,8 +7,8 @@ Integration and support for the following workflows:
 - TrenchBroom -> .map -> Bevy
 - TrenchBroom -> .map -> ericw-tools -> .bsp -> Bevy
 
-<img src="assets/screenshots/rune_proto.png">
-<label>(A testing map i made, loaded with bevy_trenchbroom)</label>
+<img src="assets/screenshots/ad_tears.png">
+<sup>Arcane Dimensions - Tears of the False God .bsp loaded and rendered in Bevy</sup>
 
 <br>
 
