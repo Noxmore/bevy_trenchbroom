@@ -4,7 +4,7 @@ use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderMeshView, GeometryProviderView};
 use qmap::{QuakeMap, QuakeMapEntity};
-use bsp::{IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
+use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
 
 use crate::*;
 
