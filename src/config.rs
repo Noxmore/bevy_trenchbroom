@@ -4,7 +4,7 @@ use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderMeshView, GeometryProviderView};
 use qmap::{QuakeMap, QuakeMapEntity};
-use bsp::GENERIC_MATERIAL_PREFIX;
+use bsp::{IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
 
 use crate::*;
 
@@ -100,6 +100,14 @@ pub struct TrenchBroomConfig {
     pub lightmap_exposure: Option<f32>,
     #[default(500.)]
     pub default_irradiance_volume_intensity: f32,
+    /// Multipliers to the colors of BSP loaded irradiance volumes depending on direction.
+    /// 
+    /// This is because light-grid-loaded irradiance volumes don't have any directionality.
+    /// This fakes it, making objects within look a little nicer.
+    /// 
+    /// (Default: IrradianceVolumeMultipliers::SLIGHT_SHADOW)
+    #[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
+    pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
     // TODO rename
     /// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)

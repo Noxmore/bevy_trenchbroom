@@ -329,7 +329,7 @@ impl AssetLoader for BspLoader {
                 light_grid.size = light_grid.size.xzy() + 1;
                 light_grid.step = self.tb_server.config.to_bevy_space(light_grid.step.to_array().into()).to_array().into();
 
-                let mut builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255]);
+                let mut builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255], self.tb_server.config.irradiance_volume_multipliers);
                 
                 for mut leaf in light_grid.leafs {
                     leaf.mins = leaf.mins.xzy();
@@ -424,16 +424,50 @@ fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Optio
     model_property_trimmed.parse::<usize>().ok()
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct IrradianceVolumeMultipliers {
+    pub x: [f32; 3],
+    pub y: [f32; 3],
+    pub z: [f32; 3],
+    pub neg_x: [f32; 3],
+    pub neg_y: [f32; 3],
+    pub neg_z: [f32; 3],
+}
+impl IrradianceVolumeMultipliers {
+    pub const ONE: Self = Self {
+        x: [1.; 3],
+        y: [1.; 3],
+        z: [1.; 3],
+        neg_x: [1.; 3],
+        neg_y: [1.; 3],
+        neg_z: [1.; 3],
+    };
+
+    pub const SLIGHT_SHADOW: Self = Self {
+        x: [0.9; 3],
+        y: [0.7; 3],
+        z: [1.; 3],
+        neg_x: [1.2; 3],
+        neg_y: [1.4; 3],
+        neg_z: [1.; 3],
+    };
+}
+impl Default for IrradianceVolumeMultipliers {
+    fn default() -> Self {
+        Self::ONE
+    }
+}
+
 /// Little helper API to create irradiance volumes for BSPs.
 struct IrradianceVolumeBuilder {
     size: UVec3,
     full_shape: RuntimeShape<u32, 3>,
     data: Vec<[u8; 4]>,
     filled: Vec<bool>,
-    // TODO perhaps for some directionality we could make a global configurable multiplier to, say, make the downward direction slightly darker.
+    multipliers: IrradianceVolumeMultipliers,
 }
 impl IrradianceVolumeBuilder {
-    pub fn new(size: impl Into<UVec3>, default_color: [u8; 4]) -> Self {
+    pub fn new(size: impl Into<UVec3>, default_color: [u8; 4], multipliers: IrradianceVolumeMultipliers) -> Self {
         let size: UVec3 = size.into();
         let shape = RuntimeShape::<u32, 3>::new([
             size.x,
@@ -446,6 +480,7 @@ impl IrradianceVolumeBuilder {
             full_shape: shape,
             data: vec![default_color; vec_size],
             filled: vec![false; vec_size],
+            multipliers,
         }
     }
 
@@ -477,13 +512,23 @@ impl IrradianceVolumeBuilder {
     #[inline]
     #[track_caller]
     pub fn put_all(&mut self, pos: impl Into<UVec3>, color: [u8; 4]) {
+        #[inline]
+        fn mul_color(color: [u8; 4], multiplier: [f32; 3]) -> [u8; 4] {
+            [
+                (color[0] as f32 * multiplier[0]) as u8,
+                (color[1] as f32 * multiplier[1]) as u8,
+                (color[2] as f32 * multiplier[2]) as u8,
+                color[3],
+            ]
+        }
+        
         let pos = pos.into();
-        self.put(pos, IrradianceVolumeDirection::X, color);
-        self.put(pos, IrradianceVolumeDirection::Y, color);
-        self.put(pos, IrradianceVolumeDirection::Z, color);
-        self.put(pos, IrradianceVolumeDirection::NEG_X, color);
-        self.put(pos, IrradianceVolumeDirection::NEG_Y, color);
-        self.put(pos, IrradianceVolumeDirection::NEG_Z, color);
+        self.put(pos, IrradianceVolumeDirection::X, mul_color(color, self.multipliers.x));
+        self.put(pos, IrradianceVolumeDirection::Y, mul_color(color, self.multipliers.y));
+        self.put(pos, IrradianceVolumeDirection::Z, mul_color(color, self.multipliers.z));
+        self.put(pos, IrradianceVolumeDirection::NEG_X, mul_color(color, self.multipliers.neg_x));
+        self.put(pos, IrradianceVolumeDirection::NEG_Y, mul_color(color, self.multipliers.neg_y));
+        self.put(pos, IrradianceVolumeDirection::NEG_Z, mul_color(color, self.multipliers.neg_z));
     }
 
     /// For any non-filled color, get replaced with neighboring filled colors.
