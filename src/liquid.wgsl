@@ -40,6 +40,7 @@ fn fragment(
 #else
     var out: FragmentOutput;
     out.color = apply_pbr_lighting(pbr_input);
+    out.color = main_pass_post_lighting_processing(pbr_input, out.color);
 #endif
 
     return out;
