@@ -85,18 +85,21 @@ impl AssetLoader for BspLoader {
 
             // Need to store this separately for animation.
             // We can't use the `next` animation property because we need the handle to create the assets to create the handles.
-            let embedded_texture_images: HashMap<&str, Handle<Image>> = data.parse_embedded_textures(self.tb_server.config.texture_pallette.1)
-                .map(|(name, image)| {
+            let embedded_texture_images: HashMap<&str, Handle<Image>> = data.textures.iter().flatten().filter(|texture| texture.data.is_some()).map(|texture| {
+                    let Some(data) = &texture.data else { unreachable!() };
+                    let name = texture.header.name.as_str();
+
                     let is_cutout_texture = name.chars().next() == Some('{');
 
                     let image = Image::new(
-                        Extent3d { width: image.width(), height: image.height(), ..default() },
+                        Extent3d { width: texture.header.width, height: texture.header.height, ..default() },
                         TextureDimension::D2,
-                        image.pixels().map(|pixel| {
-                            if self.tb_server.config.special_textures.is_some() && is_cutout_texture && pixel.0 == self.tb_server.config.texture_pallette.1.colors[255] {
+                        data.iter().copied().map(|pixel| {
+                            if self.tb_server.config.special_textures.is_some() && is_cutout_texture && pixel == 255 {
                                 [0; 4]
                             } else {
-                                [pixel[0], pixel[1], pixel[2], 255]
+                                let [r, g, b] = self.tb_server.config.texture_pallette.1.colors[pixel as usize];
+                                [r, g, b, 255]
                             }
                         }).flatten().collect(),
                         // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
@@ -106,7 +109,7 @@ impl AssetLoader for BspLoader {
                     
                     let image_handle = load_context.add_labeled_asset(format!("Texture_{name}"), image);
 
-                    (name, image_handle)
+                    (texture.header.name.as_str(), image_handle)
                 })
                 .collect();
 
