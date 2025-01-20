@@ -27,9 +27,10 @@ pub struct SpecialTexturesConfig {
     #[default(5.)]
     pub texture_animation_fps: f32,
 
-    /// List of textures to made made invisible on map load.
-    #[default(vec!["clip".s(), "skip".s()])]
-    pub invisible_textures: Vec<String>,
+    /// Set of textures to made made invisible on map load. (Default: ["clip", "skip"])
+    #[default(["clip".s(), "skip".s()].into())]
+    #[builder(into)]
+    pub invisible_textures: HashSet<String>,
 
     #[default(QuakeSkyMaterial::default)]
     pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
@@ -42,9 +43,9 @@ impl SpecialTexturesConfig {
         Self::default()
     }
 
-    /// Adds a new invisible texture.
+    /// Inserts a new invisible texture.
     pub fn invisible_texture(mut self, texture: impl ToString) -> Self {
-        self.invisible_textures.push(texture.to_string());
+        self.invisible_textures.insert(texture.to_string());
         self
     }
 }
@@ -52,82 +53,93 @@ impl SpecialTexturesConfig {
 /// If a [SpecialTexturesConfig] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
 pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
     let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
-    // We save a teeny tiny bit of time by only cloning if we need to :)
-    let mut material = material.clone();
-    if let Some(exposure) = view.tb_config.lightmap_exposure {
-        material.lightmap_exposure = exposure;
-    }
 
-    if view.name.starts_with('*') {
-        // TODO i think this should be 
-        let water_alpha: f32 = view.map.worldspawn()
-            .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
-            .unwrap_or(1.);
-
-        if water_alpha < 1. {
-            material.alpha_mode = AlphaMode::Blend;
-            material.base_color = Color::srgba(1., 1., 1., water_alpha);
+    fn load_internal(view: &mut TextureLoadView, material: &StandardMaterial, special_textures_config: &SpecialTexturesConfig) -> Option<GenericMaterial> {
+        // We save a teeny tiny bit of time by only cloning if we need to :)
+        let mut material = material.clone();
+        if let Some(exposure) = view.tb_config.lightmap_exposure {
+            material.lightmap_exposure = exposure;
         }
-
-        let handle = view.add_material(LiquidMaterial {
-            base: material,
-            extension: (special_textures_config.default_liquid_material)(),
-        });
-        
-        return Some(GenericMaterial {
-            handle: handle.into(),
-            properties: default(),
-        });
-    } else if view.name.starts_with("sky") {
-        let Some(texture) = material.base_color_texture else { return None };
-
-        let handle = view.add_material(QuakeSkyMaterial {
-            texture,
-            ..(special_textures_config.default_quake_sky_material)()
-        });
-
-        return Some(GenericMaterial {
-            handle: handle.into(),
-            properties: default(),
-        });
-    } else if view.name.starts_with('+') {
-        let Some(embedded_textures) = view.embedded_textures else { return None };
-        
-        let mut chars = view.name.chars();
-        chars.next();
-
-        let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
-        let name_content = &view.name[2..];
-        
-        let mut frames = Vec::new();
-        let mut frame_num = 0;
-        while let Some(frame) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
-            frames.push(frame.clone());
-            frame_num += 1;
+    
+        if view.name.starts_with('*') {
+            // TODO i think this should be 
+            let water_alpha: f32 = view.map.worldspawn()
+                .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
+                .unwrap_or(1.);
+    
+            if water_alpha < 1. {
+                material.alpha_mode = AlphaMode::Blend;
+                material.base_color = Color::srgba(1., 1., 1., water_alpha);
+            }
+    
+            let handle = view.add_material(LiquidMaterial {
+                base: material,
+                extension: (special_textures_config.default_liquid_material)(),
+            });
+            
+            return Some(GenericMaterial {
+                handle: handle.into(),
+                properties: default(),
+            });
+        } else if view.name.starts_with("sky") {
+            let Some(texture) = material.base_color_texture else { return None };
+    
+            let handle = view.add_material(QuakeSkyMaterial {
+                texture,
+                ..(special_textures_config.default_quake_sky_material)()
+            });
+    
+            return Some(GenericMaterial {
+                handle: handle.into(),
+                properties: default(),
+            });
+        } else if view.name.starts_with('+') {
+            let Some(embedded_textures) = view.embedded_textures else { return None };
+            
+            let mut chars = view.name.chars();
+            chars.next();
+    
+            let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
+            let name_content = &view.name[2..];
+            
+            let mut frames = Vec::new();
+            let mut frame_num = 0;
+            while let Some(frame) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
+                frames.push(frame.clone());
+                frame_num += 1;
+            }
+            
+            let handle = view.add_material(material);
+    
+            let mut generic_material = GenericMaterial::new(handle);
+    
+            generic_material.set_property(GenericMaterial::ANIMATION, MaterialAnimations {
+                next: None,
+                images: Some(MaterialAnimation {
+                    fps: special_textures_config.texture_animation_fps,
+                    value: bevy::utils::HashMap::from([
+                        ("base_color_texture".s(), frames),
+                    ]),
+                    state: GenericMaterialAnimationState {
+                        current_frame: texture_frame_idx.wrapping_sub(1) as usize,
+                        next_frame_time: Instant::now(),
+                    },
+                }),
+            });
+    
+            return Some(generic_material);
+        }
+    
+        None
+    }
+    
+    load_internal(view, material, special_textures_config).map(|mut material| {
+        if special_textures_config.invisible_textures.contains(view.name) {
+            material.set_property(GenericMaterial::VISIBILITY, Visibility::Hidden);
         }
         
-        let handle = view.add_material(material);
-
-        let mut generic_material = GenericMaterial::new(handle);
-
-        generic_material.set_property(GenericMaterial::ANIMATION, MaterialAnimations {
-            next: None,
-            images: Some(MaterialAnimation {
-                fps: special_textures_config.texture_animation_fps,
-                value: bevy::utils::HashMap::from([
-                    ("base_color_texture".s(), frames),
-                ]),
-                state: GenericMaterialAnimationState {
-                    current_frame: texture_frame_idx.wrapping_sub(1) as usize,
-                    next_frame_time: Instant::now(),
-                },
-            }),
-        });
-
-        return Some(generic_material);
-    }
-
-    None
+        material
+    })
 }
 
 /// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.
