@@ -237,7 +237,7 @@ impl GeometryProvider {
 
     // TODO convex colliders with BSPs/hull collision
 
-    /// Inserts a compound collider of every brush in this entity into said entity. This means that even faces with [MaterialKind::Empty] will still have collision, and brushes will be fully solid.
+    /// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
     #[cfg(any(feature = "rapier", feature = "avian"))]
     pub fn convex_collider(self) -> Self {
         self.push(|view| {
