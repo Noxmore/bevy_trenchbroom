@@ -16,6 +16,7 @@ pub mod fgd;
 #[cfg(any(feature = "rapier", feature = "avian"))]
 pub mod physics;
 
+use bevy_materialize::MaterializeMarkerPlugin;
 pub(crate) use prelude::*;
 
 // Re-exports
@@ -39,6 +40,10 @@ impl TrenchBroomPlugin {
 
 impl Plugin for TrenchBroomPlugin {
     fn build(&self, app: &mut App) {
+        if !app.is_plugin_added::<MaterializeMarkerPlugin>() {
+            app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
+        }
+        
         if self.config.special_textures.is_some() {
             app.add_plugins(special_textures::SpecialTexturesPlugin);
         }
