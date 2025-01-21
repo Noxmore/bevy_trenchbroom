@@ -74,7 +74,8 @@ pub struct TrenchBroomConfig {
     #[default(vec4(0.6, 0.6, 0.6, 1.0))]
     #[builder(into)]
     pub entity_default_color: Vec4,
-    /// An expression to evaluate how big entities' models are. Any instances of the string `$tb_scale$` will be replaced with the scale configured in this struct.
+    /// An expression to evaluate how big entities' models are. (Default: `{{ scale == undefined -> 1, scale }}``)
+    #[default(Some("{{ scale == undefined -> 1, scale }}".s()))]
     #[builder(into)]
     pub entity_scale_expression: Option<String>,
     /// Whether to set property defaults into an entity on creation, or leave them to use the default value that is defined in entity definitions. It is not recommended to use this.
