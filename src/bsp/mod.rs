@@ -3,7 +3,7 @@ pub mod util;
 
 use bevy::{asset::{AssetLoader, LoadContext}, image::ImageSampler, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
 use class::ErasedQuakeClass;
-use config::TextureLoadView;
+use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
 use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, mesh::lighting::ComputeLightmapAtlasError};
@@ -13,6 +13,7 @@ use util::IrradianceVolumeBuilder;
 use crate::*;
 
 pub static GENERIC_MATERIAL_PREFIX: &str = "GenericMaterial_";
+pub static TEXTURE_PREFIX: &str = "Texture_";
 
 #[derive(Asset, Reflect, Debug)]
 pub struct Bsp {
@@ -85,11 +86,11 @@ impl AssetLoader for BspLoader {
 
             // Need to store this separately for animation.
             // We can't use the `next` animation property because we need the handle to create the assets to create the handles.
-            let embedded_texture_images: HashMap<&str, Handle<Image>> = data.textures.iter().flatten().filter(|texture| texture.data.is_some()).map(|texture| {
+            let embedded_texture_images: HashMap<&str, (Image, Handle<Image>)> = data.textures.iter().flatten().filter(|texture| texture.data.is_some()).map(|texture| {
                     let Some(data) = &texture.data else { unreachable!() };
                     let name = texture.header.name.as_str();
 
-                    let is_cutout_texture = name.chars().next() == Some('{');
+                    let is_cutout_texture = name.starts_with('{');
 
                     let image = Image::new(
                         Extent3d { width: texture.header.width, height: texture.header.height, ..default() },
@@ -102,29 +103,33 @@ impl AssetLoader for BspLoader {
                                 [r, g, b, 255]
                             }
                         }).flatten().collect(),
-                        // Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
                         TextureFormat::Rgba8UnormSrgb,
                         self.tb_server.config.bsp_textures_asset_usages,
                     );
                     
-                    let image_handle = load_context.add_labeled_asset(format!("Texture_{name}"), image);
+                    let image_handle = load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image.clone());
 
-                    (texture.header.name.as_str(), image_handle)
+                    (texture.header.name.as_str(), (image, image_handle))
                 })
                 .collect();
 
             let embedded_textures: HashMap<String, BspEmbeddedTexture> = embedded_texture_images.iter()
-                .map(|(name, image_handle)| {
+                .map(|(name, (image, image_handle))| {
                     let is_cutout_texture = name.chars().next() == Some('{');
 
-                    let material = (self.tb_server.config.load_embedded_texture)(TextureLoadView {
-                        name,
-                        tb_config: &self.tb_server.config,
-                        load_context,
-                        map: &map,
-                        alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
-                        embedded_textures: Some(&embedded_texture_images),
-                    }, image_handle.clone());
+                    let material = (self.tb_server.config.load_embedded_texture)(EmbeddedTextureLoadView {
+                        parent_view: TextureLoadView {
+                            name,
+                            tb_config: &self.tb_server.config,
+                            load_context,
+                            map: &map,
+                            alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
+                            embedded_textures: Some(&embedded_texture_images),
+                        },
+
+                        image_handle,
+                        image,
+                    });
 
                     (name.to_string(), BspEmbeddedTexture { image: image_handle.clone(), material })
                 })

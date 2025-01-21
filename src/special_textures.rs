@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 
-use bevy::{asset::embedded_asset, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::AsBindGroup};
+use bevy::{asset::embedded_asset, image::TextureFormatPixelInfo, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::{AsBindGroup, Extent3d, TextureDimension}};
 use bevy_materialize::animation::{GenericMaterialAnimationState, MaterialAnimation, MaterialAnimations};
-use config::TextureLoadView;
+use bsp::TEXTURE_PREFIX;
+use config::EmbeddedTextureLoadView;
 
 use crate::*;
 
@@ -50,10 +51,10 @@ impl SpecialTexturesConfig {
 }
 
 /// If a [SpecialTexturesConfig] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
-pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
+pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
     let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
 
-    fn load_internal(view: &mut TextureLoadView, material: &StandardMaterial, special_textures_config: &SpecialTexturesConfig) -> Option<GenericMaterial> {
+    fn load_internal(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial, special_textures_config: &SpecialTexturesConfig) -> Option<GenericMaterial> {
         // We save a teeny tiny bit of time by only cloning if we need to :)
         let mut material = material.clone();
         if let Some(exposure) = view.tb_config.lightmap_exposure {
@@ -61,7 +62,6 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
         }
     
         if view.name.starts_with('*') {
-            // TODO i think this should be 
             let water_alpha: f32 = view.map.worldspawn()
                 .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
                 .unwrap_or(1.);
@@ -81,10 +81,42 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
                 properties: default(),
             });
         } else if view.name.starts_with("sky") {
-            let Some(texture) = material.base_color_texture else { return None };
+            // We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
+            
+            fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
+                // Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
+                let mut data: Vec<u8> = Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
+
+                // Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
+                for y in 0..view.image.height() {
+                    for x in x_range.clone() {
+                        if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
+                            data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
+                            // data.extend([127, 127, 127, 0]);
+                        } else {
+                            data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
+                        }
+                    }
+                }
+                
+                Image::new(
+                    Extent3d { width: view.image.width() / 2, height: view.image.height(), depth_or_array_layers: 1 },
+                    TextureDimension::D2,
+                    data,
+                    view.image.texture_descriptor.format,
+                    view.tb_config.bsp_textures_asset_usages,
+                )
+            }
+            
+            let fg = separate_sky_image(view, 0..view.image.width() / 2, true);
+            let fg = view.parent_view.load_context.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
+
+            let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
+            let bg = view.parent_view.load_context.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
     
             let handle = view.add_material(QuakeSkyMaterial {
-                texture,
+                fg,
+                bg,
                 ..(special_textures_config.default_quake_sky_material)()
             });
     
@@ -103,8 +135,8 @@ pub fn load_special_texture(view: &mut TextureLoadView, material: &StandardMater
             
             let mut frames = Vec::new();
             let mut frame_num = 0;
-            while let Some(frame) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
-                frames.push(frame.clone());
+            while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
+                frames.push(frame_handle.clone());
                 frame_num += 1;
             }
             
@@ -164,12 +196,12 @@ impl MaterialExtension for LiquidMaterialExt {
 pub struct QuakeSkyMaterial {
     /// The speed the foreground layer moves.
     #[uniform(0)]
-    #[default(0.1)]
-    pub fg_speed: f32,
+    #[default(Vec2::splat(0.1))]
+    pub fg_scroll: Vec2,
     /// The speed the background layer moves.
     #[uniform(0)]
-    #[default(0.05)]
-    pub bg_speed: f32,
+    #[default(Vec2::splat(0.05))]
+    pub bg_scroll: Vec2,
     /// The scale of the textures.
     #[uniform(0)]
     #[default(2.)]
@@ -179,10 +211,13 @@ pub struct QuakeSkyMaterial {
     #[default(vec3(1., 3., 1.))]
     pub sphere_scale: Vec3,
     
-    /// Must be twice as wide as it is tall. The left side is the foreground, where any pixels that are black will show the right side -- the background.
     #[texture(1)]
     #[sampler(2)]
-    pub texture: Handle<Image>,
+    pub fg: Handle<Image>,
+
+    #[texture(3)]
+    #[sampler(4)]
+    pub bg: Handle<Image>,
 }
 impl Material for QuakeSkyMaterial {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {

@@ -11,7 +11,7 @@ use crate::*;
 
 // TODO look through here for things that should be able to be changed during gameplay.
 
-pub type LoadEmbeddedTextureFn = dyn Fn(TextureLoadView, Handle<Image>) -> Handle<GenericMaterial> + Send + Sync;
+pub type LoadEmbeddedTextureFn = dyn Fn(EmbeddedTextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
 pub type LoadLooseTextureFn = dyn Fn(TextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
 pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
 
@@ -220,9 +220,9 @@ impl TrenchBroomConfig {
         self.load_embedded_texture.set(provider);
         self
     }
-    pub fn default_load_embedded_texture(mut view: TextureLoadView, image: Handle<Image>) -> Handle<GenericMaterial> {
+    pub fn default_load_embedded_texture(mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
         let mut material = StandardMaterial {
-            base_color_texture: Some(image),
+            base_color_texture: Some(view.image_handle.clone()),
             perceptual_roughness: 1.,
             ..default()
         };
@@ -239,7 +239,7 @@ impl TrenchBroomConfig {
             }
         };
         
-        view.load_context.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+        view.parent_view.load_context.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
     }
 
     pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
@@ -289,17 +289,28 @@ pub struct TextureLoadView<'a, 'b> {
     pub tb_config: &'a TrenchBroomConfig,
     pub load_context: &'a mut LoadContext<'b>,
     pub map: &'a QuakeMap,
-    /// `Some` if it is determined that a specific alpha mode should be used for a material, such as in embedded textures.
+    /// `Some` if it is determined that a specific alpha mode should be used for a material, such as in some embedded textures.
     pub alpha_mode: Option<AlphaMode>,
     /// If the map contains embedded textures, this will be a map of texture names to image handles.
     /// This is useful for things like animated textures.
-    pub embedded_textures: Option<&'a HashMap<&'a str, Handle<Image>>>,
+    pub embedded_textures: Option<&'a HashMap<&'a str, (Image, Handle<Image>)>>,
 }
 impl TextureLoadView<'_, '_> {
     /// Shorthand for adding a material asset with the correct label.
     pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
         self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
     }
+}
+
+#[derive(Deref, DerefMut)]
+pub struct EmbeddedTextureLoadView<'a, 'b> {
+    #[deref]
+    pub parent_view: TextureLoadView<'a, 'b>,
+
+    /// The handle of the image of this embedded texture.
+    pub image_handle: &'a Handle<Image>,
+    /// The actual image data behind the texture.
+    pub image: &'a Image,
 }
 
 // TODO I wish this was bit more encapsulated and ergonomic
