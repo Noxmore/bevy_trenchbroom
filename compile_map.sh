@@ -5,7 +5,7 @@ cd assets/textures
 
 # Meant to be used with ericw-tools in path
 qbsp -bsp2 -wrbrushes ../maps/$1.map ../maps/$1.bsp
-light -bspx -lightgrid ../maps/$1.bsp
+light -novanilla -bspx -lightgrid ../maps/$1.bsp
 vis ../maps/$1.bsp
 
 # I like to remove the log files since they are just duplicates of what we get in the terminal

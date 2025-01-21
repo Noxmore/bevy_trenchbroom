@@ -8,8 +8,10 @@
 "wad" "/d/_map/wads/prototype_basic_1_3.wad;/d/_map/wads/prototype_symbols_1_3.wad"
 "_dirt" "1"
 "_phong" "1"
-"_bounce" "8"
+"_bounce" "1"
 "_bouncestyled" "1"
+"_dirtscale" "1.1"
+"_dirtdepth" "32"
 // brush 0
 {
 ( -64 -64 -16 ) ( -64 -63 -16 ) ( -64 -64 -15 ) wood [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
