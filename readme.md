@@ -161,7 +161,7 @@ After you write it out, the folder the files need to end up in is your TrenchBro
 
 Because Bevy's material system so heavily relies on generics, storing and inserting arbitrary materials at runtime is challenging.
 
-To this end, i've created the [https://github.com/Noxmore/bevy_materialize](bevy_materialize crate), 
+To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize),
 
 TODO
 If you're loading .map files, to avoid an unnecessary amount of polygons being rendered or used for trimesh collision, it's recommended to have `__TB_empty.material` in your textures root directory, with the following content:
