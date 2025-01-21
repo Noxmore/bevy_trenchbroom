@@ -4,6 +4,9 @@ use geometry::{Brushes, BrushList};
 #[cfg(feature = "rapier")]
 use bevy_rapier3d::prelude::*;
 
+#[cfg(feature = "avian")]
+use avian3d::prelude::*;
+
 
 /// Automatically creates convex colliders for entities with [Brushes].
 #[derive(Component, Reflect, Debug, Clone)]
@@ -59,7 +62,36 @@ impl PhysicsPlugin {
         }
     }
 
-    // TODO avian
+    #[cfg(feature = "avian")]
+    pub fn create_convex_colliders(
+        mut commands: Commands,
+        query: Query<(Entity, &Brushes), (With<ConvexCollision>, Without<Collider>)>,
+        brush_lists: Res<Assets<BrushList>>,
+    ) {
+        for (entity, brushes) in &query {
+            let mut colliders = Vec::new();
+            let Some(brushes) = brushes.get(&brush_lists) else { continue };
+
+            for (brush_idx, brush) in brushes.iter().enumerate() {
+                let vertices: Vec<Vec3> = brush.calculate_vertices()
+                    .into_iter()
+                    .map(|(pos, _)| pos.as_vec3())
+                    .collect();
+                
+                let Some(collider) = Collider::convex_hull(vertices) else {
+                    error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
+                    continue;
+                };
+                colliders.push((
+                    Vec3::ZERO,
+                    Quat::IDENTITY,
+                    collider,
+                ));
+            }
+
+            commands.entity(entity).insert(Collider::compound(colliders));
+        }
+    }
 
     #[cfg(feature = "rapier")]
     pub fn create_trimesh_colliders(
@@ -80,7 +112,24 @@ impl PhysicsPlugin {
         }
     }
 
-    // TODO avian
+    #[cfg(feature = "avian")]
+    pub fn create_trimesh_colliders(
+        mut commands: Commands,
+        query: Query<(Entity, &Mesh3d), (With<TrimeshCollision>, Without<Collider>)>,
+        meshes: Res<Assets<Mesh>>,
+    ) {
+        for (entity, mesh3d) in &query {
+            let Some(mesh) = meshes.get(mesh3d.id()) else { continue };
+
+            let Some(collider) = Collider::trimesh_from_mesh(mesh) else {
+                error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format. TrimeshCollision component removed to not clutter logs.");
+                commands.entity(entity).remove::<TrimeshCollision>();
+                continue;
+            };
+
+            commands.entity(entity).insert(collider);
+        }
+    }
 }
 
 // TODO test collider creation
