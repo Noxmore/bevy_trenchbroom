@@ -29,6 +29,7 @@ bevy_trenchbroom_macros = { path = "macros" }
 anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
     "bevy_asset",
+    "bevy_scene",
     "bevy_render",
     "bevy_pbr",
 ] }
@@ -53,10 +54,6 @@ q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "df60a98" }
 nil = "0.14"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
-
-[dev-dependencies.bevy]
-version = "0.15"
-features = ["bevy_scene"]
 
 [dev-dependencies]
 bevy_flycam = "0.15"
