@@ -54,8 +54,10 @@ q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "df60a98" }
 nil = "0.14"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
+smol = "2"
 
 [dev-dependencies]
+bevy = { version = "0.15", default-features = true }
 bevy_flycam = "0.15"
 bevy-inspector-egui = "0.28" # TODO TMP
 

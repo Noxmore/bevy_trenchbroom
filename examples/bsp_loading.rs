@@ -2,7 +2,6 @@ use bevy::{ecs::{component::ComponentId, world::DeferredWorld}, pbr::irradiance_
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use bevy::math::*;
-use std::sync::Arc;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
@@ -78,9 +77,6 @@ fn main() {
             TrenchBroomConfig::new("bevy_trenchbroom_example")
                 .special_textures(SpecialTexturesConfig::new())
                 .ignore_invalid_entity_definitions(true)
-                .load_loose_texture_fn(|_| Arc::new(|view| {
-                    view.load_context.load(view.tb_config.texture_root.join(format!("{}.png", view.name)))
-                }))
         ))
         .add_systems(PostStartup, (setup_scene, write_config))
         .add_systems(Update, visualize)

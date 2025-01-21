@@ -1,4 +1,4 @@
-use bevy::{asset::LoadContext, render::render_asset::RenderAssetUsages};
+use bevy::{asset::{io::AssetReaderError, AssetLoadError, LoadContext}, render::render_asset::RenderAssetUsages};
 use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
@@ -51,7 +51,7 @@ pub struct TrenchBroomConfig {
     #[default("textures".into())]
     #[builder(into)]
     pub texture_root: PathBuf,
-    /// The extension of your texture files. (Default: "png")
+    /// The extension of your texture files. This is also used for material loading as a fallback. (Default: "png")
     #[default("png".into())]
     #[builder(into)]
     pub texture_extension: String,
@@ -94,6 +94,17 @@ pub struct TrenchBroomConfig {
     ///
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
+
+    /// The file extension used when loading [GenericMaterial]s.
+    /// 
+    /// With the default loose texture loader, if a file with this asset doesn't exist,
+    /// it tries to load it with [SimpleGenericMaterialLoader](bevy_materialize::load::SimpleGenericMaterialLoader)
+    /// with this config's [texture_extension](Self::texture_extension)
+    /// 
+    /// (Default: "material")
+    #[default("material".s())]
+    #[builder(into)]
+    pub generic_material_extension: String,
 
     /// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
     #[default(Some(10_000.))]
@@ -220,7 +231,7 @@ impl TrenchBroomConfig {
         self.load_embedded_texture.set(provider);
         self
     }
-    pub fn default_load_embedded_texture(mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
+    pub fn default_load_embedded_texture(mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {        
         let mut material = StandardMaterial {
             base_color_texture: Some(view.image_handle.clone()),
             perceptual_roughness: 1.,
@@ -246,8 +257,28 @@ impl TrenchBroomConfig {
         self.load_loose_texture.set(provider);
         self
     }
+    /// Tries to load a [GenericMaterial] with the [generic_material_extension](Self::generic_material_extension), as a fallback tries [texture_extension](Self::texture_extension).
     pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
-        view.load_context.load(view.tb_config.texture_root.join(format!("{}.material", view.name)))
+        let path = view.tb_config.texture_root.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
+        match smol::block_on(async {
+            // Because i can't just check if an asset exists, i have to load it twice.
+            view.load_context.loader()
+                .immediate()
+                .load::<GenericMaterial>(path.clone())
+                .await
+        }) {
+            Ok(_) => view.load_context.load(path),
+            Err(err) => match err.error {
+                AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => {
+                    view.load_context.load(view.tb_config.texture_root.join(format!("{}.{}", view.name, view.tb_config.texture_extension)))
+                }
+
+                err => {
+                    error!("Loading map {}: {err}", view.load_context.asset_path());
+                    Handle::default()
+                }
+            }
+        }
     }
 
     /// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [GLOBAL_CLASS_REGISTRY].
