@@ -8,6 +8,15 @@ use crate::*;
 /// A good starting threshold in radians for interpolating similar normals, creating smoother curved surfaces.
 pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
 
+pub struct GeometryPlugin;
+impl Plugin for GeometryPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .init_asset::<BrushList>()
+        ;
+    }
+}
+
 /// Contains the brushes that a solid entity is made of.
 /// 
 /// Can either be [Owned](Brushes::Owned), meaning the brushes are stored directly in the component itself (useful for dynamically editing brushes),
