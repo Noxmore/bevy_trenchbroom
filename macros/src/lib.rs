@@ -1,5 +1,5 @@
 use heck::*;
-use quote::quote;
+use quote::*;
 use syn::*;
 use proc_macro2::*;
 
@@ -19,7 +19,7 @@ struct Opts {
     geometry: Option<TokenStream>,
     classname: Option<TokenStream>,
 
-    require: Option<TokenStream>,
+    base: Option<TokenStream>,
     doc: Option<String>,
 }
 
@@ -39,24 +39,24 @@ impl FieldsType {
     }
 }
 
-#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname))]
+#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base))]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     class_derive(parse_macro_input!(input as DeriveInput), QuakeClassType::Point).into()
 }
 
-#[proc_macro_derive(SolidClass, attributes(geometry, classname))]
+#[proc_macro_derive(SolidClass, attributes(geometry, classname, base))]
 pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     class_derive(parse_macro_input!(input as DeriveInput), QuakeClassType::Solid).into()
 }
 
-#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname))]
+#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     class_derive(parse_macro_input!(input as DeriveInput), QuakeClassType::Base).into()
 }
 
 fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
     let DeriveInput { ident, attrs, data, .. } = input;
-    let ty_ident = Ident::new(&format!("{ty:?}"), Span::mixed_site());
+    let ty_ident = format_ident!("{ty:?}");
 
     let mut opts = Opts::default();
 
@@ -82,8 +82,10 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
                     opts.geometry = Some(meta.tokens);
                 } else if compare_path(&meta.path, "classname") {
                     opts.classname = Some(meta.tokens);
-                } else if compare_path(&meta.path, "require") {
-                    opts.require = Some(meta.tokens);
+                } else if compare_path(&meta.path, "require") && opts.base.is_none() {
+                    opts.base = Some(meta.tokens);
+                } else if compare_path(&meta.path, "base") {
+                    opts.base = Some(meta.tokens);
                 }
             }
             Meta::Path(_) => {}
@@ -180,7 +182,8 @@ fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
     let description = option(opts.doc);
 
     // This is a naive approach, but the Component macro should handle making sure the input is valid anyway.
-    let bases = opts.require.unwrap_or_default().into_iter().filter(|tree| matches!(tree, TokenTree::Ident(_)));
+    let bases = opts.base.unwrap_or_default().into_iter().filter(|tree| matches!(tree, TokenTree::Ident(_)));
+    
 
     let model = option(opts.model.map(|model| quote! { stringify!(#model) }));
     let color = option(opts.color.map(|color| quote! { stringify!(#color) }));
