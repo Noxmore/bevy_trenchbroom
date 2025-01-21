@@ -1,11 +1,12 @@
 mod quake_class;
+mod fgd_type;
 
 use heck::*;
 use quote::*;
 use syn::*;
 use proc_macro2::*;
 
-
+// TODO spawnflags support using something like bitflags?
 
 #[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base))]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -20,6 +21,11 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 #[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Base).into()
+}
+
+#[proc_macro_derive(FgdType)]
+pub fn fgd_type_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    fgd_type::fgd_type_derive(parse_macro_input!(input as DeriveInput)).into()
 }
 
 fn compare_path(path: &Path, s: &str) -> bool {
