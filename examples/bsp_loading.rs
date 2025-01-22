@@ -2,20 +2,21 @@ use bevy::{ecs::{component::ComponentId, world::DeferredWorld}, pbr::irradiance_
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use bevy::math::*;
+use nil::prelude::*;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncDoor;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
@@ -41,19 +42,23 @@ impl Cube {
     }
 }
 
-#[derive(PointClass, Component, Reflect, Default)]
+#[derive(PointClass, Component, Reflect, SmartDefault)]
 #[reflect(Component)]
 #[require(Transform)]
 pub struct Light {
-    // pub color: Color,
-    // pub intensity: f32,
+    #[default(Color::srgb(1., 1., 1.))]
+    pub _color: Color,
+    #[default(300.)]
+    pub light: f32,
+    #[default(0)]
+    pub delay: u8,
 }
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins
             .set(ImagePlugin {
-                default_sampler: repeating_image_sampler(true),
+                default_sampler: repeating_image_sampler(false),
             })
         )
 
@@ -61,7 +66,7 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00005,
-            speed: 12.,
+            speed: 6.,
         })
         .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
         // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
@@ -77,7 +82,6 @@ fn main() {
             TrenchBroomConfig::new("bevy_trenchbroom_example")
                 .special_textures(SpecialTexturesConfig::new())
                 .ignore_invalid_entity_definitions(true)
-                .lightmap_exposure(20_000.)
         ))
         .add_systems(PostStartup, (setup_scene, write_config))
         .add_systems(Update, visualize)
@@ -94,8 +98,8 @@ fn setup_scene(
     lightmap_animators.values.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
     // lightmap_animators.values.clear();
     
-    // commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
-    commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_scastle.bsp#Scene")));
+    commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
+    // commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
     
     let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
     let material = asset_server.add(StandardMaterial::default());
