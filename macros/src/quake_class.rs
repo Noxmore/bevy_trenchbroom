@@ -64,11 +64,19 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
     let mut properties: Vec<TokenStream> = Vec::new();
 
     let spawn_constructor: TokenStream;
+    // If fields are present, we'll construct a default instance to help if any fields are missing.
+    let mut spawn_constructor_default_value: Option<TokenStream> = None;
 
     match data {
         Data::Struct(data) => {
             let mut field_constructors = Vec::with_capacity(data.fields.len());
             let fields_type = FieldsType::from_fields(&data.fields);
+
+            if !data.fields.is_empty() {
+                spawn_constructor_default_value = Some(quote! {
+                    let default = <#ident as Default>::default();
+                });
+            }
             
             for (field_idx, field) in data.fields.into_iter().enumerate() {
                 let ty = field.ty;
@@ -78,12 +86,18 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
                 let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
                 
                 let mut doc = None;
+                let mut defaulted = true;
                 
                 for attr in field.attrs {
                     match attr.meta {
                         Meta::NameValue(meta) => {
                             if compare_path(&meta.path, "doc") {
                                 doc = Some(meta.value);
+                            }
+                        }
+                        Meta::Path(path) => {
+                            if compare_path(&path, "no_default") {
+                                defaulted = false;
                             }
                         }
                         _ => {}
@@ -96,6 +110,12 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
                 });
 
                 let description = option(doc);
+
+                let default_value_fn = if defaulted {
+                    quote! { || ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number) }
+                } else {
+                    quote! { String::new }
+                };
                 
                 properties.push(quote! {
                     ::bevy_trenchbroom::class::QuakeClassProperty {
@@ -103,15 +123,20 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
                         name: #field_name,
                         title: None,
                         description: #description,
-                        // default_value: #default,
-                        default_value: Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&Self::default().#field_ident_or_number)),
+                        default_value: Some(#default_value_fn),
                     },
                 });
 
                 let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
 
+                let not_found_handler = if defaulted {
+                    quote! { .unwrap_or(default.#field_ident_or_number) }
+                } else {
+                    quote! { ? }
+                };
+
                 field_constructors.push(quote! {
-                    #setter src_entity.get(#field_name)?,
+                    #setter src_entity.get(#field_name)#not_found_handler,
                 });
             }
 
@@ -186,6 +211,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 
             #[allow(unused)]
             fn class_spawn(config: &::bevy_trenchbroom::config::TrenchBroomConfig, src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity, entity: &mut ::bevy::ecs::world::EntityWorldMut) -> ::bevy_trenchbroom::anyhow::Result<()> {
+                #spawn_constructor_default_value
                 entity.insert(#spawn_constructor);
                 Ok(())
             }
