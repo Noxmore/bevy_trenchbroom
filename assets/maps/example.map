@@ -8,10 +8,11 @@
 "wad" "/d/_map/wads/prototype_basic_1_3.wad;/d/_map/wads/prototype_symbols_1_3.wad"
 "_dirt" "1"
 "_phong" "1"
-"_bounce" "1"
+"_bounce" "8"
 "_bouncestyled" "1"
 "_dirtscale" "1.1"
 "_dirtdepth" "32"
+"_bouncecolorscale" "1"
 // brush 0
 {
 ( -64 -64 -16 ) ( -64 -63 -16 ) ( -64 -64 -15 ) wood [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -534,6 +535,7 @@
 "origin" "-36 28 40"
 "_color" "255 204 178"
 "light" "300"
+"delay" "5"
 }
 // entity 4
 {
@@ -613,14 +615,16 @@
 "_color" "200 255 200"
 "light" "200"
 "style" "5"
+"delay" "5"
 }
 // entity 10
 {
 "classname" "light"
 "origin" "40 -52 112"
 "_color" "228 204 255"
-"light" "300"
+"light" "w"
 "style" "1"
+"delay" "5"
 }
 // entity 11
 {
@@ -632,4 +636,13 @@
 "classname" "cube"
 "origin" "122.343 8 22.202"
 "angles" "-15 0 0"
+}
+// entity 13
+{
+"classname" "light"
+"origin" "0 172 56"
+"_color" "255 53 56"
+"light" "200"
+"style" "5"
+"delay" "5"
 }
