@@ -112,9 +112,9 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
                 let description = option(doc);
 
                 let default_value_fn = if defaulted {
-                    quote! { || ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number) }
+                    quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number)) }
                 } else {
-                    quote! { String::new }
+                    quote! { None }
                 };
                 
                 properties.push(quote! {
@@ -123,7 +123,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
                         name: #field_name,
                         title: None,
                         description: #description,
-                        default_value: Some(#default_value_fn),
+                        default_value: #default_value_fn,
                     },
                 });
 
