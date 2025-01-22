@@ -135,21 +135,21 @@ impl QuakeClass for Transform {
                 name: "origin",
                 title: Some("Translation/Origin"),
                 description: None,
-                default_value: Some(|| Vec3::ZERO.fgd_to_string()),
+                default_value: Some(|| Vec3::ZERO.fgd_to_string_quoted()),
             },
             QuakeClassProperty {
                 ty: Vec3::PROPERTY_TYPE,
                 name: "angles",
                 title: Some("Rotation (pitch yaw roll) in degrees"),
                 description: None,
-                default_value: Some(|| Vec3::ZERO.fgd_to_string()),
+                default_value: Some(|| Vec3::ZERO.fgd_to_string_quoted()),
             },
             QuakeClassProperty {
                 ty: Vec3::PROPERTY_TYPE,
                 name: "scale",
                 title: Some("Scale"),
                 description: None,
-                default_value: Some(|| Vec3::ONE.fgd_to_string()),
+                default_value: Some(|| Vec3::ONE.fgd_to_string_quoted()),
             },
         ],
     };
@@ -204,7 +204,7 @@ impl QuakeClass for Visibility {
                 name: "visibility",
                 title: Some("Visibility"),
                 description: None,
-                default_value: Some(|| "Inherited".s()),
+                default_value: Some(|| "\"Inherited\"".s()),
             },
         ],
     };

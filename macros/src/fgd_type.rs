@@ -20,9 +20,10 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
                 valid_variants.push(variant_ident.to_string());
 
                 let variant_literal = Literal::string(&variant_ident.to_string());
+                let variant_literal_quoted = Literal::string(&format!("\"{variant_ident}\""));
 
                 property_type_choices.push(quote! {
-                    (#variant_literal, #variant_literal),
+                    (#variant_literal_quoted, #variant_literal),
                 });
 
                 variant_idents.push(variant_ident);
