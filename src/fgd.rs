@@ -209,7 +209,6 @@ impl FgdType for Color {
     }
 }
 
-// God i love rust's trait system
 impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
     const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
 
@@ -228,5 +227,24 @@ impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
     }
     fn fgd_to_string(&self) -> String {
         self.iter().map(T::fgd_to_string).join(" ")
+    }
+}
+
+impl<T: FgdType> FgdType for Option<T> {
+    const FGD_IS_QUOTED: bool = T::FGD_IS_QUOTED;
+    const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
+
+    fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+        if input.trim().is_empty() {
+            return Ok(None);
+        }
+        T::fgd_parse(input).map(Some)
+    }
+
+    fn fgd_to_string(&self) -> String {
+        match self {
+            Some(v) => v.fgd_to_string(),
+            None => String::new(),
+        }
     }
 }
