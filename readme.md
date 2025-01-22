@@ -99,8 +99,10 @@ pub struct FuncIllusionary;
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {
-    /// Documentation comments on structs and their fields will show up in-editor.
+    // no_default makes the field have an empty default value in-editor, and will cause an error if not defined.
+    #[no_default]
     pub model: String,
+    /// Documentation comments on structs and their fields will show up in-editor.
     pub skin: u32,
     pub collision_type: CollisionType,
     pub enable_shadows: bool,
