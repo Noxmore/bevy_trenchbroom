@@ -1,9 +1,20 @@
 use bevy::asset::{AssetLoader, AsyncReadExt};
-use brush::Brush;
+use brush::{generate_mesh_from_brush_polygons, Brush, BrushSurfacePolygon};
+use config::TextureLoadView;
 use fgd::FgdType;
+use geometry::{GeometryProviderMeshView, MapGeometryTexture};
 
 use crate::*;
 
+/// Quake map loaded from a .map file.
+#[derive(Reflect, Asset, Debug, Clone)]
+pub struct QuakeMap {
+    pub scene: Handle<Scene>,
+    pub meshes: Vec<Handle<Mesh>>,
+    pub entities: QuakeMapEntities,
+}
+
+/// All the entities stored in a quake map, whether [QuakeMap] or [Bsp](bsp::Bsp).
 #[derive(Reflect, Debug, Clone, Default, Deref, DerefMut)]
 pub struct QuakeMapEntities(pub Vec<QuakeMapEntity>);
 impl QuakeMapEntities {
@@ -36,6 +47,7 @@ impl QuakeMapEntities {
     }
 }
 
+/// A single entity from a quake map, containing the entities property map, and optionally, brushes.
 #[derive(Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct QuakeMapEntity {
     /// The properties defined in this entity instance.
@@ -93,9 +105,9 @@ impl FromWorld for QuakeMapLoader {
         }
     }
 }
-/* impl AssetLoader for QuakeMapLoader {
+impl AssetLoader for QuakeMapLoader {
     // TODO this should be some asset version of QuakeMap
-    type Asset = QuakeMapEntities;
+    type Asset = QuakeMap;
     type Settings = ();
     type Error = anyhow::Error;
     
@@ -103,19 +115,134 @@ impl FromWorld for QuakeMapLoader {
         &self,
         reader: &mut dyn bevy::asset::io::Reader,
         _settings: &Self::Settings,
-        _load_context: &mut bevy::asset::LoadContext,
+        load_context: &mut bevy::asset::LoadContext,
     ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
         Box::pin(async {
             let mut input = String::new();
             reader.read_to_string(&mut input).await?;
 
             let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(input))?;
+            let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
-            Ok(QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config))
+            let mut mesh_handles = Vec::new();
+            
+            let mut world = World::new();
+
+            for (map_entity_idx, map_entity) in entities.iter().enumerate() {
+                let Some(classname) = map_entity.properties.get("classname") else { continue };
+                let Some(class) = self.tb_server.config.get_class(classname) else {
+                    if !self.tb_server.config.ignore_invalid_entity_definitions {
+                        error!("No class found for classname `{classname}` on entity {map_entity_idx}");
+                    }
+                    
+                    continue;
+                };
+
+                let mut entity = world.spawn_empty();
+                let entity_id = entity.id();
+                
+                class.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
+                    .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
+                
+                if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
+                    let mut grouped_polygons: HashMap<&str, Vec<BrushSurfacePolygon>> = default();
+                    let mut texture_size_cache: HashMap<&str, UVec2> = default();
+                    let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();
+                    
+                    for brush in &map_entity.brushes {
+                        for polygon in brush.polygonize() {
+                            grouped_polygons.entry(&polygon.surface.texture).or_default().push(polygon);
+                        }
+                    }
+
+                    let mut meshes = Vec::with_capacity(grouped_polygons.len());
+
+                    for (texture, polygons) in grouped_polygons {
+                        // TODO auto remove
+
+                        let texture_size = *texture_size_cache.entry(texture).or_insert_with(|| {
+                            // Have to because this is not an async context, and it's simpler than expanding or_insert_with
+                            smol::block_on(async {
+                                load_context.loader().immediate().load::<Image>(
+                                    self.tb_server.config.texture_root.join(
+                                        format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)
+                                    )
+                                ).await
+                            }).map(|image: bevy::asset::LoadedAsset<Image>| image.take().size()).unwrap_or(UVec2::splat(1))
+                        });
+
+                        let material = material_cache.entry(texture).or_insert_with(|| {
+                            (self.tb_server.config.load_loose_texture)(TextureLoadView {
+                                name: texture,
+                                tb_config: &self.tb_server.config,
+                                load_context,
+                                map: &entities,
+                                alpha_mode: None,
+                                embedded_textures: None,
+                            })
+                        }).clone();
+                        
+                        let mesh = generate_mesh_from_brush_polygons(&polygons, &self.tb_server.config, texture_size);
+
+                        let mesh_entity = world.spawn(Name::new(texture.s())).id();
+                        world.entity_mut(entity_id).add_child(mesh_entity);
+
+                        meshes.push((mesh_entity, mesh, MapGeometryTexture {
+                            name: texture.s(),
+                            material,
+                            lightmap: None,
+                            special: false,
+                        }));
+                    }
+
+                    let mesh_views = meshes.iter_mut().map(|(entity, mesh, texture)| {
+                        GeometryProviderMeshView {
+                            entity: *entity,
+                            mesh,
+                            texture,
+                        }
+                    }).collect_vec();
+
+                    let mut view = GeometryProviderView {
+                        world: &mut world,
+                        entity: entity_id,
+                        tb_server: &self.tb_server,
+                        map_entity,
+                        map_entity_idx,
+                        meshes: mesh_views,
+                        load_context,
+                    };
+                    
+                    for provider in geometry_provider.providers {
+                        provider(&mut view);
+                    }
+
+                    (self.tb_server.config.global_geometry_provider)(&mut view);
+
+                    for (entity, mesh, _) in meshes {
+                        let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
+
+                        world.entity_mut(entity).insert(Mesh3d(handle.clone()));
+
+                        mesh_handles.push(handle);
+                    }
+                }
+
+                let mut entity = world.entity_mut(entity_id);
+
+                (self.tb_server.config.global_spawner)(&self.tb_server.config, map_entity, &mut entity)
+                    .map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+            }
+
+            Ok(QuakeMap {
+                scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+                meshes: mesh_handles,
+                entities,
+            })
         })
     }
 
     fn extensions(&self) -> &[&str] {
         &["map"]
     }
-} */
+}

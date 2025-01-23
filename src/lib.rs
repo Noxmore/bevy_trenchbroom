@@ -68,7 +68,8 @@ impl Plugin for TrenchBroomPlugin {
             .add_plugins((bsp::lighting::BspLightingPlugin, geometry::GeometryPlugin))
             // I'd rather not clone here, but i only have a reference to self
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
-            // .init_asset_loader::<qmap::QuakeMapLoader>()
+            .init_asset::<qmap::QuakeMap>()
+            .init_asset_loader::<qmap::QuakeMapLoader>()
             .init_asset::<bsp::Bsp>()
             .init_asset_loader::<bsp::BspLoader>();
     }
