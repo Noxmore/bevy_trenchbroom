@@ -336,10 +336,10 @@ impl<'w> BrushSurfacePolygon<'w> {
 ///
 /// NOTE: If this isn't a server, this function makes a file system call to get textures' sizes.
 pub fn generate_mesh_from_brush_polygons(
-    faces: &[&BrushSurfacePolygon],
+    polygons: &[BrushSurfacePolygon],
     config: &TrenchBroomConfig,
 ) -> Mesh {
-    let texture_size = if faces.is_empty() || config.is_server {
+    let texture_size = if polygons.is_empty() || config.is_server {
         Vec2::ONE
     } else {
         UVec2::from(
@@ -347,7 +347,7 @@ pub fn generate_mesh_from_brush_polygons(
                 config.assets_path.join(
                     config
                         .texture_root
-                        .join(format!("{}.{}", &faces[0].surface.texture, config.texture_extension)),
+                        .join(format!("{}.{}", &polygons[0].surface.texture, config.texture_extension)),
                 ),
             )
             .unwrap_or((1, 1)),
@@ -360,32 +360,32 @@ pub fn generate_mesh_from_brush_polygons(
     let mut uvs: Vec<Vec2> = default();
     let mut indices: Vec<u32> = default();
 
-    // Combine the attributes of all the faces
-    for face in faces {
-        indices.extend(face.indices.iter().map(|x| vertices.len() as u32 + *x));
-        vertices.extend(&face.vertices);
-        normals.extend(repeat_n(face.surface.plane.normal, face.vertices.len()));
-        uvs.extend(face.vertices.iter().map(|vertex| {
-            let mut uv = match face.surface.uv.axes {
+    // Combine the attributes of all the polygons
+    for polygon in polygons {
+        indices.extend(polygon.indices.iter().map(|x| vertices.len() as u32 + *x));
+        vertices.extend(&polygon.vertices);
+        normals.extend(repeat_n(polygon.surface.plane.normal, polygon.vertices.len()));
+        uvs.extend(polygon.vertices.iter().map(|vertex| {
+            let mut uv = match polygon.surface.uv.axes {
                 Some([x_normal, y_normal]) => {
                     vec2(x_normal.dot(*vertex) as f32, y_normal.dot(*vertex) as f32)
                 }
-                None => face.surface.plane.project(*vertex).as_vec2(),
+                None => polygon.surface.plane.project(*vertex).as_vec2(),
             };
 
             // Correct the size into Bevy space
             // Honestly not sure how this works, but it does
-            if face.surface.uv.axes.is_some() {
+            if polygon.surface.uv.axes.is_some() {
                 uv *= config.scale * config.scale / texture_size;
             }
 
-            uv /= face.surface.uv.scale.convert_zero_to_one();
-            uv += face.surface.uv.offset / texture_size;
+            uv /= polygon.surface.uv.scale.convert_zero_to_one();
+            uv += polygon.surface.uv.offset / texture_size;
 
             // From my testing it seems rotation is built-in to the uv axes in Valve format, so we only need to do this if the axes are not defined
             // I have no idea if this works
-            if face.surface.uv.axes.is_none() {
-                uv = Vec2::from_angle(face.surface.uv.rotation.to_radians()).rotate(uv);
+            if polygon.surface.uv.axes.is_none() {
+                uv = Vec2::from_angle(polygon.surface.uv.rotation.to_radians()).rotate(uv);
             }
 
             uv
