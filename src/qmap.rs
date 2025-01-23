@@ -5,10 +5,10 @@ use fgd::FgdType;
 use crate::*;
 
 #[derive(Reflect, Asset, Debug, Clone, Default)]
-pub struct QuakeMap {
+pub struct QuakeMapEntities {
     pub entities: Vec<QuakeMapEntity>,
 }
-impl QuakeMap {
+impl QuakeMapEntities {
     pub fn from_quake_util(qmap: quake_util::qmap::QuakeMap, config: &TrenchBroomConfig) -> Self {
         let mut map = Self::default();
         map.entities.reserve(qmap.entities.len());
@@ -98,7 +98,7 @@ impl FromWorld for QuakeMapLoader {
 }
 impl AssetLoader for QuakeMapLoader {
     // TODO this should be some asset version of QuakeMap
-    type Asset = QuakeMap;
+    type Asset = QuakeMapEntities;
     type Settings = ();
     type Error = anyhow::Error;
     
@@ -114,7 +114,7 @@ impl AssetLoader for QuakeMapLoader {
 
             let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(input))?;
 
-            Ok(QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config))
+            Ok(QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config))
         })
     }
 

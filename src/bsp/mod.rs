@@ -7,7 +7,7 @@ use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
 use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, mesh::lighting::ComputeLightmapAtlasError};
-use qmap::{QuakeMap, QuakeMapEntity};
+use qmap::{QuakeMapEntities, QuakeMapEntity};
 use util::IrradianceVolumeBuilder;
 
 use crate::*;
@@ -29,7 +29,7 @@ pub struct Bsp {
 
     #[reflect(ignore)]
     pub data: BspData,
-    pub qmap: QuakeMap,
+    pub qmap: QuakeMapEntities,
 }
 
 #[derive(Reflect, Debug)]
@@ -82,7 +82,7 @@ impl AssetLoader for BspLoader {
 
             let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes()))
                 .map_err(|err| anyhow!("Parsing entities: {err}"))?;
-            let map = QuakeMap::from_quake_util(quake_util_map, &self.tb_server.config);
+            let map = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
             // Need to store this separately for animation.
             // We can't use the `next` animation property because we need the handle to create the assets to create the handles.
