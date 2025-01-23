@@ -4,14 +4,12 @@ use fgd::FgdType;
 
 use crate::*;
 
-#[derive(Reflect, Asset, Debug, Clone, Default)]
-pub struct QuakeMapEntities {
-    pub entities: Vec<QuakeMapEntity>,
-}
+#[derive(Reflect, Debug, Clone, Default, Deref, DerefMut)]
+pub struct QuakeMapEntities(pub Vec<QuakeMapEntity>);
 impl QuakeMapEntities {
     pub fn from_quake_util(qmap: quake_util::qmap::QuakeMap, config: &TrenchBroomConfig) -> Self {
-        let mut map = Self::default();
-        map.entities.reserve(qmap.entities.len());
+        let mut entities = Self::default();
+        entities.reserve(qmap.entities.len());
 
         for entity in qmap.entities {
             let properties = entity.edict
@@ -19,21 +17,20 @@ impl QuakeMapEntities {
                 .map(|(k, v)| (k.to_string_lossy().into(), v.to_string_lossy().into()))
                 .collect::<HashMap<String, String>>();
 
-            map.entities.push(QuakeMapEntity {
+            entities.push(QuakeMapEntity {
                 properties,
                 brushes: entity.brushes.iter().map(|brush | Brush::from_quake_util(brush, config)).collect(),
             });
         }
 
-        map
+        entities
     }
 
     /// Gets the worldspawn of this map, this will return `Some` on any valid map.
     ///
     /// worldspawn should be the first entity, so normally this will be an `O(1)` operation
     pub fn worldspawn(&self) -> Option<&QuakeMapEntity> {
-        self.entities
-            .iter()
+        self.iter()
             .find(|ent| ent.classname() == Ok("worldspawn"))
             .map(|v| &*v)
     }
@@ -96,7 +93,7 @@ impl FromWorld for QuakeMapLoader {
         }
     }
 }
-impl AssetLoader for QuakeMapLoader {
+/* impl AssetLoader for QuakeMapLoader {
     // TODO this should be some asset version of QuakeMap
     type Asset = QuakeMapEntities;
     type Settings = ();
@@ -121,4 +118,4 @@ impl AssetLoader for QuakeMapLoader {
     fn extensions(&self) -> &[&str] {
         &["map"]
     }
-}
+} */

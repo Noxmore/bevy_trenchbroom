@@ -82,7 +82,7 @@ impl AssetLoader for BspLoader {
 
             let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes()))
                 .map_err(|err| anyhow!("Parsing entities: {err}"))?;
-            let map = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
+            let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
             // Need to store this separately for animation.
             // We can't use the `next` animation property because we need the handle to create the assets to create the handles.
@@ -122,7 +122,7 @@ impl AssetLoader for BspLoader {
                             name,
                             tb_config: &self.tb_server.config,
                             load_context,
-                            map: &map,
+                            map: &entities,
                             alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
                             embedded_textures: Some(&embedded_texture_images),
                         },
@@ -231,7 +231,7 @@ impl AssetLoader for BspLoader {
                             name: &exported_mesh.texture,
                             tb_config: &self.tb_server.config,
                             load_context,
-                            map: &map,
+                            map: &entities,
                             alpha_mode: None,
                             embedded_textures: Some(&embedded_texture_images),
                         }));
@@ -253,7 +253,7 @@ impl AssetLoader for BspLoader {
             }
 
             // Spawn entities into scene
-            for (map_entity_idx, map_entity) in map.entities.iter().enumerate() {
+            for (map_entity_idx, map_entity) in entities.iter().enumerate() {
                 let Some(classname) = map_entity.properties.get("classname") else { continue };
                 let Some(class) = self.tb_server.config.get_class(classname) else {
                     if !self.tb_server.config.ignore_invalid_entity_definitions {
@@ -410,7 +410,7 @@ impl AssetLoader for BspLoader {
                 models: bsp_models,
 
                 data,
-                qmap: map,
+                qmap: entities,
             })
         })
     }
