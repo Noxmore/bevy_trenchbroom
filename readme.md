@@ -169,7 +169,7 @@ To this end, i've created the [bevy_materialize crate](https://github.com/Noxmor
 
 `TrenchBroomPlugin` Automatically adds `MaterializePlugin` with the default `toml` deserializer. If you wish to use a different deserializer, add your own `MaterializePlugin` before adding `TrenchBroomPlugin`.
 
-By default, for loose assets, it first looks for `<texture>.<GenericMaterial extension>` (.material by default), if the asset can't be found, it loads `<texture>.<Image extension>` (.png by default) as a fallback.
+By default, for loose assets, it first looks for `<texture>.<GenericMaterial extension>` (.material by default). If the asset can't be found, it loads `<texture>.<Image extension>` (.png by default) as a fallback.
 
 ## Loading maps
 
