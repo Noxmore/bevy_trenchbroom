@@ -67,9 +67,6 @@ pub struct GeometryProviderView<'w, 'l, 'lc> {
     pub world: &'w mut World,
     pub entity: Entity,
     pub tb_server: &'w TrenchBroomServer,
-    /// The main world's asset server, this is here for things you can't do with `load_context`'s abstraction. So use `load_context` for asset-related things unless you *have* to use this.
-    /// TODO remove
-    pub asset_server: &'w AssetServer,
     pub map_entity: &'w QuakeMapEntity,
     pub map_entity_idx: usize,
     pub meshes: Vec<GeometryProviderMeshView<'l>>,

@@ -294,7 +294,6 @@ impl AssetLoader for BspLoader {
                             world: &mut world,
                             entity: entity_id,
                             tb_server: &self.tb_server,
-                            asset_server: &self.asset_server,
                             map_entity,
                             map_entity_idx,
                             meshes,
