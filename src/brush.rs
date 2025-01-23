@@ -192,7 +192,7 @@ impl Brush {
     /// If you want a map of intersections to the surfaces causing them, see [calculate_vertices\()](Self::calculate_vertices)
     ///
     /// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
-    pub fn polygonize(&self) -> Vec<BrushSurfacePolygon> {
+    pub fn polygonize(&self) -> impl Iterator<Item = BrushSurfacePolygon> {
         let mut vertex_map: HashMap<usize, Vec<DVec3>> = default();
 
         for ((s1_i, s1), (s2_i, s2), (s3_i, s3)) in
@@ -221,7 +221,6 @@ impl Brush {
             .map(|(surface_index, vertices)| {
                 BrushSurfacePolygon::new(&self.surfaces[surface_index], vertices)
             })
-            .collect()
     }
 
     /// Calculates the intersections of the surfaces making up the brush,
