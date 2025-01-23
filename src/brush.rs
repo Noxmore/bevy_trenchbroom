@@ -332,28 +332,13 @@ impl<'w> BrushSurfacePolygon<'w> {
 
 /// Combines a bunch of [BrushSurfacePolygon]s into a full mesh.
 ///
-/// It is assumed all faces have the same material.
-///
-/// NOTE: If this isn't a server, this function makes a file system call to get textures' sizes.
+/// It is assumed all faces have the same material with the specified `texture_size`.
 pub fn generate_mesh_from_brush_polygons(
     polygons: &[BrushSurfacePolygon],
     config: &TrenchBroomConfig,
+    texture_size: UVec2,
 ) -> Mesh {
-    let texture_size = if polygons.is_empty() || config.is_server {
-        Vec2::ONE
-    } else {
-        UVec2::from(
-            image::image_dimensions(
-                config.assets_path.join(
-                    config
-                        .texture_root
-                        .join(format!("{}.{}", &polygons[0].surface.texture, config.texture_extension)),
-                ),
-            )
-            .unwrap_or((1, 1)),
-        )
-        .as_vec2()
-    };
+    let texture_size = texture_size.as_vec2();
 
     let mut vertices: Vec<DVec3> = default();
     let mut normals: Vec<DVec3> = default();
