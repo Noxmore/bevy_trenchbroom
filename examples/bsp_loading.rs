@@ -77,7 +77,6 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AmbientLight::NONE)
 
-        .add_plugins(MaterializePlugin::new(TomlMaterialDeserializer))
         .add_plugins(TrenchBroomPlugin::new(
             TrenchBroomConfig::new("bevy_trenchbroom_example")
                 .special_textures(SpecialTexturesConfig::new())
