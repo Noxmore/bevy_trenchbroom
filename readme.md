@@ -40,6 +40,8 @@ fn main() {
 }
 ```
 
+NOTE: By default, `TrenchbroomConfig::auto_remove_textures` contains `__TB_empty`, meaning that when loading `.map`s, any face without a texture will be automatically ignored, saving processing and render time.
+
 Quake's entity classes and their base classes are treated as an analog to Bevy's components and their required components.
 
 You can define your components like so to turn them into quake classes.
@@ -163,15 +165,7 @@ After you write it out, the folder the files need to end up in is your TrenchBro
 
 Because Bevy's material system so heavily relies on generics, storing and inserting arbitrary materials at runtime is challenging.
 
-To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize),
-
-TODO
-If you're loading .map files, to avoid an unnecessary amount of polygons being rendered or used for trimesh collision, it's recommended to have `__TB_empty.material` in your textures root directory, with the following content:
-```toml
-[properties]
-remove = true
-```
-This will make any face without a texture get ignored when creating a brush's mesh.
+To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize).
 
 ## Loading maps
 

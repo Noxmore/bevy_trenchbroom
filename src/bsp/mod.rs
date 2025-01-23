@@ -275,6 +275,10 @@ impl AssetLoader for BspLoader {
                         let mut meshes = Vec::with_capacity(model.meshes.len());
                         
                         for model_mesh in &mut model.meshes {
+                            if self.tb_server.config.auto_remove_textures.contains(&model_mesh.texture.name) {
+                                continue;
+                            }
+                            
                             let mesh_entity = world.spawn(Name::new(model_mesh.texture.name.clone())).id();
                             world.entity_mut(entity_id).add_child(mesh_entity);
                             

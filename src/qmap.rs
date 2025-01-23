@@ -158,7 +158,9 @@ impl AssetLoader for QuakeMapLoader {
                     let mut meshes = Vec::with_capacity(grouped_polygons.len());
 
                     for (texture, polygons) in grouped_polygons {
-                        // TODO auto remove
+                        if self.tb_server.config.auto_remove_textures.contains(texture) {
+                            continue;
+                        }
 
                         let texture_size = *texture_size_cache.entry(texture).or_insert_with(|| {
                             // Have to because this is not an async context, and it's simpler than expanding or_insert_with

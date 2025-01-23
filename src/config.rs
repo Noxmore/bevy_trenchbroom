@@ -96,6 +96,11 @@ pub struct TrenchBroomConfig {
     /// NOTE: This bounding box is in TrenchBroom space (Z up).
     pub soft_map_bounds: Option<[Vec3; 2]>,
 
+    /// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "__TB_empty"])
+    #[default(["clip".s(), "skip".s(), "__TB_empty".s()].into())]
+    #[builder(into)]
+    pub auto_remove_textures: HashSet<String>,
+
     /// The file extension used when loading [GenericMaterial]s.
     /// 
     /// With the default loose texture loader, if a file with this asset doesn't exist,
@@ -171,6 +176,12 @@ impl TrenchBroomConfig {
     /// Creates a new TrenchBroom config. It is recommended to use this over [TrenchBroomConfig::default]
     pub fn new(name: impl Into<String>) -> Self {
         Self::default().name(name)
+    }
+
+    /// Inserts a new texture to auto-remove.
+    pub fn auto_remove_texture(mut self, texture: impl ToString) -> Self {
+        self.auto_remove_textures.insert(texture.to_string());
+        self
     }
 
     /// Excludes "\*_normal", "\*_mr" (Metallic and roughness), "\*_emissive", and "\*_depth".

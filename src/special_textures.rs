@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use bevy::{asset::embedded_asset, image::TextureFormatPixelInfo, pbr::{ExtendedMaterial, MaterialExtension}, render::render_resource::{AsBindGroup, Extent3d, TextureDimension}};
 use bevy_materialize::animation::{GenericMaterialAnimationState, MaterialAnimation, MaterialAnimations};
 use bsp::TEXTURE_PREFIX;
@@ -27,11 +25,6 @@ pub struct SpecialTexturesConfig {
     #[default(5.)]
     pub texture_animation_fps: f32,
 
-    /// Set of textures to made made invisible on map load. (Default: ["clip", "skip"])
-    #[default(["clip".s(), "skip".s()].into())]
-    #[builder(into)]
-    pub invisible_textures: HashSet<String>,
-
     #[default(QuakeSkyMaterial::default)]
     pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
 
@@ -42,135 +35,119 @@ impl SpecialTexturesConfig {
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// Inserts a new invisible texture.
-    pub fn invisible_texture(mut self, texture: impl ToString) -> Self {
-        self.invisible_textures.insert(texture.to_string());
-        self
-    }
 }
 
 /// If a [SpecialTexturesConfig] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
     let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
 
-    fn load_internal(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial, special_textures_config: &SpecialTexturesConfig) -> Option<GenericMaterial> {
-        // We save a teeny tiny bit of time by only cloning if we need to :)
-        let mut material = material.clone();
-        if let Some(exposure) = view.tb_config.lightmap_exposure {
-            material.lightmap_exposure = exposure;
-        }
-    
-        if view.name.starts_with('*') {
-            let water_alpha: f32 = view.map.worldspawn()
-                .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
-                .unwrap_or(1.);
-    
-            if water_alpha < 1. {
-                material.alpha_mode = AlphaMode::Blend;
-                material.base_color = Color::srgba(1., 1., 1., water_alpha);
-            }
-    
-            let handle = view.add_material(LiquidMaterial {
-                base: material,
-                extension: (special_textures_config.default_liquid_material)(),
-            });
-            
-            return Some(GenericMaterial {
-                handle: handle.into(),
-                properties: default(),
-            });
-        } else if view.name.starts_with("sky") {
-            // We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
-            
-            fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
-                // Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
-                let mut data: Vec<u8> = Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
+    // We save a teeny tiny bit of time by only cloning if we need to :)
+    let mut material = material.clone();
+    if let Some(exposure) = view.tb_config.lightmap_exposure {
+        material.lightmap_exposure = exposure;
+    }
 
-                // Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
-                for y in 0..view.image.height() {
-                    for x in x_range.clone() {
-                        if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
-                            data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
-                            // data.extend([127, 127, 127, 0]);
-                        } else {
-                            data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
-                        }
+    if view.name.starts_with('*') {
+        let water_alpha: f32 = view.map.worldspawn()
+            .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
+            .unwrap_or(1.);
+
+        if water_alpha < 1. {
+            material.alpha_mode = AlphaMode::Blend;
+            material.base_color = Color::srgba(1., 1., 1., water_alpha);
+        }
+
+        let handle = view.add_material(LiquidMaterial {
+            base: material,
+            extension: (special_textures_config.default_liquid_material)(),
+        });
+        
+        return Some(GenericMaterial {
+            handle: handle.into(),
+            properties: default(),
+        });
+    } else if view.name.starts_with("sky") {
+        // We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
+        
+        fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
+            // Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
+            let mut data: Vec<u8> = Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
+
+            // Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
+            for y in 0..view.image.height() {
+                for x in x_range.clone() {
+                    if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
+                        data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
+                        // data.extend([127, 127, 127, 0]);
+                    } else {
+                        data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
                     }
                 }
-                
-                Image::new(
-                    Extent3d { width: view.image.width() / 2, height: view.image.height(), depth_or_array_layers: 1 },
-                    TextureDimension::D2,
-                    data,
-                    view.image.texture_descriptor.format,
-                    view.tb_config.bsp_textures_asset_usages,
-                )
             }
             
-            let fg = separate_sky_image(view, 0..view.image.width() / 2, true);
-            let fg = view.parent_view.load_context.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
-
-            let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
-            let bg = view.parent_view.load_context.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
-    
-            let handle = view.add_material(QuakeSkyMaterial {
-                fg,
-                bg,
-                ..(special_textures_config.default_quake_sky_material)()
-            });
-    
-            return Some(GenericMaterial {
-                handle: handle.into(),
-                properties: default(),
-            });
-        } else if view.name.starts_with('+') {
-            let Some(embedded_textures) = view.embedded_textures else { return None };
-            
-            let mut chars = view.name.chars();
-            chars.next();
-    
-            let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
-            let name_content = &view.name[2..];
-            
-            let mut frames = Vec::new();
-            let mut frame_num = 0;
-            while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
-                frames.push(frame_handle.clone());
-                frame_num += 1;
-            }
-            
-            let handle = view.add_material(material);
-    
-            let mut generic_material = GenericMaterial::new(handle);
-    
-            generic_material.set_property(GenericMaterial::ANIMATION, MaterialAnimations {
-                next: None,
-                images: Some(MaterialAnimation {
-                    fps: special_textures_config.texture_animation_fps,
-                    value: bevy::utils::HashMap::from([
-                        ("base_color_texture".s(), frames),
-                    ]),
-                    state: GenericMaterialAnimationState {
-                        current_frame: texture_frame_idx.wrapping_sub(1) as usize,
-                        next_frame_time: Instant::now(),
-                    },
-                }),
-            });
-    
-            return Some(generic_material);
-        }
-    
-        None
-    }
-    
-    load_internal(view, material, special_textures_config).map(|mut material| {
-        if special_textures_config.invisible_textures.contains(view.name) {
-            material.set_property(GenericMaterial::VISIBILITY, Visibility::Hidden);
+            Image::new(
+                Extent3d { width: view.image.width() / 2, height: view.image.height(), depth_or_array_layers: 1 },
+                TextureDimension::D2,
+                data,
+                view.image.texture_descriptor.format,
+                view.tb_config.bsp_textures_asset_usages,
+            )
         }
         
-        material
-    })
+        let fg = separate_sky_image(view, 0..view.image.width() / 2, true);
+        let fg = view.parent_view.load_context.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
+
+        let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
+        let bg = view.parent_view.load_context.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
+
+        let handle = view.add_material(QuakeSkyMaterial {
+            fg,
+            bg,
+            ..(special_textures_config.default_quake_sky_material)()
+        });
+
+        return Some(GenericMaterial {
+            handle: handle.into(),
+            properties: default(),
+        });
+    } else if view.name.starts_with('+') {
+        let Some(embedded_textures) = view.embedded_textures else { return None };
+        
+        let mut chars = view.name.chars();
+        chars.next();
+
+        let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
+        let name_content = &view.name[2..];
+        
+        let mut frames = Vec::new();
+        let mut frame_num = 0;
+        while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
+            frames.push(frame_handle.clone());
+            frame_num += 1;
+        }
+        
+        let handle = view.add_material(material);
+
+        let mut generic_material = GenericMaterial::new(handle);
+
+        generic_material.set_property(GenericMaterial::ANIMATION, MaterialAnimations {
+            next: None,
+            images: Some(MaterialAnimation {
+                fps: special_textures_config.texture_animation_fps,
+                value: bevy::utils::HashMap::from([
+                    ("base_color_texture".s(), frames),
+                ]),
+                state: GenericMaterialAnimationState {
+                    current_frame: texture_frame_idx.wrapping_sub(1) as usize,
+                    next_frame_time: Instant::now(),
+                },
+            }),
+        });
+
+        return Some(generic_material);
+    }
+
+    None
 }
 
 /// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.
