@@ -161,11 +161,15 @@ This writes it out every time your app starts, but depending on what you want to
 
 After you write it out, the folder the files need to end up in is your TrenchBroom games configuration folder which you can find the path of [here](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
 
-## Materials and bevy_materialize
+## Materials and `bevy_materialize`
 
 Because Bevy's material system so heavily relies on generics, storing and inserting arbitrary materials at runtime is challenging.
 
-To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize).
+To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize), which `bevy_trenchbroom` uses.
+
+`TrenchBroomPlugin` Automatically adds `MaterializePlugin` with the default `toml` deserializer. If you wish to use a different deserializer, add your own `MaterializePlugin` before adding `TrenchBroomPlugin`.
+
+By default, for loose assets, it first looks for `<texture>.<GenericMaterial extension>` (.material by default), if the asset can't be found, it loads `<texture>.<Image extension>` (.png by default) as a fallback.
 
 ## Loading maps
 
