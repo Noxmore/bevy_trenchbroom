@@ -178,7 +178,7 @@ impl AssetLoader for QuakeMapLoader {
                                 name: texture,
                                 tb_config: &self.tb_server.config,
                                 load_context,
-                                map: &entities,
+                                entities: &entities,
                                 alpha_mode: None,
                                 embedded_textures: None,
                             })

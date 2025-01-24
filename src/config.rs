@@ -331,7 +331,7 @@ pub struct TextureLoadView<'a, 'b> {
     pub name: &'a str,
     pub tb_config: &'a TrenchBroomConfig,
     pub load_context: &'a mut LoadContext<'b>,
-    pub map: &'a QuakeMapEntities,
+    pub entities: &'a QuakeMapEntities,
     /// `Some` if it is determined that a specific alpha mode should be used for a material, such as in some embedded textures.
     pub alpha_mode: Option<AlphaMode>,
     /// If the map contains embedded textures, this will be a map of texture names to image handles.

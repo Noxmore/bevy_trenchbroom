@@ -48,7 +48,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
     }
 
     if view.name.starts_with('*') {
-        let water_alpha: f32 = view.map.worldspawn()
+        let water_alpha: f32 = view.entities.worldspawn()
             .and_then(|worldspawn| worldspawn.get("water_alpha").ok())
             .unwrap_or(1.);
 

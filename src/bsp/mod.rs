@@ -122,7 +122,7 @@ impl AssetLoader for BspLoader {
                             name,
                             tb_config: &self.tb_server.config,
                             load_context,
-                            map: &entities,
+                            entities: &entities,
                             alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
                             embedded_textures: Some(&embedded_texture_images),
                         },
@@ -231,7 +231,7 @@ impl AssetLoader for BspLoader {
                             name: &exported_mesh.texture,
                             tb_config: &self.tb_server.config,
                             load_context,
-                            map: &entities,
+                            entities: &entities,
                             alpha_mode: None,
                             embedded_textures: Some(&embedded_texture_images),
                         }));
