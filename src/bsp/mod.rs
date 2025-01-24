@@ -29,7 +29,7 @@ pub struct Bsp {
 
     #[reflect(ignore)]
     pub data: BspData,
-    pub qmap: QuakeMapEntities,
+    pub entities: QuakeMapEntities,
 }
 
 #[derive(Reflect, Debug)]
@@ -413,7 +413,7 @@ impl AssetLoader for BspLoader {
                 models: bsp_models,
 
                 data,
-                qmap: entities,
+                entities,
             })
         })
     }
