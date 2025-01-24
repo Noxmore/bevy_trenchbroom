@@ -17,6 +17,7 @@ pub mod fgd;
 pub mod physics;
 
 use bevy_materialize::MaterializeMarkerPlugin;
+use bsp::BspDataAsset;
 pub(crate) use prelude::*;
 
 // Re-exports
@@ -70,6 +71,7 @@ impl Plugin for TrenchBroomPlugin {
             .insert_resource(TrenchBroomServer::new(self.config.clone()))
             .init_asset::<qmap::QuakeMap>()
             .init_asset_loader::<qmap::QuakeMapLoader>()
+            .init_asset::<BspDataAsset>()
             .init_asset::<bsp::Bsp>()
             .init_asset_loader::<bsp::BspLoader>();
     }

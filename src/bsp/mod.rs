@@ -27,10 +27,13 @@ pub struct Bsp {
     // TODO
     // pub entity_brushes: Vec<Handle<BrushList>>,
 
-    #[reflect(ignore)]
-    pub data: BspData,
+    pub data: Handle<BspDataAsset>,
     pub entities: QuakeMapEntities,
 }
+
+/// Store [BspData] in an asset so that it can be easily referenced from other places without referencing the [Bsp] (such as in the [Bsp]'s scene).
+#[derive(Asset, TypePath, Debug, Clone, Default)]
+pub struct BspDataAsset(pub BspData);
 
 #[derive(Reflect, Debug)]
 pub struct BspModel {
@@ -252,6 +255,12 @@ impl AssetLoader for BspLoader {
                 models.push(model);
             }
 
+            // We need this here while we still have access to data for later
+            let light_grid_octree = data.bspx.parse_light_grid_octree(&data.parse_ctx);
+            
+            // So we can access the handle in the scene
+            let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(data));
+            
             // Spawn entities into scene
             for (map_entity_idx, map_entity) in entities.iter().enumerate() {
                 let Some(classname) = map_entity.properties.get("classname") else { continue };
@@ -337,7 +346,7 @@ impl AssetLoader for BspLoader {
             
             // Calculate irradiance volumes for light grids.
             // Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
-            if let Some(light_grid) = data.bspx.parse_light_grid_octree(&data.parse_ctx) {
+            if let Some(light_grid) = light_grid_octree {
                 let mut light_grid = light_grid.map_err(io::Error::other)?;
                 light_grid.mins = self.tb_server.config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
                 // We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
@@ -412,7 +421,7 @@ impl AssetLoader for BspLoader {
                 irradiance_volume,
                 models: bsp_models,
 
-                data,
+                data: data_handle,
                 entities,
             })
         })
