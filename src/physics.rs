@@ -89,7 +89,9 @@ impl PhysicsPlugin {
                 ));
             }
 
-            commands.entity(entity).insert(Collider::compound(colliders));
+            commands.entity(entity)
+                .insert(Collider::compound(colliders))
+                .insert_if_new(RigidBody::Static);
         }
     }
 
@@ -108,6 +110,7 @@ impl PhysicsPlugin {
                 continue;
             };
 
+            // TODO test if we need a RigidBody::Fixed
             commands.entity(entity).insert(collider);
         }
     }
@@ -127,7 +130,9 @@ impl PhysicsPlugin {
                 continue;
             };
 
-            commands.entity(entity).insert(collider);
+            commands.entity(entity)
+                .insert(collider)
+                .insert_if_new(RigidBody::Static);
         }
     }
 }
