@@ -2,7 +2,7 @@ use bevy::asset::{AssetLoader, AsyncReadExt};
 use brush::{generate_mesh_from_brush_polygons, Brush, BrushSurfacePolygon};
 use config::TextureLoadView;
 use fgd::FgdType;
-use geometry::{GeometryProviderMeshView, MapGeometryTexture};
+use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
 
 use crate::*;
 
@@ -11,6 +11,8 @@ use crate::*;
 pub struct QuakeMap {
     pub scene: Handle<Scene>,
     pub meshes: Vec<Handle<Mesh>>,
+    /// Maps from entity indexes to brush lists.
+    pub brush_lists: HashMap<usize, Handle<BrushList>>,
     pub entities: QuakeMapEntities,
 }
 
@@ -125,6 +127,7 @@ impl AssetLoader for QuakeMapLoader {
             let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
             let mut mesh_handles = Vec::new();
+            let mut brush_lists = HashMap::new();
             
             let mut world = World::new();
 
@@ -228,6 +231,11 @@ impl AssetLoader for QuakeMapLoader {
 
                         mesh_handles.push(handle);
                     }
+
+                    let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
+                    brush_lists.insert(map_entity_idx, brush_list_handle.clone());
+                    
+                    world.entity_mut(entity_id).insert(Brushes::Shared(brush_list_handle));
                 }
 
                 let mut entity = world.entity_mut(entity_id);
@@ -239,6 +247,7 @@ impl AssetLoader for QuakeMapLoader {
             Ok(QuakeMap {
                 scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
                 meshes: mesh_handles,
+                brush_lists,
                 entities,
             })
         })
