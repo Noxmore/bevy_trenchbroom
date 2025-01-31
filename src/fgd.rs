@@ -150,8 +150,8 @@ impl FgdType for Aabb {
     fn fgd_parse(input: &str) -> anyhow::Result<Self> {
         let values = <[f32; 6]>::fgd_parse(input)?;
         Ok(Aabb::from_min_max(
-            Vec3::from_slice(&values[0..=3]),
-            Vec3::from_slice(&values[3..=6]),
+            Vec3::from_slice(&values[0..3]),
+            Vec3::from_slice(&values[3..6]),
         ))
     }
     fn fgd_to_string(&self) -> String {
