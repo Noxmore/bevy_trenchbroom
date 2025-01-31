@@ -1,5 +1,5 @@
 use bevy::{asset::{io::AssetReaderError, AssetLoadError, LoadContext}, render::render_asset::RenderAssetUsages};
-use class::{ErasedQuakeClass, QuakeClassType, GLOBAL_CLASS_REGISTRY};
+use class::{ErasedQuakeClass, QuakeClassType};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -300,7 +300,7 @@ impl TrenchBroomConfig {
         }
 
         #[cfg(feature = "auto_register")] {
-            self.entity_classes.get(classname).or_else(|| GLOBAL_CLASS_REGISTRY.get(classname).copied())
+            self.entity_classes.get(classname).or_else(|| class::GLOBAL_CLASS_REGISTRY.get(classname).copied())
         }
     }
 
@@ -311,7 +311,7 @@ impl TrenchBroomConfig {
         }
 
         #[cfg(feature = "auto_register")] {
-            self.entity_classes.values().chain(GLOBAL_CLASS_REGISTRY.values().copied())
+            self.entity_classes.values().chain(class::GLOBAL_CLASS_REGISTRY.values().copied())
         }
     }
 
