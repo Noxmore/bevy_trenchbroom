@@ -13,6 +13,7 @@ impl Plugin for GeometryPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_asset::<BrushList>()
+            .register_type::<Brushes>()
         ;
     }
 }
