@@ -218,7 +218,7 @@ impl AssetLoader for BspLoader {
                 let mut model = Model::default();
                 
                 for exported_mesh in model_output.meshes {
-                    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
+                    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, self.tb_server.config.brush_mesh_asset_usages);
 
                     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());
                     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals.into_iter().map(convert_vec3(&self.tb_server)).collect_vec());

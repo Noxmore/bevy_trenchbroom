@@ -163,8 +163,8 @@ pub struct TrenchBroomConfig {
     #[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
     pub global_geometry_provider: Hook<GeometryProviderFn>,
 
-    /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
-    #[default(RenderAssetUsages::RENDER_WORLD)]
+    /// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::all] (kept around)
+    #[default(RenderAssetUsages::all())]
     pub brush_mesh_asset_usages: RenderAssetUsages,
 
     /// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
