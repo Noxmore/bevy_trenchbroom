@@ -16,25 +16,36 @@ pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
     }
 }
 
-pub trait ZUpToYUp {
+pub trait BevyTrenchbroomCoordinateConversions {
     /// Converts from a z-up, y-forward coordinate space to a y-up, negative-z-forward coordinate space.
     fn z_up_to_y_up(self) -> Self;
+
+    /// Converts from a y-up, negative-z-forward coordinate space to a z-up, y-forward coordinate space.
+    fn y_up_to_z_up(self) -> Self;
 }
 
-impl ZUpToYUp for DVec3 {
+impl BevyTrenchbroomCoordinateConversions for DVec3 {
     #[inline]
     fn z_up_to_y_up(self) -> Self {
         dvec3(self.x, self.z, -self.y)
     }
+
+    #[inline]
+    fn y_up_to_z_up(self) -> Self {
+        dvec3(self.x, -self.z, self.y)
+    }
 }
-impl ZUpToYUp for Vec3 {
+impl BevyTrenchbroomCoordinateConversions for Vec3 {
     #[inline]
     fn z_up_to_y_up(self) -> Self {
         vec3(self.x, self.z, -self.y)
     }
-}
 
-// pub const Z_UP_TO_Y_UP: Quat = Quat::
+    #[inline]
+    fn y_up_to_z_up(self) -> Self {
+        vec3(self.x, -self.z, self.y)
+    }
+}
 
 pub(crate) trait AlmostEqual<T> {
     type Margin;
@@ -189,10 +200,14 @@ pub fn quake_light_to_lux(light: f32) -> f32 {
 }
 
 #[test]
-fn z_up_to_y_up() {
+fn coordinate_conversions() {
     assert_eq!(Vec3::X.z_up_to_y_up(), Vec3::X);
     assert_eq!(Vec3::Y.z_up_to_y_up(), Vec3::NEG_Z);
     assert_eq!(Vec3::Z.z_up_to_y_up(), Vec3::Y);
+
+    assert_eq!(Vec3::X.z_up_to_y_up().y_up_to_z_up(), Vec3::X);
+    assert_eq!(Vec3::Y.z_up_to_y_up().y_up_to_z_up(), Vec3::Y);
+    assert_eq!(Vec3::Z.z_up_to_y_up().y_up_to_z_up(), Vec3::Z);
 }
 
 #[test]
