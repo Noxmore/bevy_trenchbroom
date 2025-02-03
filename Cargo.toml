@@ -34,7 +34,7 @@ bevy = { version = "0.15", default-features = false, features = [
     "bevy_pbr",
 ] }
 bevy_reflect = { version = "0.15", features = ["documentation"] }
-bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "1d95c4e" }
+bevy_materialize = "0.1.0"
 # bevy_materialize = { path = "/d/_dev/_lib/rust/bevy_materialize" } # TODO tmp
 bevy_rapier3d = { version = "0.28", optional = true }
 avian3d = { version = "0.2", optional = true }
