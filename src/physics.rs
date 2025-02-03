@@ -25,8 +25,10 @@ impl Plugin for PhysicsPlugin {
             .register_type::<ConvexCollision>()
             .register_type::<TrimeshCollision>()
 
-            .add_systems(Update, Self::create_convex_colliders)
-            .add_systems(Update, Self::create_trimesh_colliders)
+            .add_systems(Update, (
+                Self::create_convex_colliders,
+                Self::create_trimesh_colliders,
+            ))
         ;
     }
 }
