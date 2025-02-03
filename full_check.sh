@@ -9,8 +9,8 @@ cargo clippy --all-targets
 echo cargo clippy --no-default-features --all-targets
 cargo clippy --no-default-features --all-targets
 
-echo cargo c --features rapier --all-targets
-cargo c --features rapier --all-targets
+echo cargo clippy --features rapier --all-targets
+cargo clippy --features rapier --all-targets
 
 echo cargo clippy --features avian --all-targets
 cargo clippy --features avian --all-targets
