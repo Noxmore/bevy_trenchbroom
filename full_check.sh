@@ -18,5 +18,5 @@ cargo clippy --features avian --all-targets
 echo cargo fmt --all --check
 cargo fmt --all --check
 
-echo cargo test
-cargo test
+echo cargo test --features avian
+cargo test --features avian

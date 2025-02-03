@@ -51,7 +51,7 @@ use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 // The required worldspawn class makes up the main structural world geometry and settings. Exactly one exists in every map.
-#[derive(SolidClass, Component, Reflect)]
+#[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
 #[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn {
@@ -119,6 +119,7 @@ impl Default for StaticProp {
     fn default() -> Self {
         Self {
             model: default(),
+            skin: 0,
             collision_type: CollisionType::Model,
             enable_shadows: true,
         }
