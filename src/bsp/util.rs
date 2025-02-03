@@ -91,13 +91,8 @@ impl IrradianceVolumeBuilder {
 	#[track_caller]
 	pub fn put_all(&mut self, pos: impl Into<UVec3>, color: [u8; 4]) {
 		#[inline]
-		fn mul_color(color: [u8; 4], multiplier: [f32; 3]) -> [u8; 4] {
-			[
-				(color[0] as f32 * multiplier[0]) as u8,
-				(color[1] as f32 * multiplier[1]) as u8,
-				(color[2] as f32 * multiplier[2]) as u8,
-				color[3],
-			]
+		fn mul_color([r, g, b, a]: [u8; 4], [mul_r, mul_g, mul_b]: [f32; 3]) -> [u8; 4] {
+			[(r as f32 * mul_r) as u8, (g as f32 * mul_g) as u8, (b as f32 * mul_b) as u8, a]
 		}
 
 		let pos = pos.into();
