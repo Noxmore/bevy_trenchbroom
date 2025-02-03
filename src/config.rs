@@ -5,7 +5,7 @@ use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
 use special_textures::load_special_texture;
-use util::{trenchbroom_gltf_rotation_fix, ZUpToYUp};
+use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 
 use crate::*;
 
@@ -324,6 +324,16 @@ impl TrenchBroomConfig {
     pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
         vec.z_up_to_y_up() / self.scale as f64
     }
+
+    /// The opposite of [Self::to_bevy_space], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
+    pub fn from_bevy_space(&self, vec: Vec3) -> Vec3 {
+        vec.y_up_to_z_up() * self.scale
+    }
+
+    /// The opposite of [Self::to_bevy_space_f64], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
+    pub fn from_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
+        vec.y_up_to_z_up() * self.scale as f64
+    }
 }
 
 /// Various inputs available when loading textures.
@@ -627,4 +637,12 @@ fn hook_stack() {
     assert_eq!(hook(), 2);
     hook.set(|prev| Arc::new(move || prev() + 1));
     assert_eq!(hook(), 3);
+}
+
+#[test]
+fn coordinate_conversions() {
+    let config = TrenchBroomConfig::default();
+
+    let input = vec3(20.6, 1.72, 9.0);
+    assert_eq!(config.from_bevy_space(config.to_bevy_space(input)), input);
 }
