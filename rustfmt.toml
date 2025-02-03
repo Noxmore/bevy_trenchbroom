@@ -1,2 +1,3 @@
 max_width = 150
 single_line_let_else_max_width = 150
+hard_tabs = true

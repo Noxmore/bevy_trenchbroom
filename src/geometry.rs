@@ -10,104 +10,101 @@ pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
 
 pub struct GeometryPlugin;
 impl Plugin for GeometryPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .init_asset::<BrushList>()
-            .register_type::<Brushes>()
-        ;
-    }
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.init_asset::<BrushList>()
+			.register_type::<Brushes>()
+		;
+	}
 }
 
 /// Contains the brushes that a solid entity is made of.
-/// 
+///
 /// Can either be [Owned](Brushes::Owned), meaning the brushes are stored directly in the component itself (useful for dynamically editing brushes),
 /// or [Shared](Brushes::Shared), which reads from an asset instead for completely static geometry, usually from .
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 #[require(Transform)]
 pub enum Brushes {
-    Owned(BrushList),
-    Shared(Handle<BrushList>),
+	Owned(BrushList),
+	Shared(Handle<BrushList>),
 }
 impl Brushes {
-    pub fn get<'l, 'w: 'l>(&'l self, brush_lists: &'w Assets<BrushList>) -> Option<&'l BrushList> {
-        match self {
-            Self::Owned(list) => Some(list),
-            Self::Shared(handle) => brush_lists.get(handle),
-        }
-    }
+	pub fn get<'l, 'w: 'l>(&'l self, brush_lists: &'w Assets<BrushList>) -> Option<&'l BrushList> {
+		match self {
+			Self::Owned(list) => Some(list),
+			Self::Shared(handle) => brush_lists.get(handle),
+		}
+	}
 }
 
 #[derive(Asset, Reflect, Debug, Clone)]
 pub struct BrushList(pub Vec<Brush>);
 impl std::ops::Deref for BrushList {
-    type Target = [Brush];
+	type Target = [Brush];
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
 }
-
 
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
 pub struct MapGeometryTexture {
-    pub name: String,
-    pub material: Handle<GenericMaterial>,
-    pub lightmap: Option<Handle<AnimatedLighting>>,
-    /// If the texture should be full-bright
-    pub special: bool,
+	pub name: String,
+	pub material: Handle<GenericMaterial>,
+	pub lightmap: Option<Handle<AnimatedLighting>>,
+	/// If the texture should be full-bright
+	pub special: bool,
 }
 
 pub struct GeometryProviderMeshView<'l> {
-    pub entity: Entity,
-    pub mesh: &'l mut Mesh,
-    pub texture: &'l mut MapGeometryTexture,
+	pub entity: Entity,
+	pub mesh: &'l mut Mesh,
+	pub texture: &'l mut MapGeometryTexture,
 }
 
 pub struct GeometryProviderView<'w, 'l, 'lc> {
-    pub world: &'w mut World,
-    pub entity: Entity,
-    pub tb_server: &'w TrenchBroomServer,
-    pub map_entity: &'w QuakeMapEntity,
-    pub map_entity_idx: usize,
-    pub meshes: Vec<GeometryProviderMeshView<'l>>,
-    pub load_context: &'l mut LoadContext<'lc>,
+	pub world: &'w mut World,
+	pub entity: Entity,
+	pub tb_server: &'w TrenchBroomServer,
+	pub map_entity: &'w QuakeMapEntity,
+	pub map_entity_idx: usize,
+	pub meshes: Vec<GeometryProviderMeshView<'l>>,
+	pub load_context: &'l mut LoadContext<'lc>,
 }
 
 pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
 
 #[derive(Default)]
 pub struct GeometryProvider {
-    pub providers: Vec<Box<GeometryProviderFn>>,
+	pub providers: Vec<Box<GeometryProviderFn>>,
 }
 
 impl GeometryProvider {
-    pub fn new() -> Self {
-        Self::default()
-    }
+	pub fn new() -> Self {
+		Self::default()
+	}
 
-    /// Add a function to the settings' spawner stack.
-    pub fn push(
-        mut self,
-        provider: impl Fn(&mut GeometryProviderView) + Send + Sync + 'static,
-    ) -> Self {
-        self.providers.push(Box::new(provider));
-        self
-    }
+	/// Add a function to the settings' spawner stack.
+	pub fn push(mut self, provider: impl Fn(&mut GeometryProviderView) + Send + Sync + 'static) -> Self {
+		self.providers.push(Box::new(provider));
+		self
+	}
 
-    /// Any intersecting vertices where the angle between their normals in radians is less than [DEFAULT_NORMAL_SMOOTH_THRESHOLD] will have their normals interpolated, making curved surfaces look smooth.
-    ///
-    /// Shorthand for `self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)` to reduce syntactic noise.
-    pub fn smooth_by_default_angle(self) -> Self {
-        self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)
-    }
+	/// Any intersecting vertices where the angle between their normals in radians is less than [DEFAULT_NORMAL_SMOOTH_THRESHOLD] will have their normals interpolated, making curved surfaces look smooth.
+	///
+	/// Shorthand for `self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)` to reduce syntactic noise.
+	pub fn smooth_by_default_angle(self) -> Self {
+		self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)
+	}
 
-    /// Any intersecting vertices where the angle between their normals in radians is less than `normal_smooth_threshold` will have their normals interpolated, making curved surfaces look smooth.
-    /// [DEFAULT_NORMAL_SMOOTH_THRESHOLD] is a good starting value for this, shorthanded by [smooth_by_default_angle\()](Self::smooth_by_default_angle).
-    ///
-    /// if `normal_smooth_threshold` is <= 0, nothing will happen.
-    pub fn smooth_by_angle(self, normal_smooth_threshold: f32) -> Self {
-        self.push(move |view| {
+	/// Any intersecting vertices where the angle between their normals in radians is less than `normal_smooth_threshold` will have their normals interpolated, making curved surfaces look smooth.
+	/// [DEFAULT_NORMAL_SMOOTH_THRESHOLD] is a good starting value for this, shorthanded by [smooth_by_default_angle\()](Self::smooth_by_default_angle).
+	///
+	/// if `normal_smooth_threshold` is <= 0, nothing will happen.
+	pub fn smooth_by_angle(self, normal_smooth_threshold: f32) -> Self {
+		self.push(move |view| {
             if normal_smooth_threshold <= 0. {
                 return; // The user doesn't want to smooth after all!
             }
@@ -191,55 +188,59 @@ impl GeometryProvider {
                 }
             }
         })
-    }
+	}
 
-    /// Puts materials on mesh entities.
-    /// Will do nothing is your config is specified to be a server.
-    pub fn render(self) -> Self {
-        self.push(|view| {
-            if view.tb_server.config.is_server {
-                return;
-            }
+	/// Puts materials on mesh entities.
+	/// Will do nothing is your config is specified to be a server.
+	pub fn render(self) -> Self {
+		self.push(|view| {
+			if view.tb_server.config.is_server {
+				return;
+			}
 
-            for mesh_view in &view.meshes {
-                view.world.entity_mut(mesh_view.entity).insert(GenericMaterial3d(mesh_view.texture.material.clone()));
-            }
-        })
-    }
+			for mesh_view in &view.meshes {
+				view.world
+					.entity_mut(mesh_view.entity)
+					.insert(GenericMaterial3d(mesh_view.texture.material.clone()));
+			}
+		})
+	}
 
-    /// Inserts lightmaps if available.
-    pub fn with_lightmaps(self) -> Self {
-        self.push(|view| {
-            for mesh_view in &view.meshes {
-                let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
-                
-                view.world.entity_mut(mesh_view.entity).insert(AnimatedLightmap(animated_lighting_handle.clone()));
-            }
-        })
-    }
+	/// Inserts lightmaps if available.
+	pub fn with_lightmaps(self) -> Self {
+		self.push(|view| {
+			for mesh_view in &view.meshes {
+				let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
 
-    /// Inserts trimesh colliders on each mesh of this entity. This means that brushes will be hollow. Not recommended to use on physics objects.
-    #[cfg(any(feature = "rapier", feature = "avian"))]
-    pub fn trimesh_collider(self) -> Self {
-        self.push(|view| {
-            for mesh_view in &view.meshes {
-                // TODO
-                // if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
-                //     continue;
-                // }
+				view.world
+					.entity_mut(mesh_view.entity)
+					.insert(AnimatedLightmap(animated_lighting_handle.clone()));
+			}
+		})
+	}
 
-                view.world.entity_mut(mesh_view.entity).insert(physics::TrimeshCollision);
-            }
-        })
-    }
+	/// Inserts trimesh colliders on each mesh of this entity. This means that brushes will be hollow. Not recommended to use on physics objects.
+	#[cfg(any(feature = "rapier", feature = "avian"))]
+	pub fn trimesh_collider(self) -> Self {
+		self.push(|view| {
+			for mesh_view in &view.meshes {
+				// TODO
+				// if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
+				//     continue;
+				// }
 
-    // TODO convex colliders with BSPs/hull collision
+				view.world.entity_mut(mesh_view.entity).insert(physics::TrimeshCollision);
+			}
+		})
+	}
 
-    /// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
-    #[cfg(any(feature = "rapier", feature = "avian"))]
-    pub fn convex_collider(self) -> Self {
-        self.push(|view| {
-            view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
-        })
-    }
+	// TODO convex colliders with BSPs/hull collision
+
+	/// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
+	#[cfg(any(feature = "rapier", feature = "avian"))]
+	pub fn convex_collider(self) -> Self {
+		self.push(|view| {
+			view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
+		})
+	}
 }

@@ -13,45 +13,45 @@
 @group(1) @binding(0) var<uniform> globals: Globals;
 
 struct VertexOutput {
-    @builtin(position) position: vec4f,
-    @location(0) uv: vec3f,
+	@builtin(position) position: vec4f,
+	@location(0) uv: vec3f,
 }
 
 @vertex
 fn vertex(
-    @builtin(vertex_index) vert_idx: u32,
+	@builtin(vertex_index) vert_idx: u32,
 ) -> VertexOutput {
-    // Create a quad
-    var output: VertexOutput;
-    output.uv = vec3f(f32(vert_idx % 2), f32((vert_idx % 4) / 2), f32(vert_idx / 4));
-    output.position = vec4f(output.uv * 2 - 1, 1);
-    output.uv.y = 1 - output.uv.y; // TODO this is hacky
+	// Create a quad
+	var output: VertexOutput;
+	output.uv = vec3f(f32(vert_idx % 2), f32((vert_idx % 4) / 2), f32(vert_idx / 4));
+	output.position = vec4f(output.uv * 2 - 1, 1);
+	output.uv.y = 1 - output.uv.y; // TODO this is hacky
 
-    return output;
+	return output;
 }
 
 fn sample_atlas(input: texture_3d<f32>, animator_idx: u32, coords: vec3u) -> vec4f {
-    var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
-    if animators[animator_idx].interpolate != 0 {
-        mul = mix(mul, animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len], (globals.time * animators[animator_idx].speed) % 1);
-    }
+	var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
+	if animators[animator_idx].interpolate != 0 {
+		mul = mix(mul, animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len], (globals.time * animators[animator_idx].speed) % 1);
+	}
 
-    return textureLoad(input, coords % textureDimensions(input), 0) * vec4f(mul, 1);
+	return textureLoad(input, coords % textureDimensions(input), 0) * vec4f(mul, 1);
 }
 
 @fragment
 fn fragment(
-    input: VertexOutput,
+	input: VertexOutput,
 ) -> @location(0) vec4f {
-    var color = vec4f(0, 0, 0, 1);
+	var color = vec4f(0, 0, 0, 1);
 
-    let coords = vec3u(input.uv * vec3f(full_texture_size)) % textureDimensions(input_texture_mapping);
-    let mapping: vec4u = textureLoad(input_texture_mapping, coords, 0);
+	let coords = vec3u(input.uv * vec3f(full_texture_size)) % textureDimensions(input_texture_mapping);
+	let mapping: vec4u = textureLoad(input_texture_mapping, coords, 0);
 
-    color += sample_atlas(input_texture_0, mapping.x, coords);
-    color += sample_atlas(input_texture_1, mapping.y, coords);
-    color += sample_atlas(input_texture_2, mapping.z, coords);
-    color += sample_atlas(input_texture_3, mapping.w, coords);
+	color += sample_atlas(input_texture_0, mapping.x, coords);
+	color += sample_atlas(input_texture_1, mapping.y, coords);
+	color += sample_atlas(input_texture_2, mapping.z, coords);
+	color += sample_atlas(input_texture_3, mapping.w, coords);
 
-    return color;
+	return color;
 }

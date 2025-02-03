@@ -1,7 +1,10 @@
-use bevy::{ecs::{component::ComponentId, world::DeferredWorld}, prelude::*};
+use bevy::math::*;
+use bevy::{
+	ecs::{component::ComponentId, world::DeferredWorld},
+	prelude::*,
+};
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
-use bevy::math::*;
 use nil::prelude::*;
 
 #[derive(SolidClass, Component, Reflect)]
@@ -20,82 +23,78 @@ pub struct FuncDoor;
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {
-    fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
-        let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
-        let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
-        let material = asset_server.add(StandardMaterial::default());
+	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
+		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
+		let material = asset_server.add(StandardMaterial::default());
 
-        world.commands().entity(entity).insert((
-            Mesh3d(cube),
-            MeshMaterial3d(material),
-        ));
-    }
+		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
+	}
 }
 
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[reflect(Component)]
 #[require(Transform)]
 pub struct Light {
-    #[default(Color::srgb(1., 1., 1.))]
-    pub _color: Color,
-    #[default(300.)]
-    pub light: f32,
-    #[default(0)]
-    pub delay: u8,
+	#[default(Color::srgb(1., 1., 1.))]
+	pub _color: Color,
+	#[default(300.)]
+	pub light: f32,
+	#[default(0)]
+	pub delay: u8,
 }
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins
-            .set(ImagePlugin {
-                default_sampler: repeating_image_sampler(false),
-            })
-        )
-
-        // bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
-        .add_plugins(PlayerPlugin)
-        .insert_resource(MovementSettings {
-            sensitivity: 0.00005,
-            speed: 6.,
-        })
-        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-        // .add_plugins(bevy::pbr::wireframe::WireframePlugin)
-        // .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
-        // .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
-        // .insert_resource(bevy::pbr::DefaultOpaqueRendererMethod::deferred()) // TODO
-        
-        .add_plugins(TrenchBroomPlugin::new(TrenchBroomConfig::new("bevy_trenchbroom_example")))
-        .add_systems(PostStartup, setup_scene)
-        .add_systems(Update, spawn_lights)
-        .run();
+	App::new()
+		.add_plugins(DefaultPlugins.set(ImagePlugin {
+			default_sampler: repeating_image_sampler(false),
+		}))
+		// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
+		.add_plugins(PlayerPlugin)
+		.insert_resource(MovementSettings {
+			sensitivity: 0.00005,
+			speed: 6.,
+		})
+		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+		// .add_plugins(bevy::pbr::wireframe::WireframePlugin)
+		// .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
+		// .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
+		// .insert_resource(bevy::pbr::DefaultOpaqueRendererMethod::deferred()) // TODO
+		.add_plugins(TrenchBroomPlugin::new(TrenchBroomConfig::new("bevy_trenchbroom_example")))
+		.add_systems(PostStartup, setup_scene)
+		.add_systems(Update, spawn_lights)
+		.run();
 }
 
+#[rustfmt::skip]
 fn setup_scene(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut projection_query: Query<&mut Projection>,
+	mut commands: Commands,
+	asset_server: Res<AssetServer>,
+	mut projection_query: Query<&mut Projection>,
 ) {
-    commands.spawn(SceneRoot(asset_server.load("maps/example.map#Scene")));
+	commands.spawn(SceneRoot(asset_server.load("maps/example.map#Scene")));
 
-    // Wide FOV
-    for mut projection in &mut projection_query {
-        *projection = Projection::Perspective(PerspectiveProjection {
-            fov: 90_f32.to_radians(),
-            ..default()
-        });
-    }
+	// Wide FOV
+	for mut projection in &mut projection_query {
+		*projection = Projection::Perspective(PerspectiveProjection {
+			fov: 90_f32.to_radians(),
+			..default()
+		});
+	}
 }
 
+#[rustfmt::skip]
 fn spawn_lights(
-    mut commands: Commands,
-    query: Query<(Entity, &Light), Changed<Light>>,
+	mut commands: Commands,
+	query: Query<(Entity, &Light),
+	Changed<Light>>,
 ) {
-    for (entity, light) in &query {
-        commands.entity(entity).insert(PointLight {
-            color: light._color,
-            intensity: light.light / 1000.,
-            shadows_enabled: true,
-            ..default()
-        });
-    }
+	for (entity, light) in &query {
+		commands.entity(entity).insert(PointLight {
+			color: light._color,
+			intensity: light.light / 1000.,
+			shadows_enabled: true,
+			..default()
+		});
+	}
 }
