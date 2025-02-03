@@ -1,4 +1,4 @@
-use bevy::image::{ImageAddressMode, ImageSamplerDescriptor};
+use bevy::{ecs::world::DeferredWorld, image::{ImageAddressMode, ImageSamplerDescriptor}};
 
 use crate::*;
 
@@ -132,6 +132,18 @@ impl ConvertZeroToOne for f32 {
 impl ConvertZeroToOne for Vec2 {
     fn convert_zero_to_one(self) -> Self {
         vec2(self.x.convert_zero_to_one(), self.y.convert_zero_to_one())
+    }
+}
+
+pub trait IsSceneWorld {
+    /// Shorthand for checking if there isn't an `AppTypeRegistry` resource (chosen somewhat arbitrarily).
+    /// 
+    /// This is for component hooks, where if they are in a scene, they shouldn't fire.
+    fn is_scene_world(&self) -> bool;
+}
+impl IsSceneWorld for DeferredWorld<'_> {
+    fn is_scene_world(&self) -> bool {
+        !self.contains_resource::<AppTypeRegistry>()
     }
 }
 

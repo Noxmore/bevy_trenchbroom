@@ -40,6 +40,7 @@ pub use crate::{
     util::{
         TrenchBroomGltfRotationFix,
         repeating_image_sampler,
+        IsSceneWorld,
     },
 };
 
