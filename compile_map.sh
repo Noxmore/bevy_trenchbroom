@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# In order to be able to load the textures, we have to be in the textures folder when compiling
-cd assets/textures
+set -e
 
 # Meant to be used with ericw-tools in path
-qbsp -bsp2 -wrbrushes ../maps/$1.map ../maps/$1.bsp
-light -novanilla -bspx -lightgrid ../maps/$1.bsp
-vis ../maps/$1.bsp
+qbsp -bsp2 -wrbrushesonly -nosubdivide -nosoftware -path assets/textures assets/maps/$1.map assets/maps/$1.bsp
+light -extra4 -novanilla -bspx -lightgrid assets/maps/$1.bsp
+vis assets/maps/$1.bsp
 
 # I like to remove the log files since they are just duplicates of what we get in the terminal
-rm ../maps/$1.log
-rm ../maps/$1-light.log
-rm ../maps/$1-vis.log
+rm assets/maps/$1.log
+rm assets/maps/$1-light.log
+rm assets/maps/$1-vis.log
 
 # Also this is here, not really sure what it's for
-rm ../maps/$1.texinfo.json
+rm assets/maps/$1.texinfo.json # TODO contains phong information
