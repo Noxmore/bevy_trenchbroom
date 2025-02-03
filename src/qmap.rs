@@ -216,6 +216,8 @@ impl AssetLoader for QuakeMapLoader {
                         map_entity_idx,
                         meshes: mesh_views,
                         load_context,
+
+                        bsp_view: None,
                     };
                     
                     for provider in geometry_provider.providers {

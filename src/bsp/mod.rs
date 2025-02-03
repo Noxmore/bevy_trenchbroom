@@ -4,7 +4,7 @@ pub mod util;
 use bevy::{asset::{AssetLoader, LoadContext}, image::ImageSampler, render::{mesh::{Indices, PrimitiveTopology}, render_asset::RenderAssetUsages, render_resource::{Extent3d, TextureDimension, TextureFormat}}};
 use class::ErasedQuakeClass;
 use config::{EmbeddedTextureLoadView, TextureLoadView};
-use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
+use geometry::{BspGeometryProviderView, GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
 use q1bsp::{data::{bsp::BspTexFlags, bspx::LightGridCell}, mesh::lighting::ComputeLightmapAtlasError};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -33,7 +33,7 @@ pub struct Bsp {
 
 /// Store [BspData] in an asset so that it can be easily referenced from other places without referencing the [Bsp] (such as in the [Bsp]'s scene).
 #[derive(Asset, TypePath, Debug, Clone, Default)]
-pub struct BspDataAsset(pub BspData);
+pub struct BspDataAsset(pub Arc<BspData>);
 
 #[derive(Reflect, Debug)]
 pub struct BspModel {
@@ -82,6 +82,16 @@ impl AssetLoader for BspLoader {
             let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
             
             let data = BspData::parse(BspParseInput { bsp: &bytes, lit: lit.as_ref().map(Vec::as_slice) })?;
+            // load_context.get_label_handle() TODO USE THIS!!!
+
+            for face in &data.faces {
+                let tex_info = &data.tex_info[face.texture_info_idx.bsp2() as usize];
+                let Some(texture) = &data.textures[tex_info.texture_idx as usize] else { continue };
+                
+                if texture.header.name.as_str() == "skip" {
+                    println!("we have found skip");
+                }
+            }
 
             let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes()))
                 .map_err(|err| anyhow!("Parsing entities: {err}"))?;
@@ -259,7 +269,7 @@ impl AssetLoader for BspLoader {
             let light_grid_octree = data.bspx.parse_light_grid_octree(&data.parse_ctx);
             
             // So we can access the handle in the scene
-            let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(data));
+            let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(Arc::new(data)));
             
             // Spawn entities into scene
             for (map_entity_idx, map_entity) in entities.iter().enumerate() {
@@ -311,6 +321,11 @@ impl AssetLoader for BspLoader {
                             map_entity_idx,
                             meshes,
                             load_context,
+
+                            bsp_view: Some(BspGeometryProviderView {
+                                data_handle: &data_handle,
+                                model_idx,
+                            }),
                         };
                         
                         for provider in geometry_provider.providers {
@@ -437,7 +452,7 @@ fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3)
     |x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
-fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Option<usize> {
+pub fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Option<usize> {
     // Worldspawn always has model 0
     if class.info.name == "worldspawn" { return Some(0) }
     

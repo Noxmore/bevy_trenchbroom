@@ -1,6 +1,6 @@
 use bevy::{asset::LoadContext, render::mesh::VertexAttributeValues};
 use brush::Brush;
-use bsp::lighting::{AnimatedLighting, AnimatedLightmap};
+use bsp::{lighting::{AnimatedLighting, AnimatedLightmap}, BspDataAsset};
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -72,6 +72,14 @@ pub struct GeometryProviderView<'w, 'l, 'lc> {
     pub map_entity_idx: usize,
     pub meshes: Vec<GeometryProviderMeshView<'l>>,
     pub load_context: &'l mut LoadContext<'lc>,
+
+    /// If this geometry is being loaded from a BSP, this contains extra information.
+    pub bsp_view: Option<BspGeometryProviderView<'l>>,
+}
+
+pub struct BspGeometryProviderView<'l> {
+    pub data_handle: &'l Handle<BspDataAsset>,
+    pub model_idx: usize,
 }
 
 pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
@@ -240,6 +248,24 @@ impl GeometryProvider {
     pub fn convex_collider(self) -> Self {
         self.push(|view| {
             view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
+        })
+    }
+
+    /// Inserts a custom collider that uses BSP nodes. If not loading a bsp, falls back to convex collision.
+    #[cfg(any(feature = "rapier", feature = "avian"))]
+    pub fn hull_collider(self) -> Self {
+        self.push(|view| {
+            match &view.bsp_view {
+                None => {
+                    view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
+                }
+                Some(bsp_view) => {
+                    view.world.entity_mut(view.entity).insert(physics::BspHullCollision {
+                        bsp: bsp_view.data_handle.clone(),
+                        model_idx: bsp_view.model_idx,
+                    });
+                }
+            }
         })
     }
 }
