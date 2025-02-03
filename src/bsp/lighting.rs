@@ -184,6 +184,7 @@ pub struct LightmapAnimator {
 impl LightmapAnimator {
 	pub fn new<const N: usize>(speed: f32, interpolate: bool, sequence: [Vec3; N]) -> Self {
 		let mut target_sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
+		#[allow(clippy::manual_memcpy)]
 		for i in 0..N {
 			target_sequence[i] = sequence[i];
 		}

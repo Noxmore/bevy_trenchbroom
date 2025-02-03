@@ -130,12 +130,12 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			properties: default(),
 		});
 	} else if view.name.starts_with('+') {
-		let Some(embedded_textures) = view.embedded_textures else { return None };
+		let embedded_textures = view.embedded_textures?;
 
 		let mut chars = view.name.chars();
 		chars.next();
 
-		let Some(texture_frame_idx) = chars.next().and_then(|c| c.to_digit(10)) else { return None };
+		let texture_frame_idx = chars.next().and_then(|c| c.to_digit(10))?;
 		let name_content = &view.name[2..];
 
 		let mut frames = Vec::new();

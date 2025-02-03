@@ -48,9 +48,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.geometry = Some(meta.tokens);
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
-				} else if compare_path(&meta.path, "require") && opts.base.is_none() {
-					opts.base = Some(meta.tokens);
-				} else if compare_path(&meta.path, "base") {
+				} else if (compare_path(&meta.path, "require") && opts.base.is_none()) || compare_path(&meta.path, "base") {
 					opts.base = Some(meta.tokens);
 				}
 			}

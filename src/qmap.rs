@@ -44,7 +44,7 @@ impl QuakeMapEntities {
 	///
 	/// worldspawn should be the first entity, so normally this will be an `O(1)` operation
 	pub fn worldspawn(&self) -> Option<&QuakeMapEntity> {
-		self.iter().find(|ent| ent.classname() == Ok("worldspawn")).map(|v| &*v)
+		self.iter().find(|ent| ent.classname() == Ok("worldspawn"))
 	}
 }
 

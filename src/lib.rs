@@ -1,4 +1,7 @@
 #![doc = include_str!("../readme.md")]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::needless_doctest_main)]
 
 #[cfg(all(feature = "rapier", feature = "avian"))]
 compile_error!("can only have one collider backend enabled");

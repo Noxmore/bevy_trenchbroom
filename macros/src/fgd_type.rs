@@ -24,13 +24,10 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 				let mut doc = None;
 
 				for attr in attrs {
-					match attr.meta {
-						Meta::NameValue(meta) => {
-							if compare_path(&meta.path, "doc") {
-								doc = Some(meta.value);
-							}
-						}
-						_ => {}
+					let Meta::NameValue(meta) = attr.meta else { continue };
+
+					if compare_path(&meta.path, "doc") {
+						doc = Some(meta.value);
 					}
 				}
 

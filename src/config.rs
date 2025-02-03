@@ -248,7 +248,7 @@ impl TrenchBroomConfig {
 			material.alpha_mode = alpha_mode;
 		}
 
-		let generic_material = match load_special_texture(&mut view, &mut material) {
+		let generic_material = match load_special_texture(&mut view, &material) {
 			Some(v) => v,
 			None => GenericMaterial {
 				handle: view.add_material(material).into(),
@@ -627,7 +627,7 @@ impl TrenchBroomConfig {
 
 #[test]
 fn hook_stack() {
-	let mut hook: Hook<dyn Fn() -> i32> = Hook(Arc::new(|| 2));
+	let mut hook: Hook<dyn Fn() -> i32 + Send + Sync> = Hook(Arc::new(|| 2));
 	assert_eq!(hook(), 2);
 	hook.set(|prev| Arc::new(move || prev() + 1));
 	assert_eq!(hook(), 3);

@@ -136,10 +136,7 @@ impl Brush {
 		!self
 			.calculate_vertices()
 			.into_iter()
-			.map(|(vertex, _)| match plane.point_side(vertex) {
-				0.0.. => true,
-				_ => false,
-			})
+			.map(|(vertex, _)| matches!(plane.point_side(vertex), 0.0..))
 			.all_equal()
 			|| self.surfaces.iter().any(|surface| plane == &surface.plane)
 	}
@@ -188,7 +185,7 @@ impl Brush {
 
 				// Add the intersection to the map
 				for surface_index in [s1_i, s2_i, s3_i] {
-					vertex_map.entry(surface_index).or_insert_with(Vec::new).push(intersection);
+					vertex_map.entry(surface_index).or_default().push(intersection);
 				}
 			}
 		}

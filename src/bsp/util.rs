@@ -125,6 +125,7 @@ impl IrradianceVolumeBuilder {
 
 						if self.filled[offset_idx] {
 							contributors += 1;
+							#[allow(clippy::needless_range_loop)]
 							for color_channel in 0..4 {
 								color[color_channel] += self.data[offset_idx][color_channel] as u16;
 							}

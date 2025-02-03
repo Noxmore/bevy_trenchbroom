@@ -127,16 +127,16 @@ impl GeometryProvider {
                 // SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
                 let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
 
-                let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).map(VertexAttributeValues::as_float3).flatten() else {
+                let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).and_then(VertexAttributeValues::as_float3) else {
                     error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!", mesh_view.entity, ent_index);
                     return;
                 };
                 let positions_len = positions.len();
 
-                let Some(normals) = mesh2.attribute_mut(Mesh::ATTRIBUTE_NORMAL).map(|values| match values {
+                let Some(normals) = mesh2.attribute_mut(Mesh::ATTRIBUTE_NORMAL).and_then(|values| match values {
                     VertexAttributeValues::Float32x3(v) => Some(v),
                     _ => None,
-                }).flatten() else {
+                }) else {
                     error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!", mesh_view.entity, ent_index);
                     return;
                 };
@@ -147,7 +147,7 @@ impl GeometryProvider {
                     return;
                 }
 
-                for (i, normal) in normals.into_iter().enumerate() {
+                for (i, normal) in normals.iter_mut().enumerate() {
                     // Let's make this lower precision, just in case
                     let position = Vec3Ord(positions[i].map(|v| FloatOrd((v * 10000.).round() / 10000.)));
 

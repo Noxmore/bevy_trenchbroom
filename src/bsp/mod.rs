@@ -93,7 +93,7 @@ impl AssetLoader for BspLoader {
 
 			let data = BspData::parse(BspParseInput {
 				bsp: &bytes,
-				lit: lit.as_ref().map(Vec::as_slice),
+				lit: lit.as_deref(),
 			})?;
 
 			let quake_util_map =
@@ -122,7 +122,7 @@ impl AssetLoader for BspLoader {
 						TextureDimension::D2,
 						data.iter()
 							.copied()
-							.map(|pixel| {
+							.flat_map(|pixel| {
 								if self.tb_server.config.special_textures.is_some() && is_cutout_texture && pixel == 255 {
 									[0; 4]
 								} else {
@@ -130,7 +130,6 @@ impl AssetLoader for BspLoader {
 									[r, g, b, 255]
 								}
 							})
-							.flatten()
 							.collect(),
 						TextureFormat::Rgba8UnormSrgb,
 						self.tb_server.config.bsp_textures_asset_usages,
@@ -145,7 +144,7 @@ impl AssetLoader for BspLoader {
 			let embedded_textures: HashMap<String, BspEmbeddedTexture> = embedded_texture_images
 				.iter()
 				.map(|(name, (image, image_handle))| {
-					let is_cutout_texture = name.chars().next() == Some('{');
+					let is_cutout_texture = name.starts_with('{');
 
 					let material = (self.tb_server.config.load_embedded_texture)(EmbeddedTextureLoadView {
 						parent_view: TextureLoadView {
@@ -184,9 +183,7 @@ impl AssetLoader for BspLoader {
 						for (i, image) in slots.iter().enumerate() {
 							image.save_with_format(format!("target/lightmaps/{i}.png"), image::ImageFormat::Png).ok();
 						}
-						styles
-							.save_with_format(format!("target/lightmaps/styles.png"), image::ImageFormat::Png)
-							.ok();
+						styles.save_with_format("target/lightmaps/styles.png", image::ImageFormat::Png).ok();
 					}
 
 					let output = load_context.add_labeled_asset("LightmapOutput".s(), new_lightmap_output_image(size.x, size.y));
@@ -202,7 +199,7 @@ impl AssetLoader for BspLoader {
 									..default()
 								},
 								TextureDimension::D2,
-								image.pixels().map(|pixel| [pixel[0], pixel[1], pixel[2], 255]).flatten().collect(),
+								image.pixels().flat_map(|pixel| [pixel[0], pixel[1], pixel[2], 255]).collect(),
 								// Without Srgb all the colors are washed out, so i'm guessing ericw-tools outputs sRGB, though i can't find it documented anywhere.
 								TextureFormat::Rgba8UnormSrgb,
 								self.tb_server.config.bsp_textures_asset_usages,
@@ -439,6 +436,7 @@ impl AssetLoader for BspLoader {
 
 								for sample in samples {
 									// println!("{sample:?}");
+									#[allow(clippy::needless_range_loop)]
 									for i in 0..3 {
 										color[i] = color[i].saturating_add(sample.color[i]);
 									}
@@ -506,7 +504,7 @@ impl AssetLoader for BspLoader {
 }
 
 #[inline]
-fn convert_vec3<'a>(server: &'a TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + 'a {
+fn convert_vec3(server: &TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + '_ {
 	|x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
