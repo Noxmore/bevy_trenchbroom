@@ -56,10 +56,6 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		// .add_plugins(bevy::pbr::wireframe::WireframePlugin)
-		// .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
-		// .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
-		// .insert_resource(bevy::pbr::DefaultOpaqueRendererMethod::deferred()) // TODO
 		.add_plugins(TrenchBroomPlugin::new(TrenchBroomConfig::new("bevy_trenchbroom_example")))
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(Update, spawn_lights)
