@@ -59,7 +59,7 @@ smol = "2"
 [dev-dependencies]
 bevy = { version = "0.15", default-features = true }
 bevy_flycam = "0.15"
-bevy-inspector-egui = "0.28" # TODO TMP
+bevy-inspector-egui = "0.29" # TODO TMP
 
 [features]
 default = ["auto_register"]
