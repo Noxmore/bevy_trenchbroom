@@ -125,28 +125,12 @@ impl Brush {
 		}
 	}
 
-	/// Returns `true` if `point` is not on the outside of the brush, else `false`.
-	pub fn contains_point(&self, point: DVec3) -> bool {
-		// I don't use exactly 0 here just in case the floating-point precision is a bit off
-		self.surfaces.iter().all(|surface| surface.plane.point_side(point) < 0.000001)
-	}
-
-	/// Returns `true` if `plane` is intersecting the brush, or directly on one of the existing planes, else `false`.
-	pub fn contains_plane(&self, plane: &BrushPlane) -> bool {
-		!self
-			.calculate_vertices()
-			.into_iter()
-			.map(|(vertex, _)| matches!(plane.point_side(vertex), 0.0..))
-			.all_equal()
-			|| self.surfaces.iter().any(|surface| plane == &surface.plane)
-	}
-
 	/// Cuts the brush along the specified surface, adding said surface to the brush, and removing all other surfaces in front of it.
 	///
 	/// NOTE: If `along` is outside of the brush, it can make this brush invalid, if you are using untrusted data, check with [Brush::contains_plane].
 	pub fn cut(&mut self, along: BrushSurface) {
 		// TODO this should probably support cutting along a Vec<BrushSurface>
-		let vertices = self.calculate_vertices();
+		let vertices = self.calculate_vertices().collect_vec();
 
 		// We're going to take the current vector of surfaces, and add back the ones we want to keep
 		let mut old_surfaces = mem::take(&mut self.surfaces).into_iter().map(Option::from).collect_vec();
@@ -194,33 +178,54 @@ impl Brush {
 			.into_iter()
 			.map(|(surface_index, vertices)| BrushSurfacePolygon::new(&self.surfaces[surface_index], vertices))
 	}
+}
 
-	/// Calculates the intersections of the surfaces making up the brush,
-	/// returns a map that maps the intersection position to the indexes of the surfaces causing it,
+/// A 3D convex hull made of [`BrushPlane`]s (half-spaces).
+pub trait ConvexHull {
+	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone;
+
+	/// Returns `true` if `point` is not on the outside of the brush, else `false`.
+	fn contains_point(&self, point: DVec3) -> bool {
+		// I don't use exactly 0 here just in case the floating-point precision is a bit off
+		self.planes().all(|plane| plane.point_side(point) < 0.000001)
+	}
+
+	/// Calculates the intersections of the surfaces making up the hull,
+	/// returns an iterator that maps the intersection position to the indexes of the surfaces causing it,
 	/// and filters out the intersections that exist outside of the brush.
 	///
-	/// If you want a map of the surfaces to the intersections they cause, see [polygonize\()](Self::polygonize).
+	/// If you want a map of the surfaces to the intersections they cause for a [`Brush`], see [`Brush::polygonize`].
 	///
 	/// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
-	pub fn calculate_vertices(&self) -> Vec<(DVec3, [usize; 3])> {
-		let mut vertex_map = Vec::new();
-
-		for ((s1_i, s1), (s2_i, s2), (s3_i, s3)) in self.surfaces.iter().enumerate().tuple_combinations() {
-			if let Some(intersection) = BrushPlane::calculate_intersection_point([&s1.plane, &s2.plane, &s3.plane]) {
+	fn calculate_vertices(&self) -> impl Iterator<Item = (DVec3, [usize; 3])> {
+		self.planes()
+			.enumerate()
+			.tuple_combinations()
+			.flat_map(|((p1_i, p1), (p2_i, p2), (p3_i, p3))| {
+				let intersection = BrushPlane::calculate_intersection_point([p1, p2, p3])?;
 				// If the intersection does not exist within the bounds the hull, discard it
 				if !self.contains_point(intersection) {
-					continue;
+					return None;
 				}
 
-				vertex_map.push((intersection, [s1_i, s2_i, s3_i]));
-				// vertex_map.push(BrushVertex {
-				//     position: intersection,
-				//     surfaces: [s1, s2, s3],
-				// });
-			}
-		}
+				Some((intersection, [p1_i, p2_i, p3_i]))
+			})
+	}
 
-		vertex_map
+	/// Returns `true` if `plane` is intersecting the hull, or directly on one of the existing planes, else `false`.
+	fn contains_plane(&self, plane: &BrushPlane) -> bool {
+		!self
+			.calculate_vertices()
+			.map(|(vertex, _)| matches!(plane.point_side(vertex), 0.0..))
+			.all_equal()
+			|| self.planes().any(|lhs_plane| lhs_plane == plane)
+	}
+}
+
+impl ConvexHull for Brush {
+	#[inline]
+	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone {
+		self.surfaces.iter().map(|surface| &surface.plane)
 	}
 }
 
