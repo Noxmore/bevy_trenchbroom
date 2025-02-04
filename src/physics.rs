@@ -62,13 +62,16 @@ impl PhysicsPlugin {
 		mut commands: Commands,
 		query: Query<(Entity, &Brushes), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
+		bsp_brush_assets: Res<Assets<BspBrushesAsset>>,
 	) {
 		for (entity, brushes) in &query {
 			let mut colliders = Vec::new();
-			let Some(brushes) = brushes.get(&brush_lists) else { continue };
+			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &bsp_brush_assets) else { continue };
 
-			for (brush_idx, brush) in brushes.iter().enumerate() {
-				let vertices: Vec<Vec3> = brush.calculate_vertices().into_iter().map(|(pos, _)| pos.as_vec3()).collect();
+			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
+				if vertices.is_empty() {
+					continue;
+				}
 
 				let Some(collider) = Collider::convex_hull(&vertices) else {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
