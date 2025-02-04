@@ -395,7 +395,6 @@ impl AssetLoader for BspLoader {
 							map_entity,
 							map_entity_idx,
 							meshes,
-							load_context,
 						};
 
 						for provider in geometry_provider.providers {

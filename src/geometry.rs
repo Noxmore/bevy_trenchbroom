@@ -1,4 +1,4 @@
-use bevy::{asset::LoadContext, render::mesh::VertexAttributeValues};
+use bevy::render::mesh::VertexAttributeValues;
 use brush::Brush;
 use bsp::{
 	lighting::{AnimatedLighting, AnimatedLightmap},
@@ -62,14 +62,13 @@ pub struct GeometryProviderMeshView<'l> {
 	pub texture: &'l mut MapGeometryTexture,
 }
 
-pub struct GeometryProviderView<'w, 'l, 'lc> {
+pub struct GeometryProviderView<'w, 'l> {
 	pub world: &'w mut World,
 	pub entity: Entity,
 	pub tb_server: &'w TrenchBroomServer,
 	pub map_entity: &'w QuakeMapEntity,
 	pub map_entity_idx: usize,
 	pub meshes: Vec<GeometryProviderMeshView<'l>>,
-	pub load_context: &'l mut LoadContext<'lc>,
 }
 
 pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
