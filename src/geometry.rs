@@ -1,6 +1,9 @@
 use bevy::{asset::LoadContext, render::mesh::VertexAttributeValues};
 use brush::Brush;
-use bsp::lighting::{AnimatedLighting, AnimatedLightmap};
+use bsp::{
+	lighting::{AnimatedLighting, AnimatedLightmap},
+	BspBrushesAsset,
+};
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -21,22 +24,17 @@ impl Plugin for GeometryPlugin {
 
 /// Contains the brushes that a solid entity is made of.
 ///
-/// Can either be [Owned](Brushes::Owned), meaning the brushes are stored directly in the component itself (useful for dynamically editing brushes),
-/// or [Shared](Brushes::Shared), which reads from an asset instead for completely static geometry, usually from .
+/// Unless [`Brushes::Bsp`], entities with this component have meshes generated for them at runtime.
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 #[require(Transform)]
 pub enum Brushes {
+	/// Brushes are stored directly in the component itself, useful if you need to dynamically edit brushes.
 	Owned(BrushList),
+	/// Reads an asset instead for completely static geometry.
 	Shared(Handle<BrushList>),
-}
-impl Brushes {
-	pub fn get<'l, 'w: 'l>(&'l self, brush_lists: &'w Assets<BrushList>) -> Option<&'l BrushList> {
-		match self {
-			Self::Owned(list) => Some(list),
-			Self::Shared(handle) => brush_lists.get(handle),
-		}
-	}
+	/// Used with the `BRUSHLIST` BSPX lump. Collision only.
+	Bsp(Handle<BspBrushesAsset>),
 }
 
 #[derive(Asset, Reflect, Debug, Clone)]

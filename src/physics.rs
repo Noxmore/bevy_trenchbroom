@@ -1,4 +1,6 @@
 use crate::*;
+use brush::ConvexHull;
+use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
 
 #[cfg(feature = "rapier")]
@@ -16,6 +18,29 @@ pub struct ConvexCollision;
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 pub struct TrimeshCollision;
+
+pub type BrushVertices = Vec<Vec3>;
+
+/// This *abomination* of a function attempts to calculate vertices on the brushes contained within for use in physics, if it can find said brushes.
+///
+/// If it can't find them (like if the asset isn't loaded), returns [`None`].
+pub fn calculate_brushes_vertices<'l, 'w: 'l>(
+	brushes: &Brushes,
+	brush_lists: &'w Assets<BrushList>,
+	bsp_brushes: &'w Assets<BspBrushesAsset>,
+) -> Option<Vec<BrushVertices>> {
+	fn extract_vertices<T: ConvexHull>(brush: &T) -> Vec<Vec3> {
+		brush.calculate_vertices().map(|(position, _)| position.as_vec3()).collect()
+	}
+
+	match brushes {
+		Brushes::Owned(list) => Some(list.iter().map(extract_vertices).collect()),
+		Brushes::Shared(handle) => brush_lists.get(handle).map(|list| list.iter().map(extract_vertices).collect()),
+		Brushes::Bsp(handle) => bsp_brushes
+			.get(handle)
+			.map(|brushes_asset| brushes_asset.brushes.iter().map(extract_vertices).collect()),
+	}
+}
 
 pub(crate) struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
@@ -61,14 +86,15 @@ impl PhysicsPlugin {
 		mut commands: Commands,
 		query: Query<(Entity, &Brushes), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
+		bsp_brush_assets: Res<Assets<BspBrushesAsset>>,
 	) {
 		for (entity, brushes) in &query {
 			let mut colliders = Vec::new();
-			let Some(brushes) = brushes.get(&brush_lists) else { continue };
+			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &bsp_brush_assets) else { continue };
 
-			for (brush_idx, brush) in brushes.iter().enumerate() {
-				let vertices: Vec<Vec3> = brush.calculate_vertices().into_iter().map(|(pos, _)| pos.as_vec3()).collect();
-
+			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
+				if vertices.is_empty() { continue }
+				
 				let Some(collider) = Collider::convex_hull(vertices) else {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;

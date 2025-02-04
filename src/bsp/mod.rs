@@ -10,9 +10,10 @@ use bevy::{
 		render_resource::{Extent3d, TextureDimension, TextureFormat},
 	},
 };
+use brush::{BrushPlane, ConvexHull};
 use class::ErasedQuakeClass;
 use config::{EmbeddedTextureLoadView, TextureLoadView};
-use geometry::{GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
+use geometry::{Brushes, GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
 use q1bsp::{
 	data::{bsp::BspTexFlags, bspx::LightGridCell},
@@ -21,7 +22,7 @@ use q1bsp::{
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 use util::IrradianceVolumeBuilder;
 
-use crate::*;
+use crate::{util::BevyTrenchbroomCoordinateConversions, *};
 
 pub static GENERIC_MATERIAL_PREFIX: &str = "GenericMaterial_";
 pub static TEXTURE_PREFIX: &str = "Texture_";
@@ -35,21 +36,40 @@ pub struct Bsp {
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,
-	// TODO
-	// pub entity_brushes: Vec<Handle<BrushList>>,
-	pub data: Handle<BspDataAsset>,
+	#[reflect(ignore)]
+	pub data: BspData,
 	pub entities: QuakeMapEntities,
 }
 
-/// Store [BspData] in an asset so that it can be easily referenced from other places without referencing the [Bsp] (such as in the [Bsp]'s scene).
+/* /// Store [BspData] in an asset so that it can be easily referenced from other places without referencing the [Bsp] (such as in the [Bsp]'s scene).
 #[derive(Asset, TypePath, Debug, Clone, Default)]
-pub struct BspDataAsset(pub BspData);
+pub struct BspDataAsset(pub BspData); */
 
 #[derive(Reflect, Debug)]
 pub struct BspModel {
 	/// TODO doc Textures and meshes
 	/// TODO store texture flags?
 	pub meshes: Vec<(String, Handle<Mesh>)>,
+
+	pub brushes: Option<Handle<BspBrushesAsset>>,
+}
+
+/// Wrapper for a `Vec<`[`BspBrush`]`>` in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).
+#[derive(Asset, Reflect, Debug, Clone, Default)]
+pub struct BspBrushesAsset {
+	pub brushes: Vec<BspBrush>,
+}
+
+#[derive(Reflect, Debug, Clone, Default)]
+pub struct BspBrush {
+	pub planes: Vec<BrushPlane>,
+}
+
+impl ConvexHull for BspBrush {
+	#[inline]
+	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone {
+		self.planes.iter()
+	}
 }
 
 /// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
@@ -247,12 +267,15 @@ impl AssetLoader for BspLoader {
 			#[derive(Default)]
 			struct Model {
 				meshes: Vec<ModelMesh>,
+				/// Entity to apply [`Brushes`] to. Should probably only be one of these.
+				entity: Option<Entity>,
 			}
 
+			// We need to run geometry providers before adding model assets because geometry providers have mutable access to meshes
 			struct ModelMesh {
 				texture: MapGeometryTexture,
 				mesh: Mesh,
-				/// Entity to apply Mesh3d to. Should probably only be one of these.
+				/// Entity to apply [`Mesh3d`] to. Should probably only be one of these.
 				entity: Option<Entity>,
 			}
 
@@ -313,10 +336,10 @@ impl AssetLoader for BspLoader {
 			}
 
 			// We need this here while we still have access to data for later
-			let light_grid_octree = data.bspx.parse_light_grid_octree(&data.parse_ctx);
+			// let light_grid_octree = data.bspx.parse_light_grid_octree(&data.parse_ctx);
 
 			// So we can access the handle in the scene
-			let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(data));
+			// let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(data));
 
 			// Spawn entities into scene
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
@@ -339,6 +362,13 @@ impl AssetLoader for BspLoader {
 				if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
 					if let Some(model_idx) = get_model_idx(map_entity, class) {
 						let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
+
+						// Assign model entity
+						if model.entity.is_some() {
+							error!("Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!", class.info.name);
+						}
+						model.entity = Some(entity_id);
+						
 						let mut meshes = Vec::with_capacity(model.meshes.len());
 
 						for model_mesh in &mut model.meshes {
@@ -355,9 +385,6 @@ impl AssetLoader for BspLoader {
 								texture: &mut model_mesh.texture,
 							});
 
-							if model_mesh.entity.is_some() {
-								error!("Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!", class.info.name);
-							}
 							model_mesh.entity = Some(mesh_entity);
 						}
 
@@ -385,6 +412,11 @@ impl AssetLoader for BspLoader {
 					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
 			}
 
+			let brush_list = match data.bspx.parse_brush_list(&data.parse_ctx) {
+				Some(result) => result?,
+				None => Vec::new(),
+			};
+
 			let bsp_models = models
 				.into_iter()
 				.enumerate()
@@ -403,6 +435,54 @@ impl AssetLoader for BspLoader {
 							(model_mesh.texture.name, mesh_handle)
 						})
 						.collect(),
+
+					brushes: brush_list
+						.iter()
+						.find(|model_brushes| model_brushes.model_idx as usize == model_idx)
+						.map(|model_brushes| {
+							let brushes_asset = load_context.add_labeled_asset(
+								format!("Model{model_idx}Brushes"),
+								BspBrushesAsset {
+									brushes: model_brushes
+										.brushes
+										.iter()
+										.map(|model_brush| {
+											let min = self.tb_server.config.to_bevy_space(model_brush.bound.min).as_dvec3();
+											let max = self.tb_server.config.to_bevy_space(model_brush.bound.max).as_dvec3();
+											
+											let mut brush = BspBrush::default();
+											brush.planes.reserve(4 + model_brush.planes.len());
+
+											#[rustfmt::skip]
+											brush.planes.extend([
+												BrushPlane { normal: DVec3::Y, distance: -max.y },
+												BrushPlane { normal: DVec3::NEG_Y, distance: min.y },
+												BrushPlane { normal: DVec3::X, distance: -max.x },
+												BrushPlane { normal: DVec3::NEG_X, distance: min.x },
+												BrushPlane { normal: DVec3::Z, distance: -min.z },
+												BrushPlane { normal: DVec3::NEG_Z, distance: max.z },
+											]);
+
+											brush.planes.extend(model_brush.planes.iter().map(|plane| {
+												// We need to invert it because brush math expects normals to point inwards
+												BrushPlane {
+													normal: plane.normal.as_dvec3().z_up_to_y_up(),
+													distance: -plane.dist as f64 / self.tb_server.config.scale as f64,
+												}
+											}));
+
+											brush
+										})
+										.collect(),
+								},
+							);
+
+							if let Some(entity) = model.entity {
+								world.entity_mut(entity).insert(Brushes::Bsp(brushes_asset.clone()));
+							}
+							
+							brushes_asset
+						}),
 				})
 				.collect();
 
@@ -411,7 +491,7 @@ impl AssetLoader for BspLoader {
 
 			// Calculate irradiance volumes for light grids.
 			// Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
-			if let Some(light_grid) = light_grid_octree {
+			if let Some(light_grid) = data.bspx.parse_light_grid_octree(&data.parse_ctx) {
 				let mut light_grid = light_grid.map_err(io::Error::other)?;
 				light_grid.mins = self.tb_server.config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
 				// We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
@@ -492,7 +572,7 @@ impl AssetLoader for BspLoader {
 				irradiance_volume,
 				models: bsp_models,
 
-				data: data_handle,
+				data,
 				entities,
 			})
 		})
