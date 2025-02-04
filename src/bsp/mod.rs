@@ -24,6 +24,20 @@ use util::IrradianceVolumeBuilder;
 
 use crate::{util::BevyTrenchbroomCoordinateConversions, *};
 
+pub struct BspPlugin;
+impl Plugin for BspPlugin {
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.add_plugins(lighting::BspLightingPlugin)
+
+			.init_asset::<BspBrushesAsset>()
+			.init_asset::<Bsp>()
+			.init_asset_loader::<BspLoader>()
+		;
+	}
+}
+
 pub static GENERIC_MATERIAL_PREFIX: &str = "GenericMaterial_";
 pub static TEXTURE_PREFIX: &str = "Texture_";
 
