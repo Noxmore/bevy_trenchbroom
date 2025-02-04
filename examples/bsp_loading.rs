@@ -1,7 +1,6 @@
 use bevy::math::*;
 use bevy::{
 	ecs::{component::ComponentId, world::DeferredWorld},
-	pbr::irradiance_volume::IrradianceVolume,
 	prelude::*,
 };
 use bevy_flycam::prelude::*;
@@ -69,10 +68,6 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		// .add_plugins(bevy::pbr::wireframe::WireframePlugin)
-		// .insert_resource(bevy::pbr::wireframe::WireframeConfig { global: true, default_color: Color::WHITE })
-		// .insert_resource(AmbientLight { color: Color::WHITE, brightness: 500. })
-		// .insert_resource(bevy::pbr::DefaultOpaqueRendererMethod::deferred()) // TODO
 		.insert_resource(ClearColor(Color::BLACK))
 		.insert_resource(AmbientLight::NONE)
 		.add_plugins(TrenchBroomPlugin::new(
@@ -81,7 +76,6 @@ fn main() {
 				.ignore_invalid_entity_definitions(true),
 		))
 		.add_systems(PostStartup, (setup_scene, write_config))
-		.add_systems(Update, visualize)
 		.run();
 }
 
@@ -95,7 +89,6 @@ fn setup_scene(
 	lightmap_animators
 		.values
 		.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
-	// lightmap_animators.values.clear();
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
@@ -120,58 +113,6 @@ fn setup_scene(
 			.id();
 
 		commands.entity(entity).add_child(gi_tester);
-	}
-
-	// TODO tmp
-	/* for x in 1..=9 {
-		for y in 1..=7 {
-			for z in 0..9 {
-				commands.spawn(PbrBundle {
-					mesh: sphere_mesh.clone(),
-					material: material.clone(),
-					transform: Transform::from_translation(vec3(x as f32, y as f32, z as f32 - 1.) * vec3(0.8128, 0.8128, -0.8128) + vec3(-1.6256, 0., 1.6256) - 0.8128),
-					..default()
-				});
-			}
-		}
-	} */
-
-	/* commands.spawn(MaterialMeshBundle {
-		mesh: asset_server.add(Cuboid::from_length(0.5).mesh().build()),
-		material: asset_server.add(LiquidMaterial {
-			base: StandardMaterial {
-				base_color_texture: Some(asset_server.load("textures/bricks.png")),
-				// emissive: LinearRgba::WHITE / 2.,
-				unlit: true,
-				alpha_mode: AlphaMode::Blend,
-				cull_mode: None,
-				..default()
-			},
-			extension: LiquidMaterialExt::default(),
-		}),
-		// material: asset_server.add(SkyMaterial {
-		//     texture: asset_server.load("textures/bricks.png"),
-		//     speed: 1.,
-		// }),
-		transform: Transform::from_xyz(0., 5., 0.),
-		..default()
-	}); */
-	// commands.spawn(MaterialMeshBundle::<StandardMaterial> {
-	//     mesh: meshes.add(Cuboid::from_length(0.5).mesh().build()),
-	//     material: asset_server.add(StandardMaterial {
-	//         base_color_texture: Some(asset_server.load("textures/bricks.png")),
-	//         // emissive: LinearRgba::WHITE / 2.,
-	//         unlit: true,
-	//         ..default()
-	//     }),
-	//     transform: Transform::from_xyz(0., 5., 0.),
-	//     ..default()
-	// });
-}
-
-fn visualize(mut gizmos: Gizmos, irradiance_volume_query: Query<&Transform, With<IrradianceVolume>>) {
-	for transform in &irradiance_volume_query {
-		gizmos.cuboid(*transform, Color::WHITE);
 	}
 }
 
