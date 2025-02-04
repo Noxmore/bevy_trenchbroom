@@ -143,6 +143,10 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		_ => panic!("Only structs supported"),
 	}
 
+	if opts.geometry.is_none() && ty == QuakeClassType::Solid {
+		panic!("Solid classes must have a `#[geometry(...)]` attribute.");
+	}
+
 	// let inventory_import = cfg!(feature = "auto_register").then(|| Ident::new("inventory", Span::mixed_site()));
 
 	let inventory_submit = cfg!(feature = "auto_register").then(|| {
@@ -182,19 +186,14 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 	let iconsprite = option(opts.iconsprite.map(|iconsprite| quote! { stringify!(#iconsprite) }));
 	let size = option(opts.size.map(|size| quote! { stringify!(#size) }));
 
-	let geometry_provider = opts.geometry.map(|geometry| {
-		quote! {
-			#[allow(unused)]
-			fn geometry_provider(src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity) -> Option<::bevy_trenchbroom::geometry::GeometryProvider> {
-				Some(#geometry)
-			}
-		}
+	let geometry_provider = opts.geometry.map(|tokens| {
+		quote! { (|| #tokens) }
 	});
 
 	quote! {
 		impl ::bevy_trenchbroom::class::QuakeClass for #ident {
 			const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
-				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident,
+				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident #geometry_provider,
 				name: #name,
 				description: #description,
 				base: &[#(<#bases as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS),*],
@@ -206,8 +205,6 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 
 				properties: &[#(#properties)*],
 			};
-
-			#geometry_provider
 
 			#[allow(unused)]
 			fn class_spawn(config: &::bevy_trenchbroom::config::TrenchBroomConfig, src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity, entity: &mut ::bevy::ecs::world::EntityWorldMut) -> ::bevy_trenchbroom::anyhow::Result<()> {

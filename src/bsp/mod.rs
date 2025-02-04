@@ -11,7 +11,7 @@ use bevy::{
 	},
 };
 use brush::{BrushPlane, ConvexHull};
-use class::ErasedQuakeClass;
+use class::{ErasedQuakeClass, QuakeClassType};
 use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{Brushes, GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
@@ -359,7 +359,9 @@ impl AssetLoader for BspLoader {
 					.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
 					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
-				if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
+				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
+					let geometry_provider = geometry_provider();
+					
 					if let Some(model_idx) = get_model_idx(map_entity, class) {
 						let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
 

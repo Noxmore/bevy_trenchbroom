@@ -55,6 +55,7 @@ nil = "0.14"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
 smol = "2"
+strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
 bevy = { version = "0.15", default-features = true }

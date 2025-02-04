@@ -3,7 +3,7 @@ use bevy::{
 	render::render_asset::RenderAssetUsages,
 };
 use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
-use class::{ErasedQuakeClass, QuakeClassType};
+use class::ErasedQuakeClass;
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -204,7 +204,7 @@ impl TrenchBroomConfig {
 		let classname = src_entity.classname()?.s();
 
 		if let Some(mut transform) = entity.get_mut::<Transform>() {
-			if config.get_class(&classname).map(|class| class.info.ty) == Some(QuakeClassType::Solid) {
+			if config.get_class(&classname).map(|class| class.info.ty.is_solid()) == Some(true) {
 				transform.rotation = Quat::IDENTITY;
 			}
 		}

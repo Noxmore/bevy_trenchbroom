@@ -1,5 +1,6 @@
 use bevy::asset::{AssetLoader, AsyncReadExt};
 use brush::{generate_mesh_from_brush_polygons, Brush, BrushSurfacePolygon};
+use class::QuakeClassType;
 use config::TextureLoadView;
 use fgd::FgdType;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
@@ -149,7 +150,9 @@ impl AssetLoader for QuakeMapLoader {
 					.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
 					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
-				if let Some(geometry_provider) = (class.geometry_provider_fn)(map_entity) {
+				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
+					let geometry_provider = geometry_provider();
+
 					let mut grouped_polygons: HashMap<&str, Vec<BrushSurfacePolygon>> = default();
 					let mut texture_size_cache: HashMap<&str, UVec2> = default();
 					let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();

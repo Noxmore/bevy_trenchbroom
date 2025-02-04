@@ -6,7 +6,7 @@ use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 
 use crate::*;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, strum::EnumIs)]
 pub enum QuakeClassType {
 	/// Cannot be spawned in TrenchBroom, works like a base class in any object-oriented language.
 	#[default]
@@ -14,7 +14,7 @@ pub enum QuakeClassType {
 	/// An entity that revolves around a single point.
 	Point,
 	/// An entity that contains brushes.
-	Solid,
+	Solid(fn() -> GeometryProvider),
 }
 
 /// A property for an entity definition. the property type (`ty`) doesn't have a set of different options, it more just tells users what kind of data you are expecting.
@@ -66,17 +66,12 @@ pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	const CLASS_INFO: QuakeClassInfo;
 
 	fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
-	fn geometry_provider(src_entity: &QuakeMapEntity) -> Option<GeometryProvider> {
-		let _ = src_entity;
-		None
-	}
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
 	pub info: QuakeClassInfo,
 	pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
-	pub geometry_provider_fn: fn(&QuakeMapEntity) -> Option<GeometryProvider>,
 	pub get_type_registration: fn() -> TypeRegistration,
 	pub register_type_dependencies: fn(&mut TypeRegistry),
 }
@@ -85,7 +80,6 @@ impl ErasedQuakeClass {
 		Self {
 			info: T::CLASS_INFO,
 			spawn_fn: T::class_spawn,
-			geometry_provider_fn: T::geometry_provider,
 			get_type_registration: T::get_type_registration,
 			register_type_dependencies: T::register_type_dependencies,
 		}
