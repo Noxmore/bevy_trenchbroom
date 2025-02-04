@@ -368,7 +368,7 @@ impl AssetLoader for BspLoader {
 							error!("Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!", class.info.name);
 						}
 						model.entity = Some(entity_id);
-						
+
 						let mut meshes = Vec::with_capacity(model.meshes.len());
 
 						for model_mesh in &mut model.meshes {
@@ -449,7 +449,7 @@ impl AssetLoader for BspLoader {
 										.map(|model_brush| {
 											let min = self.tb_server.config.to_bevy_space(model_brush.bound.min).as_dvec3();
 											let max = self.tb_server.config.to_bevy_space(model_brush.bound.max).as_dvec3();
-											
+
 											let mut brush = BspBrush::default();
 											brush.planes.reserve(4 + model_brush.planes.len());
 
@@ -480,7 +480,7 @@ impl AssetLoader for BspLoader {
 							if let Some(entity) = model.entity {
 								world.entity_mut(entity).insert(Brushes::Bsp(brushes_asset.clone()));
 							}
-							
+
 							brushes_asset
 						}),
 				})

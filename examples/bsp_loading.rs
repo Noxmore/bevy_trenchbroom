@@ -35,7 +35,9 @@ pub struct Cube;
 impl Cube {
 	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
 		// This isn't necessary because we get AssetServer here, this is mainly for example.
-		if world.is_scene_world() { return }
+		if world.is_scene_world() {
+			return;
+		}
 		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
 		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
 		let material = asset_server.add(StandardMaterial::default());

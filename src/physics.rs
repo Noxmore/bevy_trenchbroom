@@ -93,8 +93,10 @@ impl PhysicsPlugin {
 			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &bsp_brush_assets) else { continue };
 
 			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
-				if vertices.is_empty() { continue }
-				
+				if vertices.is_empty() {
+					continue;
+				}
+
 				let Some(collider) = Collider::convex_hull(vertices) else {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;
