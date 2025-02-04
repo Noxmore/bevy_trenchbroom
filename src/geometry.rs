@@ -30,6 +30,8 @@ impl Plugin for GeometryPlugin {
 #[require(Transform)]
 pub enum Brushes {
 	/// Brushes are stored directly in the component itself, useful if you need to dynamically edit brushes.
+	/// 
+	/// NOTE: TODO dynamic brush mesh generation currently does not work.
 	Owned(BrushList),
 	/// Reads an asset instead for completely static geometry.
 	Shared(Handle<BrushList>),
