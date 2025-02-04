@@ -11,7 +11,11 @@ pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
 		address_mode_u: ImageAddressMode::Repeat,
 		address_mode_v: ImageAddressMode::Repeat,
 		address_mode_w: ImageAddressMode::Repeat,
-		..if filtered { ImageSamplerDescriptor::linear() } else { ImageSamplerDescriptor::nearest() }
+		..if filtered {
+			ImageSamplerDescriptor::linear()
+		} else {
+			ImageSamplerDescriptor::nearest()
+		}
 	}
 }
 

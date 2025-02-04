@@ -361,7 +361,7 @@ impl AssetLoader for BspLoader {
 
 				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
 					let geometry_provider = geometry_provider();
-					
+
 					if let Some(model_idx) = get_model_idx(map_entity, class) {
 						let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
 
