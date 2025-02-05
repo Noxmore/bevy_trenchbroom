@@ -11,10 +11,10 @@ license.workspace = true
 proc-macro = true
 
 [dependencies]
-heck = "0.5.0"
-proc-macro2 = "1.0.92"
-quote = "1.0.38"
-syn = "2.0.94"
+heck = "0.5"
+proc-macro2 = "1"
+quote = "1"
+syn = "2"
 
 [features]
 auto_register = []
