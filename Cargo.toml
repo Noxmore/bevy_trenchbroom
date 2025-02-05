@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "macros",
+	"macros",
 ]
 
 [workspace.package]
@@ -28,10 +28,10 @@ bevy_trenchbroom_macros = { path = "macros" }
 
 anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
-    "bevy_asset",
-    "bevy_scene",
-    "bevy_render",
-    "bevy_pbr",
+	"bevy_asset",
+	"bevy_scene",
+	"bevy_render",
+	"bevy_pbr",
 ] }
 bevy_reflect = { version = "0.15", features = ["documentation"] }
 bevy_materialize = "0.1.0"
