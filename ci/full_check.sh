@@ -1,5 +1,3 @@
-# Runs a bunch of commands to make sure everything is good. This is my bootleg replacement for CI :)
-
 #!/bin/bash
 set -e
 
