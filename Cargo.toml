@@ -49,8 +49,8 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-q1bsp = { git = "https://github.com/Noxmore/q1bsp.git", rev = "3b7be9a" }
-# q1bsp = { path = "/d/_dev/_lib/rust/q1bsp" } # TODO tmp
+qbsp = "0.1.0"
+# qbsp = { path = "/d/_dev/_lib/rust/qbsp" } # TODO tmp
 nil = "0.14"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }

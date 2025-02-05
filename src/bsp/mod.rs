@@ -15,7 +15,7 @@ use class::{ErasedQuakeClass, QuakeClassType};
 use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{Brushes, GeometryProviderMeshView, GeometryProviderView, MapGeometryTexture};
 use lighting::{new_lightmap_output_image, AnimatedLighting, AnimatedLightingType};
-use q1bsp::{
+use qbsp::{
 	data::{bsp::BspTexFlags, bspx::LightGridCell},
 	mesh::lighting::ComputeLightmapAtlasError,
 };
@@ -312,10 +312,10 @@ impl AssetLoader for BspLoader {
 					);
 					mesh.insert_attribute(
 						Mesh::ATTRIBUTE_UV_0,
-						exported_mesh.uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec(),
+						exported_mesh.uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec(),
 					);
 					if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
-						mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(q1bsp::glam::Vec2::to_array).collect_vec());
+						mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec());
 					}
 					mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
 
@@ -599,7 +599,7 @@ impl AssetLoader for BspLoader {
 }
 
 #[inline]
-fn convert_vec3(server: &TrenchBroomServer) -> impl Fn(q1bsp::glam::Vec3) -> Vec3 + '_ {
+fn convert_vec3(server: &TrenchBroomServer) -> impl Fn(qbsp::glam::Vec3) -> Vec3 + '_ {
 	|x| server.config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 

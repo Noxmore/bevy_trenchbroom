@@ -8,12 +8,12 @@ pub(crate) use indexmap::*;
 pub(crate) use itertools::*;
 pub(crate) use nil::prelude::*;
 pub(crate) use nil::std_prelude::*;
-pub(crate) use q1bsp::prelude::*;
+pub(crate) use qbsp::prelude::*;
 pub(crate) use serde::*;
 pub(crate) use thiserror::Error;
 
 pub use bevy_materialize::prelude::*;
-pub use q1bsp::{
+pub use qbsp::{
 	self,
 	data::bsp::LightmapStyle,
 	mesh::lighting::{ComputeLightmapSettings, LightmapAtlas, Lightmaps},
