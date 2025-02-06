@@ -35,7 +35,7 @@ pub struct TrenchBroomPlugin {
 }
 
 impl TrenchBroomPlugin {
-	/// Creates a new [TrenchBroomPlugin] with the specified config.
+	/// Creates a new [`TrenchBroomPlugin`] with the specified config.
 	pub fn new(config: TrenchBroomConfig) -> Self {
 		Self { config }
 	}
@@ -99,7 +99,7 @@ impl TrenchBroomPlugin {
 	}
 }
 
-/// The main hub of `bevy_trenchbroom`-related data. Similar to [AssetServer], all data this stores is reference counted and can be easily cloned.
+/// The main hub of `bevy_trenchbroom`-related data. Similar to [`AssetServer`], all data this stores is reference counted and can be easily cloned.
 #[derive(Resource, Debug, Clone)]
 pub struct TrenchBroomServer {
 	data: Arc<TrenchBroomServerData>,
@@ -124,6 +124,6 @@ impl std::ops::Deref for TrenchBroomServer {
 pub struct TrenchBroomServerData {
 	pub config: TrenchBroomConfig,
 	// TODO remove?
-	/// Caches textures used on brushes to [StandardMaterial] handles.
+	/// Caches textures used on brushes to [`StandardMaterial`] handles.
 	pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
 }

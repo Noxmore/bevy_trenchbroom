@@ -152,7 +152,7 @@ impl IsSceneWorld for DeferredWorld<'_> {
 #[derive(Component)]
 pub struct TrenchBroomGltfRotationFix;
 
-/// See docs on [TrenchBroomGltfRotationFix]
+/// See docs on [`TrenchBroomGltfRotationFix`]
 pub(crate) fn trenchbroom_gltf_rotation_fix(entity: &mut EntityWorldMut) {
 	if entity.contains::<TrenchBroomGltfRotationFix>() {
 		if let Some(mut transform) = entity.get_mut::<Transform>() {

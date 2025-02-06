@@ -9,12 +9,12 @@ use bevy_rapier3d::prelude::*;
 #[cfg(feature = "avian")]
 use avian3d::prelude::*;
 
-/// Automatically creates convex colliders for entities with [Brushes].
+/// Automatically creates convex colliders for entities with [`Brushes`].
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 pub struct ConvexCollision;
 
-/// Automatically creates trimesh colliders for entities with [Mesh3d].
+/// Automatically creates trimesh colliders for entities with [`Mesh3d`].
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 pub struct TrimeshCollision;

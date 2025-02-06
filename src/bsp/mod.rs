@@ -55,7 +55,7 @@ pub struct Bsp {
 	pub entities: QuakeMapEntities,
 }
 
-/* /// Store [BspData] in an asset so that it can be easily referenced from other places without referencing the [Bsp] (such as in the [Bsp]'s scene).
+/* /// Store [`BspData`] in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).
 #[derive(Asset, TypePath, Debug, Clone, Default)]
 pub struct BspDataAsset(pub BspData); */
 

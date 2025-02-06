@@ -27,7 +27,7 @@ pub struct QuakeMap {
 	pub entities: QuakeMapEntities,
 }
 
-/// All the entities stored in a quake map, whether [QuakeMap] or [Bsp](bsp::Bsp).
+/// All the entities stored in a quake map, whether [`QuakeMap`] or [`Bsp`](bsp::Bsp).
 #[derive(Reflect, Debug, Clone, Default, Deref, DerefMut)]
 pub struct QuakeMapEntities(pub Vec<QuakeMapEntity>);
 impl QuakeMapEntities {
@@ -68,7 +68,7 @@ pub struct QuakeMapEntity {
 }
 
 impl QuakeMapEntity {
-	/// Gets the classname of the entity, on any valid entity, this will return `Ok`. Otherwise it will return [QuakeEntityError::RequiredPropertyNotFound].
+	/// Gets the classname of the entity, on any valid entity, this will return `Ok`. Otherwise it will return [`QuakeEntityError::RequiredPropertyNotFound`].
 	pub fn classname(&self) -> Result<&str, QuakeEntityError> {
 		self.properties
 			.get("classname")
@@ -78,7 +78,7 @@ impl QuakeMapEntity {
 			})
 	}
 
-	/// Helper function to try to parse an [FgdType] property from this map entity.
+	/// Helper function to try to parse an [`FgdType`] property from this map entity.
 	pub fn get<T: FgdType>(&self, key: &str) -> Result<T, QuakeEntityError> {
 		let s = self
 			.properties

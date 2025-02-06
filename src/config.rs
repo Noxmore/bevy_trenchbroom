@@ -50,7 +50,7 @@ pub struct TrenchBroomConfig {
 	#[builder(skip)] // bevy_trenchbroom currently *only* supports loose files
 	package_format: AssetPackageFormat,
 
-	/// The root directory to look for textures in the [assets_path](Self::assets_path). (Default: "textures")
+	/// The root directory to look for textures in the [`assets_path`](Self::assets_path). (Default: "textures")
 	#[default("textures".into())]
 	#[builder(into)]
 	pub texture_root: PathBuf,
@@ -61,14 +61,14 @@ pub struct TrenchBroomConfig {
 	/// The palette file path and data used for WADs. The path roots from your assets folder.
 	///
 	/// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
-	/// and a copy distributed by this library in the form of [QUAKE_PALETTE].
+	/// and a copy distributed by this library in the form of [`QUAKE_PALETTE`].
 	///
 	/// If TrenchBroom can't find this palette file, all WAD textures will be black.
 	/// (Default: ("palette.lmp", &QUAKE_PALETTE))
 	#[builder(into)]
 	#[default(("palette.lmp".into(), &QUAKE_PALETTE))] // TODO
 	pub texture_pallette: (PathBuf, &'static Palette),
-	/// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [TrenchBroomConfig::default_texture_exclusions]).
+	/// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [`TrenchBroomConfig::default_texture_exclusions`]).
 	#[builder(into)]
 	#[default(Self::default_texture_exclusions())]
 	pub texture_exclusions: Vec<String>,
@@ -87,7 +87,7 @@ pub struct TrenchBroomConfig {
 	/// Tags to apply to brushes.
 	#[builder(into)]
 	pub brush_tags: Vec<TrenchBroomTag>,
-	/// Tags to apply to brush faces. The default is defined by [TrenchBroomConfig::empty_face_tag], and all it does is make `__TB_empty` transparent.
+	/// Tags to apply to brush faces. The default is defined by [`TrenchBroomConfig::empty_face_tag`], and all it does is make `__TB_empty` transparent.
 	#[default(vec![Self::empty_face_tag()])]
 	#[builder(into)]
 	pub face_tags: Vec<TrenchBroomTag>,
@@ -104,11 +104,11 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub auto_remove_textures: HashSet<String>,
 
-	/// The file extension used when loading [GenericMaterial]s.
+	/// The file extension used when loading [`GenericMaterial`]s.
 	///
 	/// With the default loose texture loader, if a file with this asset doesn't exist,
-	/// it tries to load it with [SimpleGenericMaterialLoader](bevy_materialize::load::SimpleGenericMaterialLoader)
-	/// with this config's [texture_extension](Self::texture_extension)
+	/// it tries to load it with [`SimpleGenericMaterialLoader`](bevy_materialize::load::SimpleGenericMaterialLoader)
+	/// with this config's [`texture_extension`](Self::texture_extension)
 	///
 	/// (Default: "material")
 	#[default("material".s())]
@@ -148,7 +148,7 @@ pub struct TrenchBroomConfig {
 
 	/// How lightmaps atlas' are computed when loading BSP files.
 	///
-	/// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [RenderPlugin](bevy::render::RenderPlugin) if needed.
+	/// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [`RenderPlugin`](bevy::render::RenderPlugin) if needed.
 	///
 	/// NOTE: `special_lighting_color` is set to gray (`75`) by default instead of white (`255`), because otherwise all textures with it look way too bright and washed out, not sure why.
 	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
@@ -156,27 +156,27 @@ pub struct TrenchBroomConfig {
 
 	entity_classes: HashMap<String, ErasedQuakeClass>,
 
-	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [TrenchBroomConfig::default_global_spawner])
+	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_global_spawner)))]
 	pub global_spawner: Hook<SpawnFn>,
 
-	/// Geometry provider run after all others for all entities regardless of classname. (Default: [TrenchBroomConfig::default_global_geometry_provider])
+	/// Geometry provider run after all others for all entities regardless of classname. (Default: [`TrenchBroomConfig::default_global_geometry_provider`])
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
 	pub global_geometry_provider: Hook<GeometryProviderFn>,
 
-	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::all] (kept around)
+	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
 	#[default(RenderAssetUsages::all())]
 	pub brush_mesh_asset_usages: RenderAssetUsages,
 
-	/// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [RenderAssetUsages::RENDER_WORLD] (not kept around)
+	/// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::RENDER_WORLD`] (not kept around)
 	#[default(RenderAssetUsages::RENDER_WORLD)]
 	pub bsp_textures_asset_usages: RenderAssetUsages,
 }
 
 impl TrenchBroomConfig {
-	/// Creates a new TrenchBroom config. It is recommended to use this over [TrenchBroomConfig::default]
+	/// Creates a new TrenchBroom config. It is recommended to use this over [`TrenchBroomConfig::default`]
 	pub fn new(name: impl Into<String>) -> Self {
 		Self::default().name(name)
 	}
@@ -192,12 +192,12 @@ impl TrenchBroomConfig {
 		vec!["*_normal".into(), "*_mr".into(), "*_emissive".into(), "*_depth".into()]
 	}
 
-	/// (See documentation on [TrenchBroomConfig::face_tags])
+	/// (See documentation on [`TrenchBroomConfig::face_tags`])
 	pub fn empty_face_tag() -> TrenchBroomTag {
 		TrenchBroomTag::new("empty", "__TB_empty").attributes([TrenchBroomTagAttribute::Transparent])
 	}
 
-	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [TrenchBroomConfig::global_spawner])
+	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
 	///
 	/// If the entity is a brush entity, rotation is reset.
 	pub fn default_global_spawner(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
@@ -221,7 +221,7 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	/// Adds [Visibility] and [Transform] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
+	/// Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
 	pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
 		let mut ent = view.world.entity_mut(view.entity);
 
@@ -265,7 +265,7 @@ impl TrenchBroomConfig {
 		self.load_loose_texture.set(provider);
 		self
 	}
-	/// Tries to load a [GenericMaterial] with the [generic_material_extension](Self::generic_material_extension), as a fallback tries [texture_extension](Self::texture_extension).
+	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extension`](Self::generic_material_extension), as a fallback tries [`texture_extension`](Self::texture_extension).
 	pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
 		let path = view
 			.tb_config
@@ -291,7 +291,7 @@ impl TrenchBroomConfig {
 		}
 	}
 
-	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [GLOBAL_CLASS_REGISTRY].
+	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).
 	pub fn get_class(&self, classname: &str) -> Option<&ErasedQuakeClass> {
 		#[cfg(not(feature = "auto_register"))]
 		{
@@ -306,7 +306,7 @@ impl TrenchBroomConfig {
 		}
 	}
 
-	/// A list of all registered classes. If the `auto_register` feature is enabled, also includes [GLOBAL_CLASS_REGISTRY].
+	/// A list of all registered classes. If the `auto_register` feature is enabled, also includes [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).
 	pub fn class_iter(&self) -> impl Iterator<Item = &ErasedQuakeClass> {
 		#[cfg(not(feature = "auto_register"))]
 		{
@@ -329,12 +329,12 @@ impl TrenchBroomConfig {
 		vec.z_up_to_y_up() / self.scale as f64
 	}
 
-	/// The opposite of [Self::to_bevy_space], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
+	/// The opposite of [`Self::to_bevy_space`], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
 	pub fn from_bevy_space(&self, vec: Vec3) -> Vec3 {
 		vec.y_up_to_z_up() * self.scale
 	}
 
-	/// The opposite of [Self::to_bevy_space_f64], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
+	/// The opposite of [`Self::to_bevy_space_f64`], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
 	pub fn from_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
 		vec.y_up_to_z_up() * self.scale as f64
 	}
@@ -371,7 +371,7 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 }
 
 // TODO I wish this was bit more encapsulated and ergonomic
-/// Wrapper for storing a stack of dynamic functions. Use [Hook::push] to push a new function onto the stack.
+/// Wrapper for storing a stack of dynamic functions. Use [`Hook::set`] to push a new function onto the stack.
 #[derive(Deref)]
 pub struct Hook<F: ?Sized>(pub Arc<F>);
 impl<F: ?Sized + Send + Sync> fmt::Debug for Hook<F> {
@@ -533,7 +533,7 @@ impl TrenchBroomTag {
 	}
 }
 
-/// Attribute for [TrenchBroomTag], currently the only option is `Transparent`.
+/// Attribute for [`TrenchBroomTag`], currently the only option is `Transparent`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrenchBroomTagAttribute {
 	Transparent,

@@ -4,7 +4,7 @@ use crate::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use util::{AlmostEqual, ConvertZeroToOne};
 
-/// Represents an infinitely large plane in 3d space, used for defining convex hulls like [Brush]es.
+/// Represents an infinitely large plane in 3d space, used for defining convex hulls like [`Brush`]es.
 #[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
 pub struct BrushPlane {
 	pub normal: DVec3,
@@ -12,7 +12,7 @@ pub struct BrushPlane {
 }
 
 impl BrushPlane {
-	/// Converts a triangle into a [BrushPlane]. The direction of the plane is based on the order of the vertices of the triangle.
+	/// Converts a triangle into a [`BrushPlane`]. The direction of the plane is based on the order of the vertices of the triangle.
 	pub fn from_triangle(tri: [DVec3; 3]) -> Self {
 		let normal = (tri[2] - tri[0]).cross(tri[1] - tri[0]).normalize();
 		Self {
@@ -103,7 +103,7 @@ pub struct Brush {
 }
 
 impl Brush {
-	/// Converts a brush from [quake_util] to a bevy_trenchbroom brush.
+	/// Converts a brush from [`quake_util`] to a bevy_trenchbroom brush.
 	pub(crate) fn from_quake_util(brush: &quake_util::qmap::Brush, config: &TrenchBroomConfig) -> Self {
 		Self {
 			surfaces: brush
@@ -127,7 +127,7 @@ impl Brush {
 
 	/// Cuts the brush along the specified surface, adding said surface to the brush, and removing all other surfaces in front of it.
 	///
-	/// NOTE: If `along` is outside of the brush, it can make this brush invalid, if you are using untrusted data, check with [Brush::contains_plane].
+	/// NOTE: If `along` is outside of the brush, it can make this brush invalid, if you are using untrusted data, check with [`Brush::contains_plane`].
 	pub fn cut(&mut self, along: BrushSurface) {
 		// TODO this should probably support cutting along a Vec<BrushSurface>
 		let vertices = self.calculate_vertices().collect_vec();
@@ -154,7 +154,7 @@ impl Brush {
 	///
 	/// Returns a vector of polygonal faces where each face includes vertices, indices, and a copy of the surface the face was calculated from.
 	///
-	/// If you want a map of intersections to the surfaces causing them, see [calculate_vertices\()](Self::calculate_vertices)
+	/// If you want a map of intersections to the surfaces causing them, see [`Self::calculate_vertices`]
 	///
 	/// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
 	pub fn polygonize(&self) -> impl Iterator<Item = BrushSurfacePolygon> {
@@ -229,7 +229,7 @@ impl ConvexHull for Brush {
 	}
 }
 
-/// A polygonal face calculated from a [BrushSurface], mainly used for rendering.
+/// A polygonal face calculated from a [`BrushSurface`], mainly used for rendering.
 #[derive(Debug, Clone)]
 pub struct BrushSurfacePolygon<'w> {
 	pub surface: &'w BrushSurface,
@@ -299,7 +299,7 @@ impl<'w> BrushSurfacePolygon<'w> {
 	}
 }
 
-/// Combines a bunch of [BrushSurfacePolygon]s into a full mesh.
+/// Combines a bunch of [`BrushSurfacePolygon`]s into a full mesh.
 ///
 /// It is assumed all faces have the same material with the specified `texture_size`.
 pub fn generate_mesh_from_brush_polygons(polygons: &[BrushSurfacePolygon], config: &TrenchBroomConfig, texture_size: UVec2) -> Mesh {

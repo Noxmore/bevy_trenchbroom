@@ -59,7 +59,7 @@ pub struct QuakeClassInfo {
 }
 
 pub trait QuakeClass: Component + GetTypeRegistration + Sized {
-	/// A global [ErasedQuakeClass] of this type. Used for base classes and registration.
+	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
 	///
 	/// NOTE: Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
 	const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();

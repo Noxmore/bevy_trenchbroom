@@ -43,7 +43,7 @@ impl SpecialTexturesConfig {
 	}
 }
 
-/// If a [SpecialTexturesConfig] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
+/// If a [`SpecialTexturesConfig`] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
 	let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
 
@@ -170,7 +170,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 	None
 }
 
-/// Material extension to [StandardMaterial] that emulates the wave effect of Quake liquid.
+/// Material extension to [`StandardMaterial`] that emulates the wave effect of Quake liquid.
 pub type LiquidMaterial = ExtendedMaterial<StandardMaterial, LiquidMaterialExt>;
 
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone, SmartDefault)]

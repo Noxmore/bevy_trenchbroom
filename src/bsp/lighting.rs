@@ -238,7 +238,7 @@ impl Default for LightmapAnimators {
 	}
 }
 
-/// Contains multiple images that are composited together in `output` using the current [TrenchBroomConfig]'s lightmap animators. Used for both lightmaps an irradiance volumes.
+/// Contains multiple images that are composited together in `output` using the current [`TrenchBroomConfig`]'s lightmap animators. Used for both lightmaps an irradiance volumes.
 #[derive(Asset, TypePath, Clone)]
 pub struct AnimatedLighting {
 	pub ty: AnimatedLightingType,
@@ -249,7 +249,7 @@ pub struct AnimatedLighting {
 	/// An input image for each lightmap style slot globally.
 	pub input: [Handle<Image>; 4],
 
-	/// An image containing the [LightmapStyle]s to use for each pixel.
+	/// An image containing the [`LightmapStyle`]s to use for each pixel.
 	///
 	/// 4 8-bit color channels refer to 4 lightmap style slots, each channel being the animator to use to composite.
 	pub styles: Handle<Image>,
@@ -266,7 +266,7 @@ impl RenderAsset for AnimatedLighting {
 	}
 }
 
-/// Holds an [AnimatedLighting] handle and automatically inserts the output lightmap onto the entity.
+/// Holds an [`AnimatedLighting`] handle and automatically inserts the output lightmap onto the entity.
 #[derive(Component, Reflect, Debug, Clone, Default, PartialEq, Eq, Deref, DerefMut)]
 #[reflect(Component, Default)]
 pub struct AnimatedLightmap(pub Handle<AnimatedLighting>);

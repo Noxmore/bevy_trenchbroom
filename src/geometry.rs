@@ -91,7 +91,7 @@ impl GeometryProvider {
 		self
 	}
 
-	/// Any intersecting vertices where the angle between their normals in radians is less than [DEFAULT_NORMAL_SMOOTH_THRESHOLD] will have their normals interpolated, making curved surfaces look smooth.
+	/// Any intersecting vertices where the angle between their normals in radians is less than [`DEFAULT_NORMAL_SMOOTH_THRESHOLD`] will have their normals interpolated, making curved surfaces look smooth.
 	///
 	/// Shorthand for `self.smooth_by_angle(DEFAULT_NORMAL_SMOOTH_THRESHOLD)` to reduce syntactic noise.
 	pub fn smooth_by_default_angle(self) -> Self {
@@ -99,7 +99,7 @@ impl GeometryProvider {
 	}
 
 	/// Any intersecting vertices where the angle between their normals in radians is less than `normal_smooth_threshold` will have their normals interpolated, making curved surfaces look smooth.
-	/// [DEFAULT_NORMAL_SMOOTH_THRESHOLD] is a good starting value for this, shorthanded by [smooth_by_default_angle\()](Self::smooth_by_default_angle).
+	/// [`DEFAULT_NORMAL_SMOOTH_THRESHOLD`] is a good starting value for this, shorthanded by [`Self::smooth_by_default_angle`].
 	///
 	/// if `normal_smooth_threshold` is <= 0, nothing will happen.
 	pub fn smooth_by_angle(self, normal_smooth_threshold: f32) -> Self {
