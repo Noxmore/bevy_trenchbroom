@@ -230,9 +230,9 @@ impl Default for LightmapAnimator {
 
 // TODO reflect (LightmapStyle doesn't impl it)
 /// Resource that contains the current lightmap animators for each [`LightmapStyle`].
-/// 
+///
 /// You can use this to change animations, and do things like toggle lights.
-/// 
+///
 /// The default value somewhat mirrors some of Quake's animators.
 #[derive(Resource, ExtractResource, Debug, Clone)]
 pub struct LightmapAnimators {

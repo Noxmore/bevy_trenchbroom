@@ -9,9 +9,9 @@ use syn::*;
 // TODO spawnflags support using something like bitflags?
 
 /// Point classes don't have any geometry built in -- simply a point in space.
-/// 
+///
 /// If the `auto_register` feature is enabled, this will automatically register the type with Bevy and `bevy_trenchbroom`.
-/// 
+///
 /// # Type attributes
 /// - `#[model(<path expression>)]` Displays the entity as the specified model in-editor.
 /// - `#[model({ "path": <path expr>, "skin": <skin expr>, "frame": <frame expr>, "scale": <scale expr> })]` Same as above attribute, but with greater control over how the model is shown. Note that any of these properties can be left out.
@@ -31,9 +31,9 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 }
 
 /// Solid classes contain brush geometry.
-/// 
+///
 /// If the `auto_register` feature is enabled, this will automatically register the type with Bevy and `bevy_trenchbroom`.
-/// 
+///
 /// # Type attributes
 /// - `#[geometry(<rust expression>)]` Required. An expression that produces a `GeometryProvider` to control how the geometry appears in the world.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
@@ -49,9 +49,9 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 }
 
 /// Base classes don't appear in-editor, rather they give properties and attributes to their sub-classes (components that require them).
-/// 
+///
 /// If the `auto_register` feature is enabled, this will automatically register the type with Bevy and `bevy_trenchbroom`.
-/// 
+///
 /// It has the same attributes as [`PointClass`].
 #[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, no_default))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
