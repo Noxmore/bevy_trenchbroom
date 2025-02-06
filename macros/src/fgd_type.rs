@@ -18,7 +18,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 			} in data.variants
 			{
 				if !fields.is_empty() {
-					panic!("Only unit vectors supported, variant {variant_ident} has fields");
+					panic!("Only unit enums supported, variant {variant_ident} has fields");
 				}
 
 				let mut doc = None;
