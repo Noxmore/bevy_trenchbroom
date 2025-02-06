@@ -169,7 +169,7 @@ impl AssetLoader for BspLoader {
 						self.tb_server.config.bsp_textures_asset_usages,
 					);
 
-					let image_handle = load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image.clone());
+					let image_handle = load_context.get_label_handle(format!("{TEXTURE_PREFIX}{name}"));
 
 					(texture.header.name.as_str(), (image, image_handle))
 				})
@@ -347,6 +347,11 @@ impl AssetLoader for BspLoader {
 				}
 
 				models.push(model);
+			}
+
+			// Actually add images
+			for (name, (image, _)) in embedded_texture_images {
+				load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
 			}
 
 			// We need this here while we still have access to data for later
