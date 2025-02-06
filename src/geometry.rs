@@ -1,7 +1,7 @@
 use bevy::render::mesh::VertexAttributeValues;
 use brush::Brush;
 use bsp::{
-	lighting::{AnimatedLighting, AnimatedLightmap},
+	lighting::{AnimatedLighting, AnimatedLightingHandle},
 	BspBrushesAsset,
 };
 use qmap::QuakeMapEntity;
@@ -213,7 +213,7 @@ impl GeometryProvider {
 
 				view.world
 					.entity_mut(mesh_view.entity)
-					.insert(AnimatedLightmap(animated_lighting_handle.clone()));
+					.insert(AnimatedLightingHandle(animated_lighting_handle.clone()));
 			}
 		})
 	}

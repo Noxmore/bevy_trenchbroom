@@ -48,7 +48,7 @@ impl Plugin for BspLightingPlugin {
 		app
 			.add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
 			.add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
-			.register_type::<AnimatedLightmap>()
+			.register_type::<AnimatedLightingHandle>()
 			.init_resource::<LightmapAnimators>()
 			.init_asset::<AnimatedLighting>()
 			.add_systems(PreUpdate, Self::insert_animated_lightmaps)
@@ -74,16 +74,27 @@ impl BspLightingPlugin {
 	/// Inserts [`Lightmap`] components into entities with [`AnimatedLightmap`].
 	pub fn insert_animated_lightmaps(
 		mut commands: Commands,
-		query: Query<(Entity, &AnimatedLightmap), Without<Lightmap>>,
+		query: Query<(Entity, &AnimatedLightingHandle), Or<(Without<Lightmap>, Without<IrradianceVolume>)>>,
 		animated_lighting_assets: Res<Assets<AnimatedLighting>>,
+		tb_server: Res<TrenchBroomServer>,
 	) {
 		for (entity, animated_lightmap) in &query {
 			let Some(animated_lighting) = animated_lighting_assets.get(&animated_lightmap.0) else { continue };
 
-			commands.entity(entity).insert(Lightmap {
-				image: animated_lighting.output.clone(),
-				uv_rect: Rect::new(0., 0., 1., 1.),
-			});
+			match animated_lighting.ty {
+				AnimatedLightingType::Lightmap => {
+					commands.entity(entity).insert(Lightmap {
+						image: animated_lighting.output.clone(),
+						uv_rect: Rect::new(0., 0., 1., 1.),
+					});
+				}
+				AnimatedLightingType::IrradianceVolume => {
+					commands.entity(entity).insert(IrradianceVolume {
+						voxels: animated_lighting.output.clone(),
+						intensity: tb_server.config.default_irradiance_volume_intensity,
+					});
+				}
+			}
 		}
 	}
 
@@ -280,10 +291,10 @@ impl RenderAsset for AnimatedLighting {
 	}
 }
 
-/// Holds an [`AnimatedLighting`] handle and automatically inserts the output lightmap onto the entity.
+/// Holds an [`AnimatedLighting`] handle and automatically inserts the output [`Lightmap`] or [`IrradianceVolume`] based on [`AnimatedLighting::ty`] onto the entity.
 #[derive(Component, Reflect, Debug, Clone, Default, PartialEq, Eq, Deref, DerefMut)]
 #[reflect(Component, Default)]
-pub struct AnimatedLightmap(pub Handle<AnimatedLighting>); // TODO should be more general-purpose
+pub struct AnimatedLightingHandle(pub Handle<AnimatedLighting>);
 
 #[derive(Reflect, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnimatedLightingType {
