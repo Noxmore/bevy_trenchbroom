@@ -41,28 +41,29 @@ impl Plugin for BspPlugin {
 pub static GENERIC_MATERIAL_PREFIX: &str = "GenericMaterial_";
 pub static TEXTURE_PREFIX: &str = "Texture_";
 
+/// Quake level loaded from a `.bsp` file.
 #[derive(Asset, Reflect, Debug)]
 pub struct Bsp {
+	/// The main scene of everything put together.
 	pub scene: Handle<Scene>,
 	pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,
+	/// The source data this BSP's assets was created from.
 	pub data: BspData,
+	/// The entities parsed from the map that was used to construct the scene.
 	pub entities: QuakeMapEntities,
 }
 
-/* /// Store [`BspData`] in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).
-#[derive(Asset, TypePath, Debug, Clone, Default)]
-pub struct BspDataAsset(pub BspData); */
-
+/// Geometry and brushes of a `SolidClass` entity.
 #[derive(Reflect, Debug)]
 pub struct BspModel {
-	/// TODO doc Textures and meshes
-	/// TODO store texture flags?
+	/// Maps texture names to mesh handles.
 	pub meshes: Vec<(String, Handle<Mesh>)>,
 
+	/// If the BSP contains the `BRUSHLIST` BSPX lump, this will be [`Some`] containing a handle to the brushes for this model.
 	pub brushes: Option<Handle<BspBrushesAsset>>,
 }
 
@@ -72,6 +73,7 @@ pub struct BspBrushesAsset {
 	pub brushes: Vec<BspBrush>,
 }
 
+/// Like a [`Brush`](crate::brush::Brush), but only contains the hull geometry, no texture information.
 #[derive(Reflect, Debug, Clone, Default)]
 pub struct BspBrush {
 	pub planes: Vec<BrushPlane>,
@@ -84,7 +86,7 @@ impl ConvexHull for BspBrush {
 	}
 }
 
-/// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
+/// A reference to a texture loaded from a BSP file. Stores the handle to the [`Image`], and to the [`GenericMaterial`] that will be applied to mesh entities.
 #[derive(Reflect, Debug)]
 pub struct BspEmbeddedTexture {
 	pub image: Handle<Image>,
@@ -352,12 +354,6 @@ impl AssetLoader for BspLoader {
 				load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
 			}
 
-			// We need this here while we still have access to data for later
-			// let light_grid_octree = data.bspx.parse_light_grid_octree(&data.parse_ctx);
-
-			// So we can access the handle in the scene
-			// let data_handle = load_context.add_labeled_asset("BspData".s(), BspDataAsset(data));
-
 			// Spawn entities into scene
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
 				let Some(classname) = map_entity.properties.get("classname") else { continue };
@@ -533,7 +529,6 @@ impl AssetLoader for BspLoader {
 								let mut color: [u8; 4] = [0, 0, 0, 255];
 
 								for sample in samples {
-									// println!("{sample:?}");
 									#[allow(clippy::needless_range_loop)]
 									for i in 0..3 {
 										color[i] = color[i].saturating_add(sample.color[i]);
@@ -621,6 +616,7 @@ fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Optio
 	model_property_trimmed.parse::<usize>().ok()
 }
 
+// TODO
 /* #[test]
 fn bsp_loading() {
 	let mut app = App::new();
