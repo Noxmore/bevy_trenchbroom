@@ -64,6 +64,7 @@ pub fn fgd_type_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 	fgd_type::fgd_type_derive(parse_macro_input!(input as DeriveInput)).into()
 }
 
+/// Returns `true` if the path contains a single segment, that segment being `s`.
 fn compare_path(path: &Path, s: &str) -> bool {
 	path.segments
 		== [PathSegment {
@@ -74,6 +75,7 @@ fn compare_path(path: &Path, s: &str) -> bool {
 		.collect()
 }
 
+/// Returns a token stream where if `value` is [`Some`], returns `Some(<value>)`, else returns a token stream containing `None`.
 fn option(value: Option<impl quote::ToTokens>) -> TokenStream {
 	match value {
 		Some(value) => quote! { Some(#value) },
@@ -81,6 +83,7 @@ fn option(value: Option<impl quote::ToTokens>) -> TokenStream {
 	}
 }
 
+/// Unit enum version of [`Fields`].
 enum FieldsType {
 	Named,
 	Unnamed,
