@@ -19,13 +19,16 @@ use crate::*;
 
 /// Max animators passed to a shader, must match value in `composite_lightmaps.wgsl`.
 pub const MAX_ANIMATORS: usize = 255;
+/// Max number of steps in a [`LightmapAnimator`].
 pub const MAX_LIGHTMAP_FRAMES: usize = 64;
 
+/// The format used for the out channel in lighting animation. I've found that [`TextureFormat::Rgba8UnormSrgb`] and the like show noticeable banding on slower animations.
 pub(crate) const LIGHTMAP_OUTPUT_TEXTURE_FORMAT: TextureFormat = TextureFormat::Rgba32Float;
 pub(crate) fn new_lightmap_output_image(width: u32, height: u32) -> Image {
 	let mut image = Image::new_fill(
 		Extent3d { width, height, ..default() },
 		TextureDimension::D2,
+		// Bright color -- easy to spot errors
 		[0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
 		LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
 		RenderAssetUsages::RENDER_WORLD,
@@ -68,6 +71,7 @@ impl Plugin for BspLightingPlugin {
 	}
 }
 impl BspLightingPlugin {
+	/// Inserts [`Lightmap`] components into entities with [`AnimatedLightmap`].
 	pub fn insert_animated_lightmaps(
 		mut commands: Commands,
 		query: Query<(Entity, &AnimatedLightmap), Without<Lightmap>>,
@@ -214,16 +218,26 @@ impl Default for LightmapAnimator {
 }
 
 // TODO reflect (LightmapStyle doesn't impl it)
+/// Resource that contains the current lightmap animators for each [`LightmapStyle`].
+/// 
+/// You can use this to change animations, and do things like toggle lights.
+/// 
+/// The default value somewhat mirrors some of Quake's animators.
 #[derive(Resource, ExtractResource, Debug, Clone)]
 pub struct LightmapAnimators {
 	pub values: HashMap<LightmapStyle, LightmapAnimator>,
+}
+impl LightmapAnimators {
+	/// Returns an empty animator map.
+	pub fn none() -> Self {
+		Self { values: default() }
+	}
 }
 
 impl Default for LightmapAnimators {
 	fn default() -> Self {
 		Self {
 			values: HashMap::from([
-				// TODO copy quake's default animators?
 				(
 					LightmapStyle(1),
 					LightmapAnimator::new(
@@ -269,7 +283,7 @@ impl RenderAsset for AnimatedLighting {
 /// Holds an [`AnimatedLighting`] handle and automatically inserts the output lightmap onto the entity.
 #[derive(Component, Reflect, Debug, Clone, Default, PartialEq, Eq, Deref, DerefMut)]
 #[reflect(Component, Default)]
-pub struct AnimatedLightmap(pub Handle<AnimatedLighting>);
+pub struct AnimatedLightmap(pub Handle<AnimatedLighting>); // TODO should be more general-purpose
 
 #[derive(Reflect, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnimatedLightingType {
@@ -442,7 +456,6 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 					resolve_target: None,
 					ops: Operations {
 						load: LoadOp::Clear(LinearRgba::rgb(1., 0., 1.).into()), // Obvious error color
-						// load: LoadOp::Load,
 						store: StoreOp::Store,
 					},
 				})],
