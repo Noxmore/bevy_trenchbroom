@@ -616,20 +616,26 @@ fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Optio
 	model_property_trimmed.parse::<usize>().ok()
 }
 
-// TODO
-/* #[test]
+#[test]
 fn bsp_loading() {
 	let mut app = App::new();
 
+	// Can't find a better solution than this mess :(
+	#[rustfmt::skip]
 	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), TrenchBroomPlugin::new(default())))
-		.init_asset::<Map>()
+		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), MaterializePlugin::new(TomlMaterialDeserializer)))
+		.insert_resource(TrenchBroomServer::new(default()))
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
+		.init_asset::<AnimatedLighting>()
+		.init_asset::<Mesh>()
+		.init_asset::<BspBrushesAsset>()
+		.init_asset::<Scene>()
+		.init_asset::<Bsp>()
 		.init_asset_loader::<BspLoader>()
 	;
 
-	let bsp_handle = app.world().resource::<AssetServer>().load::<Map>("maps/example.bsp");
+	let bsp_handle = app.world().resource::<AssetServer>().load::<Bsp>("maps/example.bsp");
 
 	for _ in 0..1000 {
 		match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
@@ -641,4 +647,4 @@ fn bsp_loading() {
 		app.update();
 	}
 	panic!("Bsp took longer than 5 seconds to load.");
-} */
+}

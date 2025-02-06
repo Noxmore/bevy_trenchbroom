@@ -183,3 +183,34 @@ impl AssetLoader for QuakeMapLoader {
 		&["map"]
 	}
 }
+
+#[test]
+fn map_loading() {
+	let mut app = App::new();
+
+	// Can't find a better solution than this mess :(
+	#[rustfmt::skip]
+	app
+		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), MaterializePlugin::new(TomlMaterialDeserializer)))
+		.insert_resource(TrenchBroomServer::new(default()))
+		.init_asset::<Image>()
+		.init_asset::<StandardMaterial>()
+		.init_asset::<Mesh>()
+		.init_asset::<Scene>()
+		.init_asset::<QuakeMap>()
+		.init_asset_loader::<QuakeMapLoader>()
+	;
+
+	let map_handle = app.world().resource::<AssetServer>().load::<QuakeMap>("maps/example.map");
+
+	for _ in 0..1000 {
+		match app.world().resource::<AssetServer>().load_state(&map_handle) {
+			bevy::asset::LoadState::Loaded => return,
+			bevy::asset::LoadState::Failed(err) => panic!("{err}"),
+			_ => std::thread::sleep(std::time::Duration::from_millis(5)),
+		}
+
+		app.update();
+	}
+	panic!("Map took longer than 5 seconds to load.");
+}
