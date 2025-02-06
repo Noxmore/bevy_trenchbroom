@@ -44,13 +44,11 @@ pub static TEXTURE_PREFIX: &str = "Texture_";
 #[derive(Asset, Reflect, Debug)]
 pub struct Bsp {
 	pub scene: Handle<Scene>,
-	#[reflect(ignore)]
 	pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,
-	#[reflect(ignore)]
 	pub data: BspData,
 	pub entities: QuakeMapEntities,
 }
@@ -87,7 +85,7 @@ impl ConvexHull for BspBrush {
 }
 
 /// A reference to a texture loaded from a BSP file. Stores the handle to the image, and the alpha mode that'll work for said image for performance reasons.
-#[derive(Debug)]
+#[derive(Reflect, Debug)]
 pub struct BspEmbeddedTexture {
 	pub image: Handle<Image>,
 	pub material: Handle<GenericMaterial>,
