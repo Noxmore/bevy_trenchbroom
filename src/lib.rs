@@ -107,10 +107,7 @@ pub struct TrenchBroomServer {
 impl TrenchBroomServer {
 	pub fn new(config: TrenchBroomConfig) -> Self {
 		Self {
-			data: Arc::new(TrenchBroomServerData {
-				config,
-				material_cache: default(),
-			}),
+			data: Arc::new(TrenchBroomServerData { config }),
 		}
 	}
 }
@@ -123,7 +120,4 @@ impl std::ops::Deref for TrenchBroomServer {
 #[derive(Debug)]
 pub struct TrenchBroomServerData {
 	pub config: TrenchBroomConfig,
-	// TODO remove?
-	/// Caches textures used on brushes to [`StandardMaterial`] handles.
-	pub material_cache: Mutex<HashMap<String, Handle<StandardMaterial>>>,
 }
