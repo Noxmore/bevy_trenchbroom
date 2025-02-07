@@ -8,12 +8,12 @@ impl TrenchBroomConfig {
 		use fmt::Write;
 		let mut s = String::new();
 		macro_rules! write {($($arg:tt)*) => {
-            s.write_fmt(format_args!($($arg)*)).ok()
-        };}
+			s.write_fmt(format_args!($($arg)*)).ok()
+		};}
 
 		// TODO don't write hanging base classes
 		for class in self.class_iter() {
-			write!("@{:?}Class ", class.info.ty);
+			write!("@{}Class ", class.info.ty);
 
 			if !class.info.base.is_empty() {
 				write!("base({}) ", class.info.base.iter().map(|base| base.info.name).join(", "));

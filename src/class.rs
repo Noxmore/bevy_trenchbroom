@@ -16,6 +16,15 @@ pub enum QuakeClassType {
 	/// An entity that contains brushes.
 	Solid(fn() -> GeometryProvider),
 }
+impl fmt::Display for QuakeClassType {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.write_str(match self {
+			Self::Base => "Base",
+			Self::Point => "Point",
+			Self::Solid(_) => "Solid",
+		})
+	}
+}
 
 /// A property for an entity definition. the property type (`ty`) doesn't have a set of different options, it more just tells users what kind of data you are expecting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
