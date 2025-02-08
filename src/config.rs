@@ -126,7 +126,7 @@ pub struct TrenchBroomConfig {
 	/// This is because light-grid-loaded irradiance volumes don't have any directionality.
 	/// This fakes it, making objects within look a little nicer.
 	///
-	/// (Default: IrradianceVolumeMultipliers::SLIGHT_SHADOW)
+	/// (Default: [`IrradianceVolumeMultipliers::SLIGHT_SHADOW`])
 	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
 	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
