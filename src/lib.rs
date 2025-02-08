@@ -40,10 +40,6 @@ impl Plugin for TrenchBroomPlugin {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}
 
-		if config.special_textures.is_some() {
-			app.add_plugins(special_textures::SpecialTexturesPlugin);
-		}
-
 		#[cfg(any(feature = "rapier", feature = "avian"))]
 		app.add_plugins(physics::PhysicsPlugin);
 
@@ -67,6 +63,7 @@ impl Plugin for TrenchBroomPlugin {
 			.insert_resource(TrenchBroomServer::new(config.clone()))
 
 			.add_plugins((
+				special_textures::SpecialTexturesPlugin,
 				qmap::QuakeMapPlugin,
 				bsp::BspPlugin,
 				geometry::GeometryPlugin,
