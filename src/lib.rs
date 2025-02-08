@@ -30,24 +30,17 @@ pub use indexmap;
 pub use inventory;
 pub use toml;
 
-pub struct TrenchBroomPlugin {
-	pub config: TrenchBroomConfig,
-}
-
-impl TrenchBroomPlugin {
-	/// Creates a new [`TrenchBroomPlugin`] with the specified config.
-	pub fn new(config: TrenchBroomConfig) -> Self {
-		Self { config }
-	}
-}
+pub struct TrenchBroomPlugin(pub TrenchBroomConfig);
 
 impl Plugin for TrenchBroomPlugin {
 	fn build(&self, app: &mut App) {
+		let TrenchBroomPlugin(config) = self;
+		
 		if !app.is_plugin_added::<MaterializeMarkerPlugin>() {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}
 
-		if self.config.special_textures.is_some() {
+		if config.special_textures.is_some() {
 			app.add_plugins(special_textures::SpecialTexturesPlugin);
 		}
 
@@ -58,20 +51,20 @@ impl Plugin for TrenchBroomPlugin {
 		{
 			let type_registry = app.world().resource::<AppTypeRegistry>();
 			let mut type_registry = type_registry.write();
-			for class in self.config.class_iter() {
+			for class in config.class_iter() {
 				type_registry.add_registration((class.get_type_registration)());
 				(class.register_type_dependencies)(&mut type_registry);
 			}
 		}
 
-		if self.config.lightmap_exposure.is_some() {
+		if config.lightmap_exposure.is_some() {
 			app.add_systems(Update, Self::set_lightmap_exposure);
 		}
 
 		#[rustfmt::skip]
 		app
 			// I'd rather not clone here, but i only have a reference to self
-			.insert_resource(TrenchBroomServer::new(self.config.clone()))
+			.insert_resource(TrenchBroomServer::new(config.clone()))
 
 			.add_plugins((
 				qmap::QuakeMapPlugin,

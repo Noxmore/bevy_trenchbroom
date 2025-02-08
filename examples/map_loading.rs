@@ -56,7 +56,7 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		.add_plugins(TrenchBroomPlugin::new(TrenchBroomConfig::new("bevy_trenchbroom_example")))
+		.add_plugins(TrenchBroomPlugin(TrenchBroomConfig::new("bevy_trenchbroom_example")))
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(Update, spawn_lights)
 		.run();

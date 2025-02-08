@@ -72,7 +72,7 @@ fn main() {
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
 		.insert_resource(ClearColor(Color::BLACK))
 		.insert_resource(AmbientLight::NONE)
-		.add_plugins(TrenchBroomPlugin::new(
+		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.special_textures(SpecialTexturesConfig::new())
 				.ignore_invalid_entity_definitions(true),
