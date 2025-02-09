@@ -29,10 +29,13 @@ fn main() {
         // TrenchBroom maps use repeating textures, and currently by default bevy's images don't repeat.
         // Use `repeating_image_sampler` to easily create a sampler for this that is optionally filtered.
         .add_plugins(DefaultPlugins.set(ImagePlugin { default_sampler: repeating_image_sampler(false) }))
-        .add_plugins(TrenchBroomPlugin::new(
+        .add_plugins(TrenchBroomPlugin(
+            // Here you can customize the resulting bevy_trenchbroom and game configuration with a builder syntax
             TrenchBroomConfig::new("example_game") // <- The name of your game
-                // Here you can customize the resulting bevy_trenchbroom and game configuration with a builder syntax
-                .special_textures(SpecialTexturesConfig::new()) // <- You'll want to enable this if you're loading BSPs with embedded textures via WADs
+                // For example: by default, the scale is set to 1 unit = 1 inch assuming that 1 Bevy unit = 1 meter.
+                // This makes 1 TrenchBroom unit = 1 Bevy unit
+                .scale(1.)
+                // You should have a good look at all the settings, as there are a few that can cause some nasty little bugs if you don't know that they're active. (e.g. `lightmap_exposure`)
                 // ...
         ))
         // ...

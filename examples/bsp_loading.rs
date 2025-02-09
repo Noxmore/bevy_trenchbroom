@@ -73,9 +73,7 @@ fn main() {
 		.insert_resource(ClearColor(Color::BLACK))
 		.insert_resource(AmbientLight::NONE)
 		.add_plugins(TrenchBroomPlugin(
-			TrenchBroomConfig::new("bevy_trenchbroom_example")
-				.special_textures(SpecialTexturesConfig::new())
-				.ignore_invalid_entity_definitions(true),
+			TrenchBroomConfig::new("bevy_trenchbroom_example").ignore_invalid_entity_definitions(true),
 		))
 		.add_systems(PostStartup, (setup_scene, write_config))
 		.run();

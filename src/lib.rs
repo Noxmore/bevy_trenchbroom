@@ -35,7 +35,7 @@ pub struct TrenchBroomPlugin(pub TrenchBroomConfig);
 impl Plugin for TrenchBroomPlugin {
 	fn build(&self, app: &mut App) {
 		let TrenchBroomPlugin(config) = self;
-		
+
 		if !app.is_plugin_added::<MaterializeMarkerPlugin>() {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}

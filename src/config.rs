@@ -99,11 +99,6 @@ pub struct TrenchBroomConfig {
 	/// NOTE: This bounding box is in TrenchBroom space (Z up).
 	pub soft_map_bounds: Option<[Vec3; 2]>,
 
-	/// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "__TB_empty"])
-	#[default(["clip".s(), "skip".s(), "__TB_empty".s()].into())]
-	#[builder(into)]
-	pub auto_remove_textures: HashSet<String>,
-
 	/// The file extension used when loading [`GenericMaterial`]s.
 	///
 	/// With the default loose texture loader, if a file with this asset doesn't exist,
@@ -134,17 +129,45 @@ pub struct TrenchBroomConfig {
 	/// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
 	pub ignore_invalid_entity_definitions: bool,
 
-	/// An optional configuration for supporting [Quake special textures](https://quakewiki.org/wiki/Textures),
-	/// such as animated textures, skies, liquids, and invisible textures like clip and skip.
-	#[builder(into)]
-	pub special_textures: Option<SpecialTexturesConfig>,
-
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_embedded_texture)))]
 	pub load_embedded_texture: Hook<LoadEmbeddedTextureFn>,
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_loose_texture)))]
 	pub load_loose_texture: Hook<LoadLooseTextureFn>,
+
+	/// Default frames per second for embedded animated textures.
+	///
+	/// If [`Some`], embedded textures with names starting with `+<0..9>` will become animated, going to the next number in the range, and if it doesn't exist, looping back around to 0.
+	///
+	/// (Default: `Some(5)`)
+	#[default(Some(5.))]
+	pub embedded_texture_animation_fps: Option<f32>,
+
+	/// If [`Some`], embedded textures with names that start with "sky" will be split in two.
+	///
+	/// Using the material provided by the contained function, the left side being the foreground, and right side the background.
+	///
+	/// (Default: `Some(QuakeSkyMaterial::default)`)
+	#[default(Some(default))]
+	pub embedded_quake_sky_material: Option<fn() -> QuakeSkyMaterial>,
+
+	/// If [`Some`], embedded textures with names that start with `*` will use [`LiquidMaterial`], and will abide by the `water_alpha` worldspawn key.
+	///
+	/// (Default: `Some(QuakeSkyMaterial::default)`)
+	#[default(Some(default))]
+	pub embedded_liquid_material: Option<fn() -> LiquidMaterialExt>,
+
+	/// If `true`, embedded textures with names starting with `{` will be given the alpha mode [`Mask(0.5)`](AlphaMode::Mask), and pixels with the index value `255` will be turned transparent.
+	///
+	/// (Default: `true`)
+	#[default(true)]
+	pub embedded_texture_cutouts: bool,
+
+	/// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "__TB_empty"])
+	#[default(["clip".s(), "skip".s(), "__TB_empty".s()].into())]
+	#[builder(into)]
+	pub auto_remove_textures: HashSet<String>,
 
 	/// How lightmaps atlas' are computed when loading BSP files.
 	///

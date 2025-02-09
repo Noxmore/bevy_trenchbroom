@@ -28,7 +28,7 @@ pub use crate::{
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial, SpecialTexturesConfig},
+	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
 	util::{repeating_image_sampler, IsSceneWorld, TrenchBroomGltfRotationFix},
 	TrenchBroomPlugin, TrenchBroomServer,
 };

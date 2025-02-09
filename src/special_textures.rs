@@ -24,147 +24,130 @@ impl Plugin for SpecialTexturesPlugin {
 	}
 }
 
-/// Config for supporting quake special textures, such as animated textures and liquid.
-#[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
-pub struct SpecialTexturesConfig {
-	/// Default frames per second for animated textures. (Default: 5)
-	#[default(5.)]
-	pub texture_animation_fps: f32,
-
-	#[default(QuakeSkyMaterial::default)]
-	pub default_quake_sky_material: fn() -> QuakeSkyMaterial,
-
-	#[default(LiquidMaterialExt::default)]
-	pub default_liquid_material: fn() -> LiquidMaterialExt,
-}
-impl SpecialTexturesConfig {
-	pub fn new() -> Self {
-		Self::default()
-	}
-}
-
 /// If a [`SpecialTexturesConfig`] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
-	let Some(special_textures_config) = &view.tb_config.special_textures else { return None };
-
 	// We save a teeny tiny bit of time by only cloning if we need to :)
 	let mut material = material.clone();
 	if let Some(exposure) = view.tb_config.lightmap_exposure {
 		material.lightmap_exposure = exposure;
 	}
 
-	if view.name.starts_with('*') {
-		let water_alpha: f32 = view
-			.entities
-			.worldspawn()
-			.and_then(|worldspawn| worldspawn.get("water_alpha").ok())
-			.unwrap_or(1.);
+	if let Some(default_fn) = view.tb_config.embedded_liquid_material {
+		if view.name.starts_with('*') {
+			let water_alpha: f32 = view
+				.entities
+				.worldspawn()
+				.and_then(|worldspawn| worldspawn.get("water_alpha").ok())
+				.unwrap_or(1.);
 
-		if water_alpha < 1. {
-			material.alpha_mode = AlphaMode::Blend;
-			material.base_color = Color::srgba(1., 1., 1., water_alpha);
-		}
-
-		let handle = view.add_material(LiquidMaterial {
-			base: material,
-			extension: (special_textures_config.default_liquid_material)(),
-		});
-
-		return Some(GenericMaterial {
-			handle: handle.into(),
-			properties: default(),
-		});
-	} else if view.name.starts_with("sky") {
-		// We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
-
-		fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
-			// Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
-			let mut data: Vec<u8> =
-				Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
-
-			// Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
-			for y in 0..view.image.height() {
-				for x in x_range.clone() {
-					if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
-						data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
-						// data.extend([127, 127, 127, 0]);
-					} else {
-						data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
-					}
-				}
+			if water_alpha < 1. {
+				material.alpha_mode = AlphaMode::Blend;
+				material.base_color = Color::srgba(1., 1., 1., water_alpha);
 			}
 
-			Image::new(
-				Extent3d {
-					width: view.image.width() / 2,
-					height: view.image.height(),
-					depth_or_array_layers: 1,
-				},
-				TextureDimension::D2,
-				data,
-				view.image.texture_descriptor.format,
-				view.tb_config.bsp_textures_asset_usages,
-			)
+			let handle = view.add_material(LiquidMaterial {
+				base: material,
+				extension: default_fn(),
+			});
+
+			return Some(GenericMaterial {
+				handle: handle.into(),
+				properties: default(),
+			});
 		}
+	}
+	if let Some(default_fn) = view.tb_config.embedded_quake_sky_material {
+		if view.name.starts_with("sky") {
+			// We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
 
-		let fg = separate_sky_image(view, 0..view.image.width() / 2, true);
-		let fg = view
-			.parent_view
-			.load_context
-			.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
+			fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
+				// Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
+				let mut data: Vec<u8> =
+					Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
 
-		let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
-		let bg = view
-			.parent_view
-			.load_context
-			.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
+				// Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
+				for y in 0..view.image.height() {
+					for x in x_range.clone() {
+						if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
+							data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
+							// data.extend([127, 127, 127, 0]);
+						} else {
+							data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
+						}
+					}
+				}
 
-		let handle = view.add_material(QuakeSkyMaterial {
-			fg,
-			bg,
-			..(special_textures_config.default_quake_sky_material)()
-		});
-
-		return Some(GenericMaterial {
-			handle: handle.into(),
-			properties: default(),
-		});
-	} else if view.name.starts_with('+') {
-		let embedded_textures = view.embedded_textures?;
-
-		let mut chars = view.name.chars();
-		chars.next();
-
-		let texture_frame_idx = chars.next().and_then(|c| c.to_digit(10))?;
-		let name_content = &view.name[2..];
-
-		let mut frames = Vec::new();
-		let mut frame_num = 0;
-		while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
-			frames.push(frame_handle.clone());
-			frame_num += 1;
-		}
-
-		let handle = view.add_material(material);
-
-		let mut generic_material = GenericMaterial::new(handle);
-
-		generic_material.set_property(
-			GenericMaterial::ANIMATION,
-			MaterialAnimations {
-				next: None,
-				images: Some(MaterialAnimation {
-					fps: special_textures_config.texture_animation_fps,
-					value: bevy::utils::HashMap::from([("base_color_texture".s(), frames)]),
-					state: GenericMaterialAnimationState {
-						current_frame: texture_frame_idx.wrapping_sub(1) as usize,
-						next_frame_time: Instant::now(),
+				Image::new(
+					Extent3d {
+						width: view.image.width() / 2,
+						height: view.image.height(),
+						depth_or_array_layers: 1,
 					},
-				}),
-			},
-		);
+					TextureDimension::D2,
+					data,
+					view.image.texture_descriptor.format,
+					view.tb_config.bsp_textures_asset_usages,
+				)
+			}
 
-		return Some(generic_material);
+			let fg = separate_sky_image(view, 0..view.image.width() / 2, true);
+			let fg = view
+				.parent_view
+				.load_context
+				.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
+
+			let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
+			let bg = view
+				.parent_view
+				.load_context
+				.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
+
+			let handle = view.add_material(QuakeSkyMaterial { fg, bg, ..default_fn() });
+
+			return Some(GenericMaterial {
+				handle: handle.into(),
+				properties: default(),
+			});
+		}
+	}
+	if let Some(fps) = view.tb_config.embedded_texture_animation_fps {
+		if view.name.starts_with('+') {
+			let embedded_textures = view.embedded_textures?;
+
+			let mut chars = view.name.chars();
+			chars.next();
+
+			let texture_frame_idx = chars.next().and_then(|c| c.to_digit(10))?;
+			let name_content = &view.name[2..];
+
+			let mut frames = Vec::new();
+			let mut frame_num = 0;
+			while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
+				frames.push(frame_handle.clone());
+				frame_num += 1;
+			}
+
+			let handle = view.add_material(material);
+
+			let mut generic_material = GenericMaterial::new(handle);
+
+			generic_material.set_property(
+				GenericMaterial::ANIMATION,
+				MaterialAnimations {
+					next: None,
+					images: Some(MaterialAnimation {
+						fps,
+						value: bevy::utils::HashMap::from([("base_color_texture".s(), frames)]),
+						state: GenericMaterialAnimationState {
+							current_frame: texture_frame_idx.wrapping_sub(1) as usize,
+							next_frame_time: Instant::now(),
+						},
+					}),
+				},
+			);
+
+			return Some(generic_material);
+		}
 	}
 
 	None

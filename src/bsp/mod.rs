@@ -157,7 +157,7 @@ impl AssetLoader for BspLoader {
 						data.iter()
 							.copied()
 							.flat_map(|pixel| {
-								if self.tb_server.config.special_textures.is_some() && is_cutout_texture && pixel == 255 {
+								if self.tb_server.config.embedded_texture_cutouts && is_cutout_texture && pixel == 255 {
 									[0; 4]
 								} else {
 									let [r, g, b] = self.tb_server.config.texture_pallette.1.colors[pixel as usize];
