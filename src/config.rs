@@ -405,7 +405,6 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 	pub image: &'a Image,
 }
 
-// TODO I wish this was bit more encapsulated and ergonomic
 /// Wrapper for storing a stack of dynamic functions. Use [`Hook::set`] to push a new function onto the stack.
 #[derive(Deref)]
 pub struct Hook<F: ?Sized>(pub Arc<F>);
@@ -425,38 +424,6 @@ impl<F: ?Sized> Hook<F> {
 		self.0 = provider(self.0.clone());
 	}
 }
-
-/* /// Macro that produces a Hook type with less boilerplate.
-#[macro_export]
-macro_rules! Hook {(($($arg:ty),* $(,)?) $(-> $return:ty)?) => {
-	Hook<dyn Fn($($arg),*) $(-> $return)? + Send + Sync>
-};} */
-
-/* impl<F: ?Sized + HookClone<F = F>> Clone for Hook<F> {
-	fn clone(&self) -> Self {
-		F::clone_hook(self)
-	}
-} */
-
-/* pub trait DynClone<T: ?Sized> {
-	fn dyn_clone(&self) -> Box<T>;
-}
-impl<T: Clone> DynClone<T> for T {
-	fn dyn_clone(&self) -> Box<T> {
-		Box::new(self.clone())
-	}
-} */
-
-/* pub trait HookClone {
-	type F: ?Sized;
-	fn clone_hook(&self) -> Hook<Self::F>;
-}
-impl<F: Clone> HookClone for F {
-	type F = F;
-	fn clone_hook(&self) -> Hook<Self::F> {
-		Hook(Box::new(self.clone()))
-	}
-} */
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum AssetPackageFormat {
