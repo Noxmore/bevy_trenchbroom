@@ -14,6 +14,7 @@ pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
+#[require(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render())]
 pub struct FuncDoor;
 
