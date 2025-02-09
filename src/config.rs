@@ -164,8 +164,8 @@ pub struct TrenchBroomConfig {
 	#[default(true)]
 	pub embedded_texture_cutouts: bool,
 
-	/// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "__TB_empty"])
-	#[default(["clip".s(), "skip".s(), "__TB_empty".s()].into())]
+	/// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "origin", "__TB_empty"])
+	#[default(["clip".s(), "skip".s(), "origin".s(), "__TB_empty".s()].into())]
 	#[builder(into)]
 	pub auto_remove_textures: HashSet<String>,
 
