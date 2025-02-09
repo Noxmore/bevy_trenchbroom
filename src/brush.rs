@@ -220,6 +220,18 @@ pub trait ConvexHull {
 			.all_equal()
 			|| self.planes().any(|lhs_plane| lhs_plane == plane)
 	}
+
+	/// Computes the average of all de-duplicated intersections.
+	fn center(&self) -> DVec3 {
+		let set = self.calculate_vertices()
+			.map(|(pos, _)| pos.to_array().map(float_ord::FloatOrd))
+			.collect::<HashSet<_>>();
+
+		let set_len = set.len();
+		set.into_iter()
+			.map(|arr| DVec3::from_array(arr.map(|f| f.0)))
+			.sum::<DVec3>() / set_len as f64
+	}
 }
 
 impl ConvexHull for Brush {
