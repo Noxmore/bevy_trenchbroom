@@ -93,24 +93,24 @@ impl AlmostEqual<Quat> for Quat {
 
 #[allow(unused)]
 macro_rules! assert_almost_eq {
-    ($left:expr, $right:expr, $margin:expr) => {
-        match ($left, $right, $margin) {
-            (left, right, margin) => {
-                if !left.almost_eq(right, margin) {
-                    panic!("assertion `left.almost_eq(right)` failed\n  left: {left}\n right: {right}");
-                }
-            }
-        }
-    };
-    ($left:expr, $right:expr, $margin:expr, $($arg:tt)+) => {
-        match ($left, $right, $margin) {
-            (left, right, margin) => {
-                if !left.almost_eq(right, margin) {
-                    panic!($($arg)+);
-                }
-            }
-        }
-    };
+	($left:expr, $right:expr, $margin:expr) => {
+		match ($left, $right, $margin) {
+			(left, right, margin) => {
+				if !left.almost_eq(right, margin) {
+					panic!("assertion `left.almost_eq(right)` failed\n  left: {left}\n right: {right}");
+				}
+			}
+		}
+	};
+	($left:expr, $right:expr, $margin:expr, $($arg:tt)+) => {
+		match ($left, $right, $margin) {
+			(left, right, margin) => {
+				if !left.almost_eq(right, margin) {
+					panic!($($arg)+);
+				}
+			}
+		}
+	};
 }
 
 pub trait ConvertZeroToOne {

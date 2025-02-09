@@ -104,89 +104,89 @@ impl GeometryProvider {
 	/// if `normal_smooth_threshold` is <= 0, nothing will happen.
 	pub fn smooth_by_angle(self, normal_smooth_threshold: f32) -> Self {
 		self.push(move |view| {
-            if normal_smooth_threshold <= 0. {
-                return; // The user doesn't want to smooth after all!
-            }
+			if normal_smooth_threshold <= 0. {
+				return; // The user doesn't want to smooth after all!
+			}
 
-            #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-            struct Vec3Ord([FloatOrd; 3]);
+			#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+			struct Vec3Ord([FloatOrd; 3]);
 
-            // It's either a map or a doubly-connected edge list, the prior seems to work well enough.
-            let mut vertex_map: HashMap<Vec3Ord, Vec<&mut [f32; 3]>> = default();
-
-
-            let ent_index = view.map_entity_idx; // Borrow checker
-            // We go through all the meshes and add all their normals into vertex_map
-            for mesh_view in &mut view.meshes {
-                // TODO replace with bevy_materialize integration for qmap loading
-                // if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
-                //     continue;
-                // }
-
-                // SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
-                let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
-
-                let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).and_then(VertexAttributeValues::as_float3) else {
-                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!", mesh_view.entity, ent_index);
-                    return;
-                };
-                let positions_len = positions.len();
-
-                let Some(normals) = mesh2.attribute_mut(Mesh::ATTRIBUTE_NORMAL).and_then(|values| match values {
-                    VertexAttributeValues::Float32x3(v) => Some(v),
-                    _ => None,
-                }) else {
-                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!", mesh_view.entity, ent_index);
-                    return;
-                };
-                let normals_len = normals.len();
-
-                if normals_len != positions_len {
-                    error!("[entity {} (map entity {:?})] Tried to smooth by angle, but ATTRIBUTE_NORMAL len doesn't match ATTRIBUTE_POSITION len! ({} and {})", mesh_view.entity, ent_index, normals_len, positions_len);
-                    return;
-                }
-
-                for (i, normal) in normals.iter_mut().enumerate() {
-                    // Let's make this lower precision, just in case
-                    let position = Vec3Ord(positions[i].map(|v| FloatOrd((v * 10000.).round() / 10000.)));
-
-                    vertex_map.entry(position).or_default().push(normal);
-                }
-            }
+			// It's either a map or a doubly-connected edge list, the prior seems to work well enough.
+			let mut vertex_map: HashMap<Vec3Ord, Vec<&mut [f32; 3]>> = default();
 
 
-            for (_position, mut normals) in vertex_map {
-                use disjoint_sets::*;
+			let ent_index = view.map_entity_idx; // Borrow checker
+			// We go through all the meshes and add all their normals into vertex_map
+			for mesh_view in &mut view.meshes {
+				// TODO replace with bevy_materialize integration for qmap loading
+				// if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
+				//     continue;
+				// }
 
-                if normals.len() <= 1 { // There are no duplicates
-                    continue;
-                }
+				// SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
+				let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
 
-                // Group normals to be smoothed
-                let mut uf = UnionFind::new(normals.len());
+				let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).and_then(VertexAttributeValues::as_float3) else {
+					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!", mesh_view.entity, ent_index);
+					return;
+				};
+				let positions_len = positions.len();
 
-                for ((a_i, a), (b_i, b)) in normals.iter().map(|v| Vec3::from(**v)).enumerate().tuple_combinations() {
-                    if a.angle_between(b) < normal_smooth_threshold {
-                        uf.union(a_i, b_i);
-                    }
-                }
+				let Some(normals) = mesh2.attribute_mut(Mesh::ATTRIBUTE_NORMAL).and_then(|values| match values {
+					VertexAttributeValues::Float32x3(v) => Some(v),
+					_ => None,
+				}) else {
+					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!", mesh_view.entity, ent_index);
+					return;
+				};
+				let normals_len = normals.len();
 
-                // Put the groups into an easily iterable structure, then average the normals in each group
-                let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
-                for i in 0..normals.len() {
-                    let root = uf.find(i);
-                    groups.entry(root).or_default().push(i);
-                }
+				if normals_len != positions_len {
+					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but ATTRIBUTE_NORMAL len doesn't match ATTRIBUTE_POSITION len! ({} and {})", mesh_view.entity, ent_index, normals_len, positions_len);
+					return;
+				}
 
-                for (_, group) in groups {
-                    let new_normal = group.iter().map(|idx| Vec3::from(*normals[*idx])).sum::<Vec3>() / normals.len() as f32;
+				for (i, normal) in normals.iter_mut().enumerate() {
+					// Let's make this lower precision, just in case
+					let position = Vec3Ord(positions[i].map(|v| FloatOrd((v * 10000.).round() / 10000.)));
 
-                    for idx in group {
-                        *normals[idx] = new_normal.to_array();
-                    }
-                }
-            }
-        })
+					vertex_map.entry(position).or_default().push(normal);
+				}
+			}
+
+
+			for (_position, mut normals) in vertex_map {
+				use disjoint_sets::*;
+
+				if normals.len() <= 1 { // There are no duplicates
+					continue;
+				}
+
+				// Group normals to be smoothed
+				let mut uf = UnionFind::new(normals.len());
+
+				for ((a_i, a), (b_i, b)) in normals.iter().map(|v| Vec3::from(**v)).enumerate().tuple_combinations() {
+					if a.angle_between(b) < normal_smooth_threshold {
+						uf.union(a_i, b_i);
+					}
+				}
+
+				// Put the groups into an easily iterable structure, then average the normals in each group
+				let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
+				for i in 0..normals.len() {
+					let root = uf.find(i);
+					groups.entry(root).or_default().push(i);
+				}
+
+				for (_, group) in groups {
+					let new_normal = group.iter().map(|idx| Vec3::from(*normals[*idx])).sum::<Vec3>() / normals.len() as f32;
+
+					for idx in group {
+						*normals[idx] = new_normal.to_array();
+					}
+				}
+			}
+		})
 	}
 
 	/// Puts materials on mesh entities.

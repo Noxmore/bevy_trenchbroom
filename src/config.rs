@@ -557,7 +557,7 @@ impl TrenchBroomConfig {
 			return Err(io::Error::new(
 				io::ErrorKind::InvalidData,
 				"Please set a name for your TrenchBroom config. \
-                If you have, make sure you call `write_into` after the app is built. (e.g. In a startup system)",
+				If you have, make sure you call `write_into` after the app is built. (e.g. In a startup system)",
 			));
 		}
 
