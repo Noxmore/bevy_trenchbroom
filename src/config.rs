@@ -226,6 +226,7 @@ impl TrenchBroomConfig {
 	pub fn default_global_spawner(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let classname = src_entity.classname()?.s();
 
+		// For things like doors where the `angles` property means open direction.
 		if let Some(mut transform) = entity.get_mut::<Transform>() {
 			if config.get_class(&classname).map(|class| class.info.ty.is_solid()) == Some(true) {
 				transform.rotation = Quat::IDENTITY;
