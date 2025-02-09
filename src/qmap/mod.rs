@@ -64,6 +64,9 @@ impl QuakeMapEntities {
 pub struct QuakeMapEntity {
 	/// The properties defined in this entity instance.
 	pub properties: HashMap<String, String>,
+	/// If the map entity is a [`Solid`](crate::class::QuakeClassType::Solid) entity, this will contain the brushes making it up.
+	///
+	/// NOTE: If loading from a BSP, this will always be empty. Instead, use the `BRUSHLIST` BSPX lump stored within [`BspModel`](crate::bsp::BspModel).
 	pub brushes: Vec<Brush>,
 }
 
