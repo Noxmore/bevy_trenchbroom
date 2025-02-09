@@ -164,10 +164,21 @@ pub struct TrenchBroomConfig {
 	#[default(true)]
 	pub embedded_texture_cutouts: bool,
 
-	/// Set of textures to skip meshes of on map load. (Default: ["clip", "skip", "origin", "__TB_empty"])
+	/// Set of textures to skip meshes of on map load. (Default: `["clip", "skip", "origin", "__TB_empty"]`)
 	#[default(["clip".s(), "skip".s(), "origin".s(), "__TB_empty".s()].into())]
 	#[builder(into)]
 	pub auto_remove_textures: HashSet<String>,
+
+	/// If a brush is fully textured with the name of one of these when loading a `.map` file, it will set the transformation origin of the entity it belong to to the center of the brush.
+	/// 
+	/// This allows, for example, your `func_rotate` entity to easily rotate around a specific point.
+	/// 
+	/// NOTE: Entities that support this need to have [`Transform`] as a base class, or they will appear at the world origin.
+	/// 
+	/// (Default: `["origin"]`)
+	#[default(["origin".s()].into())]
+	#[builder(into)]
+	pub origin_textures: HashSet<String>,
 
 	/// How lightmaps atlas' are computed when loading BSP files.
 	///

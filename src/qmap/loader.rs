@@ -1,5 +1,5 @@
 use bevy::asset::{AssetLoader, AsyncReadExt};
-use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon};
+use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
 use class::QuakeClassType;
 use config::TextureLoadView;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
@@ -33,13 +33,28 @@ impl AssetLoader for QuakeMapLoader {
 			reader.read_to_string(&mut input).await?;
 
 			let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(input))?;
-			let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
+			let mut entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
 			let mut mesh_handles = Vec::new();
 			let mut brush_lists = HashMap::new();
 
 			let mut world = World::new();
 
+			// Handle origin brushes
+			for map_entity in entities.iter_mut() {
+				let origin_point = map_entity.brushes.iter()
+					.find(|brush| {
+						brush.surfaces.iter().all(|surface| self.tb_server.config.origin_textures.contains(&surface.texture))
+					})
+					.map(|brush| {
+						self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3()
+					});
+
+				if let Some(origin_point) = origin_point {
+					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string());
+				}
+			}
+			
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
 				let Some(classname) = map_entity.properties.get("classname") else { continue };
 				let Some(class) = self.tb_server.config.get_class(classname) else {
@@ -49,6 +64,8 @@ impl AssetLoader for QuakeMapLoader {
 
 					continue;
 				};
+
+				
 
 				let mut entity = world.spawn_empty();
 				let entity_id = entity.id();
@@ -109,7 +126,11 @@ impl AssetLoader for QuakeMapLoader {
 							})
 							.clone();
 
-						let mesh = generate_mesh_from_brush_polygons(&polygons, &self.tb_server.config, texture_size);
+						let mut mesh = generate_mesh_from_brush_polygons(&polygons, &self.tb_server.config, texture_size);
+
+						if let Ok(origin_point) = map_entity.get::<Vec3>("origin") {
+							mesh = mesh.translated_by(self.tb_server.config.to_bevy_space(-origin_point));
+						}
 
 						let mesh_entity = world.spawn(Name::new(texture.s())).id();
 						world.entity_mut(entity_id).add_child(mesh_entity);
