@@ -92,6 +92,16 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub face_tags: Vec<TrenchBroomTag>,
 
+	/// Game-defined flags per face.
+	#[builder(into)]
+	pub surface_flags: Vec<BitFlag>,
+	/// Game-defined flags per face.
+	/// According to [TrenchBroom docs](https://trenchbroom.github.io/manual/latest/#game_configuration_files), unlike [`Self::surface_flags`], this is "generally affecting the behavior of the brush containing the face".
+	#[builder(into)]
+	pub content_flags: Vec<BitFlag>,
+
+	pub default_face_attributes: DefaultFaceAttributes,
+
 	/// The optional bounding box enclosing the map to draw in the 2d viewports.
 	///
 	/// The two values are the bounding box min, and max respectively.
@@ -170,11 +180,11 @@ pub struct TrenchBroomConfig {
 	pub auto_remove_textures: HashSet<String>,
 
 	/// If a brush is fully textured with the name of one of these when loading a `.map` file, it will set the transformation origin of the entity it belong to to the center of the brush.
-	/// 
+	///
 	/// This allows, for example, your `func_rotate` entity to easily rotate around a specific point.
-	/// 
+	///
 	/// NOTE: Entities that support this need to have [`Transform`] as a base class, or they will appear at the world origin.
-	/// 
+	///
 	/// (Default: `["origin"]`)
 	#[default(["origin".s()].into())]
 	#[builder(into)]
@@ -550,6 +560,92 @@ impl TrenchBroomTagAttribute {
 	}
 }
 
+/// Definition of a bit flag for [`TrenchBroomConfig`]. The position of the flag definition determines the position of the bit.
+#[derive(Debug, Clone, Default)]
+pub enum BitFlag {
+	#[default]
+	Unused,
+	/// Shows up in-editor with the specified name and optional description.
+	Used { name: String, description: Option<String> },
+}
+impl From<BitFlag> for json::JsonValue {
+	fn from(value: BitFlag) -> Self {
+		match value {
+			BitFlag::Unused => json::object! { "unused": true },
+			BitFlag::Used { name, description } => {
+				let mut json = json::object! {
+					"name": name.clone(),
+				};
+
+				if let Some(description) = description {
+					json.insert("description", description.clone()).unwrap();
+				}
+
+				json
+			}
+		}
+	}
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct DefaultFaceAttributes {
+	/// If [`Some`], overrides the default x and y texture offset.
+	pub offset: Option<Vec2>,
+	/// If [`Some`], overrides the default texture scale.
+	pub scale: Option<Vec2>,
+	/// If [`Some`], overrides the default texture rotation.
+	pub rotation: Option<f32>,
+	/// Number specifying the default surface value (only applicable if surfaceflags exist)
+	pub surface_value: Option<u64>,
+	/// List of strings naming the default surface flags
+	pub surface_flags: Vec<String>,
+	/// List of strings naming the default content flags
+	pub content_flags: Vec<String>,
+	/// The default surface color (only applicable for Daikatana)
+	pub color: Option<Srgba>,
+}
+impl DefaultFaceAttributes {
+	/// Returns `true` if any attribute is set to something not the default, else `false`.
+	pub fn is_any_set(&self) -> bool {
+		self.offset.is_some()
+			|| self.scale.is_some()
+			|| self.rotation.is_some()
+			|| self.surface_value.is_some()
+			|| !self.surface_flags.is_empty()
+			|| !self.content_flags.is_empty()
+			|| self.color.is_some()
+	}
+}
+impl From<&DefaultFaceAttributes> for json::JsonValue {
+	fn from(value: &DefaultFaceAttributes) -> Self {
+		let mut json = json::JsonValue::new_object();
+
+		if let Some(value) = value.offset {
+			json.insert("offset", value.to_array().as_ref()).unwrap();
+		}
+		if let Some(value) = value.scale {
+			json.insert("scale", value.to_array().as_ref()).unwrap();
+		}
+		if let Some(value) = value.rotation {
+			json.insert("rotation", value).unwrap();
+		}
+		if let Some(value) = value.surface_value {
+			json.insert("surfaceValue", value).unwrap();
+		}
+		if !value.surface_flags.is_empty() {
+			json.insert::<&[_]>("surfaceFlags", &value.surface_flags).unwrap();
+		}
+		if !value.content_flags.is_empty() {
+			json.insert::<&[_]>("surfaceContents", &value.content_flags).unwrap();
+		}
+		if let Some(value) = value.color {
+			json.insert("scale", value.to_f32_array().as_ref()).unwrap();
+		}
+
+		json
+	}
+}
+
 impl TrenchBroomConfig {
 	/// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
@@ -593,7 +689,7 @@ impl TrenchBroomConfig {
 			"tags": {
 				"brush": self.brush_tags.iter().map(|tag| tag.to_json("classname")).collect::<Vec<_>>(),
 				"brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
-			}
+			},
 		};
 
 		if let Some(icon) = &self.icon {
@@ -601,9 +697,24 @@ impl TrenchBroomConfig {
 			json.insert("icon", "Icon.png").unwrap();
 		}
 
-		// if let Some(palette) = &self.texture_pallette {
-		//     json["textures"].insert("palette", palette.clone()).unwrap();
-		// }
+		let insert_defaults = self.default_face_attributes.is_any_set();
+		let insert_surface_flags = !self.surface_flags.is_empty();
+		let insert_content_flags = !self.content_flags.is_empty();
+		if insert_defaults || insert_surface_flags || insert_content_flags {
+			let mut face_attributes = json::JsonValue::new_object();
+
+			if insert_surface_flags {
+				face_attributes.insert::<&[_]>("surfaceflags", &self.surface_flags).unwrap();
+			}
+			if insert_content_flags {
+				face_attributes.insert::<&[_]>("contentflags", &self.content_flags).unwrap();
+			}
+			if insert_defaults {
+				face_attributes.insert("defaults", &self.default_face_attributes).unwrap();
+			}
+
+			json.insert("faceattribs", face_attributes).unwrap();
+		}
 
 		if let Some(bounds) = self.soft_map_bounds {
 			json.insert("softMapBounds", bounds.fgd_to_string()).unwrap();
