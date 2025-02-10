@@ -229,5 +229,3 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 | 0.15 | 0.6 | 2024.1 |
 | 0.14 | 0.4-0.5 | 2024.1 |
 | 0.13 | 0.1-0.3 | 2024.1 |
-
-Note: There's a good chance that it will work for other TrenchBroom versions then the one your version of bevy_trenchbroom is made for.
