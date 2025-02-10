@@ -45,6 +45,7 @@ pub struct TrenchBroomConfig {
 	pub icon: Option<Vec<u8>>,
 	/// Supported map file formats, it is recommended to leave this at its default (Valve)
 	#[default(vec![MapFileFormat::Valve])]
+	#[builder(into)]
 	pub file_formats: Vec<MapFileFormat>,
 	/// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
 	#[builder(skip)] // bevy_trenchbroom currently *only* supports loose files
@@ -698,17 +699,12 @@ impl TrenchBroomConfig {
 		}
 
 		let insert_defaults = self.default_face_attributes.is_any_set();
-		let insert_surface_flags = !self.surface_flags.is_empty();
-		let insert_content_flags = !self.content_flags.is_empty();
-		if insert_defaults || insert_surface_flags || insert_content_flags {
-			let mut face_attributes = json::JsonValue::new_object();
+		if insert_defaults || !self.surface_flags.is_empty() || !self.content_flags.is_empty() {
+			let mut face_attributes = json::object! {
+				"surfaceflags": self.surface_flags.as_slice(),
+				"contentflags": self.content_flags.as_slice(),
+			};
 
-			if insert_surface_flags {
-				face_attributes.insert::<&[_]>("surfaceflags", &self.surface_flags).unwrap();
-			}
-			if insert_content_flags {
-				face_attributes.insert::<&[_]>("contentflags", &self.content_flags).unwrap();
-			}
 			if insert_defaults {
 				face_attributes.insert("defaults", &self.default_face_attributes).unwrap();
 			}
