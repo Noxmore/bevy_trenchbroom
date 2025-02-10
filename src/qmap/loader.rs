@@ -42,19 +42,22 @@ impl AssetLoader for QuakeMapLoader {
 
 			// Handle origin brushes
 			for map_entity in entities.iter_mut() {
-				let origin_point = map_entity.brushes.iter()
+				let origin_point = map_entity
+					.brushes
+					.iter()
 					.find(|brush| {
-						brush.surfaces.iter().all(|surface| self.tb_server.config.origin_textures.contains(&surface.texture))
+						brush
+							.surfaces
+							.iter()
+							.all(|surface| self.tb_server.config.origin_textures.contains(&surface.texture))
 					})
-					.map(|brush| {
-						self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3()
-					});
+					.map(|brush| self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3());
 
 				if let Some(origin_point) = origin_point {
 					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string());
 				}
 			}
-			
+
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
 				let Some(classname) = map_entity.properties.get("classname") else { continue };
 				let Some(class) = self.tb_server.config.get_class(classname) else {
@@ -64,8 +67,6 @@ impl AssetLoader for QuakeMapLoader {
 
 					continue;
 				};
-
-				
 
 				let mut entity = world.spawn_empty();
 				let entity_id = entity.id();
