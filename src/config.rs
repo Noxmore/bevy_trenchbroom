@@ -43,7 +43,9 @@ pub struct TrenchBroomConfig {
 
 	/// Optional icon for the TrenchBroom UI. Contains the data of a PNG file. Should be 32x32 or it will look weird in the UI.
 	pub icon: Option<Vec<u8>>,
-	/// Supported map file formats, it is recommended to leave this at its default (Valve)
+	/// Supported map file formats. Currently, only the loading of [`Valve`](MapFileFormat::Valve) is supported.
+	/// 
+	/// (Default: [`MapFileFormat::Valve`])
 	#[default(vec![MapFileFormat::Valve])]
 	#[builder(into)]
 	pub file_formats: Vec<MapFileFormat>,
@@ -94,10 +96,14 @@ pub struct TrenchBroomConfig {
 	pub face_tags: Vec<TrenchBroomTag>,
 
 	/// Game-defined flags per face.
+	/// 
+	/// TODO: Currently, these do not save in the map file, or are able to be loaded, as it requires [MapFileFormat::Quake2] or higher, which isn't supported yet.
 	#[builder(into)]
 	pub surface_flags: Vec<BitFlag>,
 	/// Game-defined flags per face.
 	/// According to [TrenchBroom docs](https://trenchbroom.github.io/manual/latest/#game_configuration_files), unlike [`Self::surface_flags`], this is "generally affecting the behavior of the brush containing the face".
+	///
+	/// TODO: Currently, these do not save in the map file, or are able to be loaded, as it requires [MapFileFormat::Quake2] or higher, which isn't supported yet.
 	#[builder(into)]
 	pub content_flags: Vec<BitFlag>,
 
