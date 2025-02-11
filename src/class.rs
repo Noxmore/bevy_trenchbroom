@@ -223,7 +223,12 @@ impl QuakeClass for Visibility {
 		size: None,
 
 		properties: &[QuakeClassProperty {
-			ty: QuakeClassPropertyType::Choices(&[("\"Inherited\"", "Inherited"), ("\"Hidden\"", "Hidden"), ("\"Visible\"", "Visible")]),
+			#[rustfmt::skip]
+			ty: QuakeClassPropertyType::Choices(&[
+				("\"Inherited\"", "Uses the visibility of its parents. If its a root-level entity, it will be visible."),
+				("\"Hidden\"", "Always not rendered, regardless of its parent's visibility."),
+				("\"Visible\"", "Always rendered, regardless of its parent's visibility."),
+			]),
 			name: "visibility",
 			title: Some("Visibility"),
 			description: None,
@@ -233,14 +238,14 @@ impl QuakeClass for Visibility {
 
 	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let visibility = match src_entity.properties.get("visibility").map(String::as_str) {
-			Some("inherited") => Visibility::Inherited,
-			Some("hidden") => Visibility::Hidden,
-			Some("visible") => Visibility::Visible,
-			None => Err(QuakeEntityError::RequiredPropertyNotFound { property: "visibility".s() })?,
+			Some("Inherited") => Visibility::Inherited,
+			Some("Hidden") => Visibility::Hidden,
+			Some("Visible") => Visibility::Visible,
+			None => Visibility::default(),
 			Some(_) => Err(QuakeEntityError::PropertyParseError {
 				property: "visibility".s(),
 				required_type: "Visibility",
-				error: "Must be either `inherited`, `hidden`, or `visible`".s(),
+				error: "Must be either `Inherited`, `Hidden`, or `Visible`".s(),
 			})?,
 		};
 
