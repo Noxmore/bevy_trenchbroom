@@ -2,7 +2,7 @@ pub mod lighting;
 pub mod util;
 
 use bevy::{
-	asset::{AssetLoader, LoadContext},
+	asset::{io::AssetReaderError, AssetLoader, LoadContext, ReadAssetBytesError},
 	image::ImageSampler,
 	render::{
 		mesh::{Indices, PrimitiveTopology},
@@ -134,6 +134,12 @@ impl AssetLoader for BspLoader {
 				quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes())).map_err(|err| anyhow!("Parsing entities: {err}"))?;
 			let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
+			let texture_palette = match load_context.read_asset_bytes(self.tb_server.config.texture_pallette.as_path()).await {
+				Ok(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", self.tb_server.config.texture_pallette))?,
+				Err(ReadAssetBytesError::AssetReaderError(AssetReaderError::NotFound(_))) => QUAKE_PALETTE.clone(),
+				Err(err) => return Err(err.into()),
+			};
+
 			// Need to store this separately for animation.
 			// We can't use the `next` animation property because we need the handle to create the assets to create the handles.
 			let embedded_texture_images: HashMap<&str, (Image, Handle<Image>)> = data
@@ -160,7 +166,7 @@ impl AssetLoader for BspLoader {
 								if self.tb_server.config.embedded_texture_cutouts && is_cutout_texture && pixel == 255 {
 									[0; 4]
 								} else {
-									let [r, g, b] = self.tb_server.config.texture_pallette.1.colors[pixel as usize];
+									let [r, g, b] = texture_palette.colors[pixel as usize];
 									[r, g, b, 255]
 								}
 							})

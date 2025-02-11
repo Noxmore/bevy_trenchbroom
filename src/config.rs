@@ -61,16 +61,17 @@ pub struct TrenchBroomConfig {
 	#[default("png".into())]
 	#[builder(into)]
 	pub texture_extension: String,
-	/// The palette file path and data used for WADs. The path roots from your assets folder.
+	/// The palette file path and data used for WADs. The path roots from your [`AssetServer`]'s assets folder.
 	///
 	/// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
-	/// and a copy distributed by this library in the form of [`QUAKE_PALETTE`].
+	/// and a copy distributed by `qbsp` in the form of [`QUAKE_PALETTE`].
 	///
-	/// If TrenchBroom can't find this palette file, all WAD textures will be black.
-	/// (Default: ("palette.lmp", &QUAKE_PALETTE))
+	/// If TrenchBroom can't find this palette file, all WAD textures will be black. If `bevy_trenchbroom` can't find the file, it will default to [`QUAKE_PALETTE`].
+	/// 
+	/// (Default: "palette.lmp")
 	#[builder(into)]
-	#[default(("palette.lmp".into(), &QUAKE_PALETTE))] // TODO
-	pub texture_pallette: (PathBuf, &'static Palette),
+	#[default("palette.lmp".into())] // TODO
+	pub texture_pallette: PathBuf,
 	/// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [`TrenchBroomConfig::default_texture_exclusions`]).
 	#[builder(into)]
 	#[default(Self::default_texture_exclusions())]
@@ -683,7 +684,7 @@ impl TrenchBroomConfig {
 				"root": self.texture_root.s(),
 				// .D is required for WADs to work
 				"extensions": [".D", self.texture_extension.clone()],
-				"palette": self.texture_pallette.0.s(),
+				"palette": self.texture_pallette.s(),
 				"attribute": "wad",
 				"excludes": self.texture_exclusions.clone(),
 			},
