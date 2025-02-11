@@ -17,6 +17,7 @@ struct Opts {
 	classname: Option<TokenStream>,
 
 	base: Option<TokenStream>,
+	no_register: bool,
 	doc: Option<String>,
 }
 
@@ -52,7 +53,11 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.base = Some(meta.tokens);
 				}
 			}
-			Meta::Path(_) => {}
+			Meta::Path(path) => {
+				if compare_path(&path, "no_register") {
+					opts.no_register = true;
+				}
+			}
 		}
 	}
 
@@ -147,9 +152,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		panic!("Solid classes must have a `#[geometry(...)]` attribute.");
 	}
 
-	// let inventory_import = cfg!(feature = "auto_register").then(|| Ident::new("inventory", Span::mixed_site()));
-
-	let inventory_submit = cfg!(feature = "auto_register").then(|| {
+	let inventory_submit = (cfg!(feature = "auto_register") && !opts.no_register).then(|| {
 		quote! {
 			::bevy_trenchbroom::inventory::submit! { <#ident as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS }
 		}

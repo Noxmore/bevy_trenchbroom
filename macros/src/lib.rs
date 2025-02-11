@@ -22,10 +22,11 @@ use syn::*;
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
 /// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, no_default))]
+#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Point).into()
 }
@@ -40,10 +41,11 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
 /// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(SolidClass, attributes(geometry, classname, base, no_default))]
+#[proc_macro_derive(SolidClass, attributes(geometry, classname, base, no_register, no_default))]
 pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Solid).into()
 }
@@ -53,7 +55,7 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// If the `auto_register` feature is enabled, this will automatically register the type with Bevy and `bevy_trenchbroom`.
 ///
 /// It has the same attributes as [`PointClass`].
-#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, no_default))]
+#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Base).into()
 }
