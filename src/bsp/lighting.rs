@@ -14,6 +14,7 @@ use bevy::{
 		Render, RenderApp, RenderSet,
 	},
 };
+use ser::SerializeStruct;
 
 use crate::*;
 
@@ -228,14 +229,147 @@ impl Default for LightmapAnimator {
 		Self::unanimated(Vec3::ONE)
 	}
 }
+impl Serialize for LightmapAnimator {
+	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+		let mut s = serializer.serialize_struct("LightmapAnimator", 3)?;
+		
+		s.serialize_field("sequence", &self.sequence[..usize::min(self.sequence_len as usize, MAX_LIGHTMAP_FRAMES)])?;
+
+		s.serialize_field("speed", &self.speed)?;
+		s.serialize_field("interpolate", &self.interpolate)?;
+
+		s.end()
+	}
+}
+// Holy boilerplate, Batman!
+impl<'de> Deserialize<'de> for LightmapAnimator {
+	fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		enum Field {
+			Sequence,
+			Speed,
+			Interpolate,
+			Ignore,
+		}
+		struct FieldVisitor;
+		impl de::Visitor<'_> for FieldVisitor {
+			type Value = Field;
+
+			fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+				fmt.write_str("field identifier")
+			}
+
+			fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+				Ok(match v {
+					0 => Field::Sequence,
+					1 => Field::Speed,
+					2 => Field::Interpolate,
+					_ => Field::Ignore,
+				})
+			}
+
+			fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+				Ok(match v {
+					"sequence" => Field::Sequence,
+					"speed" => Field::Speed,
+					"interpolate" => Field::Interpolate,
+					_ => Field::Ignore,
+				})
+			}
+
+			fn visit_bytes<E: de::Error>(self, v: &[u8]) -> Result<Self::Value, E> {
+				Ok(match v {
+					b"sequence" => Field::Sequence,
+					b"speed" => Field::Speed,
+					b"interpolate" => Field::Interpolate,
+					_ => Field::Ignore,
+				})
+			}
+		}
+		impl<'de> Deserialize<'de> for Field {
+			fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+				deserializer.deserialize_identifier(FieldVisitor)
+			}
+		}
+		
+		struct Visitor;
+		impl<'de> de::Visitor<'de> for Visitor {
+			type Value = LightmapAnimator;
+
+			fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+				fmt.write_str("struct LightmapAnimator")
+			}
+
+			fn visit_seq<A: de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+				let sequence_vec: Vec<Vec3> = seq.next_element()?.ok_or(de::Error::invalid_length(0, &"struct LightmapAnimator with 3 elements"))?;
+				let speed: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(1, &"struct LightmapAnimator with 3 elements"))?;
+				let interpolate: u32 = seq.next_element()?.ok_or(de::Error::invalid_length(2, &"struct LightmapAnimator with 3 elements"))?;
+
+				visit_internal(sequence_vec, speed, interpolate)
+			}
+			
+			fn visit_map<A: de::MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+				let mut sequence_vec: Option<Vec<Vec3>> = None;
+				let mut speed: Option<f32> = None;
+				let mut interpolate: Option<u32> = None;
+
+				while let Some(key) = map.next_key::<Field>()? {
+					match key {
+						Field::Sequence => if sequence_vec.is_some() {
+							return Err(de::Error::duplicate_field("sequence"));
+						} else {
+							sequence_vec = map.next_value()?;
+						},
+						Field::Speed => if speed.is_some() {
+							return Err(de::Error::duplicate_field("speed"));
+						} else {
+							speed = map.next_value()?;
+						},
+						Field::Interpolate => if interpolate.is_some() {
+							return Err(de::Error::duplicate_field("interpolate"));
+						} else {
+							interpolate = map.next_value()?;
+						},
+						Field::Ignore => {
+							map.next_value::<de::IgnoredAny>()?;
+						},
+					}
+				}
+
+				visit_internal(
+					sequence_vec.ok_or(de::Error::missing_field("sequence"))?,
+					speed.ok_or(de::Error::missing_field("speed"))?,
+					interpolate.ok_or(de::Error::missing_field("interpolate"))?,
+				)
+			}
+		}
+
+		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: u32) -> Result<LightmapAnimator, E> {
+			if sequence_vec.len() > MAX_LIGHTMAP_FRAMES {
+				return Err(de::Error::custom(format_args!("sequence has {} frames, but the max is {MAX_LIGHTMAP_FRAMES}", sequence_vec.len())));
+			}
+
+			let mut sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
+			sequence[..sequence_vec.len()].copy_from_slice(&sequence_vec);
+
+			Ok(LightmapAnimator {
+				sequence,
+				sequence_len: sequence_vec.len() as u32,
+				speed,
+				interpolate
+			})
+		}
+
+		deserializer.deserialize_struct("LightmapAnimator", &["sequence", "speed", "interpolate"], Visitor)
+	}
+}
 
 /// Resource that contains the current lightmap animators for each [`LightmapStyle`].
 ///
 /// You can use this to change animations, and do things like toggle lights.
 ///
 /// The default value somewhat mirrors some of Quake's animators.
-#[derive(Resource, ExtractResource, Reflect, Debug, Clone)]
-#[reflect(Resource, Default)]
+#[derive(Resource, ExtractResource, Reflect, Debug, Clone, Serialize, Deserialize)]
+#[reflect(Resource, Default, Serialize, Deserialize)]
 pub struct LightmapAnimators {
 	pub values: HashMap<LightmapStyle, LightmapAnimator>,
 }
