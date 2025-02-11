@@ -16,9 +16,17 @@ struct Opts {
 	geometry: Option<TokenStream>,
 	classname: Option<TokenStream>,
 
-	base: Option<TokenStream>,
+	/// `true` if the `#[base(...)]` attribute is used to override, otherwise uses `#[require(...)]`
+	base_override: bool,
+	base: Vec<Type>,
 	no_register: bool,
 	doc: Option<String>,
+}
+
+fn extract_type_list(tokens: TokenStream) -> impl Iterator<Item = Type> {
+	let types: syn::punctuated::Punctuated<Type, Token![,]> = syn::parse_quote!(#tokens);
+
+	types.into_iter()
 }
 
 pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
@@ -49,8 +57,15 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.geometry = Some(meta.tokens);
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
-				} else if (compare_path(&meta.path, "require") && opts.base.is_none()) || compare_path(&meta.path, "base") {
-					opts.base = Some(meta.tokens);
+				} else if compare_path(&meta.path, "require") && !opts.base_override {
+					opts.base.extend(extract_type_list(meta.tokens));
+				} else if compare_path(&meta.path, "base") {
+					if !opts.base_override {
+						opts.base.clear();
+					}
+					opts.base_override = true;
+
+					opts.base.extend(extract_type_list(meta.tokens));
 				}
 			}
 			Meta::Path(path) => {
@@ -177,12 +192,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		.unwrap_or_else(|| Literal::string(&ident.to_string().to_snake_case()));
 	let description = option(opts.doc);
 
-	// This is a naive approach, but the Component macro should handle making sure the input is valid anyway.
-	let bases = opts
-		.base
-		.unwrap_or_default()
-		.into_iter()
-		.filter(|tree| matches!(tree, TokenTree::Ident(_)));
+	let bases = opts.base;
 
 	let model = option(opts.model.map(|model| quote! { stringify!(#model) }));
 	let color = option(opts.color.map(|color| quote! { stringify!(#color) }));
