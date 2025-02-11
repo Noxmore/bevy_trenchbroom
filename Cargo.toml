@@ -49,8 +49,8 @@ serde = { version = "1.0", features = ["derive"] } # serde isn't optional becaus
 thiserror = "2.0"
 toml = "0.8"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.2.0", features = ["bevy_reflect"] }
-# qbsp = { path = "/d/_dev/_lib/rust/qbsp", features = ["bevy_reflect"] } # TODO tmp
+qbsp = { version = "0.2.1", features = ["bevy_reflect", "serde"] }
+# qbsp = { path = "/d/_dev/_lib/rust/qbsp", features = ["bevy_reflect", "serde"] } # TODO tmp
 nil = "0.14"
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
