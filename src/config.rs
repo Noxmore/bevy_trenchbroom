@@ -208,7 +208,7 @@ pub struct TrenchBroomConfig {
 
 	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes.
 	#[builder(skip)]
-	pub entity_classes: HashMap<String, Cow<'static, ErasedQuakeClass>>,
+	pub entity_classes: HashMap<&'static str, Cow<'static, ErasedQuakeClass>>,
 
 	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
 	#[builder(skip)]
@@ -382,13 +382,13 @@ impl TrenchBroomConfig {
 	///
 	/// If the `auto_register` feature is enabled, you don't have to do this, as it automatically puts classes into a global registry when [`QuakeClass`] is derived.
 	pub fn register_class<T: QuakeClass>(mut self) -> Self {
-		self.entity_classes.insert(T::CLASS_INFO.name.s(), Cow::Borrowed(T::ERASED_CLASS));
+		self.entity_classes.insert(T::CLASS_INFO.name, Cow::Borrowed(T::ERASED_CLASS));
 		self
 	}
 
 	/// Register an owned [`ErasedQuakeClass`] directly for dynamic classes. You almost always want to be using [`Self::register_class`] instead.
 	pub fn register_class_dynamic(mut self, class: ErasedQuakeClass) -> Self {
-		self.entity_classes.insert(class.info.name.s(), Cow::Owned(class));
+		self.entity_classes.insert(class.info.name, Cow::Owned(class));
 		self
 	}
 
