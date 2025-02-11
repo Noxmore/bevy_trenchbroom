@@ -3,7 +3,7 @@ use bevy::{
 	render::render_asset::RenderAssetUsages,
 };
 use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
-use class::ErasedQuakeClass;
+use class::{ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -206,8 +206,9 @@ pub struct TrenchBroomConfig {
 	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
-	/// Registered entity classes to be outputted in the fgd file, and used when spawning into the scene.
-	pub entity_classes: HashMap<String, ErasedQuakeClass>,
+	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes.
+	#[builder(skip)]
+	pub entity_classes: HashMap<String, Cow<'static, ErasedQuakeClass>>,
 
 	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
 	#[builder(skip)]
@@ -356,6 +357,7 @@ impl TrenchBroomConfig {
 		{
 			self.entity_classes
 				.get(classname)
+				.map(Cow::as_ref)
 				.or_else(|| class::GLOBAL_CLASS_REGISTRY.get(classname).copied())
 		}
 	}
@@ -369,8 +371,25 @@ impl TrenchBroomConfig {
 
 		#[cfg(feature = "auto_register")]
 		{
-			self.entity_classes.values().chain(class::GLOBAL_CLASS_REGISTRY.values().copied())
+			self.entity_classes
+				.values()
+				.map(Cow::as_ref)
+				.chain(class::GLOBAL_CLASS_REGISTRY.values().copied())
 		}
+	}
+
+	/// Registers a [`QuakeClass`] into this config. It will be outputted into the fgd, and will be used when loading entities into scenes.
+	///
+	/// If the `auto_register` feature is enabled, you don't have to do this, as it automatically puts classes into a global registry when [`QuakeClass`] is derived.
+	pub fn register_class<T: QuakeClass>(mut self) -> Self {
+		self.entity_classes.insert(T::CLASS_INFO.name.s(), Cow::Borrowed(T::ERASED_CLASS));
+		self
+	}
+
+	/// Register an owned [`ErasedQuakeClass`] directly for dynamic classes. You almost always want to be using [`Self::register_class`] instead.
+	pub fn register_class_dynamic(mut self, class: ErasedQuakeClass) -> Self {
+		self.entity_classes.insert(class.info.name.s(), Cow::Owned(class));
+		self
 	}
 
 	/// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
