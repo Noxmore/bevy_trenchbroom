@@ -351,7 +351,7 @@ impl TrenchBroomConfig {
 	pub fn get_class(&self, classname: &str) -> Option<&ErasedQuakeClass> {
 		#[cfg(not(feature = "auto_register"))]
 		{
-			self.entity_classes.get(classname)
+			self.entity_classes.get(classname).map(Cow::as_ref)
 		}
 
 		#[cfg(feature = "auto_register")]
@@ -367,7 +367,7 @@ impl TrenchBroomConfig {
 	pub fn class_iter(&self) -> impl Iterator<Item = &ErasedQuakeClass> {
 		#[cfg(not(feature = "auto_register"))]
 		{
-			self.entity_classes.values()
+			self.entity_classes.values().map(Cow::as_ref)
 		}
 
 		#[cfg(feature = "auto_register")]
