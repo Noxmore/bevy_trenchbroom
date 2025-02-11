@@ -235,6 +235,7 @@ impl Default for LightmapAnimator {
 ///
 /// The default value somewhat mirrors some of Quake's animators.
 #[derive(Resource, ExtractResource, Reflect, Debug, Clone)]
+#[reflect(Resource, Default)]
 pub struct LightmapAnimators {
 	pub values: HashMap<LightmapStyle, LightmapAnimator>,
 }
