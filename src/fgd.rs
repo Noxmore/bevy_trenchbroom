@@ -11,8 +11,17 @@ impl TrenchBroomConfig {
 			s.write_fmt(format_args!($($arg)*)).ok()
 		};}
 
-		// TODO don't write hanging base classes
 		for class in self.class_iter() {
+			// If this is a base class, and nothing depends on it, we shouldn't write it.
+			// This checks names instead of references because i'm still not 100% sure const static refs are stable.
+			if class.info.ty.is_base()
+				&& self
+					.class_iter()
+					.all(|checking_class| !checking_class.info.base.iter().any(|base| base.info.name == class.info.name))
+			{
+				continue;
+			}
+
 			write!("@{}Class ", class.info.ty);
 
 			if !class.info.base.is_empty() {
