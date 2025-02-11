@@ -206,7 +206,8 @@ pub struct TrenchBroomConfig {
 	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
-	entity_classes: HashMap<String, ErasedQuakeClass>,
+	/// Registered entity classes to be outputted in the fgd file, and used when spawning into the scene.
+	pub entity_classes: HashMap<String, ErasedQuakeClass>,
 
 	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
 	#[builder(skip)]
