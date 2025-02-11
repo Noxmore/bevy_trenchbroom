@@ -44,7 +44,7 @@ pub struct TrenchBroomConfig {
 	/// Optional icon for the TrenchBroom UI. Contains the data of a PNG file. Should be 32x32 or it will look weird in the UI.
 	pub icon: Option<Vec<u8>>,
 	/// Supported map file formats. Currently, only the loading of [`Valve`](MapFileFormat::Valve) is supported.
-	/// 
+	///
 	/// (Default: [`MapFileFormat::Valve`])
 	#[default(vec![MapFileFormat::Valve])]
 	#[builder(into)]
@@ -67,7 +67,7 @@ pub struct TrenchBroomConfig {
 	/// and a copy distributed by `qbsp` in the form of [`QUAKE_PALETTE`].
 	///
 	/// If TrenchBroom can't find this palette file, all WAD textures will be black. If `bevy_trenchbroom` can't find the file, it will default to [`QUAKE_PALETTE`].
-	/// 
+	///
 	/// (Default: "palette.lmp")
 	#[builder(into)]
 	#[default("palette.lmp".into())] // TODO
@@ -97,7 +97,7 @@ pub struct TrenchBroomConfig {
 	pub face_tags: Vec<TrenchBroomTag>,
 
 	/// Game-defined flags per face.
-	/// 
+	///
 	/// TODO: Currently, these do not save in the map file, or are able to be loaded, as it requires [MapFileFormat::Quake2] or higher, which isn't supported yet.
 	#[builder(into)]
 	pub surface_flags: Vec<BitFlag>,

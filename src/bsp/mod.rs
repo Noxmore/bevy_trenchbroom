@@ -135,7 +135,9 @@ impl AssetLoader for BspLoader {
 			let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
 			let texture_palette = match load_context.read_asset_bytes(self.tb_server.config.texture_pallette.as_path()).await {
-				Ok(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", self.tb_server.config.texture_pallette))?,
+				Ok(bytes) => {
+					Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", self.tb_server.config.texture_pallette))?
+				}
 				Err(ReadAssetBytesError::AssetReaderError(AssetReaderError::NotFound(_))) => QUAKE_PALETTE.clone(),
 				Err(err) => return Err(err.into()),
 			};
