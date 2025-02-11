@@ -3,7 +3,7 @@ use bevy::{
 	render::render_asset::RenderAssetUsages,
 };
 use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
-use class::{ErasedQuakeClass, QuakeClass};
+use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -206,7 +206,8 @@ pub struct TrenchBroomConfig {
 	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
-	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes.
+	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes. (Default: [`default_quake_class_registry`])
+	#[default(default_quake_class_registry())]
 	#[builder(skip)]
 	pub entity_classes: HashMap<&'static str, Cow<'static, ErasedQuakeClass>>,
 

@@ -126,6 +126,20 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 // // BASIC IMPLEMENTATIONS
 // ////////////////////////////////////////////////////////////////////////////////
 
+/// Returns the default registry used in [`TrenchBroomConfig`], containing a bunch of useful foundational and utility classes to greatly reduce boilerplate.
+pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, ErasedQuakeClass>> {
+	macro_rules! registry {
+		{$($ty:ident),* $(,)?} => {
+			[$(($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS))),*].into()
+		};
+	}
+
+	registry! {
+		Transform,
+		Visibility,
+	}
+}
+
 impl QuakeClass for Transform {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
@@ -195,8 +209,6 @@ impl QuakeClass for Transform {
 		Ok(())
 	}
 }
-#[cfg(feature = "auto_register")]
-inventory::submit! { Transform::ERASED_CLASS }
 
 impl QuakeClass for Visibility {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
@@ -237,5 +249,3 @@ impl QuakeClass for Visibility {
 		Ok(())
 	}
 }
-#[cfg(feature = "auto_register")]
-inventory::submit! { Visibility::ERASED_CLASS }
