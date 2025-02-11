@@ -6,6 +6,9 @@
 #[cfg(all(feature = "rapier", feature = "avian"))]
 compile_error!("can only have one collider backend enabled");
 
+// For proc macros to be able to use the `bevy_trenchbroom` path.
+extern crate self as bevy_trenchbroom;
+
 pub mod brush;
 pub mod bsp;
 pub mod class;
