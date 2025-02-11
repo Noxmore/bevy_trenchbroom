@@ -153,6 +153,22 @@ simple_fgd_type_impl!(bool, true, Choices & [("\"true\"", "true"), ("\"false\"",
 simple_fgd_type_impl!(f32, true, Value "float");
 simple_fgd_type_impl!(f64, true, Value "float");
 
+/// [`FgdType`] Wrapper for a `bool` that expects integers rather than boolean strings. Non-zero is `true`, zero is `false`.
+#[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Eq, Deref, DerefMut, Serialize, Deserialize)]
+pub struct IntBool(pub bool);
+impl FgdType for IntBool {
+	const FGD_IS_QUOTED: bool = false;
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("integer");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		u64::fgd_parse(input).map(|v| Self(v != 0))
+	}
+
+	fn fgd_to_string(&self) -> String {
+		if self.0 { "1".s() } else { "0".s() }
+	}
+}
+
 impl FgdType for Aabb {
 	const FGD_IS_QUOTED: bool = false;
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("aabb");
