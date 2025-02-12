@@ -184,6 +184,34 @@ impl FgdType for IntBool {
 	}
 }
 
+/// Mainly for BSP compiler properties, 1 translates to [`Enable`](IntBoolOverride::Enable), 0 to [`Inherit`](IntBoolOverride::Inherit), and -1 to [`Disable`](IntBoolOverride::Disable).
+#[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum IntBoolOverride {
+	Enable,
+	#[default]
+	Inherit,
+	Disable,
+}
+impl FgdType for IntBoolOverride {
+	const FGD_IS_QUOTED: bool = false;
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("integer");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		i64::fgd_parse(input).map(|v| match v {
+			..=-1 => Self::Disable,
+			0 => Self::Inherit,
+			1.. => Self::Enable,
+		})
+	}
+	fn fgd_to_string(&self) -> String {
+		match self {
+			Self::Enable => "1".s(),
+			Self::Inherit => "0".s(),
+			Self::Disable => "-1".s(),
+		}
+	}
+}
+
 impl FgdType for Aabb {
 	const FGD_IS_QUOTED: bool = false;
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("aabb");
