@@ -4,27 +4,37 @@ use bevy::{
 	prelude::*,
 };
 use bevy_flycam::prelude::*;
+use bevy_trenchbroom::bsp::base_classes::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
+#[require(BspWorldspawn)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(Transform)]
+#[require(BspModelEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncDoor;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
+#[require(BspModelEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
+#[require(BspModelEntity)]
+#[geometry(GeometryProvider::new())] // Compiler-handled
+pub struct FuncDetail;
+
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(Component)]
+#[require(BspModelEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
 
@@ -49,15 +59,8 @@ impl Cube {
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]
 #[reflect(Component)]
-#[require(Transform)]
-pub struct Light {
-	#[default(Color::srgb(1., 1., 1.))]
-	pub _color: Color,
-	#[default(300.)]
-	pub light: f32,
-	#[default(0)]
-	pub delay: u8,
-}
+#[require(BspLight, Transform)]
+pub struct Light;
 
 fn main() {
 	App::new()

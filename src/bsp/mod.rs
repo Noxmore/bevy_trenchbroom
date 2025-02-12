@@ -1,3 +1,4 @@
+pub mod base_classes;
 pub mod lighting;
 pub mod util;
 
@@ -29,7 +30,10 @@ impl Plugin for BspPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.add_plugins(lighting::BspLightingPlugin)
+			.add_plugins((
+				lighting::BspLightingPlugin,
+				base_classes::BspBaseClassesPlugin,
+			))
 
 			.init_asset::<BspBrushesAsset>()
 			.init_asset::<Bsp>()
