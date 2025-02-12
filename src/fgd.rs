@@ -165,7 +165,11 @@ impl FgdType for IntBool {
 	}
 
 	fn fgd_to_string(&self) -> String {
-		if self.0 { "1".s() } else { "0".s() }
+		if self.0 {
+			"1".s()
+		} else {
+			"0".s()
+		}
 	}
 }
 
@@ -230,9 +234,18 @@ impl FgdType for Srgba {
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
 
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		fn truncate_byte_color_range<const N: usize>(color: [f32; N]) -> [f32; N] {
+			if color.into_iter().any(|channel| channel > 1.) {
+				color.map(|channel| channel / 255.)
+			} else {
+				color
+			}
+		}
+
 		<[f32; 3]>::fgd_parse(input)
+			.map(truncate_byte_color_range)
 			.map(Self::from_f32_array_no_alpha)
-			.or(<[f32; 4]>::fgd_parse(input).map(Self::from_f32_array))
+			.or(<[f32; 4]>::fgd_parse(input).map(truncate_byte_color_range).map(Self::from_f32_array))
 	}
 	fn fgd_to_string(&self) -> String {
 		format!("{} {} {} {}", self.red, self.green, self.blue, self.alpha)
