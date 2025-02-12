@@ -55,7 +55,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 	for attr in attrs {
 		match attr.meta {
 			Meta::NameValue(meta) => {
-				if compare_path(&meta.path, "doc") {
+				if ty != QuakeClassType::Base && compare_path(&meta.path, "doc") {
 					extract_doc(meta, &mut opts.doc);
 				}
 			}
