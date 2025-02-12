@@ -232,7 +232,7 @@ impl Default for LightmapAnimator {
 impl Serialize for LightmapAnimator {
 	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
 		let mut s = serializer.serialize_struct("LightmapAnimator", 3)?;
-		
+
 		s.serialize_field("sequence", &self.sequence[..usize::min(self.sequence_len as usize, MAX_LIGHTMAP_FRAMES)])?;
 
 		s.serialize_field("speed", &self.speed)?;
@@ -290,7 +290,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 				deserializer.deserialize_identifier(FieldVisitor)
 			}
 		}
-		
+
 		struct Visitor;
 		impl<'de> de::Visitor<'de> for Visitor {
 			type Value = LightmapAnimator;
@@ -299,6 +299,8 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 				fmt.write_str("struct LightmapAnimator")
 			}
 
+			// rustfmt is threatening to make these look even more boilerplate-y then they already do.
+			#[rustfmt::skip]
 			fn visit_seq<A: de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
 				let sequence_vec: Vec<Vec3> = seq.next_element()?.ok_or(de::Error::invalid_length(0, &"struct LightmapAnimator with 3 elements"))?;
 				let speed: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(1, &"struct LightmapAnimator with 3 elements"))?;
@@ -306,7 +308,8 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 
 				visit_internal(sequence_vec, speed, interpolate)
 			}
-			
+
+			#[rustfmt::skip]
 			fn visit_map<A: de::MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
 				let mut sequence_vec: Option<Vec<Vec3>> = None;
 				let mut speed: Option<f32> = None;
@@ -345,7 +348,10 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 
 		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: u32) -> Result<LightmapAnimator, E> {
 			if sequence_vec.len() > MAX_LIGHTMAP_FRAMES {
-				return Err(de::Error::custom(format_args!("sequence has {} frames, but the max is {MAX_LIGHTMAP_FRAMES}", sequence_vec.len())));
+				return Err(de::Error::custom(format_args!(
+					"sequence has {} frames, but the max is {MAX_LIGHTMAP_FRAMES}",
+					sequence_vec.len()
+				)));
 			}
 
 			let mut sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
@@ -355,7 +361,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 				sequence,
 				sequence_len: sequence_vec.len() as u32,
 				speed,
-				interpolate
+				interpolate,
 			})
 		}
 
