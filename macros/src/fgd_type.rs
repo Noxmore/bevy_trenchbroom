@@ -83,7 +83,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 		_ => panic!("Currently only enums supported"),
 	}
 
-	let valid_variant_fmt = vec!["{}".to_string(); variants.len()].join(", ");
+	let valid_variants = variant_strings.join(", ");
 
 	quote! {
 		impl ::bevy_trenchbroom::fgd::FgdType for #ident {
@@ -94,7 +94,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 			fn fgd_parse(input: &str) -> ::bevy_trenchbroom::anyhow::Result<Self> {
 				match input {
 					#(#variant_strings => Ok(Self::#variant_idents),)*
-					input => Err(::bevy_trenchbroom::anyhow::anyhow!(concat!("{} isn't a valid ", stringify!(#ident), "! Valid variants are ", #valid_variant_fmt), input, #(#variants),*)),
+					input => Err(::bevy_trenchbroom::anyhow::anyhow!(concat!("{} isn't a valid ", stringify!(#ident), "! Valid variants are ", #valid_variants), input)),
 				}
 			}
 
