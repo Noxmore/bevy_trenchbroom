@@ -18,7 +18,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 			number_key = true;
 		}
 	}
-	
+
 	match data {
 		Data::Enum(data) => {
 			for Variant {
@@ -57,7 +57,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 					variant_string = number.base10_digits().to_string();
 				} else {
 					let variant_ident_string = variant_ident.to_string();
-					
+
 					variant = quote! { #variant_ident_string };
 					key = quote! { ::bevy_trenchbroom::class::ChoicesKey::String(#variant_ident_string) };
 					variant_string = variant_ident_string;
