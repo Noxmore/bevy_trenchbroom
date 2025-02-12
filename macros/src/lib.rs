@@ -61,7 +61,9 @@ pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStr
 }
 
 /// Any field in quake class components must implement `FgdType`. Specifically, this macro implements it for unit enums, to create `choices` properties.
-#[proc_macro_derive(FgdType)]
+/// 
+/// By default, it uses the name of the variant as the key. To use the discriminant of the variant, use the `#[number_key]` attribute on the struct.
+#[proc_macro_derive(FgdType, attributes(number_key))]
 pub fn fgd_type_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	fgd_type::fgd_type_derive(parse_macro_input!(input as DeriveInput)).into()
 }
