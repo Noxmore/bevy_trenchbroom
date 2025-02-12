@@ -52,10 +52,12 @@ You can define your components like so to turn them into quake classes.
 ```rust
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
+use bevy_trenchbroom::bsp::base_classes::*;
 
 // The required worldspawn class makes up the main structural world geometry and settings. Exactly one exists in every map.
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
+#[require(BspWorldspawn)] // If you're using a BSP workflow, this base class includes a bunch of compiler properties.
 #[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn {
     pub fog_color: Color,
@@ -87,6 +89,7 @@ pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
+#[require(BspSolidEntity)] // If you're using a BSP workflow, this base class includes a bunch of compiler properties.
 // Don't include a collider for func_illusionary.
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
