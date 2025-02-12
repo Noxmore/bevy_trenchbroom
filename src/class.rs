@@ -168,7 +168,7 @@ pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, Eras
 		Target,
 		Targetable,
 
-		BspModelEntity,
+		BspSolidEntity,
 		BspWorldspawn,
 		BspLight,
 	}

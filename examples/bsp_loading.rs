@@ -16,25 +16,25 @@ pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(BspModelEntity, Transform)]
+#[require(BspSolidEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncDoor;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(BspModelEntity)]
+#[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(BspModelEntity)]
+#[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(BspModelEntity)]
+#[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
 

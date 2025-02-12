@@ -9,7 +9,7 @@ impl Plugin for BspBaseClassesPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.register_type::<BspModelEntity>()
+			.register_type::<BspSolidEntity>()
 			.register_type::<BspWorldspawn>()
 			.register_type::<BspLight>()
 		;
@@ -20,7 +20,7 @@ impl Plugin for BspBaseClassesPlugin {
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
 #[no_register]
-pub struct BspModelEntity {
+pub struct BspSolidEntity {
 	/// `ericw-tools` `qbsp`
 	///
 	/// Generates an `LMSHIFT` BSPX lump for use by a light util. Note that both scaled and unscaled lighting will normally be used.
@@ -115,7 +115,7 @@ pub struct BspModelEntity {
 /// Contains properties used by the `ericw-tools` compiler for the `worldspawn` entity.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[require(BspModelEntity)]
+#[require(BspSolidEntity)]
 #[no_register]
 pub struct BspWorldspawn {
 	/// `ericw-tools` `light`
