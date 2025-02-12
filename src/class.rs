@@ -209,19 +209,15 @@ impl QuakeClass for Transform {
 
 	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let rotation = src_entity
-			.get::<Vec3>("angles")
-			.map(angles_to_quat)
-			.or_else(|_| {
-				src_entity
-					.get::<Vec3>("mangle")
-					// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
-					// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
-					.map(if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
-						mangle_to_quat
-					} else {
-						angles_to_quat
-					})
+			.get::<Vec3>("mangle")
+			// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
+			// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
+			.map(if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
+				mangle_to_quat
+			} else {
+				angles_to_quat
 			})
+			.or_else(|_| src_entity.get::<Vec3>("angles").map(angles_to_quat))
 			.unwrap_or_else(|_| angle_to_quat(src_entity.get::<f32>("angle").unwrap_or_default()));
 
 		entity.insert(Transform {
