@@ -159,6 +159,7 @@ simple_fgd_type_impl!(i32, false, Value "integer");
 simple_fgd_type_impl!(i64, false, Value "integer");
 simple_fgd_type_impl!(isize, false, Value "integer");
 
+#[rustfmt::skip]
 simple_fgd_type_impl!(bool, true, Choices & [(ChoicesKey::String("true"), "true"), (ChoicesKey::String("false"), "false")]);
 
 simple_fgd_type_impl!(f32, true, Value "float");
