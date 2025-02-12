@@ -301,6 +301,19 @@ impl From<Srgb> for Color {
 	}
 }
 
+impl FgdType for LightmapStyle {
+	const FGD_IS_QUOTED: bool = u8::FGD_IS_QUOTED;
+	const PROPERTY_TYPE: QuakeClassPropertyType = u8::PROPERTY_TYPE;
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		u8::fgd_parse(input).map(Self)
+	}
+
+	fn fgd_to_string(&self) -> String {
+		self.0.fgd_to_string()
+	}
+}
+
 impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
 	const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
 
