@@ -230,27 +230,62 @@ impl FgdType for Color {
 	}
 }
 
+fn truncate_byte_color_range<const N: usize>(color: [f32; N]) -> [f32; N] {
+	if color.into_iter().any(|channel| channel > 1.) {
+		color.map(|channel| channel / 255.)
+	} else {
+		color
+	}
+}
+
 impl FgdType for Srgba {
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
 
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
-		fn truncate_byte_color_range<const N: usize>(color: [f32; N]) -> [f32; N] {
-			if color.into_iter().any(|channel| channel > 1.) {
-				color.map(|channel| channel / 255.)
-			} else {
-				color
-			}
-		}
-
-		<[f32; 3]>::fgd_parse(input)
-			.map(truncate_byte_color_range)
-			.map(Self::from_f32_array_no_alpha)
+		Srgb::fgd_parse(input)
+			.map(Into::into)
 			.or(<[f32; 4]>::fgd_parse(input).map(truncate_byte_color_range).map(Self::from_f32_array))
 	}
 	fn fgd_to_string(&self) -> String {
 		format!("{} {} {} {}", self.red, self.green, self.blue, self.alpha)
 	}
 }
+
+/// Like [`Srgba`], but without the alpha channel. Implements [`FgdType`], for use in quake classes.
+#[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+pub struct Srgb {
+	pub red: f32,
+	pub green: f32,
+	pub blue: f32,
+}
+impl Srgb {
+	pub const fn new(red: f32, green: f32, blue: f32) -> Self {
+		Self { red, green, blue }
+	}
+}
+impl FgdType for Srgb {
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		<[f32; 3]>::fgd_parse(input)
+			.map(truncate_byte_color_range)
+			.map(|[red, green, blue]| Self { red, green, blue })
+	}
+	fn fgd_to_string(&self) -> String {
+		format!("{} {} {}", self.red, self.green, self.blue)
+	}
+}
+impl From<Srgb> for Srgba {
+	fn from(value: Srgb) -> Self {
+		Self::new(value.red, value.green, value.blue, 1.)
+	}
+}
+impl From<Srgb> for Color {
+	fn from(value: Srgb) -> Self {
+		Self::Srgba(value.into())
+	}
+}
+
 
 impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
 	const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
