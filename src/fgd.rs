@@ -219,13 +219,23 @@ impl FgdType for Color {
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
 
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
-		<[f32; 3]>::fgd_parse(input)
-			.map(Color::srgb_from_array)
-			.or(<[f32; 4]>::fgd_parse(input).map(|[r, g, b, a]| Color::srgba(r, g, b, a)))
+		Srgba::fgd_parse(input).map(Self::Srgba)
 	}
 	fn fgd_to_string(&self) -> String {
-		let col = self.to_srgba();
-		format!("{} {} {} {}", col.red, col.green, col.blue, col.alpha)
+		self.to_srgba().fgd_to_string()
+	}
+}
+
+impl FgdType for Srgba {
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("color1");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		<[f32; 3]>::fgd_parse(input)
+			.map(Self::from_f32_array_no_alpha)
+			.or(<[f32; 4]>::fgd_parse(input).map(Self::from_f32_array))
+	}
+	fn fgd_to_string(&self) -> String {
+		format!("{} {} {} {}", self.red, self.green, self.blue, self.alpha)
 	}
 }
 
