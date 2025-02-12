@@ -193,13 +193,14 @@ pub struct LightmapAnimator {
 	/// How many frames of `sequence` to advance a second.
 	pub speed: f32,
 
-	/// Whether to linearly interpolate between elements in the sequence, or swap between them instantly.
+	/// How much to linearly interpolate between elements in the sequence.
 	///
-	/// Has to be a `u32` because it's being passed to a shader. Non-zero for `true`.
-	pub interpolate: u32,
+	/// 0 swaps between them instantly, 1 smoothly interpolates,
+	/// 0.5 interpolates to the next frame 2 times as quick, stopping in the middle, etc.
+	pub interpolate: f32,
 }
 impl LightmapAnimator {
-	pub fn new<const N: usize>(speed: f32, interpolate: bool, sequence: [Vec3; N]) -> Self {
+	pub fn new<const N: usize>(speed: f32, interpolate: f32, sequence: [Vec3; N]) -> Self {
 		let mut target_sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
 		#[allow(clippy::manual_memcpy)]
 		for i in 0..N {
@@ -208,7 +209,7 @@ impl LightmapAnimator {
 
 		Self {
 			speed,
-			interpolate: interpolate as u32,
+			interpolate,
 			sequence: target_sequence,
 			sequence_len: N as u32,
 		}
@@ -220,7 +221,7 @@ impl LightmapAnimator {
 			sequence: [rgb; MAX_LIGHTMAP_FRAMES],
 			sequence_len: 1,
 			speed: 0.,
-			interpolate: 0,
+			interpolate: 0.,
 		}
 	}
 }
@@ -304,7 +305,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			fn visit_seq<A: de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
 				let sequence_vec: Vec<Vec3> = seq.next_element()?.ok_or(de::Error::invalid_length(0, &"struct LightmapAnimator with 3 elements"))?;
 				let speed: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(1, &"struct LightmapAnimator with 3 elements"))?;
-				let interpolate: u32 = seq.next_element()?.ok_or(de::Error::invalid_length(2, &"struct LightmapAnimator with 3 elements"))?;
+				let interpolate: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(2, &"struct LightmapAnimator with 3 elements"))?;
 
 				visit_internal(sequence_vec, speed, interpolate)
 			}
@@ -313,7 +314,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			fn visit_map<A: de::MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
 				let mut sequence_vec: Option<Vec<Vec3>> = None;
 				let mut speed: Option<f32> = None;
-				let mut interpolate: Option<u32> = None;
+				let mut interpolate: Option<f32> = None;
 
 				while let Some(key) = map.next_key::<Field>()? {
 					match key {
@@ -346,7 +347,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			}
 		}
 
-		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: u32) -> Result<LightmapAnimator, E> {
+		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: f32) -> Result<LightmapAnimator, E> {
 			if sequence_vec.len() > MAX_LIGHTMAP_FRAMES {
 				return Err(de::Error::custom(format_args!(
 					"sequence has {} frames, but the max is {MAX_LIGHTMAP_FRAMES}",
@@ -392,13 +393,9 @@ impl Default for LightmapAnimators {
 			values: HashMap::from([
 				(
 					LightmapStyle(1),
-					LightmapAnimator::new(
-						6.,
-						true,
-						[0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat),
-					),
+					LightmapAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat)),
 				),
-				(LightmapStyle(2), LightmapAnimator::new(0.5, true, [0., 1.].map(Vec3::splat))),
+				(LightmapStyle(2), LightmapAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
 			]),
 		}
 	}

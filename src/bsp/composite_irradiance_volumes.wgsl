@@ -32,8 +32,11 @@ fn vertex(
 
 fn sample_atlas(input: texture_3d<f32>, animator_idx: u32, coords: vec3u) -> vec4f {
 	var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
-	if animators[animator_idx].interpolate != 0 {
-		mul = mix(mul, animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len], (globals.time * animators[animator_idx].speed) % 1);
+	if animators[animator_idx].interpolate > 0 {
+		let next = animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len];
+		let t = min(((globals.time * animators[animator_idx].speed) % 1) / animators[animator_idx].interpolate, 1.0);
+		
+		mul = mix(mul, next, t);
 	}
 
 	return textureLoad(input, coords % textureDimensions(input), 0) * vec4f(mul, 1);

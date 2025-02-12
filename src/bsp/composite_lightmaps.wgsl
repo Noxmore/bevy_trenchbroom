@@ -9,7 +9,7 @@ struct Animator {
 	sequence: array<vec3f, 64>,
 	sequence_len: u32,
 	speed: f32,
-	interpolate: u32,
+	interpolate: f32,
 }
 
 @group(0) @binding(0) var input_texture_0: texture_2d<f32>;
@@ -42,8 +42,11 @@ fn vertex(
 
 fn sample_atlas(input: texture_2d<f32>, animator_idx: u32, uv: vec2f) -> vec4f {
 	var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
-	if animators[animator_idx].interpolate != 0 {
-		mul = mix(mul, animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len], (globals.time * animators[animator_idx].speed) % 1);
+	if animators[animator_idx].interpolate > 0 {
+		let next = animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len];
+		let t = min(((globals.time * animators[animator_idx].speed) % 1) / animators[animator_idx].interpolate, 1.0);
+
+		mul = mix(mul, next, t);
 	}
 
 	return textureSample(input, input_sampler, uv) * vec4f(mul, 1);

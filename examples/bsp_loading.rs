@@ -92,7 +92,7 @@ fn setup_scene(
 	// TODO TMP: For tears of the false god
 	lightmap_animators
 		.values
-		.insert(LightmapStyle(5), LightmapAnimator::new(0.5, true, [0.2, 1.].map(Vec3::splat)));
+		.insert(LightmapStyle(5), LightmapAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
