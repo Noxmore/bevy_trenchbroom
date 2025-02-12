@@ -403,3 +403,42 @@ pub enum BspLightAttenuation {
 	/// near the source.
 	ReciprocalSquareTweaked = 5,
 }
+
+/// `ericw-tools` qbsp has a prefab system using a point entity named “misc_external_map”.
+/// The idea is, each “misc_external_map” imports brushes from an external .map file,
+/// applies rotations specified by the “_external_map_angles” key,
+/// then translates them to the “origin” key of the “misc_external_map” entity.
+/// Finally, the classname of the “misc_external_map” is switched to the one provided by the mapper in the “_external_map_classname” key.
+/// (The “origin” key is also cleared to “0 0 0” before saving the .bsp).
+///
+/// The external .map file should consist of worldspawn brushes only, although you can use func_group for editing convenience.
+/// Brush entities are merged with the worldspawn brushes during import.
+/// All worldspawn keys, and any point entities are ignored.
+/// Currently, this means that the “wad” key is not handled,
+/// so you need to add any texture wads required by the external .map file to your main map.
+///
+/// Note that you can set other entity keys on the “misc_external_map” to configure the final entity type.
+/// e.g. if you set “_external_map_classname” to “func_door”,
+/// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
+#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Component, Default, Serialize, Deserialize)]
+#[require(Transform)]
+#[no_register]
+pub struct BspExternalMap {
+	/// Specifies the filename of the .map to import.
+	#[no_default]
+	pub _external_map: String,
+	/// What entity you want the external map to turn in to.
+	/// You can use internal qbsp entity types such as func_detail,
+	/// or a regular solid entity classname like “func_wall” or “func_door”.
+	pub _external_map_classname: Option<String>,
+	/// Rotation for the prefab, “pitch yaw roll” format.
+	/// Assuming the exernal map is facing the +X axis, positive pitch is down.
+	/// Yaw of 180, for example, would rotate it to face -X.
+	pub _external_map_angles: Option<Vec3>,
+	/// Short version of `_external_map_angles` for when you want to specify just a yaw rotation.
+	pub _external_map_angle: Option<Vec3>,
+	/// Scale factor for the prefab, defaults to 1. Either specify a single value or three scales, “x y z”.
+	#[default(Vec3::ONE)]
+	pub _external_map_scale: Vec3,
+}
