@@ -273,7 +273,7 @@ impl Srgb {
 	pub const WHITE: Self = Self::new(1., 1., 1.);
 	pub const BLACK: Self = Self::new(0., 0., 0.);
 	pub const WHITE_255: Self = Self::new(255., 255., 255.);
-	
+
 	pub const fn new(red: f32, green: f32, blue: f32) -> Self {
 		Self { red, green, blue }
 	}
@@ -300,7 +300,6 @@ impl From<Srgb> for Color {
 		Self::Srgba(value.into())
 	}
 }
-
 
 impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
 	const PROPERTY_TYPE: QuakeClassPropertyType = T::PROPERTY_TYPE;
