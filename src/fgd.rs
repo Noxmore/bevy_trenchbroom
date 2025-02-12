@@ -1,4 +1,4 @@
-use class::QuakeClassPropertyType;
+use class::{ChoicesKey, QuakeClassPropertyType};
 
 use crate::*;
 
@@ -159,7 +159,7 @@ simple_fgd_type_impl!(i32, false, Value "integer");
 simple_fgd_type_impl!(i64, false, Value "integer");
 simple_fgd_type_impl!(isize, false, Value "integer");
 
-simple_fgd_type_impl!(bool, true, Choices & [("\"true\"", "true"), ("\"false\"", "false")]);
+simple_fgd_type_impl!(bool, true, Choices & [(ChoicesKey::String("true"), "true"), (ChoicesKey::String("false"), "false")]);
 
 simple_fgd_type_impl!(f32, true, Value "float");
 simple_fgd_type_impl!(f64, true, Value "float");

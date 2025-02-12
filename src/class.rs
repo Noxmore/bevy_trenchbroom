@@ -1,10 +1,22 @@
 use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
+use bsp::base_classes::*;
 use fgd::FgdType;
 use geometry::GeometryProvider;
 use qmap::{QuakeEntityError, QuakeMapEntity};
 use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 
 use crate::*;
+
+pub struct QuakeClassPlugin;
+impl Plugin for QuakeClassPlugin {
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.register_type::<Target>()
+			.register_type::<Targetable>()
+		;
+	}
+}
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, strum::EnumIs)]
 pub enum QuakeClassType {
@@ -39,12 +51,26 @@ pub struct QuakeClassProperty {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QuakeClassPropertyType {
 	Value(&'static str),
-	Choices(&'static [(&'static str, &'static str)]),
+	Choices(&'static [(ChoicesKey, &'static str)]),
 }
 
 impl Default for QuakeClassPropertyType {
 	fn default() -> Self {
 		Self::Value("string")
+	}
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChoicesKey {
+	String(&'static str),
+	Integer(i32),
+}
+impl fmt::Display for ChoicesKey {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::String(s) => write!(f, "\"{s}\""),
+			Self::Integer(v) => write!(f, "{v}"),
+		}
 	}
 }
 
@@ -128,6 +154,7 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 
 /// Returns the default registry used in [`TrenchBroomConfig`], containing a bunch of useful foundational and utility classes to greatly reduce boilerplate.
 pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, ErasedQuakeClass>> {
+	// TODO would it be better if we use inventory instead?
 	macro_rules! registry {
 		{$($ty:ident),* $(,)?} => {
 			[$(($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS))),*].into()
@@ -137,6 +164,9 @@ pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, Eras
 	registry! {
 		Transform,
 		Visibility,
+
+		Target,
+		Targetable,
 	}
 }
 
@@ -225,9 +255,9 @@ impl QuakeClass for Visibility {
 		properties: &[QuakeClassProperty {
 			#[rustfmt::skip]
 			ty: QuakeClassPropertyType::Choices(&[
-				("\"Inherited\"", "Uses the visibility of its parents. If its a root-level entity, it will be visible."),
-				("\"Hidden\"", "Always not rendered, regardless of its parent's visibility."),
-				("\"Visible\"", "Always rendered, regardless of its parent's visibility."),
+				(ChoicesKey::String("Inherited"), "Uses the visibility of its parents. If its a root-level entity, it will be visible."),
+				(ChoicesKey::String("Hidden"), "Always not rendered, regardless of its parent's visibility."),
+				(ChoicesKey::String("Visible"), "Always rendered, regardless of its parent's visibility."),
 			]),
 			name: "visibility",
 			title: Some("Visibility"),
@@ -253,4 +283,28 @@ impl QuakeClass for Visibility {
 
 		Ok(())
 	}
+}
+
+/// Quake entity IO - Able to target entities with the [`Targetable`] component.
+///
+/// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
+#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Component, Default, Serialize, Deserialize)]
+#[no_register]
+pub struct Target {
+	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
+	pub target: Option<String>,
+	/// If [`Some`], when this entity's IO fires, it will kill all entities with its [`Targetable::targetname`] set to this.
+	pub killtarget: Option<String>,
+}
+
+/// Quake entity IO - Able to be targeted from a [`Target`] component.
+///
+/// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
+#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Component, Default, Serialize, Deserialize)]
+#[no_register]
+pub struct Targetable {
+	/// The name for entities with [`Target`] components to point to.
+	pub targetname: Option<String>,
 }
