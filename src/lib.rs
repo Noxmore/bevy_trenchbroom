@@ -66,6 +66,7 @@ impl Plugin for TrenchBroomPlugin {
 			.insert_resource(TrenchBroomServer::new(config.clone()))
 
 			.add_plugins((
+				fgd::FgdPlugin,
 				special_textures::SpecialTexturesPlugin,
 				qmap::QuakeMapPlugin,
 				bsp::BspPlugin,

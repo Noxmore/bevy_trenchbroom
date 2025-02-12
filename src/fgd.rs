@@ -2,6 +2,17 @@ use class::QuakeClassPropertyType;
 
 use crate::*;
 
+pub struct FgdPlugin;
+impl Plugin for FgdPlugin {
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.register_type::<IntBool>()
+			.register_type::<Srgb>()
+		;
+	}
+}
+
 impl TrenchBroomConfig {
 	/// Converts this config to a string for writing `fgd` (entity definition) files.
 	pub fn to_fgd(&self) -> String {
