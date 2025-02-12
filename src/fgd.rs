@@ -161,7 +161,7 @@ impl FgdType for IntBool {
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("integer");
 
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
-		u64::fgd_parse(input).map(|v| Self(v != 0))
+		i64::fgd_parse(input).map(|v| Self(v > 0))
 	}
 
 	fn fgd_to_string(&self) -> String {
