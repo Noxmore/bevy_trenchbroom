@@ -29,6 +29,23 @@ fn extract_type_list(tokens: TokenStream) -> impl Iterator<Item = Type> {
 	types.into_iter()
 }
 
+fn extract_doc(meta: MetaNameValue, doc: &mut Option<String>) {
+	let Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) = meta.value else { return };
+	let value = lit.value().trim().replace('"', "''");
+
+	let s = doc.get_or_insert_default();
+
+	if !s.is_empty() {
+		s.push(' ');
+	}
+
+	if value.is_empty() {
+		s.push('\n');
+	} else {
+		s.push_str(&value);
+	}
+}
+
 pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
 	let DeriveInput { ident, attrs, data, .. } = input;
 	let ty_ident = format_ident!("{ty:?}");
@@ -39,9 +56,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		match attr.meta {
 			Meta::NameValue(meta) => {
 				if compare_path(&meta.path, "doc") {
-					let Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) = meta.value else { continue };
-
-					opts.doc = Some(lit.value().trim().to_string());
+					extract_doc(meta, &mut opts.doc);
 				}
 			}
 			Meta::List(meta) => {
@@ -106,7 +121,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					match attr.meta {
 						Meta::NameValue(meta) => {
 							if compare_path(&meta.path, "doc") {
-								doc = Some(meta.value);
+								extract_doc(meta, &mut doc);
 							}
 						}
 						Meta::Path(path) => {
@@ -117,11 +132,6 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 						_ => {}
 					}
 				}
-
-				let doc = doc.and_then(|expr| match expr {
-					Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) => Some(lit.value().trim().to_string()),
-					_ => None,
-				});
 
 				let description = option(doc);
 
