@@ -67,6 +67,7 @@ impl Plugin for TrenchBroomPlugin {
 
 			.add_plugins((
 				fgd::FgdPlugin,
+				class::QuakeClassPlugin,
 				special_textures::SpecialTexturesPlugin,
 				qmap::QuakeMapPlugin,
 				bsp::BspPlugin,
