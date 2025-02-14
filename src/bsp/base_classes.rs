@@ -219,7 +219,7 @@ pub struct BspWorldspawn {
 	/// (Not documented, default is an educated guess.)
 	#[default(vec3(0., -90., 0.))]
 	pub _sun2_mangle: Vec3,
-	
+
 	/// Specifies the penumbra width, in degrees, of sunlight. Useful values are 3-4 for a gentle soft edge, or 10-20+ for more diffuse sunlight. Default is 0.
 	pub _sunlight_penumbra: f32,
 
@@ -514,15 +514,15 @@ pub struct BspExternalMap {
 	/// You can use internal qbsp entity types such as func_detail,
 	/// or a regular solid entity classname like “func_wall” or “func_door”.
 	pub _external_map_classname: Option<String>,
-	
+
 	/// Rotation for the prefab, “pitch yaw roll” format.
 	/// Assuming the exernal map is facing the +X axis, positive pitch is down.
 	/// Yaw of 180, for example, would rotate it to face -X.
 	pub _external_map_angles: Option<Vec3>,
-	
+
 	/// Short version of `_external_map_angles` for when you want to specify just a yaw rotation.
 	pub _external_map_angle: Option<Vec3>,
-	
+
 	/// Scale factor for the prefab, defaults to 1. Either specify a single value or three scales, “x y z”.
 	#[default(Vec3::ONE)]
 	pub _external_map_scale: Vec3,

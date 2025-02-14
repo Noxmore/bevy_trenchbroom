@@ -41,8 +41,6 @@ pub struct Light {
 	pub _color: Color,
 	#[default(300.)]
 	pub light: f32,
-	#[default(0)]
-	pub delay: u8,
 }
 
 fn main() {
@@ -89,7 +87,7 @@ fn spawn_lights(
 	for (entity, light) in &query {
 		commands.entity(entity).insert(PointLight {
 			color: light._color,
-			intensity: light.light / 1000.,
+			intensity: light.light * 1000.,
 			shadows_enabled: true,
 			..default()
 		});

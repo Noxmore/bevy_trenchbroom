@@ -86,23 +86,38 @@ fn main() {
 fn setup_scene(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
-	mut projection_query: Query<&mut Projection>,
+	mut projection_query: Query<(Entity, &mut Projection)>,
 	mut lightmap_animators: ResMut<LightmapAnimators>,
 ) {
 	// TODO TMP: For tears of the false god
 	lightmap_animators
 		.values
-		.insert(LightmapStyle(5), LightmapAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
+		// .insert(LightmapStyle(5), LightmapAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
+		.insert(LightmapStyle(5), LightmapAnimator::new(0.5, 0.1, [0., 1.].map(Vec3::splat)));
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
 
+	let sphere_mesh = asset_server.add(Sphere::new(0.1).mesh().build());
+	let material = asset_server.add(StandardMaterial::default());
+
 	// Wide FOV
-	for mut projection in &mut projection_query {
+	for (entity, mut projection) in &mut projection_query {
 		*projection = Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
 			..default()
 		});
+
+		// TODO tmp
+		let gi_tester = commands
+			.spawn((
+				Mesh3d(sphere_mesh.clone()),
+				MeshMaterial3d(material.clone()),
+				Transform::from_xyz(0., -0.2, -0.3),
+			))
+			.id();
+
+		commands.entity(entity).add_child(gi_tester);
 	}
 }
 

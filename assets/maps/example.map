@@ -541,6 +541,7 @@
 {
 "classname" "func_door"
 "angles" "0 0 0"
+"_shadow" "1"
 // brush 0
 {
 ( 16 -48 32 ) ( 32 -32 0 ) ( 16 -16 32 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -654,4 +655,10 @@
 "light" "200"
 "style" "5"
 "delay" "5"
+}
+// entity 14
+{
+"classname" "cube"
+"origin" "-5.657 136 22.202"
+"angles" "-15 0 0"
 }

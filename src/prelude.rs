@@ -23,7 +23,7 @@ pub use qbsp::{
 pub use crate::{
 	bsp::{
 		lighting::{LightmapAnimator, LightmapAnimators},
-		util::IrradianceVolumeMultipliers,
+		loader::IrradianceVolumeMultipliers,
 	},
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},

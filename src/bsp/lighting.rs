@@ -23,12 +23,14 @@ pub const MAX_ANIMATORS: usize = 255;
 /// Max number of steps in a [`LightmapAnimator`].
 pub const MAX_LIGHTMAP_FRAMES: usize = 64;
 
+const COMPUTE_WORKGROUP_SIZE: u32 = 4;
+
 /// The format used for the out channel in lighting animation. I've found that [`TextureFormat::Rgba8UnormSrgb`] and the like show noticeable banding on slower animations.
 pub(crate) const LIGHTMAP_OUTPUT_TEXTURE_FORMAT: TextureFormat = TextureFormat::Rgba32Float;
-pub(crate) fn new_lightmap_output_image(width: u32, height: u32) -> Image {
+pub(crate) fn new_animated_lighting_output_image(extent: Extent3d, dimension: TextureDimension) -> Image {
 	let mut image = Image::new_fill(
-		Extent3d { width, height, ..default() },
-		TextureDimension::D2,
+		extent,
+		dimension,
 		// Bright color -- easy to spot errors
 		[0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
 		LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
@@ -48,12 +50,21 @@ impl Plugin for BspLightingPlugin {
 		#[rustfmt::skip]
 		app
 			.add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
-			.add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
+			.add_plugins(ExtractResourcePlugin::<IrradianceVolumeDepths>::default())
+			.init_resource::<IrradianceVolumeDepths>()
+
 			.register_type::<AnimatedLightingHandle>()
+
+			.add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
 			.register_type::<LightmapAnimators>()
 			.init_resource::<LightmapAnimators>()
+
 			.init_asset::<AnimatedLighting>()
-			.add_systems(PreUpdate, Self::insert_animated_lightmaps)
+
+			.add_systems(PreUpdate, (
+				Self::insert_animated_lightmaps,
+				Self::populate_irradiance_volume_depths,
+			))
 		;
 
 		let render_app = app.sub_app_mut(RenderApp);
@@ -76,7 +87,7 @@ impl BspLightingPlugin {
 	/// Inserts [`Lightmap`] components into entities with [`AnimatedLightmap`].
 	pub fn insert_animated_lightmaps(
 		mut commands: Commands,
-		query: Query<(Entity, &AnimatedLightingHandle), Or<(Without<Lightmap>, Without<IrradianceVolume>)>>,
+		query: Query<(Entity, &AnimatedLightingHandle), (Without<Lightmap>, Without<IrradianceVolume>)>,
 		animated_lighting_assets: Res<Assets<AnimatedLighting>>,
 		tb_server: Res<TrenchBroomServer>,
 	) {
@@ -100,7 +111,7 @@ impl BspLightingPlugin {
 		}
 	}
 
-	pub fn prepare_animated_lighting_bind_groups(
+	fn prepare_animated_lighting_bind_groups(
 		animated_lighting_assets: Res<RenderAssets<AnimatedLighting>>,
 		mut bind_groups: ResMut<AnimatedLightingBindGroups>,
 		gpu_images: Res<RenderAssets<GpuImage>>,
@@ -153,13 +164,6 @@ impl BspLightingPlugin {
 					);
 				}
 				AnimatedLightingType::IrradianceVolume => {
-					// TODO Currently, GpuImage doesn't store its size in 3D, so we won't animated irradiance volumes until either that's fixed,
-					//      or i decide to get a work-around going.
-					let size: UVec3 = UVec3::ONE; // gpu_images.get(&animated_lighting.output).unwrap().size
-					let size_buffer = UniformBuffer::from(size);
-					target_animators_buffer.set_label(Some("size"));
-					target_animators_buffer.write_buffer(&render_device, &render_queue);
-
 					bind_groups.values.insert(
 						id,
 						render_device.create_bind_group(
@@ -171,8 +175,8 @@ impl BspLightingPlugin {
 								&gpu_images.get(&animated_lighting.input[2]).unwrap().texture_view,
 								&gpu_images.get(&animated_lighting.input[3]).unwrap().texture_view,
 								&gpu_images.get(&animated_lighting.styles).unwrap().texture_view,
-								size_buffer.into_binding(),
 								target_animators_buffer.into_binding(),
+								&gpu_images.get(&animated_lighting.output).unwrap().texture_view,
 							)),
 						),
 					);
@@ -180,6 +184,30 @@ impl BspLightingPlugin {
 			}
 		}
 	}
+
+	fn populate_irradiance_volume_depths(
+		mut depths: ResMut<IrradianceVolumeDepths>,
+		animated_lighting_assets: Res<Assets<AnimatedLighting>>,
+		images: Res<Assets<Image>>,
+	) {
+		for (id, animated_lighting) in animated_lighting_assets.iter() {
+			if animated_lighting.ty != AnimatedLightingType::IrradianceVolume {
+				continue;
+			}
+			if depths.values.contains_key(&id) {
+				continue;
+			}
+			let Some(image) = images.get(&animated_lighting.styles) else { continue };
+
+			depths.values.insert(id, image.texture_descriptor.size.depth_or_array_layers);
+		}
+	}
+}
+
+/// TODO: Workaround for [`GpuImage`] not storing depth until 0.16
+#[derive(Resource, ExtractResource, Clone, Default)]
+struct IrradianceVolumeDepths {
+	values: HashMap<AssetId<AnimatedLighting>, u32>,
 }
 
 /// Provides the *animation* of animated lightmaps.
@@ -456,7 +484,7 @@ pub struct AnimatedLightingPipeline {
 	// Does this help with performance? No idea, I don't even know how to profile it.
 	globals_bind_group_layout: BindGroupLayout,
 	lightmap_pipeline: CachedRenderPipelineId,
-	irradiance_volume_pipeline: CachedRenderPipelineId,
+	irradiance_volume_pipeline: CachedComputePipelineId,
 	sampler: Sampler,
 }
 impl FromWorld for AnimatedLightingPipeline {
@@ -482,36 +510,39 @@ impl FromWorld for AnimatedLightingPipeline {
 		let irradiance_volume_bind_group_layout = render_device.create_bind_group_layout(
 			"IrradianceVolumeCompositeImages",
 			&BindGroupLayoutEntries::sequential(
-				ShaderStages::VERTEX_FRAGMENT,
+				ShaderStages::COMPUTE,
 				(
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Uint),
-					uniform_buffer_sized(false, Some(UVec3::SHADER_SIZE)),
 					uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+					BindingType::StorageTexture {
+						access: StorageTextureAccess::WriteOnly,
+						format: LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
+						view_dimension: TextureViewDimension::D3,
+					}
+					.into_bind_group_layout_entry_builder(),
 				),
 			),
 		);
 
 		let globals_bind_group_layout = render_device.create_bind_group_layout(
 			None,
-			&BindGroupLayoutEntries::single(ShaderStages::FRAGMENT, uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE))),
+			&BindGroupLayoutEntries::single(
+				ShaderStages::FRAGMENT | ShaderStages::COMPUTE,
+				uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE)),
+			),
 		);
 
 		let pipeline_cache = world.resource::<PipelineCache>();
 
-		// For things shared across both pipelines
-		fn create_pipeline_descriptor(
-			shader: Handle<Shader>,
-			label: &'static str,
-			bind_group_layout: BindGroupLayout,
-			globals_bind_group_layout: BindGroupLayout,
-		) -> RenderPipelineDescriptor {
+		let lightmap_pipeline = pipeline_cache.queue_render_pipeline({
+			let shader = world.load_asset("embedded://bevy_trenchbroom/bsp/composite_lightmaps.wgsl");
 			RenderPipelineDescriptor {
-				label: Some(label.into()),
-				layout: vec![bind_group_layout, globals_bind_group_layout],
+				label: Some("Composite Lightmap Images Pipeline".into()),
+				layout: vec![lightmap_bind_group_layout.clone(), globals_bind_group_layout.clone()],
 				push_constant_ranges: vec![],
 				vertex: VertexState {
 					shader: shader.clone(),
@@ -538,20 +569,17 @@ impl FromWorld for AnimatedLightingPipeline {
 				}),
 				zero_initialize_workgroup_memory: true,
 			}
-		}
+		});
 
-		let lightmap_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
-			world.load_asset("embedded://bevy_trenchbroom/bsp/composite_lightmaps.wgsl"),
-			"Composite Lightmap Images Pipeline",
-			lightmap_bind_group_layout.clone(),
-			globals_bind_group_layout.clone(),
-		));
-		let irradiance_volume_pipeline = pipeline_cache.queue_render_pipeline(create_pipeline_descriptor(
-			world.load_asset("embedded://bevy_trenchbroom/bsp/composite_irradiance_volumes.wgsl"),
-			"Composite Irradiance Volume Images Pipeline",
-			irradiance_volume_bind_group_layout.clone(),
-			globals_bind_group_layout.clone(),
-		));
+		let irradiance_volume_pipeline = pipeline_cache.queue_compute_pipeline(ComputePipelineDescriptor {
+			label: Some("Composite Irradiance Volume Images Pipeline".into()),
+			layout: vec![irradiance_volume_bind_group_layout.clone(), globals_bind_group_layout.clone()],
+			push_constant_ranges: vec![],
+			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/composite_irradiance_volumes.wgsl"),
+			shader_defs: vec![],
+			entry_point: "main".into(),
+			zero_initialize_workgroup_memory: true,
+		});
 
 		let sampler = render_device.create_sampler(&SamplerDescriptor {
 			mag_filter: FilterMode::Nearest,
@@ -596,35 +624,54 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 		for (id, bind_group) in &bind_groups.values {
 			let Some(animated_lighting) = animated_lighting_assets.get(*id) else { continue };
 			let Some(output_image) = gpu_images.get(&animated_lighting.output) else { continue };
+
 			// TODO if there is only unanimated styles, and it's already run once, we don't need to run it again!
-
-			let mut pass = render_context.command_encoder().begin_render_pass(&RenderPassDescriptor {
-				label: Some("Composite Lighting"),
-				color_attachments: &[Some(RenderPassColorAttachment {
-					view: &output_image.texture_view,
-					resolve_target: None,
-					ops: Operations {
-						load: LoadOp::Clear(LinearRgba::rgb(1., 0., 1.).into()), // Obvious error color
-						store: StoreOp::Store,
-					},
-				})],
-				..default()
-			});
-
-			let pipeline_id = match animated_lighting.ty {
-				AnimatedLightingType::Lightmap => pipeline.lightmap_pipeline,
-				AnimatedLightingType::IrradianceVolume => pipeline.irradiance_volume_pipeline,
-			};
-			let Some(render_pipeline) = pipeline_cache.get_render_pipeline(pipeline_id) else { return Ok(()) };
-			pass.set_pipeline(render_pipeline);
-
-			pass.set_bind_group(0, bind_group, &[]);
-			pass.set_bind_group(1, globals_bind_group, &[]);
-
 			match animated_lighting.ty {
-				AnimatedLightingType::Lightmap => pass.draw(0..4, 0..1),
-				// AnimatedLightingType::IrradianceVolume => pass.draw(0..4 * output_image.size.depth_or_array_layers, 0..1),
-				AnimatedLightingType::IrradianceVolume => todo!(),
+				AnimatedLightingType::Lightmap => {
+					let Some(render_pipeline) = pipeline_cache.get_render_pipeline(pipeline.lightmap_pipeline) else { return Ok(()) };
+
+					let mut pass = render_context.command_encoder().begin_render_pass(&RenderPassDescriptor {
+						label: Some("Composite Lightmap"),
+						color_attachments: &[Some(RenderPassColorAttachment {
+							view: &output_image.texture_view,
+							resolve_target: None,
+							ops: Operations {
+								load: LoadOp::Clear(LinearRgba::rgb(1., 0., 1.).into()), // Obvious error color
+								store: StoreOp::Store,
+							},
+						})],
+						..default()
+					});
+
+					pass.set_pipeline(render_pipeline);
+
+					pass.set_bind_group(0, bind_group, &[]);
+					pass.set_bind_group(1, globals_bind_group, &[]);
+
+					pass.draw(0..4, 0..1);
+				}
+
+				AnimatedLightingType::IrradianceVolume => {
+					let Some(depth) = world.resource::<IrradianceVolumeDepths>().values.get(id).copied() else { continue };
+					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.irradiance_volume_pipeline) else { return Ok(()) };
+
+					let mut pass = render_context.command_encoder().begin_compute_pass(&ComputePassDescriptor {
+						label: Some("Composite Irradiance Volume"),
+						..default()
+					});
+
+					pass.set_pipeline(pipeline);
+
+					pass.set_bind_group(0, bind_group, &[]);
+					pass.set_bind_group(1, globals_bind_group, &[]);
+
+					// Add 1 as a hack to run on the entire image because integer division rounds down
+					pass.dispatch_workgroups(
+						output_image.size.x / COMPUTE_WORKGROUP_SIZE + 1,
+						output_image.size.y / COMPUTE_WORKGROUP_SIZE + 1,
+						depth / COMPUTE_WORKGROUP_SIZE + 1,
+					);
+				}
 			}
 		}
 

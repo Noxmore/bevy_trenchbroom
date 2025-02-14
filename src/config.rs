@@ -2,7 +2,7 @@ use bevy::{
 	asset::{io::AssetReaderError, AssetLoadError, LoadContext},
 	render::render_asset::RenderAssetUsages,
 };
-use bsp::{util::IrradianceVolumeMultipliers, GENERIC_MATERIAL_PREFIX};
+use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
