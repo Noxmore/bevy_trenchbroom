@@ -30,7 +30,6 @@ fn main(
 ) {
 	var color = vec4f(0, 0, 0, 1);
 
-	// let coords = invocation_id % textureDimensions(input_texture_mapping);
 	let mapping: vec4u = textureLoad(input_texture_mapping, invocation_id % textureDimensions(input_texture_mapping), 0);
 
 	color += sample_atlas(input_texture_0, mapping.x, invocation_id);
@@ -39,5 +38,4 @@ fn main(
 	color += sample_atlas(input_texture_3, mapping.w, invocation_id);
 
 	textureStore(output, invocation_id, color);
-	// textureStore(output, invocation_id, vec4f(1, 0, 0, 1));
 }
