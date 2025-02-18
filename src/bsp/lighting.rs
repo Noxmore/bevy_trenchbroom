@@ -605,10 +605,9 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 					pass.set_bind_group(0, bind_group, &[]);
 					pass.set_bind_group(1, globals_bind_group, &[]);
 
-					// Add 1 as a hack to run on the entire image because integer division rounds down
 					pass.dispatch_workgroups(
-						output_image.size.x / LIGHTMAP_WORKGROUP_SIZE + 1,
-						output_image.size.y / LIGHTMAP_WORKGROUP_SIZE + 1,
+						output_image.size.x.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
+						output_image.size.y.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
 						1,
 					);
 				}
@@ -622,11 +621,10 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 					pass.set_bind_group(0, bind_group, &[]);
 					pass.set_bind_group(1, globals_bind_group, &[]);
 
-					// Add 1 as a hack to run on the entire image because integer division rounds down
 					pass.dispatch_workgroups(
-						output_image.size.x / IRRADIANCE_VOLUME_WORKGROUP_SIZE + 1,
-						output_image.size.y / IRRADIANCE_VOLUME_WORKGROUP_SIZE + 1,
-						depth / IRRADIANCE_VOLUME_WORKGROUP_SIZE + 1,
+						output_image.size.x.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.size.y.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						depth.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
 					);
 				}
 			}
