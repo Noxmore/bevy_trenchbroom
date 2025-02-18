@@ -24,7 +24,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 
 		let new_builder = || IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255], config.irradiance_volume_multipliers);
 
-		let mut style_map_builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0; 4], IrradianceVolumeMultipliers::IDENTITY);
+		let mut style_map_builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [255; 4], IrradianceVolumeMultipliers::IDENTITY);
 
 		for mut leaf in light_grid.leafs {
 			leaf.mins = leaf.mins.xzy();
@@ -35,7 +35,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 					for z in 0..size.z {
 						let LightGridCell::Filled(samples) = leaf.get_cell(x, z, y) else { continue };
 						let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
-						let mut style_map: [u8; 4] = [0; 4];
+						let mut style_map: [u8; 4] = [255; 4];
 
 						for (slot_idx, sample) in samples.into_iter().enumerate() {
 							if slot_idx >= 4 {
@@ -66,9 +66,8 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		}
 
 		// This is pretty much instructed by FTE docs
-		// builder.flood_non_filled();
+		flood_non_filled(&mut input_builders, &mut style_map_builder, &new_builder);
 
-		// let mut image = builder.build();
 		let full_size = IrradianceVolumeBuilder::full_size(light_grid.size);
 		let mut output_image = Image::new_fill(
 			Extent3d {
@@ -85,7 +84,6 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		output_image.texture_descriptor.usage |= TextureUsages::STORAGE_BINDING;
 		output_image.sampler = ImageSampler::linear();
 
-		// let image_handle = load_context.add_labeled_asset("IrradianceVolume".s(), image);
 
 		let mut slot_idx = 0;
 		let input = input_builders.map(|builder| {
@@ -182,6 +180,7 @@ impl Default for IrradianceVolumeMultipliers {
 }
 
 /// Little helper API to create irradiance volumes for BSPs.
+#[derive(Clone)]
 struct IrradianceVolumeBuilder {
 	size: UVec3,
 	full_shape: RuntimeShape<u32, 3>,
@@ -250,44 +249,6 @@ impl IrradianceVolumeBuilder {
 		self.put(pos, IrradianceVolumeDirection::NEG_Z, mul_color(color, self.multipliers.neg_z));
 	}
 
-	/// For any non-filled color, get replaced with neighboring filled colors.
-	pub fn flood_non_filled(&mut self) {
-		for (i, filled) in self.filled.iter().copied().enumerate() {
-			if filled {
-				continue;
-			}
-
-			let (pos, dir) = self.delinearize(i);
-			let min = pos.saturating_sub(UVec3::splat(1));
-			let max = (pos + 1).min(self.size - 1);
-
-			let mut color = [0_u16; 4];
-			let mut contributors: u16 = 0;
-
-			for x in min.x..=max.x {
-				for y in min.y..=max.y {
-					for z in min.z..=max.z {
-						let offset_idx = self.linearize([x, y, z], dir);
-
-						if self.filled[offset_idx] {
-							contributors += 1;
-							#[allow(clippy::needless_range_loop)]
-							for color_channel in 0..4 {
-								color[color_channel] += self.data[offset_idx][color_channel] as u16;
-							}
-						}
-					}
-				}
-			}
-
-			if contributors == 0 {
-				continue;
-			}
-			// Average 'em
-			self.data[i] = color.map(|v| (v / contributors) as u8)
-		}
-	}
-
 	pub fn build(self) -> Image {
 		Image::new(
 			Extent3d {
@@ -300,6 +261,90 @@ impl IrradianceVolumeBuilder {
 			TextureFormat::Rgba8UnormSrgb,
 			RenderAssetUsages::RENDER_WORLD,
 		)
+	}
+}
+
+/// Sets non-filled cells to the average of its neighboring filled cells. If the cell has no neighboring filled cell, nothing changes.
+fn flood_non_filled(
+	input_builders: &mut [Option<IrradianceVolumeBuilder>; 4],
+	style_map_builder: &mut IrradianceVolumeBuilder,
+	new_builder: &impl Fn() -> IrradianceVolumeBuilder,
+) {
+	assert!(input_builders.iter().flatten().map(|builder| builder.data.len()).all_equal());
+	assert!(input_builders.iter().flatten().all(|builder| builder.data.len() == builder.filled.len()));
+	let Some(builder) = input_builders.iter().flatten().next() else { return };
+	let builder = builder.clone();
+	
+	for (i, filled) in builder.filled.iter().copied().enumerate() {
+		if filled {
+			continue;
+		}
+
+		let (pos, dir) = builder.delinearize(i);
+		let min = pos.saturating_sub(UVec3::splat(1));
+		let max = (pos + 1).min(builder.size - 1);
+
+		#[derive(Clone, Copy)]
+		struct Sample {
+			color: [u16; 4],
+			style: LightmapStyle,
+			contributors: u16,
+		}
+		
+		let mut dst_samples = [Sample { color: [0; 4], style: LightmapStyle::NONE, contributors: 0 }; 4];
+
+		for x in min.x..=max.x {
+			for y in min.y..=max.y {
+				for z in min.z..=max.z {
+					// For each cell around this one
+					let offset_idx = builder.linearize([x, y, z], dir);
+
+					if builder.filled[offset_idx] {
+						let contributing_styles = style_map_builder.data[offset_idx].map(LightmapStyle);
+
+						for slot in 0..4 {
+							if contributing_styles[slot] == LightmapStyle::NONE { continue }
+							let Some(input_builder) = &input_builders[slot] else { continue };
+							
+							for sample in &mut dst_samples {
+								// This slot isn't being used yet, let's fill it initially.
+								if sample.style == LightmapStyle::NONE {
+									sample.style = contributing_styles[slot];
+									sample.contributors = 1;
+									sample.color = input_builder.data[offset_idx].map(Into::into);
+									break;
+								}
+								
+								if sample.style != contributing_styles[slot] { continue }
+
+								// This is an existing sample that matches our style, let's add to it!
+								sample.contributors += 1;
+
+								#[allow(clippy::needless_range_loop)]
+								for color_channel in 0..4 {
+									sample.color[color_channel] += input_builder.data[offset_idx][color_channel] as u16;
+								}
+
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for slot in 0..4 {
+			let sample = dst_samples[slot];
+			if sample.contributors == 0 {
+				continue;
+			}
+			// Average 'em
+			let slot_builder = input_builders[slot].get_or_insert_with(new_builder);
+			slot_builder.data[i] = sample.color.map(|x| (x / sample.contributors) as u8);
+			slot_builder.filled[i] = true;
+		}
+		style_map_builder.data[i] = dst_samples.map(|sample| sample.style.0);
+		style_map_builder.filled[i] = true;
 	}
 }
 
