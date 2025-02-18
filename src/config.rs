@@ -636,7 +636,7 @@ pub struct DefaultFaceAttributes {
 	/// If [`Some`], overrides the default texture rotation.
 	pub rotation: Option<f32>,
 	/// Number specifying the default surface value (only applicable if surfaceflags exist)
-	pub surface_value: Option<u64>,
+	pub surface_value: Option<u32>,
 	/// List of strings naming the default surface flags
 	pub surface_flags: Vec<String>,
 	/// List of strings naming the default content flags
