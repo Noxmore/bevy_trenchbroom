@@ -70,13 +70,7 @@ pub fn fgd_type_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 
 /// Returns `true` if the path contains a single segment, that segment being `s`.
 fn compare_path(path: &Path, s: &str) -> bool {
-	path.segments
-		== [PathSegment {
-			ident: Ident::new(s, Span::mixed_site()),
-			arguments: PathArguments::None,
-		}]
-		.into_iter()
-		.collect()
+	path.segments.len() == 1 && path.segments[0].ident == s
 }
 
 /// Returns a token stream where if `value` is [`Some`], returns `Some(<value>)`, else returns a token stream containing `None`.
