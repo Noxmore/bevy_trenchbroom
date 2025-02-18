@@ -142,6 +142,7 @@ impl AssetLoader for QuakeMapLoader {
 							MapGeometryTexture {
 								name: texture.s(),
 								material,
+								#[cfg(feature = "bevy_pbr")]
 								lightmap: None,
 								special: false,
 							},

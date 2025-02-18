@@ -7,7 +7,6 @@ use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
-use special_textures::load_special_texture;
 use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 
 use crate::*;
@@ -129,9 +128,11 @@ pub struct TrenchBroomConfig {
 	pub generic_material_extension: String,
 
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
+	#[cfg(feature = "bevy_pbr")]
 	#[default(Some(10_000.))]
 	#[builder(into)]
 	pub lightmap_exposure: Option<f32>,
+	#[cfg(feature = "bevy_pbr")]
 	#[default(500.)]
 	pub default_irradiance_volume_intensity: f32,
 	/// Multipliers to the colors of BSP loaded irradiance volumes depending on direction.
@@ -140,6 +141,7 @@ pub struct TrenchBroomConfig {
 	/// This fakes it, making objects within look a little nicer.
 	///
 	/// (Default: [`IrradianceVolumeMultipliers::SLIGHT_SHADOW`])
+	#[cfg(feature = "bevy_pbr")]
 	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
 	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
@@ -167,12 +169,14 @@ pub struct TrenchBroomConfig {
 	/// Using the material provided by the contained function, the left side being the foreground, and right side the background.
 	///
 	/// (Default: `Some(QuakeSkyMaterial::default)`)
+	#[cfg(feature = "bevy_pbr")]
 	#[default(Some(default))]
 	pub embedded_quake_sky_material: Option<fn() -> QuakeSkyMaterial>,
 
 	/// If [`Some`], embedded textures with names that start with `*` will use [`LiquidMaterial`], and will abide by the `water_alpha` worldspawn key.
 	///
 	/// (Default: `Some(QuakeSkyMaterial::default)`)
+	#[cfg(feature = "bevy_pbr")]
 	#[default(Some(default))]
 	pub embedded_liquid_material: Option<fn() -> LiquidMaterialExt>,
 
@@ -293,24 +297,30 @@ impl TrenchBroomConfig {
 		self.load_embedded_texture.set(provider);
 		self
 	}
-	pub fn default_load_embedded_texture(mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
+	pub fn default_load_embedded_texture(#[allow(unused_mut)] mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
+		#[cfg(feature = "bevy_pbr")]
 		let mut material = StandardMaterial {
 			base_color_texture: Some(view.image_handle.clone()),
 			perceptual_roughness: 1.,
 			..default()
 		};
 
+		#[cfg(feature = "bevy_pbr")]
 		if let Some(alpha_mode) = view.alpha_mode {
 			material.alpha_mode = alpha_mode;
 		}
 
-		let generic_material = match load_special_texture(&mut view, &material) {
+		#[cfg(feature = "bevy_pbr")]
+		let generic_material = match special_textures::load_special_texture(&mut view, &material) {
 			Some(v) => v,
 			None => GenericMaterial {
 				handle: view.add_material(material).into(),
 				properties: default(),
 			},
 		};
+
+		#[cfg(not(feature = "bevy_pbr"))]
+		let generic_material = GenericMaterial::default();
 
 		view.parent_view
 			.load_context
@@ -428,6 +438,7 @@ pub struct TextureLoadView<'a, 'b> {
 }
 impl TextureLoadView<'_, '_> {
 	/// Shorthand for adding a material asset with the correct label.
+	#[cfg(feature = "bevy_pbr")]
 	pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
 		self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
 	}

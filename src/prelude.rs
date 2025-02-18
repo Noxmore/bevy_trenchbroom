@@ -1,5 +1,6 @@
 pub(crate) use anyhow::anyhow;
 pub(crate) use bevy::math::*;
+#[cfg(feature = "bevy_pbr")]
 pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
@@ -20,15 +21,18 @@ pub use qbsp::{
 	Palette, QUAKE_PALETTE,
 };
 
+#[cfg(feature = "bevy_pbr")]
 pub use crate::{
 	bsp::{
 		lighting::{LightmapAnimator, LightmapAnimators},
 		loader::IrradianceVolumeMultipliers,
 	},
+	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
+};
+pub use crate::{
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
 	util::{repeating_image_sampler, IsSceneWorld, TrenchBroomGltfRotationFix},
 	TrenchBroomPlugin, TrenchBroomServer,
 };

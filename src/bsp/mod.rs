@@ -1,4 +1,5 @@
 pub mod base_classes;
+#[cfg(feature = "bevy_pbr")]
 pub mod lighting;
 pub mod loader;
 
@@ -6,12 +7,10 @@ use brush::{BrushPlane, ConvexHull};
 use class::{ErasedQuakeClass, QuakeClassType};
 use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{Brushes, GeometryProviderMeshView, MapGeometryTexture};
+#[cfg(feature = "bevy_pbr")]
 use lighting::{new_animated_lighting_output_image, AnimatedLighting, AnimatedLightingHandle, AnimatedLightingType, LIGHTMAP_OUTPUT_TEXTURE_FORMAT};
 use loader::BspLoader;
-use qbsp::{
-	data::{bsp::BspTexFlags, bspx::LightGridCell},
-	mesh::lighting::ComputeLightmapAtlasError,
-};
+use qbsp::data::bsp::BspTexFlags;
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 
 use crate::{util::BevyTrenchbroomCoordinateConversions, *};
@@ -22,7 +21,6 @@ impl Plugin for BspPlugin {
 		#[rustfmt::skip]
 		app
 			.add_plugins((
-				lighting::BspLightingPlugin,
 				base_classes::BspBaseClassesPlugin,
 			))
 
@@ -30,6 +28,9 @@ impl Plugin for BspPlugin {
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()
 		;
+
+		#[cfg(feature = "bevy_pbr")]
+		app.add_plugins(lighting::BspLightingPlugin);
 	}
 }
 
@@ -42,7 +43,9 @@ pub struct Bsp {
 	/// The main scene of everything put together.
 	pub scene: Handle<Scene>,
 	pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
+	#[cfg(feature = "bevy_pbr")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
+	#[cfg(feature = "bevy_pbr")]
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,
@@ -88,14 +91,6 @@ pub struct BspEmbeddedTexture {
 	pub material: Handle<GenericMaterial>,
 }
 
-/// Lighting, either to a lightmap or irradiance volume.
-///
-/// TODO
-pub enum BspLightingHandle {
-	Animated(Handle<AnimatedLighting>),
-	Static(Handle<Image>),
-}
-
 fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Option<usize> {
 	// Worldspawn always has model 0
 	if class.info.name == "worldspawn" {
@@ -111,6 +106,7 @@ fn get_model_idx(map_entity: &QuakeMapEntity, class: &ErasedQuakeClass) -> Optio
 	model_property_trimmed.parse::<usize>().ok()
 }
 
+#[cfg(feature = "bevy_pbr")]
 #[test]
 fn bsp_loading() {
 	let mut app = App::new();

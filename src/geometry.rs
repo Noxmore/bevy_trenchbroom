@@ -1,9 +1,8 @@
 use bevy::render::mesh::VertexAttributeValues;
 use brush::Brush;
-use bsp::{
-	lighting::{AnimatedLighting, AnimatedLightingHandle},
-	BspBrushesAsset,
-};
+#[cfg(feature = "bevy_pbr")]
+use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
+use bsp::BspBrushesAsset;
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -53,6 +52,7 @@ impl std::ops::Deref for BrushList {
 pub struct MapGeometryTexture {
 	pub name: String,
 	pub material: Handle<GenericMaterial>,
+	#[cfg(feature = "bevy_pbr")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	/// If the texture should be full-bright
 	pub special: bool,
@@ -206,6 +206,7 @@ impl GeometryProvider {
 	}
 
 	/// Inserts lightmaps if available.
+	#[cfg(feature = "bevy_pbr")]
 	pub fn with_lightmaps(self) -> Self {
 		self.push(|view| {
 			for mesh_view in &view.meshes {
@@ -216,6 +217,10 @@ impl GeometryProvider {
 					.insert(AnimatedLightingHandle(animated_lighting_handle.clone()));
 			}
 		})
+	}
+	#[cfg(not(feature = "bevy_pbr"))]
+	pub fn with_lightmaps(self) -> Self {
+		self
 	}
 
 	/// Inserts trimesh colliders on each mesh of this entity. This means that brushes will be hollow. Not recommended to use on physics objects.

@@ -31,11 +31,10 @@ bevy = { version = "0.15", default-features = false, features = [
 	"bevy_asset",
 	"bevy_scene",
 	"bevy_render",
-	"bevy_pbr",
 ] }
 bevy_reflect = { version = "0.15", features = ["documentation"] }
-bevy_materialize = "0.1.0"
-# bevy_materialize = { path = "/d/_dev/_lib/rust/bevy_materialize" } # TODO tmp
+bevy_materialize = { version = "0.2.0", default-features = false, features = ["toml"] }
+# bevy_materialize = { path = "/d/_dev/_lib/rust/bevy_materialize", default-features = false, features = ["toml"] } # TODO tmp
 bevy_rapier3d = { version = "0.28", optional = true }
 avian3d = { version = "0.2", optional = true }
 default-struct-builder = "0.5.0"
@@ -47,7 +46,6 @@ json = "0.12"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
 serde = { version = "1.0", features = ["derive"] } # serde isn't optional because MaterialProperties requires to be deserialized
 thiserror = "2.0"
-toml = "0.8"
 disjoint-sets = "0.4.2"
 qbsp = { version = "0.2.1", features = ["bevy_reflect", "serde"] }
 # qbsp = { path = "/d/_dev/_lib/rust/qbsp", features = ["bevy_reflect", "serde"] } # TODO tmp
@@ -62,8 +60,17 @@ bevy = { version = "0.15", default-features = true }
 bevy_flycam = "0.15"
 bevy-inspector-egui = "0.29" # TODO TMP
 
+[[example]]
+name = "bsp_loading"
+required-features = ["bevy_pbr", "auto_register"]
+
+[[example]]
+name = "map_loading"
+required-features = ["bevy_pbr", "auto_register"]
+
 [features]
-default = ["auto_register"]
+default = ["bevy_pbr", "auto_register"]
+bevy_pbr = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
 auto_register = ["dep:inventory", "bevy_trenchbroom_macros/auto_register"]

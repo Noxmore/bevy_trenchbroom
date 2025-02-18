@@ -5,6 +5,7 @@ use bevy::{
 	render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bsp::*;
+use qbsp::mesh::lighting::ComputeLightmapAtlasError;
 
 /// Writes lightmaps to target/lightmaps folder
 const WRITE_DEBUG_FILES: bool = false;

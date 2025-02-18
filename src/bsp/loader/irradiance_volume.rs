@@ -7,6 +7,7 @@ use bevy::{
 };
 use bsp::*;
 use ndshape::{RuntimeShape, Shape};
+use qbsp::data::bspx::LightGridCell;
 
 pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow::Result<Option<Handle<AnimatedLighting>>> {
 	let config = &ctx.loader.tb_server.config;
@@ -83,7 +84,6 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		);
 		output_image.texture_descriptor.usage |= TextureUsages::STORAGE_BINDING;
 		output_image.sampler = ImageSampler::linear();
-
 
 		let mut slot_idx = 0;
 		let input = input_builders.map(|builder| {
@@ -274,7 +274,7 @@ fn flood_non_filled(
 	assert!(input_builders.iter().flatten().all(|builder| builder.data.len() == builder.filled.len()));
 	let Some(builder) = input_builders.iter().flatten().next() else { return };
 	let builder = builder.clone();
-	
+
 	for (i, filled) in builder.filled.iter().copied().enumerate() {
 		if filled {
 			continue;
@@ -290,8 +290,12 @@ fn flood_non_filled(
 			style: LightmapStyle,
 			contributors: u16,
 		}
-		
-		let mut dst_samples = [Sample { color: [0; 4], style: LightmapStyle::NONE, contributors: 0 }; 4];
+
+		let mut dst_samples = [Sample {
+			color: [0; 4],
+			style: LightmapStyle::NONE,
+			contributors: 0,
+		}; 4];
 
 		for x in min.x..=max.x {
 			for y in min.y..=max.y {
@@ -303,9 +307,11 @@ fn flood_non_filled(
 						let contributing_styles = style_map_builder.data[offset_idx].map(LightmapStyle);
 
 						for slot in 0..4 {
-							if contributing_styles[slot] == LightmapStyle::NONE { continue }
+							if contributing_styles[slot] == LightmapStyle::NONE {
+								continue;
+							}
 							let Some(input_builder) = &input_builders[slot] else { continue };
-							
+
 							for sample in &mut dst_samples {
 								// This slot isn't being used yet, let's fill it initially.
 								if sample.style == LightmapStyle::NONE {
@@ -314,8 +320,10 @@ fn flood_non_filled(
 									sample.color = input_builder.data[offset_idx].map(Into::into);
 									break;
 								}
-								
-								if sample.style != contributing_styles[slot] { continue }
+
+								if sample.style != contributing_styles[slot] {
+									continue;
+								}
 
 								// This is an existing sample that matches our style, let's add to it!
 								sample.contributors += 1;

@@ -23,12 +23,21 @@ fn convert_vec3(config: &TrenchBroomConfig) -> impl Fn(qbsp::glam::Vec3) -> Vec3
 	|x| config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
-pub fn compute_models(ctx: &mut BspLoadCtx, lightmap: &Option<BspLightmap>, embedded_textures: &EmbeddedTextures) -> Vec<InternalModel> {
+#[cfg(feature = "bevy_pbr")]
+type Lightmap = BspLightmap;
+#[cfg(not(feature = "bevy_pbr"))]
+type Lightmap = LightmapUvMap;
+
+pub fn compute_models(ctx: &mut BspLoadCtx, lightmap: &Option<Lightmap>, embedded_textures: &EmbeddedTextures) -> Vec<InternalModel> {
 	let config = &ctx.loader.tb_server.config;
+	#[cfg(feature = "bevy_pbr")]
+	let lightmap_uvs = lightmap.as_ref().map(|lm| &lm.uv_map);
+	#[cfg(not(feature = "bevy_pbr"))]
+	let lightmap_uvs = lightmap.as_ref();
 
 	(0..ctx.data.models.len())
 		.map(|model_idx| {
-			let model_output = ctx.data.mesh_model(model_idx, lightmap.as_ref().map(|lm| &lm.uv_map));
+			let model_output = ctx.data.mesh_model(model_idx, lightmap_uvs);
 			let mut model = InternalModel::default();
 			model.meshes.reserve(model_output.meshes.len());
 
@@ -70,6 +79,7 @@ pub fn compute_models(ctx: &mut BspLoadCtx, lightmap: &Option<BspLightmap>, embe
 				model.meshes.push(InternalModelMesh {
 					texture: MapGeometryTexture {
 						material,
+						#[cfg(feature = "bevy_pbr")]
 						lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
 						name: exported_mesh.texture,
 						// TODO this makes some things pitch black maybe?
