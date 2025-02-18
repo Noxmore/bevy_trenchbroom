@@ -179,6 +179,18 @@ pub struct BspSolidEntity {
 	/// Default 1.0, 0.0 is fully desaturated to greyscale.
 	#[default(1.)]
 	pub _lightcolorscale: f32,
+
+	/// Mask of lighting channels that this bmodel receives light on, blocks light on, and tests for AO on.
+	///
+	/// Default 1.
+	/// 
+	/// NOTE: Changing this from 1 will disable bouncing light off of this bmodel.
+	///
+	/// NOTE: Changing this from 1 implicitly enables _shadow.
+	/// 
+	/// NOTE: Changing to 2, for example, will cause the bmodel to initially be solid black. You’ll need to add minlight or lights with _light_channel_mask 2.
+	#[default(1)]
+	pub _object_channel_mask: u32,
 }
 
 /// Contains properties used by the `ericw-tools` compiler for the `worldspawn` entity.
@@ -372,21 +384,6 @@ pub struct BspLight {
 	#[default(Srgb::WHITE_255)]
 	pub _color: Srgb,
 
-	/// Turns the light into a spotlight, with the direction of light being towards another entity with it’s "targetname" key set to this value.
-	pub target: Option<String>,
-
-	/// Turns the light into a spotlight and specifies the direction of light using yaw, pitch and roll in degrees.
-	/// Yaw specifies the angle around the Z-axis from 0 to 359 degrees and pitch specifies the angle from 90 (straight up) to -90 (straight down).
-	/// Roll has no effect, so use any value (e.g. 0). Often easier than the "target" method.
-	pub mangle: Vec3,
-
-	/// Specifies the angle in degrees for a spotlight cone. Default 40.
-	#[default(40.)]
-	pub angle: f32,
-
-	/// Specifies the angle in degrees for an inner spotlight cone (must be less than the "angle" cone. Creates a softer transition between the full brightness of the inner cone to the edge of the outer cone. Default 0 (disabled).
-	pub _softangle: f32,
-
 	/// Turns the light into a switchable light, toggled by another entity targeting it’s name.
 	pub targetname: Option<String>,
 
@@ -394,8 +391,9 @@ pub struct BspLight {
 	#[default(LightmapStyle::NORMAL)]
 	pub style: LightmapStyle,
 
-	/// Sets a scaling factor for how much influence the angle of incidence of light on a surface has on the brightness of the surface.
-	/// Value must be between 0.0 and 1.0. Smaller values mean less attenuation, with zero meaning that angle of incidence has no effect at all on the brightness. Default 0.5.
+	/// Sets a scaling factor for how much influence the angle of incidence of light on a surface has on the brightness of the surface
+	/// Value must be between 0.0 and 1.0. Smaller values mean less attenuation, with zero meaning that angle of incidence has no effect at all on the brightness.
+	/// Default 0.5.
 	#[default(0.5)]
 	pub _anglescale: f32,
 
@@ -420,6 +418,37 @@ pub struct BspLight {
 	#[default(16)]
 	pub _samples: u32,
 
+	/// Scales the amount of light that is contributed by bounces. Default is 1.0, 0.0 disables bounce lighting for this light.
+	#[default(1.)]
+	pub _bouncescale: f32,
+
+	/// Set to 1 to make the light compiler ignore this entity (prevents it from casting any light). e.g. could be useful with rtlights.
+	pub _nostaticlight: IntBool,
+
+	/// Calculate lighting with and without brush models with a “targetname” equal to this value, and stores the resulting switchable shadow data in a light style which is stored in this light entity’s “style” key.
+	///
+	/// You should give this light a targetname and typically set “spawnflags” “1” (start off).
+	///
+	/// Implies `_nostaticlight` (this entity itself does not cast any light).
+	pub _switchableshadow_target: Option<String>,
+
+	/// Turns the light into a spotlight (or sun light if `_sun` if 1), with the direction of light being towards another entity with it’s "targetname" key set to this value.
+	/// 
+	/// NOTE: Docs may imply that sun lights have to target `info_null` entities? I haven't tested it though.
+	pub target: Option<String>,
+	
+	/// Turns the light into a spotlight and specifies the direction of light using yaw, pitch and roll in degrees.
+	/// Yaw specifies the angle around the Z-axis from 0 to 359 degrees and pitch specifies the angle from 90 (straight up) to -90 (straight down).
+	/// Roll has no effect, so use any value (e.g. 0). Often easier than the "target" method.
+	pub mangle: Vec3,
+
+	/// Specifies the angle in degrees for a spotlight cone. Default 40.
+	#[default(40.)]
+	pub angle: f32,
+
+	/// Specifies the angle in degrees for an inner spotlight cone (must be less than the "angle" cone. Creates a softer transition between the full brightness of the inner cone to the edge of the outer cone. Default 0 (disabled).
+	pub _softangle: f32,
+
 	/// Makes surfaces with the given texture name emit light, by using this light as a template which is copied across those surfaces.
 	/// Lights are spaced about 128 units (though possibly closer due to bsp splitting) apart and positioned 2 units above the surfaces.
 	pub _surface: Option<String>,
@@ -432,6 +461,20 @@ pub struct BspLight {
 	/// with the direction of light pointing along the surface normal. In other words, it automatically sets "mangle" on each of the generated lights.
 	pub _surface_spotlight: IntBool,
 
+	/// Whether to use Q1-style surface subdivision (0) or Q2-style surface radiosity (1) on this light specifically.
+	///
+	/// Use in conjunction with `_surface`.
+	///
+	/// The default can be changed for all surface lights in a map with worldspawn key `_surflight_radiosity`.
+	pub _surface_radiosity: Option<IntBool>,
+
+	/// Integer, default 0.
+	///
+	/// For use with `_surface` lights.
+	///
+	/// Can be set to a nonzero value to restrict this surface light template to only emit from brushes with a matching `_surflight_group` value.
+	pub _surflight_group: u32,
+
 	/// Specifies that a light should project this texture. The texture must be used in the map somewhere.
 	pub _project_texture: Option<String>,
 
@@ -442,9 +485,6 @@ pub struct BspLight {
 	#[default(90.)]
 	pub _project_fov: f32,
 
-	/// Scales the amount of light that is contributed by bounces. Default is 1.0, 0.0 disables bounce lighting for this light.
-	#[default(1.)]
-	pub _bouncescale: f32,
 
 	/// Set to 1 to make this entity a sun, as an alternative to using the sunlight worldspawn keys.
 	/// If the light targets an info_null entity, the direction towards that entity sets sun direction.
@@ -459,6 +499,31 @@ pub struct BspLight {
 	/// - _dirt => _sunlight_dirt
 	/// - _anglescale => _anglescale
 	pub _sun: IntBool,
+
+	/// This sunlight is only emitted from faces with this texture name. Default is to be emitted from all sky textures.
+	pub _suntexture: Option<String>,
+
+	/// Set to 1 to make this entity control the upper dome lighting emitted from sky faces, as an alternative to the worldspawn key `_sunlight2`.
+	/// The light entity itself is disabled, so it can be placed anywhere in the map.
+	pub _sunlight2: IntBool,
+
+	/// Same as `_sunlight2`, but makes this sky light come from the lower hemisphere.
+	pub _sunlight3: IntBool,
+	
+	/// Mask of lighting channels that the light casts on.
+	///
+	/// In order for this light to cast light on a bmodel, there needs to be a least 1 bit in common between `_light_channel_mask` and the receiving bmodel’s `_object_channel_mask` (i.e. the bitwise AND must be nonzero).
+	///
+	/// Default 1.
+	#[default(1)]
+	pub _light_channel_mask: u32,
+
+	/// This is the mask of lighting channels that will block this entity’s light rays. If the the bitwise AND of this and another bmodel’s `_object_channel_mask` is nonzero, the light ray is stopped.
+	///
+	/// This is an advanced option, for making bmodels only cast shadows for specific lights (but not others).
+	///
+	/// Defaults to `_light_channel_mask`
+	pub _shadow_channel_mask: Option<u32>,
 }
 
 /// How light fades over distance. Used in the `delay` property of light entities.
