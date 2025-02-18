@@ -3,9 +3,10 @@ use crate::*;
 use bevy::{
 	asset::RenderAssetUsages,
 	image::ImageSampler,
-	render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
+	render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bsp::*;
+use lighting::{new_animated_lighting_output_image, AnimatedLightingHandle, AnimatedLightingType};
 use ndshape::{RuntimeShape, Shape};
 use qbsp::data::bspx::LightGridCell;
 
@@ -70,20 +71,6 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		flood_non_filled(&mut input_builders, &mut style_map_builder, &new_builder);
 
 		let full_size = IrradianceVolumeBuilder::full_size(light_grid.size);
-		let mut output_image = Image::new_fill(
-			Extent3d {
-				width: full_size.x,
-				height: full_size.y,
-				depth_or_array_layers: full_size.z,
-			},
-			TextureDimension::D3,
-			// Bright color -- easy to spot errors
-			[0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
-			LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
-			RenderAssetUsages::RENDER_WORLD,
-		);
-		output_image.texture_descriptor.usage |= TextureUsages::STORAGE_BINDING;
-		output_image.sampler = ImageSampler::linear();
 
 		let mut slot_idx = 0;
 		let input = input_builders.map(|builder| {
@@ -107,7 +94,17 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 			handle
 		});
 
-		let output = ctx.load_context.add_labeled_asset("IrradianceVolume".s(), output_image);
+		let output = ctx.load_context.add_labeled_asset(
+			"IrradianceVolume".s(),
+			new_animated_lighting_output_image(
+				Extent3d {
+					width: full_size.x,
+					height: full_size.y,
+					depth_or_array_layers: full_size.z,
+				},
+				TextureDimension::D3,
+			),
+		);
 
 		let mut style_map_image = style_map_builder.build();
 		style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;

@@ -8,7 +8,7 @@ use class::{ErasedQuakeClass, QuakeClassType};
 use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{Brushes, GeometryProviderMeshView, MapGeometryTexture};
 #[cfg(feature = "bevy_pbr")]
-use lighting::{new_animated_lighting_output_image, AnimatedLighting, AnimatedLightingHandle, AnimatedLightingType, LIGHTMAP_OUTPUT_TEXTURE_FORMAT};
+use lighting::AnimatedLighting;
 use loader::BspLoader;
 use qbsp::data::bsp::BspTexFlags;
 use qmap::{QuakeMapEntities, QuakeMapEntity};

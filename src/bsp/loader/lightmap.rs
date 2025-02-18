@@ -5,6 +5,7 @@ use bevy::{
 	render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bsp::*;
+use lighting::{new_animated_lighting_output_image, AnimatedLightingType};
 use qbsp::mesh::lighting::ComputeLightmapAtlasError;
 
 /// Writes lightmaps to target/lightmaps folder
