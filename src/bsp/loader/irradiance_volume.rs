@@ -162,11 +162,11 @@ impl IrradianceVolumeMultipliers {
 	};
 
 	pub const SLIGHT_SHADOW: Self = Self {
-		x: [0.9; 3],
-		y: [0.7; 3],
-		z: [1.; 3],
-		neg_x: [1.2; 3],
-		neg_y: [1.4; 3],
+		x: [1.2; 3],
+		y: [1.4; 3],
+		z: [1.1; 3],
+		neg_x: [0.9; 3],
+		neg_y: [0.7; 3],
 		neg_z: [1.; 3],
 	};
 }
@@ -374,10 +374,10 @@ impl IrradianceVolumeDirection {
 		self.0
 	}
 
-	pub const X: Self = Self(uvec3(0, 1, 0));
-	pub const Y: Self = Self(uvec3(0, 1, 1));
-	pub const Z: Self = Self(uvec3(0, 1, 2));
-	pub const NEG_X: Self = Self(uvec3(0, 0, 0));
-	pub const NEG_Y: Self = Self(uvec3(0, 0, 1));
-	pub const NEG_Z: Self = Self(uvec3(0, 0, 2));
+	pub const X: Self = Self(uvec3(0, 0, 0));
+	pub const Y: Self = Self(uvec3(0, 0, 1));
+	pub const Z: Self = Self(uvec3(0, 0, 2));
+	pub const NEG_X: Self = Self(uvec3(0, 1, 0));
+	pub const NEG_Y: Self = Self(uvec3(0, 1, 1));
+	pub const NEG_Z: Self = Self(uvec3(0, 1, 2));
 }
