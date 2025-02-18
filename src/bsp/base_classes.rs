@@ -183,11 +183,11 @@ pub struct BspSolidEntity {
 	/// Mask of lighting channels that this bmodel receives light on, blocks light on, and tests for AO on.
 	///
 	/// Default 1.
-	/// 
+	///
 	/// NOTE: Changing this from 1 will disable bouncing light off of this bmodel.
 	///
 	/// NOTE: Changing this from 1 implicitly enables _shadow.
-	/// 
+	///
 	/// NOTE: Changing to 2, for example, will cause the bmodel to initially be solid black. You’ll need to add minlight or lights with _light_channel_mask 2.
 	#[default(1)]
 	pub _object_channel_mask: u32,
@@ -433,10 +433,10 @@ pub struct BspLight {
 	pub _switchableshadow_target: Option<String>,
 
 	/// Turns the light into a spotlight (or sun light if `_sun` if 1), with the direction of light being towards another entity with it’s "targetname" key set to this value.
-	/// 
+	///
 	/// NOTE: Docs may imply that sun lights have to target `info_null` entities? I haven't tested it though.
 	pub target: Option<String>,
-	
+
 	/// Turns the light into a spotlight and specifies the direction of light using yaw, pitch and roll in degrees.
 	/// Yaw specifies the angle around the Z-axis from 0 to 359 degrees and pitch specifies the angle from 90 (straight up) to -90 (straight down).
 	/// Roll has no effect, so use any value (e.g. 0). Often easier than the "target" method.
@@ -485,7 +485,6 @@ pub struct BspLight {
 	#[default(90.)]
 	pub _project_fov: f32,
 
-
 	/// Set to 1 to make this entity a sun, as an alternative to using the sunlight worldspawn keys.
 	/// If the light targets an info_null entity, the direction towards that entity sets sun direction.
 	/// The light itself is disabled, so it can be placed anywhere in the map.
@@ -509,7 +508,7 @@ pub struct BspLight {
 
 	/// Same as `_sunlight2`, but makes this sky light come from the lower hemisphere.
 	pub _sunlight3: IntBool,
-	
+
 	/// Mask of lighting channels that the light casts on.
 	///
 	/// In order for this light to cast light on a bmodel, there needs to be a least 1 bit in common between `_light_channel_mask` and the receiving bmodel’s `_object_channel_mask` (i.e. the bitwise AND must be nonzero).

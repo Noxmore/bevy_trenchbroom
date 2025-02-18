@@ -236,10 +236,15 @@ impl IrradianceVolumeBuilder {
 		fn clamp(x: f32) -> f32 {
 			x.clamp(0., 255.)
 		}
-		
+
 		#[inline]
 		fn mul_color([r, g, b, a]: [u8; 4], [mul_r, mul_g, mul_b]: [f32; 3]) -> [u8; 4] {
-			[clamp(r as f32 * mul_r) as u8, clamp(g as f32 * mul_g) as u8, clamp(b as f32 * mul_b) as u8, a]
+			[
+				clamp(r as f32 * mul_r) as u8,
+				clamp(g as f32 * mul_g) as u8,
+				clamp(b as f32 * mul_b) as u8,
+				a,
+			]
 		}
 
 		let pos = pos.into();
