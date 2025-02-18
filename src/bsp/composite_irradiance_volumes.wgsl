@@ -26,7 +26,7 @@ fn sample_atlas(input: texture_3d<f32>, animator_idx: u32, coords: vec3u) -> vec
 
 @compute @workgroup_size(4, 4, 4)
 fn main(
-	@builtin(global_invocation_id) invocation_id: vec3<u32>
+	@builtin(global_invocation_id) invocation_id: vec3u,
 ) {
 	var color = vec4f(0, 0, 0, 1);
 
