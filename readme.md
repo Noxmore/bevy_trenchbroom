@@ -218,6 +218,13 @@ fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 First, enable the `rapier` or `avian` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your class's `GeometryProvider` to create the respective type of collider(s) with said geometry.
 
+## Multiplayer
+
+For dedicated servers `bevy_trenchbroom` supports turning off its use of `bevy_pbr` with a feature. e.g.
+```toml
+bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
+```
+
 ## Known Bugs
 
 If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
