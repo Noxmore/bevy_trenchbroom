@@ -26,14 +26,14 @@ const IRRADIANCE_VOLUME_WORKGROUP_SIZE: u32 = 4;
 const LIGHTMAP_WORKGROUP_SIZE: u32 = 8;
 
 /// The format used for the out channel in lighting animation. I've found that [`TextureFormat::Rgba8UnormSrgb`] and the like show noticeable banding on slower animations.
-pub(crate) const LIGHTMAP_OUTPUT_TEXTURE_FORMAT: TextureFormat = TextureFormat::Rgba32Float;
+pub(crate) const ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT: TextureFormat = TextureFormat::Rgba32Float;
 pub(crate) fn new_animated_lighting_output_image(extent: Extent3d, dimension: TextureDimension) -> Image {
 	let mut image = Image::new_fill(
 		extent,
 		dimension,
 		// Bright color -- easy to spot errors
 		[0.0_f32, 1., 0., 1.].map(|f| f.to_ne_bytes()).as_flattened(),
-		LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
+		ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT,
 		RenderAssetUsages::RENDER_WORLD,
 	);
 	image.texture_descriptor.usage |= TextureUsages::STORAGE_BINDING;
@@ -501,7 +501,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					texture_2d(TextureSampleType::Float { filterable: false }),
 					texture_2d(TextureSampleType::Uint),
 					uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
-					texture_storage_2d(LIGHTMAP_OUTPUT_TEXTURE_FORMAT, StorageTextureAccess::WriteOnly)
+					texture_storage_2d(ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT, StorageTextureAccess::WriteOnly),
 				),
 			),
 		);
@@ -519,7 +519,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
 					BindingType::StorageTexture {
 						access: StorageTextureAccess::WriteOnly,
-						format: LIGHTMAP_OUTPUT_TEXTURE_FORMAT,
+						format: ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT,
 						view_dimension: TextureViewDimension::D3,
 					}
 					.into_bind_group_layout_entry_builder(),
@@ -529,10 +529,7 @@ impl FromWorld for AnimatedLightingPipeline {
 
 		let globals_bind_group_layout = render_device.create_bind_group_layout(
 			None,
-			&BindGroupLayoutEntries::single(
-				ShaderStages::COMPUTE,
-				uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE)),
-			),
+			&BindGroupLayoutEntries::single(ShaderStages::COMPUTE, uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE))),
 		);
 
 		let pipeline_cache = world.resource::<PipelineCache>();
