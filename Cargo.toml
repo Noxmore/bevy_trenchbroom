@@ -57,7 +57,7 @@ enumflags2 = "0.7"
 [dev-dependencies]
 bevy = { version = "0.15", default-features = true }
 bevy_flycam = "0.15"
-bevy-inspector-egui = "0.29" # TODO TMP
+bevy-inspector-egui = "0.29"
 
 [[example]]
 name = "bsp_loading"
