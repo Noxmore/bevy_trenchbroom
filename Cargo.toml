@@ -5,6 +5,7 @@ members = [
 
 [workspace.package]
 version = "0.6.0"
+description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2021"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -12,11 +13,11 @@ license = "MIT OR Apache-2.0"
 
 [package]
 name = "bevy_trenchbroom"
-description = "Bevy integration with TrenchBroom"
 readme = "readme.md"
 categories = ["game-development"]
 exclude = ["assets"]
 
+description.workspace = true
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
