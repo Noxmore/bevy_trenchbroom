@@ -19,7 +19,7 @@ pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldM
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
 pub struct TrenchBroomConfig {
 	/// The format version of the TrenchBroom config file, you almost certainly should not change this.
-	#[default(8)]
+	#[default(9)]
 	pub tb_format_version: u16,
 
 	/// How many units in the trenchbroom world take up 1 unit in the bevy world. (Default: ~40, 1 unit = 1 inch)
@@ -53,7 +53,7 @@ pub struct TrenchBroomConfig {
 	/// The root directory to look for textures in the [`assets_path`](Self::assets_path). (Default: "textures")
 	#[default("textures".into())]
 	#[builder(into)]
-	pub texture_root: PathBuf,
+	pub material_root: PathBuf,
 	/// The extension of your texture files. This is also used for material loading as a fallback. (Default: "png")
 	#[default("png".into())]
 	#[builder(into)]
@@ -333,7 +333,7 @@ impl TrenchBroomConfig {
 	pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
 		let path = view
 			.tb_config
-			.texture_root
+			.material_root
 			.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
 		match smol::block_on(async {
 			// Because i can't just check if an asset exists, i have to load it twice.
@@ -343,7 +343,7 @@ impl TrenchBroomConfig {
 			Err(err) => match err.error {
 				AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
 					view.tb_config
-						.texture_root
+						.material_root
 						.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
 				),
 
@@ -537,7 +537,7 @@ impl MapFileFormat {
 	}
 }
 
-/// Tag for applying attributes to certain brushes/faces, for example, making a `trigger` texture transparent.
+/// Tag for applying attributes to certain brushes/faces, for example, making a `trigger` material transparent.
 #[derive(Debug, Clone, Default, DefaultBuilder)]
 pub struct TrenchBroomTag {
 	/// Name of the tag.
@@ -546,19 +546,19 @@ pub struct TrenchBroomTag {
 	/// The attributes applied to the brushes/faces the tag targets.
 	#[builder(into)]
 	pub attributes: Vec<TrenchBroomTagAttribute>,
-	/// The pattern to match for, if this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the texture.
+	/// The pattern to match for, if this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the material.
 	#[builder(skip)]
 	pub pattern: String,
-	/// Only used if this is a brush tag. When this tag is applied by the use of its keyboard shortcut, then the selected brushes will receive this texture if it is specified.
+	/// Only used if this is a brush tag. When this tag is applied by the use of its keyboard shortcut, then the selected brushes will receive this material if it is specified.
 	#[builder(into)]
-	pub texture: Option<String>,
+	pub material: Option<String>,
 }
 
 impl TrenchBroomTag {
 	/// Creates a new tag.
 	///
 	/// The name is a simple name to identify the tag. The pattern is a pattern to match for allowing wildcards.
-	/// If this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the texture.
+	/// If this is a brush tag, it will match against the `classname`, if it is a face tag, it will match against the material.
 	pub fn new(name: impl Into<String>, pattern: impl Into<String>) -> Self {
 		Self {
 			name: name.into(),
@@ -575,8 +575,8 @@ impl TrenchBroomTag {
 			"pattern": self.pattern.clone(),
 		};
 
-		if let Some(texture) = &self.texture {
-			json.insert("texture", texture.clone()).unwrap();
+		if let Some(material) = &self.material {
+			json.insert("material", material.clone()).unwrap();
 		}
 
 		json
@@ -710,8 +710,8 @@ impl TrenchBroomConfig {
 				"searchpath": self.assets_path.s(),
 				"packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
 			},
-			"textures": {
-				"root": self.texture_root.s(),
+			"materials": {
+				"root": self.material_root.s(),
 				// .D is required for WADs to work
 				"extensions": [".D", self.texture_extension.clone()],
 				"palette": self.texture_pallette.s(),
@@ -726,7 +726,7 @@ impl TrenchBroomConfig {
 			},
 			"tags": {
 				"brush": self.brush_tags.iter().map(|tag| tag.to_json("classname")).collect::<Vec<_>>(),
-				"brushface": self.face_tags.iter().map(|tag| tag.to_json("texture")).collect::<Vec<_>>()
+				"brushface": self.face_tags.iter().map(|tag| tag.to_json("material")).collect::<Vec<_>>()
 			},
 		};
 

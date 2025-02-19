@@ -103,7 +103,7 @@ impl AssetLoader for QuakeMapLoader {
 									.load::<Image>(
 										self.tb_server
 											.config
-											.texture_root
+											.material_root
 											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
 									)
 									.await
