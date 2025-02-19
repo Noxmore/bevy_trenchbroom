@@ -63,20 +63,18 @@ impl TrenchBroomConfig {
 			for property in class.info.properties {
 				if let QuakeClassPropertyType::Flags(new_flags_iter) = property.ty {
 					let flags_iter = new_flags_iter();
-					
+
 					write!("\t{}(flags) =\n\t[\n", property.name);
-					let default = property.default_value
-						.and_then(|f| u32::fgd_parse(&f()).ok())
-						.unwrap_or(0);
+					let default = property.default_value.and_then(|f| u32::fgd_parse(&f()).ok()).unwrap_or(0);
 
 					for (i, (value, title)) in flags_iter.enumerate() {
 						write!("\t\t{value} : \"{title}\" : {}\n", (default >> i) & 1);
 					}
-					
+
 					write!("\t]\n");
 					continue;
 				}
-				
+
 				write!(
 					"\t{}({}) : \"{}\" : {} : \"{}\"",
 					property.name,
@@ -362,7 +360,6 @@ impl FgdType for LightmapStyle {
 	}
 }
 
-
 // We don't support the more common `bitflags` crate because it doesn't seem to support `derive(Reflect)`,
 // and as far as i know i can't get documentation from each flag.
 
@@ -397,9 +394,13 @@ impl<T: BitFlag + fmt::Debug> fmt::Display for FgdFlags<T> {
 	}
 }
 
-impl<N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>, T: BitFlag + enumflags2::_internal::RawBitFlags<Numeric = N> + Enum + GetTypeRegistration + FromReflect> FgdType for FgdFlags<T> {
+impl<
+		N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>,
+		T: BitFlag + enumflags2::_internal::RawBitFlags<Numeric = N> + Enum + GetTypeRegistration + FromReflect,
+	> FgdType for FgdFlags<T>
+{
 	const FGD_IS_QUOTED: bool = false;
-	
+
 	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Flags(|| {
 		let enum_info = T::get_type_registration().type_info().as_enum().unwrap();
 
@@ -408,7 +409,7 @@ impl<N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>, T: BitFlag + en
 			let Ok(variant) = variant.as_unit_variant() else { return None };
 			let title = variant.docs().map(str::trim).unwrap_or(variant.name());
 			let value = T::from_reflect(&DynamicEnum::new(variant.name(), DynamicVariant::Unit))?;
-			
+
 			Some((BitFlags::from_flag(value).bits().into(), title))
 		}))
 	});
