@@ -104,7 +104,7 @@ pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
 	const CLASS_INFO: QuakeClassInfo;
 
-	fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>; // TODO more specific error?
+	fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -189,7 +189,7 @@ impl QuakeClass for Transform {
 		model: None,
 		color: None,
 		iconsprite: None,
-		size: None, // TODO should this be Some("size")?
+		size: Some("\"scale\""),
 
 		properties: &[
 			QuakeClassProperty {

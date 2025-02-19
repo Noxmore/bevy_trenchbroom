@@ -129,7 +129,6 @@ impl Brush {
 	///
 	/// NOTE: If `along` is outside of the brush, it can make this brush invalid, if you are using untrusted data, check with [`Brush::contains_plane`].
 	pub fn cut(&mut self, along: BrushSurface) {
-		// TODO this should probably support cutting along a Vec<BrushSurface>
 		let vertices = self.calculate_vertices().collect_vec();
 
 		// We're going to take the current vector of surfaces, and add back the ones we want to keep

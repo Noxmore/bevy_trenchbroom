@@ -6,8 +6,6 @@ use proc_macro2::*;
 use quote::*;
 use syn::*;
 
-// TODO spawnflags support using something like bitflags?
-
 /// Point classes don't have any geometry built in -- simply a point in space.
 ///
 /// If the `auto_register` feature is enabled, this will automatically register the type with Bevy and `bevy_trenchbroom`.
