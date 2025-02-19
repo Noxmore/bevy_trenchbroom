@@ -3,8 +3,6 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-NOTE: Main branch is not ready for real use yet. Expect (and report!) broken or missing features.
-
 Integration and support for the following workflows:
 - TrenchBroom -> .map -> Bevy
 - TrenchBroom -> .map -> ericw-tools -> .bsp -> Bevy
