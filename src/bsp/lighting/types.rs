@@ -54,6 +54,8 @@ impl LightingAnimator {
 	///
 	/// # Example
 	/// ```
+	/// # use bevy::prelude::*;
+	/// # use bevy_trenchbroom::prelude::*;
 	/// fn sample_example(
 	///     time: Res<Time>,
 	///     animators: Res<LightingAnimators>,
