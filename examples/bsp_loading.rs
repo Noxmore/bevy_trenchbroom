@@ -5,8 +5,10 @@ use bevy::{
 };
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::bsp::base_classes::*;
+use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
+use enumflags2::*;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
@@ -14,11 +16,23 @@ use nil::prelude::*;
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn;
 
-#[derive(SolidClass, Component, Reflect)]
+#[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
 #[require(BspSolidEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
-pub struct FuncDoor;
+pub struct FuncDoor {
+	pub awesome: FgdFlags<FlagsTest>,
+}
+
+#[bitflags(default = Beep | Bap)]
+#[derive(Reflect, Debug, Clone, Copy)]
+#[repr(u16)]
+pub enum FlagsTest {
+	/// Boop flag title
+	Boop = 1,
+	Beep = 1 << 1,
+	Bap = 1 << 2,
+}
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]

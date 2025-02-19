@@ -52,6 +52,10 @@ pub struct QuakeClassProperty {
 pub enum QuakeClassPropertyType {
 	Value(&'static str),
 	Choices(&'static [(ChoicesKey, &'static str)]),
+	/// Will show up in editor as a bunch of checkboxes, each defined flag has its own name.
+	///
+	/// API is different than other variants because of integration with [`enumflags2`].
+	Flags(fn() -> Box<dyn Iterator<Item = (u32, &'static str)>>),
 }
 
 impl Default for QuakeClassPropertyType {

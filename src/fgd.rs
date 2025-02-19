@@ -1,4 +1,6 @@
+use bevy_reflect::{DynamicEnum, DynamicVariant, Enum, GetTypeRegistration};
 use class::{ChoicesKey, QuakeClassPropertyType};
+use enumflags2::{BitFlag, BitFlags};
 
 use crate::*;
 
@@ -59,12 +61,29 @@ impl TrenchBroomConfig {
 			write!("\n[\n");
 
 			for property in class.info.properties {
+				if let QuakeClassPropertyType::Flags(new_flags_iter) = property.ty {
+					let flags_iter = new_flags_iter();
+					
+					write!("\t{}(flags) =\n\t[\n", property.name);
+					let default = property.default_value
+						.and_then(|f| u32::fgd_parse(&f()).ok())
+						.unwrap_or(0);
+
+					for (i, (value, title)) in flags_iter.enumerate() {
+						write!("\t\t{value} : \"{title}\" : {}\n", (default >> i) & 1);
+					}
+					
+					write!("\t]\n");
+					continue;
+				}
+				
 				write!(
-					"\t{}({}): \"{}\" : {} : \"{}\"",
+					"\t{}({}) : \"{}\" : {} : \"{}\"",
 					property.name,
-					match &property.ty {
+					match property.ty {
 						QuakeClassPropertyType::Value(ty) => ty,
 						QuakeClassPropertyType::Choices(_) => "choices",
+						QuakeClassPropertyType::Flags(_) => unreachable!(),
 					},
 					property.title.unwrap_or(property.name),
 					property.default_value.unwrap_or(String::new)(),
@@ -340,6 +359,66 @@ impl FgdType for LightmapStyle {
 
 	fn fgd_to_string(&self) -> String {
 		self.0.fgd_to_string()
+	}
+}
+
+
+// We don't support the more common `bitflags` crate because it doesn't seem to support `derive(Reflect)`,
+// and as far as i know i can't get documentation from each flag.
+
+/// Drop-in replacement for [`BitFlags`], but supports reflection and implements [`FgdType`].
+#[derive(Reflect, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FgdFlags<T: BitFlag> {
+	pub value: T::Numeric,
+}
+impl<T: BitFlag> From<BitFlags<T>> for FgdFlags<T> {
+	fn from(value: BitFlags<T>) -> Self {
+		Self { value: value.bits() }
+	}
+}
+impl<T: BitFlag> From<FgdFlags<T>> for BitFlags<T> {
+	fn from(value: FgdFlags<T>) -> Self {
+		Self::from_bits_truncate(value.value)
+	}
+}
+impl<T: BitFlag> Default for FgdFlags<T> {
+	fn default() -> Self {
+		BitFlags::default().into()
+	}
+}
+impl<T: BitFlag + fmt::Debug> fmt::Debug for FgdFlags<T> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		BitFlags::from(*self).fmt(f)
+	}
+}
+impl<T: BitFlag + fmt::Debug> fmt::Display for FgdFlags<T> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		BitFlags::from(*self).fmt(f)
+	}
+}
+
+impl<N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>, T: BitFlag + enumflags2::_internal::RawBitFlags<Numeric = N> + Enum + GetTypeRegistration + FromReflect> FgdType for FgdFlags<T> {
+	const FGD_IS_QUOTED: bool = false;
+	
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Flags(|| {
+		let enum_info = T::get_type_registration().type_info().as_enum().unwrap();
+
+		Box::new((0..enum_info.variant_len()).flat_map(|variant_idx| {
+			let variant = enum_info.variant_at(variant_idx)?;
+			let Ok(variant) = variant.as_unit_variant() else { return None };
+			let title = variant.docs().map(str::trim).unwrap_or(variant.name());
+			let value = T::from_reflect(&DynamicEnum::new(variant.name(), DynamicVariant::Unit))?;
+			
+			Some((BitFlags::from_flag(value).bits().into(), title))
+		}))
+	});
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		N::fgd_parse(input).map(T::from_bits_truncate).map(Into::into)
+	}
+
+	fn fgd_to_string(&self) -> String {
+		self.value.fgd_to_string()
 	}
 }
 
