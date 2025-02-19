@@ -12,5 +12,5 @@ rm assets/maps/$1.log
 rm assets/maps/$1-light.log
 rm assets/maps/$1-vis.log
 
-# Also this is here, not really sure what it's for
-rm assets/maps/$1.texinfo.json # TODO contains phong information
+# Contains phong information, which currently we don't use.
+rm assets/maps/$1.texinfo.json
