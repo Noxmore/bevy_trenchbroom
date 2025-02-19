@@ -42,16 +42,16 @@ impl TrenchBroomConfig {
 			}
 
 			if let Some(value) = class.info.color {
-				write!("color({value})");
+				write!("color({value}) ");
 			}
 			if let Some(value) = class.info.iconsprite {
-				write!("iconsprite({value})");
+				write!("iconsprite({value}) ");
 			}
 			if let Some(value) = class.info.size {
-				write!("size({value})");
+				write!("size({value}) ");
 			}
 			if let Some(value) = class.info.model {
-				write!("model({value})");
+				write!("model({value}) ");
 			}
 
 			write!("= {}", class.info.name);
