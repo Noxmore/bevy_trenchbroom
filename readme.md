@@ -212,6 +212,28 @@ fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 ```
 
+## BSP
+
+`bevy_trenchbroom` supports BSP loading via the [qbsp](https://github.com/Noxmore/qbsp) crate.
+
+Specifically, it is oriented around using [ericw-tools](https://ericwa.github.io/ericw-tools/) as the compiler, including some base classes such as `BspWorldspawn`, `BspSolidEntity`, and `BspLight` that contain various compiler-specific properties.
+
+GPU-driven animated lighting is also supported, you can customize the animation with the [`LightingAnimators`](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/bsp/lighting/types/struct.LightingAnimators.html) resource.
+
+If you are to use BSPs, i recommend turning off ambient light `.insert_resource(AmbientLight::NONE)`, and using at least the following compiler settings for `qbsp` and `light`:
+
+`qbsp -bsp2 -wrbrushesonly -nosubdivide -nosoftware -path assets/materials`
+- `-bsp2` - Uses the more modern BSP2 format, expanding various limits.
+- `-wrbrushesonly` - Adds brush data into the BSP, and removes hull collision data which is [useless to this crate](https://github.com/Noxmore/bevy_trenchbroom/issues/16). Without the brush data you won't have any collision.
+- `-nosubdivide` - Don't subdivide geometry unnecessarily, there's probably some legacy support reason why it does this by default.
+- `-nosoftware` - Explicitly drop support for software renderers.
+- `-path assets/materials` Replace the path with your material folder, this lets the compiler read your loose textures.
+
+`light -extra4 -novanilla -lightgrid`
+- `-extra4` - Multisampling, makes shadows smoother.
+- `-novanilla` - Writes colored light data into a BSPX lump, not writing legacy colorless light data.
+- `-lightgrid` - Calculate global illumination, dynamic objects won't have any lighting without this.
+
 ## Physics/Collisions
 
 `bevy_trenchbroom` supports [bevy_rapier3d](https://crates.io/crates/bevy_rapier3d) and [avian3d](https://crates.io/crates/avian3d) to easily add colliders when spawning geometry.
