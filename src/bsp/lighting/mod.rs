@@ -21,7 +21,7 @@ use crate::*;
 
 /// Max animators passed to a shader, must match value in `composite_lightmaps.wgsl`.
 pub const MAX_ANIMATORS: usize = 255;
-/// Max number of steps in a [`LightmapAnimator`].
+/// Max number of steps in a [`LightingAnimator`].
 pub const MAX_LIGHTMAP_FRAMES: usize = 64;
 
 const IRRADIANCE_VOLUME_WORKGROUP_SIZE: u32 = 4;
@@ -57,9 +57,9 @@ impl Plugin for BspLightingPlugin {
 
 			.register_type::<AnimatedLightingHandle>()
 
-			.add_plugins(ExtractResourcePlugin::<LightmapAnimators>::default())
-			.register_type::<LightmapAnimators>()
-			.init_resource::<LightmapAnimators>()
+			.add_plugins(ExtractResourcePlugin::<LightingAnimators>::default())
+			.register_type::<LightingAnimators>()
+			.init_resource::<LightingAnimators>()
 
 			.init_asset::<AnimatedLighting>()
 
@@ -119,7 +119,7 @@ impl BspLightingPlugin {
 		gpu_images: Res<RenderAssets<GpuImage>>,
 		render_device: Res<RenderDevice>,
 		pipeline: Res<AnimatedLightingPipeline>,
-		animators: Res<LightmapAnimators>,
+		animators: Res<LightingAnimators>,
 		render_queue: Res<RenderQueue>,
 		globals: Res<GlobalsBuffer>,
 	) {
@@ -138,7 +138,7 @@ impl BspLightingPlugin {
 		bind_groups.values.clear();
 
 		for (id, animated_lighting) in animated_lighting_assets.iter() {
-			let mut target_animators = [LightmapAnimator::default(); MAX_ANIMATORS];
+			let mut target_animators = [LightingAnimator::default(); MAX_ANIMATORS];
 			for (style, animator) in &animators.values {
 				target_animators[style.0 as usize] = *animator;
 			}
@@ -242,7 +242,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					texture_2d(TextureSampleType::Float { filterable: false }),
 					texture_2d(TextureSampleType::Float { filterable: false }),
 					texture_2d(TextureSampleType::Uint),
-					uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+					uniform_buffer_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
 					texture_storage_2d(ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT, StorageTextureAccess::WriteOnly),
 				),
 			),
@@ -258,7 +258,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Uint),
-					uniform_buffer_sized(false, Some(<[LightmapAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+					uniform_buffer_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
 					BindingType::StorageTexture {
 						access: StorageTextureAccess::WriteOnly,
 						format: ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT,

@@ -24,7 +24,7 @@ pub use qbsp::{
 #[cfg(feature = "bevy_pbr")]
 pub use crate::{
 	bsp::{
-		lighting::{LightmapAnimator, LightmapAnimators},
+		lighting::{LightingAnimator, LightingAnimators},
 		loader::IrradianceVolumeMultipliers,
 	},
 	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},

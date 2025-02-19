@@ -9,7 +9,7 @@ use super::MAX_LIGHTMAP_FRAMES;
 
 /// Provides the *animation* of animated lightmaps.
 #[derive(ShaderType, Reflect, Debug, Clone, Copy)]
-pub struct LightmapAnimator {
+pub struct LightingAnimator {
 	/// The sequence of values to multiply the light style's lightmap with. Each frame is an RGB value.
 	pub sequence: [Vec3; MAX_LIGHTMAP_FRAMES],
 	/// How many frames to read of `sequence` before starting from the beginning.
@@ -24,7 +24,7 @@ pub struct LightmapAnimator {
 	/// 0.5 interpolates to the next frame 2 times as quick, stopping in the middle, etc.
 	pub interpolate: f32,
 }
-impl LightmapAnimator {
+impl LightingAnimator {
 	pub fn new<const N: usize>(speed: f32, interpolate: f32, sequence: [Vec3; N]) -> Self {
 		let mut target_sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
 		#[allow(clippy::manual_memcpy)]
@@ -50,14 +50,14 @@ impl LightmapAnimator {
 		}
 	}
 }
-impl Default for LightmapAnimator {
+impl Default for LightingAnimator {
 	fn default() -> Self {
 		Self::unanimated(Vec3::ONE)
 	}
 }
-impl Serialize for LightmapAnimator {
+impl Serialize for LightingAnimator {
 	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-		let mut s = serializer.serialize_struct("LightmapAnimator", 3)?;
+		let mut s = serializer.serialize_struct("LightingAnimator", 3)?;
 
 		s.serialize_field("sequence", &self.sequence[..usize::min(self.sequence_len as usize, MAX_LIGHTMAP_FRAMES)])?;
 
@@ -68,7 +68,7 @@ impl Serialize for LightmapAnimator {
 	}
 }
 // Holy boilerplate, Batman!
-impl<'de> Deserialize<'de> for LightmapAnimator {
+impl<'de> Deserialize<'de> for LightingAnimator {
 	fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		enum Field {
 			Sequence,
@@ -119,18 +119,18 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 
 		struct Visitor;
 		impl<'de> de::Visitor<'de> for Visitor {
-			type Value = LightmapAnimator;
+			type Value = LightingAnimator;
 
 			fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-				fmt.write_str("struct LightmapAnimator")
+				fmt.write_str("struct LightingAnimator")
 			}
 
 			// rustfmt is threatening to make these look even more boilerplate-y then they already do.
 			#[rustfmt::skip]
 			fn visit_seq<A: de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-				let sequence_vec: Vec<Vec3> = seq.next_element()?.ok_or(de::Error::invalid_length(0, &"struct LightmapAnimator with 3 elements"))?;
-				let speed: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(1, &"struct LightmapAnimator with 3 elements"))?;
-				let interpolate: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(2, &"struct LightmapAnimator with 3 elements"))?;
+				let sequence_vec: Vec<Vec3> = seq.next_element()?.ok_or(de::Error::invalid_length(0, &"struct LightingAnimator with 3 elements"))?;
+				let speed: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(1, &"struct LightingAnimator with 3 elements"))?;
+				let interpolate: f32 = seq.next_element()?.ok_or(de::Error::invalid_length(2, &"struct LightingAnimator with 3 elements"))?;
 
 				visit_internal(sequence_vec, speed, interpolate)
 			}
@@ -172,7 +172,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			}
 		}
 
-		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: f32) -> Result<LightmapAnimator, E> {
+		fn visit_internal<E: de::Error>(sequence_vec: Vec<Vec3>, speed: f32, interpolate: f32) -> Result<LightingAnimator, E> {
 			if sequence_vec.len() > MAX_LIGHTMAP_FRAMES {
 				return Err(de::Error::custom(format_args!(
 					"sequence has {} frames, but the max is {MAX_LIGHTMAP_FRAMES}",
@@ -183,7 +183,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			let mut sequence = [Vec3::ZERO; MAX_LIGHTMAP_FRAMES];
 			sequence[..sequence_vec.len()].copy_from_slice(&sequence_vec);
 
-			Ok(LightmapAnimator {
+			Ok(LightingAnimator {
 				sequence,
 				sequence_len: sequence_vec.len() as u32,
 				speed,
@@ -191,7 +191,7 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 			})
 		}
 
-		deserializer.deserialize_struct("LightmapAnimator", &["sequence", "speed", "interpolate"], Visitor)
+		deserializer.deserialize_struct("LightingAnimator", &["sequence", "speed", "interpolate"], Visitor)
 	}
 }
 
@@ -202,25 +202,25 @@ impl<'de> Deserialize<'de> for LightmapAnimator {
 /// The default value somewhat mirrors some of Quake's animators.
 #[derive(Resource, ExtractResource, Reflect, Debug, Clone, Serialize, Deserialize)]
 #[reflect(Resource, Default, Serialize, Deserialize)]
-pub struct LightmapAnimators {
-	pub values: HashMap<LightmapStyle, LightmapAnimator>,
+pub struct LightingAnimators {
+	pub values: HashMap<LightmapStyle, LightingAnimator>,
 }
-impl LightmapAnimators {
+impl LightingAnimators {
 	/// Returns an empty animator map.
 	pub fn none() -> Self {
 		Self { values: default() }
 	}
 }
 
-impl Default for LightmapAnimators {
+impl Default for LightingAnimators {
 	fn default() -> Self {
 		Self {
 			values: HashMap::from([
 				(
 					LightmapStyle(1),
-					LightmapAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat)),
+					LightingAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat)),
 				),
-				(LightmapStyle(2), LightmapAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
+				(LightmapStyle(2), LightingAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
 			]),
 		}
 	}
