@@ -49,6 +49,30 @@ impl LightingAnimator {
 			interpolate: 0.,
 		}
 	}
+
+	/// Samples this animator given the current elapsed seconds the same way it samples in the shader.
+	/// 
+	/// # Example
+	/// ```
+	/// fn sample_example(
+	///     time: Res<Time>,
+	///     animators: Res<LightingAnimators>,
+	/// ) {
+	///     let _ = animators.values.get(&LightmapStyle(1)).unwrap().sample(time.elapsed_secs());
+	/// }
+	/// ```
+	pub fn sample(&self, seconds: f32) -> Vec3 {
+		// MUST stay the same as in shaders
+		let mut mul = self.sequence[(seconds * self.speed) as usize % self.sequence_len as usize];
+
+		if self.interpolate > 0. {
+			let next = self.sequence[((seconds * self.speed) as usize + 1) % self.sequence_len as usize];
+			let t = (((seconds * self.speed) % 1.) / self.interpolate).min(1.);
+			mul = mul.lerp(next, t);
+		}
+		
+		mul
+	}
 }
 impl Default for LightingAnimator {
 	fn default() -> Self {

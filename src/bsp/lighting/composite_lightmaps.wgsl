@@ -23,6 +23,7 @@ struct Animator {
 @group(1) @binding(0) var<uniform> globals: Globals;
 
 fn sample_atlas(input: texture_2d<f32>, animator_idx: u32, uv: vec2u) -> vec4f {
+	// MUST stay the same as in LightingAnimator::sample
 	var mul = animators[animator_idx].sequence[u32(globals.time * animators[animator_idx].speed) % animators[animator_idx].sequence_len];
 	if animators[animator_idx].interpolate > 0 {
 		let next = animators[animator_idx].sequence[(u32(globals.time * animators[animator_idx].speed) + 1) % animators[animator_idx].sequence_len];
