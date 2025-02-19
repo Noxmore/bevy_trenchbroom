@@ -48,13 +48,8 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 								break;
 							}
 
-							// #[allow(clippy::needless_range_loop)]
-							// for i in 0..3 {
-							// 	color[i] = color[i].saturating_add(sample.color[i]);
-							// }
 							let [r, g, b] = sample.color;
 
-							// print!("{} ", sample.style.0);
 							input_builders[slot_idx]
 								.get_or_insert_with(new_builder)
 								.put_all([dst_x, dst_y, dst_z], [r, g, b, 255]);
