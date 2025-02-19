@@ -55,7 +55,7 @@ pub struct MapGeometryTexture {
 	#[cfg(feature = "bevy_pbr")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	/// If the texture should be full-bright
-	pub special: bool,
+	pub flags: BspTexFlags,
 }
 
 pub struct GeometryProviderMeshView<'l> {

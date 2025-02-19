@@ -143,7 +143,7 @@ impl AssetLoader for QuakeMapLoader {
 								material,
 								#[cfg(feature = "bevy_pbr")]
 								lightmap: None,
-								special: false,
+								flags: BspTexFlags::Normal,
 							},
 						));
 					}

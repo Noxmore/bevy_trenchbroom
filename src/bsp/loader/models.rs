@@ -82,7 +82,7 @@ pub fn compute_models(ctx: &mut BspLoadCtx, lightmap: &Option<Lightmap>, embedde
 						#[cfg(feature = "bevy_pbr")]
 						lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
 						name: exported_mesh.texture,
-						special: exported_mesh.tex_flags != BspTexFlags::Normal,
+						flags: exported_mesh.tex_flags,
 					},
 					mesh,
 					entity: None,

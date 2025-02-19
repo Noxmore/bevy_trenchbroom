@@ -10,7 +10,6 @@ use geometry::{Brushes, GeometryProviderMeshView, MapGeometryTexture};
 #[cfg(feature = "bevy_pbr")]
 use lighting::AnimatedLighting;
 use loader::BspLoader;
-use qbsp::data::bsp::BspTexFlags;
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 
 use crate::{util::BevyTrenchbroomCoordinateConversions, *};
