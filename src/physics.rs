@@ -129,7 +129,6 @@ impl PhysicsPlugin {
 				continue;
 			};
 
-			// TODO test if we need a RigidBody::Fixed
 			commands.entity(entity).insert(collider);
 		}
 	}
