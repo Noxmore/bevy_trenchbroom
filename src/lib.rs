@@ -29,7 +29,6 @@ pub(crate) use prelude::*;
 // Re-exports
 pub use anyhow;
 pub use bevy_materialize;
-pub use indexmap;
 #[cfg(feature = "auto_register")]
 pub use inventory;
 
