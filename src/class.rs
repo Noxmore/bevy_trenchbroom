@@ -91,8 +91,8 @@ pub struct QuakeClassInfo {
 	pub color: Option<&'static str>,
 	/// An icon that the entity appears as in the editor. Takes a single value representing the path to the image to show.
 	pub iconsprite: Option<&'static str>,
-	/// The size of the bounding box of the entity in the editor.
-	pub size: Option<&'static str>,
+	/// The bounding box of the entity in the editor.
+	pub size: Option<Aabb>,
 
 	pub properties: &'static [QuakeClassProperty],
 }
@@ -189,7 +189,7 @@ impl QuakeClass for Transform {
 		model: None,
 		color: None,
 		iconsprite: None,
-		size: Some("\"scale\""),
+		size: None,
 
 		properties: &[
 			QuakeClassProperty {
