@@ -3,9 +3,9 @@
 // entity 0
 {
 "mapversion" "220"
-"_tb_textures" "textures;textures/prototype_basic_1_3.wad;textures/prototype_symbols_1_3.wad"
+"_tb_textures" "prototype_basic_1_3.wad;prototype_symbols_1_3.wad;textures"
 "classname" "worldspawn"
-"wad" "/d/_map/wads/prototype_basic_1_3.wad;/d/_map/wads/prototype_symbols_1_3.wad"
+"wad" "../textures/prototype_basic_1_3.wad"
 "_dirt" "1"
 "_phong" "1"
 "_bounce" "8"
