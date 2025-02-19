@@ -103,11 +103,12 @@ fn setup_scene(
 	mut projection_query: Query<(Entity, &mut Projection)>,
 	mut lightmap_animators: ResMut<LightingAnimators>,
 ) {
-	// TODO TMP: For tears of the false god
-	lightmap_animators
-		.values
-		// .insert(LightmapStyle(5), LightingAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
-		.insert(LightmapStyle(5), LightingAnimator::new(0.5, 0.1, [0., 1.].map(Vec3::splat)));
+	lightmap_animators.values.insert(
+		LightmapStyle(1),
+		LightingAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat)),
+	);
+	lightmap_animators.values.insert(LightmapStyle(2), LightingAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat)));
+	lightmap_animators.values.insert(LightmapStyle(5), LightingAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));

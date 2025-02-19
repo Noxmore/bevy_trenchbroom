@@ -198,32 +198,10 @@ impl<'de> Deserialize<'de> for LightingAnimator {
 /// Resource that contains the current lightmap animators for each [`LightmapStyle`].
 ///
 /// You can use this to change animations, and do things like toggle lights.
-///
-/// The default value somewhat mirrors some of Quake's animators.
-#[derive(Resource, ExtractResource, Reflect, Debug, Clone, Serialize, Deserialize)]
+#[derive(Resource, ExtractResource, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 #[reflect(Resource, Default, Serialize, Deserialize)]
 pub struct LightingAnimators {
 	pub values: HashMap<LightmapStyle, LightingAnimator>,
-}
-impl LightingAnimators {
-	/// Returns an empty animator map.
-	pub fn none() -> Self {
-		Self { values: default() }
-	}
-}
-
-impl Default for LightingAnimators {
-	fn default() -> Self {
-		Self {
-			values: HashMap::from([
-				(
-					LightmapStyle(1),
-					LightingAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat)),
-				),
-				(LightmapStyle(2), LightingAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
-			]),
-		}
-	}
 }
 
 /// Contains multiple images that are composited together in `output` using the current [`TrenchBroomConfig`]'s lightmap animators. Used for both lightmaps an irradiance volumes.
