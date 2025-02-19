@@ -118,11 +118,6 @@ impl GeometryProvider {
 			let ent_index = view.map_entity_idx; // Borrow checker
 			// We go through all the meshes and add all their normals into vertex_map
 			for mesh_view in &mut view.meshes {
-				// TODO replace with bevy_materialize integration for qmap loading
-				// if !mesh_view.mat_properties.get(MaterialProperties::RENDER) {
-				//     continue;
-				// }
-
 				// SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
 				let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
 
@@ -228,17 +223,10 @@ impl GeometryProvider {
 	pub fn trimesh_collider(self) -> Self {
 		self.push(|view| {
 			for mesh_view in &view.meshes {
-				// TODO
-				// if !mesh_view.mat_properties.get(MaterialProperties::COLLIDE) {
-				//     continue;
-				// }
-
 				view.world.entity_mut(mesh_view.entity).insert(physics::TrimeshCollision);
 			}
 		})
 	}
-
-	// TODO convex colliders with BSPs/hull collision
 
 	/// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
 	#[cfg(any(feature = "rapier", feature = "avian"))]

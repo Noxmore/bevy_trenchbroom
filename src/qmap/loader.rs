@@ -17,7 +17,6 @@ impl FromWorld for QuakeMapLoader {
 	}
 }
 impl AssetLoader for QuakeMapLoader {
-	// TODO this should be some asset version of QuakeMap
 	type Asset = QuakeMap;
 	type Settings = ();
 	type Error = anyhow::Error;

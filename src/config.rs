@@ -11,8 +11,6 @@ use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 
 use crate::*;
 
-// TODO look through here for things that should be able to be changed during gameplay.
-
 pub type LoadEmbeddedTextureFn = dyn Fn(EmbeddedTextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
 pub type LoadLooseTextureFn = dyn Fn(TextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
 pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;

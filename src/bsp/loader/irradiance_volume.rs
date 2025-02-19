@@ -227,8 +227,6 @@ impl IrradianceVolumeBuilder {
 		self.filled[idx] = true;
 	}
 
-	// TODO Right now we waste the directionality of irradiance volumes when using light grids. Not quite show how yet, but we should fix this in the future.
-
 	#[inline]
 	#[track_caller]
 	pub fn put_all(&mut self, pos: impl Into<UVec3>, color: [u8; 4]) {

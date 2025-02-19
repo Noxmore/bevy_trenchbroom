@@ -153,5 +153,3 @@ impl PhysicsPlugin {
 		}
 	}
 }
-
-// TODO test collider creation

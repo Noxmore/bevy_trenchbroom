@@ -113,7 +113,7 @@ pub trait FgdType: Sized {
 	const PROPERTY_TYPE: QuakeClassPropertyType;
 
 	/// Parses a string into `Self` FGD-style. Used for parsing entity properties.
-	fn fgd_parse(input: &str) -> anyhow::Result<Self>; // TODO do we want to keep anyhow?
+	fn fgd_parse(input: &str) -> anyhow::Result<Self>;
 	/// Converts this value into a string used for writing FGDs.
 	fn fgd_to_string(&self) -> String;
 	/// Calls `fgd_to_string`, but if `FGD_IS_QUOTED` is true, surrounds the output with quotes.
