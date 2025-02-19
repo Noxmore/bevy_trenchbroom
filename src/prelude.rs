@@ -16,7 +16,7 @@ pub(crate) use thiserror::Error;
 pub use bevy_materialize::prelude::*;
 pub use qbsp::{
 	self,
-	data::bsp::{LightmapStyle, BspTexFlags},
+	data::bsp::{BspTexFlags, LightmapStyle},
 	mesh::lighting::{ComputeLightmapSettings, LightmapAtlas, Lightmaps},
 	Palette, QUAKE_PALETTE,
 };

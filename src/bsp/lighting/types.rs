@@ -51,7 +51,7 @@ impl LightingAnimator {
 	}
 
 	/// Samples this animator given the current elapsed seconds the same way it samples in the shader.
-	/// 
+	///
 	/// # Example
 	/// ```
 	/// fn sample_example(
@@ -70,7 +70,7 @@ impl LightingAnimator {
 			let t = (((seconds * self.speed) % 1.) / self.interpolate).min(1.);
 			mul = mul.lerp(next, t);
 		}
-		
+
 		mul
 	}
 }
