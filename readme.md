@@ -24,16 +24,25 @@ use bevy_trenchbroom::prelude::*;
 fn main() {
     App::new()
         // ...
-        // TrenchBroom maps use repeating textures, and currently by default bevy's images don't repeat.
-        // Use `repeating_image_sampler` to easily create a sampler for this that is optionally filtered.
+        // TrenchBroom maps use repeating textures,
+        // and currently by default Bevy's images don't repeat.
+        // Use `repeating_image_sampler` to easily create a
+        // repeating sampler this that is optionally filtered.
         .add_plugins(DefaultPlugins.set(ImagePlugin { default_sampler: repeating_image_sampler(false) }))
         .add_plugins(TrenchBroomPlugin(
-            // Here you can customize the resulting bevy_trenchbroom and game configuration with a builder syntax
-            TrenchBroomConfig::new("example_game") // <- The name of your game
-                // For example: by default, the scale is set to 1 unit = 1 inch assuming that 1 Bevy unit = 1 meter.
-                // This makes 1 TrenchBroom unit = 1 Bevy unit
+            // Here you can customize the resulting bevy_trenchbroom
+            // and game configuration with a builder syntax
+            TrenchBroomConfig::new("your_game_name")
+                // For example: by default, the scale is set to
+                // 1 unit = 1 inch assuming that
+                // 1 Bevy unit = 1 meter.
+                // This makes 1 TrenchBroom unit = 1 Bevy unit.
                 .scale(1.)
-                // You should have a good look at all the settings, as there are a few that can cause some nasty little bugs if you don't know that they're active. (e.g. `lightmap_exposure`)
+                // You should have a good look at all the settings,
+                // as there are a few that can cause some nasty
+                // little bugs if you don't know that they're
+                // active. (e.g. `lightmap_exposure`)
+
                 // ...
         ))
         // ...
@@ -52,34 +61,43 @@ use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use bevy_trenchbroom::bsp::base_classes::*;
 
-// The required worldspawn class makes up the main structural world geometry and settings. Exactly one exists in every map.
+// The required worldspawn class makes up the main structural
+// world geometry and settings. Exactly one exists in every map.
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
-#[require(BspWorldspawn)] // If you're using a BSP workflow, this base class includes a bunch of compiler properties.
+// If you're using a BSP workflow, this base class includes a bunch
+// of useful compiler properties.
+#[require(BspWorldspawn)]
 #[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn {
     pub fog_color: Color,
     pub fog_density: f32,
 }
 
-// BaseClass doesn't appear in editor, only giving properties to those which use it as a base class.
+// BaseClass doesn't appear in editor, only giving properties to
+// those which use it as a base class,
+// either by using the `require` or `base` attribute.
 #[derive(BaseClass, Component, Reflect, Default)]
 #[reflect(Component)]
-pub struct SolidShadows {
-    /// `ericw-tools` `light`: If 1, this model will cast shadows on other models and itself.
-    /// Set to -1 on func_detail/func_group to prevent them from casting shadows.
-    /// (Default: 0, no shadows)
-    pub _shadow: i8,
+pub struct MyBaseClass {
+    /// MY AWESOME VALUE!!
+    pub my_value: u32,
 }
 
-// SolidClass (also known as brush entities) makes the class contain its own geometry, such as a door or breakable
+// SolidClass (also known as brush entities) makes the class
+// contain its own geometry, such as a door or breakable
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
 #[require(Visibility)]
-// You can also use the #[base()] attribute which will take precedence over the require attribute if you want to require components that don't implement QuakeClass, or don't want to be a required component.
-#[base(Visibility, SolidShadows)]
+// You can also use the #[base()] attribute which will take
+// precedence over the require attribute if you want to require
+// components that don't implement QuakeClass,
+// or don't want to be a required component.
+#[base(Visibility, MyBaseClass)]
 #[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
-// By default, names are converted into snake_case. Using the classname attribute, you can define the case you want it to be converted to instead.
+// By default, names are converted into snake_case.
+// Using the classname attribute, you can define the case you want
+// it to be converted to instead.
 #[classname(PascalCase)] // Would be FuncWall instead of func_wall
 // Or you can just set the classname directly.
 #[classname("func_wall")]
@@ -87,37 +105,52 @@ pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(BspSolidEntity)] // If you're using a BSP workflow, this base class includes a bunch of compiler properties.
+// If you're using a BSP workflow, this base class includes a bunch
+// of useful compiler properties.
+#[require(BspSolidEntity)]
 // Don't include a collider for func_illusionary.
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
 
 // A more advanced example
 
-// PointClass doesn't have any geometry built-in -- simply just a point in space.
+// PointClass doesn't have any geometry built-in,
+// simply just a point in space.
 
 /// A GLTF model with no physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you would probably do a #[component(on_add = "<function>")] to spawn the GLTF scene when this component is added.
-// Make sure to remember that `on_add` is run both in the scene world stored in the map asset, and main world.
-// The utility function `DeferredWorld::is_scene_world` is a handy shorthand to early return if the hook is being run in a scene.
+// Here you would probably do a
+// #[component(on_add = "<function>")] to spawn the GLTF scene when
+// this component is added.
+// Make sure to remember that `on_add` is run both in the scene world
+// stored in the map asset, and main world.
 //
-// Alternatively, you could create a system with a query `Query<&StaticProp, Without<SceneRoot>>` and spawn it through that.
-// NOTE: If your GLTF model is rotated weird, add the TrenchBroomGltfRotationFix component when adding it.
+// The utility function `DeferredWorld::is_scene_world` is a
+// handy shorthand to early return if the hook is being run
+// in a scene.
+//
+// Alternatively, you could create a system with a query
+// `Query<&StaticProp, Without<SceneRoot>>`
+// and spawn it through that.
+//
+// NOTE: If you're using a GLTF model, add
+// the TrenchBroomGltfRotationFix component when adding it.
 #[reflect(Component)]
 #[require(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {
-    // no_default makes the field have an empty default value in-editor, and will cause an error if not defined.
+    // no_default makes the field have an empty default value
+    // in-editor, and will cause an error if not defined.
     #[no_default]
     pub model: String,
-    /// Documentation comments on structs and their fields will show up in-editor.
+    /// Documentation comments on structs and their fields
+    /// will show up in-editor.
     pub skin: u32,
     pub collision_type: CollisionType,
     pub enable_shadows: bool,
 }
-// If your struct has fields, you need to implement Default for said fields.
+// If your struct has fields, you need to implement Default.
 // I recommend using the `smart-default` crate for this.
 impl Default for StaticProp {
     fn default() -> Self {
@@ -132,19 +165,21 @@ impl Default for StaticProp {
 
 /// A GLTF model with physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you'd use #[component(on_add = "<function>")] or a system to add a RigidBody of your preferred physics engine.
+// Here you'd use #[component(on_add = "<function>")] or a system to
+// add a RigidBody of your preferred physics engine.
 #[reflect(Component)]
 #[require(StaticProp)]
 pub struct PhysicsProp;
 
-// For `choices` fgd properties, you can derive FgdType on a unit enum.
+// For `choices` properties, you can derive FgdType on a unit enum.
 #[derive(Reflect, FgdType)]
 pub enum CollisionType {
-    /// Uses colliders defined in the model, or none if the model doesn't have any
+    /// Uses colliders defined in the model,
+    /// or none if the model doesn't have any.
     Model,
-    /// Mesh bounding box collider
+    /// Mesh bounding box collider.
     BoundingBox,
-    // No collision
+    // No collision.
     None,
 }
 ```
@@ -162,7 +197,8 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
         error!("Could not write TrenchBroom config: {err}");
     }
 
-    // This will write <folder_path>/GameConfig.cfg, and <folder_path>/example_game.fgd
+    // This will write <folder_path>/GameConfig.cfg,
+    // and <folder_path>/example_game.fgd
 }
 ```
 
@@ -203,7 +239,10 @@ use bevy_trenchbroom::prelude::*;
 
 // app.add_systems(Startup, spawn_test_map)
 
-fn spawn_test_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_test_map(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
     commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
     // Or, if you're using BSPs.
     commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
