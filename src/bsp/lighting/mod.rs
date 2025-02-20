@@ -145,10 +145,7 @@ impl BspLightingPlugin {
 		target_animators_buffer.set_label(Some("animators"));
 		target_animators_buffer.write_buffer(&render_device, &render_queue);
 
-
 		for (id, animated_lighting) in animated_lighting_assets.iter() {
-			
-
 			match animated_lighting.ty {
 				AnimatedLightingType::Lightmap => {
 					bind_groups.values.insert(
