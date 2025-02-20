@@ -144,9 +144,8 @@ pub struct TrenchBroomConfig {
 	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
 	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
-	// TODO rename
 	/// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
-	pub ignore_invalid_entity_definitions: bool,
+	pub suppress_invalid_entity_definitions: bool,
 
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_embedded_texture)))]

@@ -12,7 +12,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 	for (map_entity_idx, map_entity) in ctx.entities.iter().enumerate() {
 		let Some(classname) = map_entity.properties.get("classname") else { continue };
 		let Some(class) = config.get_class(classname) else {
-			if !config.ignore_invalid_entity_definitions {
+			if !config.suppress_invalid_entity_definitions {
 				error!("No class found for classname `{classname}` on entity {map_entity_idx}");
 			}
 

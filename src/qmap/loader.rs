@@ -62,7 +62,7 @@ impl AssetLoader for QuakeMapLoader {
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
 				let Some(classname) = map_entity.properties.get("classname") else { continue };
 				let Some(class) = self.tb_server.config.get_class(classname) else {
-					if !self.tb_server.config.ignore_invalid_entity_definitions {
+					if !self.tb_server.config.suppress_invalid_entity_definitions {
 						error!("No class found for classname `{classname}` on entity {map_entity_idx}");
 					}
 
