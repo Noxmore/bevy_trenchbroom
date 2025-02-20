@@ -147,6 +147,9 @@ pub struct TrenchBroomConfig {
 	/// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
 	pub suppress_invalid_entity_definitions: bool,
 
+	/// Whether to disable bsp lighting (lightmaps and irradiance volumes). This is for rendering backends where these aren't supported like OpenGL.
+	pub no_bsp_lighting: bool,
+
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_embedded_texture)))]
 	pub load_embedded_texture: Hook<LoadEmbeddedTextureFn>,

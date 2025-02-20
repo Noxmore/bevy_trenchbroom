@@ -63,6 +63,7 @@ fn main() {
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
+				.no_bsp_lighting(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<Light>()
