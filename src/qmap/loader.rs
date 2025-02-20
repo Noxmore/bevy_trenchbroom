@@ -1,3 +1,5 @@
+use std::collections::hash_map::Entry;
+
 use bevy::asset::{AssetLoader, AsyncReadExt};
 use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
 use class::QuakeClassType;
@@ -94,9 +96,9 @@ impl AssetLoader for QuakeMapLoader {
 							continue;
 						}
 
-						let texture_size = *texture_size_cache.entry(texture).or_insert_with(|| {
-							// Have to because this is not an async context, and it's simpler than expanding or_insert_with
-							smol::block_on(async {
+						let texture_size = *match texture_size_cache.entry(texture) {
+							Entry::Occupied(x) => x.into_mut(),
+							Entry::Vacant(x) => x.insert(
 								load_context
 									.loader()
 									.immediate()
@@ -107,10 +109,10 @@ impl AssetLoader for QuakeMapLoader {
 											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
 									)
 									.await
-							})
-							.map(|image: bevy::asset::LoadedAsset<Image>| image.take().size())
-							.unwrap_or(UVec2::splat(1))
-						});
+									.map(|image: bevy::asset::LoadedAsset<Image>| image.take().size())
+									.unwrap_or(UVec2::splat(1)),
+							),
+						};
 
 						let material = material_cache
 							.entry(texture)
