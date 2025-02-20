@@ -114,9 +114,9 @@ impl AssetLoader for QuakeMapLoader {
 							),
 						};
 
-						let material = material_cache
-							.entry(texture)
-							.or_insert_with(|| {
+						let material = match material_cache.entry(texture) {
+							Entry::Occupied(x) => x.into_mut(),
+							Entry::Vacant(x) => x.insert(
 								(self.tb_server.config.load_loose_texture)(TextureLoadView {
 									name: texture,
 									tb_config: &self.tb_server.config,
@@ -125,8 +125,10 @@ impl AssetLoader for QuakeMapLoader {
 									alpha_mode: None,
 									embedded_textures: None,
 								})
-							})
-							.clone();
+								.await,
+							),
+						}
+						.clone();
 
 						let mut mesh = generate_mesh_from_brush_polygons(&polygons, &self.tb_server.config, texture_size);
 

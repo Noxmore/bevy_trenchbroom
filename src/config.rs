@@ -1,6 +1,7 @@
 use bevy::{
 	asset::{io::AssetReaderError, AssetLoadError, LoadContext},
 	render::render_asset::RenderAssetUsages,
+	utils::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
@@ -12,7 +13,7 @@ use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 use crate::*;
 
 pub type LoadEmbeddedTextureFn = dyn Fn(EmbeddedTextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
-pub type LoadLooseTextureFn = dyn Fn(TextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
+pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
 
 /// The main configuration structure of bevy_trenchbroom.
@@ -330,29 +331,29 @@ impl TrenchBroomConfig {
 		self
 	}
 	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extension`](Self::generic_material_extension), as a fallback tries [`texture_extension`](Self::texture_extension).
-	pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
-		let path = view
-			.tb_config
-			.material_root
-			.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
-		match smol::block_on(async {
+	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
+		Box::pin(async move {
+			let path = view
+				.tb_config
+				.material_root
+				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
 			// Because i can't just check if an asset exists, i have to load it twice.
-			view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await
-		}) {
-			Ok(_) => view.load_context.load(path),
-			Err(err) => match err.error {
-				AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
-					view.tb_config
-						.material_root
-						.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
-				),
+			match view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await {
+				Ok(_) => view.load_context.load(path),
+				Err(err) => match err.error {
+					AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
+						view.tb_config
+							.material_root
+							.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
+					),
 
-				err => {
-					error!("Loading map {}: {err}", view.load_context.asset_path());
-					Handle::default()
-				}
-			},
-		}
+					err => {
+						error!("Loading map {}: {err}", view.load_context.asset_path());
+						Handle::default()
+					}
+				},
+			}
+		})
 	}
 
 	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).

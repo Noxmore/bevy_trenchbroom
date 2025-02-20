@@ -28,70 +28,76 @@ type Lightmap = BspLightmap;
 #[cfg(not(feature = "bevy_pbr"))]
 type Lightmap = LightmapUvMap;
 
-pub fn compute_models(ctx: &mut BspLoadCtx, lightmap: &Option<Lightmap>, embedded_textures: &EmbeddedTextures) -> Vec<InternalModel> {
+pub async fn compute_models<'a, 'lc: 'a>(
+	ctx: &mut BspLoadCtx<'a, 'lc>,
+	lightmap: &Option<Lightmap>,
+	embedded_textures: &EmbeddedTextures<'a>,
+) -> Vec<InternalModel> {
 	let config = &ctx.loader.tb_server.config;
 	#[cfg(feature = "bevy_pbr")]
 	let lightmap_uvs = lightmap.as_ref().map(|lm| &lm.uv_map);
 	#[cfg(not(feature = "bevy_pbr"))]
 	let lightmap_uvs = lightmap.as_ref();
 
-	(0..ctx.data.models.len())
-		.map(|model_idx| {
-			let model_output = ctx.data.mesh_model(model_idx, lightmap_uvs);
-			let mut model = InternalModel::default();
-			model.meshes.reserve(model_output.meshes.len());
+	let mut models = Vec::with_capacity(ctx.data.models.len());
 
-			for exported_mesh in model_output.meshes {
-				let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, config.brush_mesh_asset_usages);
+	for model_idx in 0..ctx.data.models.len() {
+		let model_output = ctx.data.mesh_model(model_idx, lightmap_uvs);
+		let mut model = InternalModel::default();
+		model.meshes.reserve(model_output.meshes.len());
 
-				mesh.insert_attribute(
-					Mesh::ATTRIBUTE_POSITION,
-					exported_mesh.positions.into_iter().map(convert_vec3(config)).collect_vec(),
-				);
-				mesh.insert_attribute(
-					Mesh::ATTRIBUTE_NORMAL,
-					exported_mesh.normals.into_iter().map(convert_vec3(config)).collect_vec(),
-				);
-				mesh.insert_attribute(
-					Mesh::ATTRIBUTE_UV_0,
-					exported_mesh.uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec(),
-				);
-				if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
-					mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec());
-				}
-				mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
+		for exported_mesh in model_output.meshes {
+			let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, config.brush_mesh_asset_usages);
 
-				let material = embedded_textures
-					.textures
-					.get(exported_mesh.texture.as_str())
-					.map(|texture| texture.material.clone())
-					.unwrap_or_else(|| {
-						(config.load_loose_texture)(TextureLoadView {
-							name: &exported_mesh.texture,
-							tb_config: config,
-							load_context: ctx.load_context,
-							entities: ctx.entities,
-							alpha_mode: None,
-							embedded_textures: Some(&embedded_textures.images),
-						})
-					});
-
-				model.meshes.push(InternalModelMesh {
-					texture: MapGeometryTexture {
-						material,
-						#[cfg(feature = "bevy_pbr")]
-						lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
-						name: exported_mesh.texture,
-						flags: exported_mesh.tex_flags,
-					},
-					mesh,
-					entity: None,
-				});
+			mesh.insert_attribute(
+				Mesh::ATTRIBUTE_POSITION,
+				exported_mesh.positions.into_iter().map(convert_vec3(config)).collect_vec(),
+			);
+			mesh.insert_attribute(
+				Mesh::ATTRIBUTE_NORMAL,
+				exported_mesh.normals.into_iter().map(convert_vec3(config)).collect_vec(),
+			);
+			mesh.insert_attribute(
+				Mesh::ATTRIBUTE_UV_0,
+				exported_mesh.uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec(),
+			);
+			if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
+				mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec());
 			}
+			mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
 
-			model
-		})
-		.collect()
+			let material = match embedded_textures.textures.get(&exported_mesh.texture) {
+				Some(embedded_texture) => embedded_texture.material.clone(),
+				None => {
+					(config.load_loose_texture)(TextureLoadView {
+						name: &exported_mesh.texture,
+						tb_config: config,
+						load_context: ctx.load_context,
+						entities: ctx.entities,
+						alpha_mode: None,
+						embedded_textures: Some(&embedded_textures.images),
+					})
+					.await
+				}
+			};
+
+			model.meshes.push(InternalModelMesh {
+				texture: MapGeometryTexture {
+					material,
+					#[cfg(feature = "bevy_pbr")]
+					lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
+					name: exported_mesh.texture,
+					flags: exported_mesh.tex_flags,
+				},
+				mesh,
+				entity: None,
+			});
+		}
+
+		models.push(model)
+	}
+
+	models
 }
 
 pub fn finalize_models(ctx: &mut BspLoadCtx, models: Vec<InternalModel>, world: &mut World) -> anyhow::Result<Vec<BspModel>> {
