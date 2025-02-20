@@ -10,13 +10,17 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
+// TODO: We aren't using inventory to register here because it's broken on wasm.
+
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspWorldspawn)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
@@ -35,24 +39,28 @@ pub enum FlagsTest {
 }
 
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
 #[component(on_add = Self::on_add)]
@@ -72,6 +80,7 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]
+#[no_register]
 #[reflect(Component)]
 #[require(BspLight, Transform)]
 pub struct Light;
@@ -91,7 +100,13 @@ fn main() {
 		.insert_resource(ClearColor(Color::BLACK))
 		.insert_resource(AmbientLight::NONE)
 		.add_plugins(TrenchBroomPlugin(
-			TrenchBroomConfig::new("bevy_trenchbroom_example").ignore_invalid_entity_definitions(true),
+			TrenchBroomConfig::new("bevy_trenchbroom_example")
+				.ignore_invalid_entity_definitions(false)
+				.register_class::<Worldspawn>()
+				.register_class::<Cube>()
+				.register_class::<FuncWall>()
+				.register_class::<Light>()
+				.register_class::<FuncDoor>(),
 		))
 		.add_systems(PostStartup, (setup_scene, write_config))
 		.run();
@@ -126,8 +141,8 @@ fn setup_scene(
 	}
 }
 
-fn write_config(server: Res<TrenchBroomServer>) {
-	#[cfg(not(target_arch = "wasm32"))]
+fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>) {
+	#[cfg(not(target_family = "wasm"))]
 	{
 		std::fs::create_dir("target/example_config").ok();
 		server.config.write_folder("target/example_config").unwrap();
