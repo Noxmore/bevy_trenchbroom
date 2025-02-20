@@ -13,6 +13,10 @@ use qbsp::data::bspx::LightGridCell;
 pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow::Result<Option<Handle<AnimatedLighting>>> {
 	let config = &ctx.loader.tb_server.config;
 
+	if config.no_bsp_lighting {
+		return Ok(None);
+	}
+
 	// Calculate irradiance volumes for light grids.
 	// Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
 	Ok(if let Some(light_grid) = ctx.data.bspx.parse_light_grid_octree(&ctx.data.parse_ctx) {
