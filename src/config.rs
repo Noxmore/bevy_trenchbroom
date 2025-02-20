@@ -12,7 +12,7 @@ use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 
 use crate::*;
 
-pub type LoadEmbeddedTextureFn = dyn Fn(EmbeddedTextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
+pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
 
@@ -298,34 +298,38 @@ impl TrenchBroomConfig {
 		self.load_embedded_texture.set(provider);
 		self
 	}
-	pub fn default_load_embedded_texture(#[allow(unused_mut)] mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
-		#[cfg(feature = "bevy_pbr")]
-		let mut material = StandardMaterial {
-			base_color_texture: Some(view.image_handle.clone()),
-			perceptual_roughness: 1.,
-			..default()
-		};
+	pub fn default_load_embedded_texture<'a>(
+		#[allow(unused_mut)] mut view: EmbeddedTextureLoadView<'a, '_>,
+	) -> BoxedFuture<'a, Handle<GenericMaterial>> {
+		Box::pin(async move {
+			#[cfg(feature = "bevy_pbr")]
+			let mut material = StandardMaterial {
+				base_color_texture: Some(view.image_handle.clone()),
+				perceptual_roughness: 1.,
+				..default()
+			};
 
-		#[cfg(feature = "bevy_pbr")]
-		if let Some(alpha_mode) = view.alpha_mode {
-			material.alpha_mode = alpha_mode;
-		}
+			#[cfg(feature = "bevy_pbr")]
+			if let Some(alpha_mode) = view.alpha_mode {
+				material.alpha_mode = alpha_mode;
+			}
 
-		#[cfg(feature = "bevy_pbr")]
-		let generic_material = match special_textures::load_special_texture(&mut view, &material) {
-			Some(v) => v,
-			None => GenericMaterial {
-				handle: view.add_material(material).into(),
-				properties: default(),
-			},
-		};
+			#[cfg(feature = "bevy_pbr")]
+			let generic_material = match special_textures::load_special_texture(&mut view, &material) {
+				Some(v) => v,
+				None => GenericMaterial {
+					handle: view.add_material(material).into(),
+					properties: default(),
+				},
+			};
 
-		#[cfg(not(feature = "bevy_pbr"))]
-		let generic_material = GenericMaterial::default();
+			#[cfg(not(feature = "bevy_pbr"))]
+			let generic_material = GenericMaterial::default();
 
-		view.parent_view
-			.load_context
-			.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+			view.parent_view
+				.load_context
+				.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+		})
 	}
 
 	pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
