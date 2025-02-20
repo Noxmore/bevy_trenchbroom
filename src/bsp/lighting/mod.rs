@@ -137,14 +137,17 @@ impl BspLightingPlugin {
 		}
 		bind_groups.values.clear();
 
+		let mut target_animators = [LightingAnimator::default(); MAX_ANIMATORS];
+		for (style, animator) in &animators.values {
+			target_animators[style.0 as usize] = *animator;
+		}
+		let mut target_animators_buffer = StorageBuffer::from(target_animators);
+		target_animators_buffer.set_label(Some("animators"));
+		target_animators_buffer.write_buffer(&render_device, &render_queue);
+
+
 		for (id, animated_lighting) in animated_lighting_assets.iter() {
-			let mut target_animators = [LightingAnimator::default(); MAX_ANIMATORS];
-			for (style, animator) in &animators.values {
-				target_animators[style.0 as usize] = *animator;
-			}
-			let mut target_animators_buffer = UniformBuffer::from(target_animators);
-			target_animators_buffer.set_label(Some("animators"));
-			target_animators_buffer.write_buffer(&render_device, &render_queue);
+			
 
 			match animated_lighting.ty {
 				AnimatedLightingType::Lightmap => {
@@ -242,7 +245,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					texture_2d(TextureSampleType::Float { filterable: false }),
 					texture_2d(TextureSampleType::Float { filterable: false }),
 					texture_2d(TextureSampleType::Uint),
-					uniform_buffer_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+					storage_buffer_read_only_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
 					texture_storage_2d(ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT, StorageTextureAccess::WriteOnly),
 				),
 			),
@@ -258,7 +261,7 @@ impl FromWorld for AnimatedLightingPipeline {
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Float { filterable: false }),
 					texture_3d(TextureSampleType::Uint),
-					uniform_buffer_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
+					storage_buffer_read_only_sized(false, Some(<[LightingAnimator; MAX_ANIMATORS]>::SHADER_SIZE)),
 					BindingType::StorageTexture {
 						access: StorageTextureAccess::WriteOnly,
 						format: ANIMATED_LIGHTING_OUTPUT_TEXTURE_FORMAT,
