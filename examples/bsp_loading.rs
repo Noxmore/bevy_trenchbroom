@@ -127,6 +127,9 @@ fn setup_scene(
 }
 
 fn write_config(server: Res<TrenchBroomServer>) {
-	std::fs::create_dir("target/example_config").ok();
-	server.config.write_folder("target/example_config").unwrap();
+	#[cfg(not(target_arch = "wasm32"))]
+	{
+		std::fs::create_dir("target/example_config").ok();
+		server.config.write_folder("target/example_config").unwrap();
+	}
 }
