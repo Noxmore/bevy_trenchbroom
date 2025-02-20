@@ -81,7 +81,7 @@ impl AssetLoader for BspLoader {
 			#[cfg(not(feature = "bevy_pbr"))]
 			let lightmap = None;
 
-			let mut models = compute_models(&mut ctx, &lightmap, &embedded_textures);
+			let mut models = compute_models(&mut ctx, &lightmap, &embedded_textures).await;
 
 			let embedded_textures = embedded_textures.finalize(&mut ctx);
 

@@ -1,6 +1,7 @@
 use bevy::{
 	asset::{io::AssetReaderError, AssetLoadError, LoadContext},
 	render::render_asset::RenderAssetUsages,
+	utils::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
@@ -11,8 +12,8 @@ use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
 
 use crate::*;
 
-pub type LoadEmbeddedTextureFn = dyn Fn(EmbeddedTextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
-pub type LoadLooseTextureFn = dyn Fn(TextureLoadView) -> Handle<GenericMaterial> + Send + Sync;
+pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
+pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
 
 /// The main configuration structure of bevy_trenchbroom.
@@ -143,9 +144,11 @@ pub struct TrenchBroomConfig {
 	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
 	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
-	// TODO rename
 	/// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
-	pub ignore_invalid_entity_definitions: bool,
+	pub suppress_invalid_entity_definitions: bool,
+
+	/// Whether to disable bsp lighting (lightmaps and irradiance volumes). This is for rendering backends where these aren't supported like OpenGL.
+	pub no_bsp_lighting: bool,
 
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_embedded_texture)))]
@@ -295,34 +298,38 @@ impl TrenchBroomConfig {
 		self.load_embedded_texture.set(provider);
 		self
 	}
-	pub fn default_load_embedded_texture(#[allow(unused_mut)] mut view: EmbeddedTextureLoadView) -> Handle<GenericMaterial> {
-		#[cfg(feature = "bevy_pbr")]
-		let mut material = StandardMaterial {
-			base_color_texture: Some(view.image_handle.clone()),
-			perceptual_roughness: 1.,
-			..default()
-		};
+	pub fn default_load_embedded_texture<'a>(
+		#[allow(unused_mut)] mut view: EmbeddedTextureLoadView<'a, '_>,
+	) -> BoxedFuture<'a, Handle<GenericMaterial>> {
+		Box::pin(async move {
+			#[cfg(feature = "bevy_pbr")]
+			let mut material = StandardMaterial {
+				base_color_texture: Some(view.image_handle.clone()),
+				perceptual_roughness: 1.,
+				..default()
+			};
 
-		#[cfg(feature = "bevy_pbr")]
-		if let Some(alpha_mode) = view.alpha_mode {
-			material.alpha_mode = alpha_mode;
-		}
+			#[cfg(feature = "bevy_pbr")]
+			if let Some(alpha_mode) = view.alpha_mode {
+				material.alpha_mode = alpha_mode;
+			}
 
-		#[cfg(feature = "bevy_pbr")]
-		let generic_material = match special_textures::load_special_texture(&mut view, &material) {
-			Some(v) => v,
-			None => GenericMaterial {
-				handle: view.add_material(material).into(),
-				properties: default(),
-			},
-		};
+			#[cfg(feature = "bevy_pbr")]
+			let generic_material = match special_textures::load_special_texture(&mut view, &material) {
+				Some(v) => v,
+				None => GenericMaterial {
+					handle: view.add_material(material).into(),
+					properties: default(),
+				},
+			};
 
-		#[cfg(not(feature = "bevy_pbr"))]
-		let generic_material = GenericMaterial::default();
+			#[cfg(not(feature = "bevy_pbr"))]
+			let generic_material = GenericMaterial::default();
 
-		view.parent_view
-			.load_context
-			.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+			view.parent_view
+				.load_context
+				.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+		})
 	}
 
 	pub fn load_loose_texture_fn(mut self, provider: impl FnOnce(Arc<LoadLooseTextureFn>) -> Arc<LoadLooseTextureFn>) -> Self {
@@ -330,29 +337,29 @@ impl TrenchBroomConfig {
 		self
 	}
 	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extension`](Self::generic_material_extension), as a fallback tries [`texture_extension`](Self::texture_extension).
-	pub fn default_load_loose_texture(view: TextureLoadView) -> Handle<GenericMaterial> {
-		let path = view
-			.tb_config
-			.material_root
-			.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
-		match smol::block_on(async {
+	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
+		Box::pin(async move {
+			let path = view
+				.tb_config
+				.material_root
+				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
 			// Because i can't just check if an asset exists, i have to load it twice.
-			view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await
-		}) {
-			Ok(_) => view.load_context.load(path),
-			Err(err) => match err.error {
-				AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
-					view.tb_config
-						.material_root
-						.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
-				),
+			match view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await {
+				Ok(_) => view.load_context.load(path),
+				Err(err) => match err.error {
+					AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
+						view.tb_config
+							.material_root
+							.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
+					),
 
-				err => {
-					error!("Loading map {}: {err}", view.load_context.asset_path());
-					Handle::default()
-				}
-			},
-		}
+					err => {
+						error!("Loading map {}: {err}", view.load_context.asset_path());
+						Handle::default()
+					}
+				},
+			}
+		})
 	}
 
 	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).

@@ -62,34 +62,34 @@ impl<'d> EmbeddedTextures<'d> {
 			})
 			.collect();
 
-		let textures: HashMap<String, BspEmbeddedTexture> = images
-			.iter()
-			.map(|(name, (image, image_handle))| {
-				let is_cutout_texture = name.starts_with('{');
+		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity(images.len());
 
-				let material = (config.load_embedded_texture)(EmbeddedTextureLoadView {
-					parent_view: TextureLoadView {
-						name,
-						tb_config: config,
-						load_context: ctx.load_context,
-						entities: ctx.entities,
-						alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
-						embedded_textures: Some(&images),
-					},
+		for (name, (image, image_handle)) in &images {
+			let is_cutout_texture = name.starts_with('{');
 
-					image_handle,
-					image,
-				});
+			let material = (config.load_embedded_texture)(EmbeddedTextureLoadView {
+				parent_view: TextureLoadView {
+					name,
+					tb_config: config,
+					load_context: ctx.load_context,
+					entities: ctx.entities,
+					alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
+					embedded_textures: Some(&images),
+				},
 
-				(
-					name.s(),
-					BspEmbeddedTexture {
-						image: image_handle.clone(),
-						material,
-					},
-				)
+				image_handle,
+				image,
 			})
-			.collect();
+			.await;
+
+			textures.insert(
+				name.s(),
+				BspEmbeddedTexture {
+					image: image_handle.clone(),
+					material,
+				},
+			);
+		}
 
 		Ok(Self { images, textures })
 	}

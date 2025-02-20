@@ -17,7 +17,7 @@ struct Animator {
 @group(0) @binding(2) var input_texture_2: texture_2d<f32>;
 @group(0) @binding(3) var input_texture_3: texture_2d<f32>;
 @group(0) @binding(4) var input_texture_mapping: texture_2d<u32>;
-@group(0) @binding(5) var<uniform> animators: array<Animator, MAX_ANIMATORS>;
+@group(0) @binding(5) var<storage, read> animators: array<Animator, MAX_ANIMATORS>;
 @group(0) @binding(6) var output: texture_storage_2d<rgba32float, write>;
 
 @group(1) @binding(0) var<uniform> globals: Globals;

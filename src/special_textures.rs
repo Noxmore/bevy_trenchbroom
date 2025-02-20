@@ -140,7 +140,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 						value: bevy::utils::HashMap::from([("base_color_texture".s(), frames)]),
 						state: GenericMaterialAnimationState {
 							current_frame: texture_frame_idx.wrapping_sub(1) as usize,
-							next_frame_time: Instant::now(),
+							next_frame_time: Duration::default(),
 						},
 					}),
 				},

@@ -7,18 +7,23 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
+// TODO: We aren't using inventory to register here because it's broken on wasm.
+
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().render())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
+#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
 #[component(on_add = Self::on_add)]
@@ -34,6 +39,7 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
+#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
 pub struct Light {
@@ -55,7 +61,14 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		.add_plugins(TrenchBroomPlugin(TrenchBroomConfig::new("bevy_trenchbroom_example")))
+		.add_plugins(TrenchBroomPlugin(
+			TrenchBroomConfig::new("bevy_trenchbroom_example")
+				.no_bsp_lighting(true)
+				.register_class::<Worldspawn>()
+				.register_class::<Cube>()
+				.register_class::<Light>()
+				.register_class::<FuncDoor>(),
+		))
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(Update, spawn_lights)
 		.run();

@@ -29,7 +29,9 @@ impl Plugin for BspPlugin {
 		;
 
 		#[cfg(feature = "bevy_pbr")]
-		app.add_plugins(lighting::BspLightingPlugin);
+		if !app.world().resource::<TrenchBroomServer>().config.no_bsp_lighting {
+			app.add_plugins(lighting::BspLightingPlugin);
+		}
 	}
 }
 
