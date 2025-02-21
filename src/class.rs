@@ -189,7 +189,7 @@ impl QuakeClass for Transform {
 		model: None,
 		color: None,
 		iconsprite: None,
-		size: Some("\"scale\""),
+		size: None,
 
 		properties: &[
 			QuakeClassProperty {
