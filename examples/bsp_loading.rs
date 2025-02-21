@@ -83,6 +83,7 @@ impl Cube {
 #[no_register]
 #[reflect(Component)]
 #[require(BspLight, Transform)]
+#[size(-8 -8 -8, 8 8 8)]
 pub struct Light;
 
 fn main() {
