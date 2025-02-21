@@ -48,7 +48,7 @@ impl TrenchBroomConfig {
 				write!("iconsprite({value}) ");
 			}
 			if let Some(value) = class.info.size {
-				write!("size({}) ", value.fgd_to_string());
+				write!("size({value}) ");
 			}
 			if let Some(value) = class.info.model {
 				write!("model({value}) ");
