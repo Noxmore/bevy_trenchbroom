@@ -15,7 +15,7 @@ use syn::*;
 /// - `#[model({ "path": <path expr>, "skin": <skin expr>, "frame": <frame expr>, "scale": <scale expr> })]` Same as above attribute, but with greater control over how the model is shown. Note that any of these properties can be left out.
 /// - `#[color(<red> <green> <blue>)]` Changes the wireframe color of the entity. Each number has a range from 0 to 255.
 /// - `#[iconsprite(<path expression>)]` Displays the entity as the specified image, presented as a billboard (always facing the camera).
-/// - `#[size(<-x>, <-y>, <-z>, <+x>, <+y>, <+z>)]` The bounding box of the entity in-editor.
+/// - `#[size(<-x> <-y> <-z>, <+x> <+y> <+z>)]` The bounding box of the entity in-editor.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
