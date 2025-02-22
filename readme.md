@@ -204,7 +204,7 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
 
 This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
-After you write it out, the folder the files need to end up in is your TrenchBroom games configuration folder which you can find the path of [here](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
+After you write it out, the folder the files need to end up in is your TrenchBroom games configuration folder which you can find the path of [here](https://trenchbroom.github.io/manual/latest/#game_configuration_files), and you have the set the "Game path" to your project/game folder in TrenchBroom preferences.
 
 ## Materials and `bevy_materialize`
 
