@@ -210,6 +210,7 @@ impl AssetLoader for QuakeMapLoader {
 	}
 }
 
+#[cfg(feature = "bevy_pbr")]
 #[test]
 fn map_loading() {
 	let mut app = App::new();
