@@ -61,6 +61,7 @@ impl AssetLoader for BspLoader {
 			let data = BspData::parse(BspParseInput {
 				bsp: &bytes,
 				lit: lit.as_deref(),
+				settings: self.tb_server.config.bsp_parse_settings.clone(),
 			})?;
 
 			let quake_util_map =

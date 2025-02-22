@@ -211,6 +211,9 @@ pub struct TrenchBroomConfig {
 	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
+	/// `qbsp` settings when parsing BSP files.
+	pub bsp_parse_settings: BspParseSettings,
+
 	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes. (Default: [`default_quake_class_registry`])
 	#[default(default_quake_class_registry())]
 	#[builder(skip)]
