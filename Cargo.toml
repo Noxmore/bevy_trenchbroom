@@ -4,7 +4,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.6.1"
+version = "0.6.2"
 description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2021"
 authors = ["Noxmore"]
