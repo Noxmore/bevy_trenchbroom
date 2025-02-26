@@ -385,7 +385,10 @@ impl TrenchBroomConfig {
 	pub fn class_iter(&self) -> impl Iterator<Item = &ErasedQuakeClass> {
 		#[cfg(not(feature = "auto_register"))]
 		{
-			self.entity_classes.values().map(Cow::as_ref)
+			self.entity_classes
+				.values()
+				.map(Cow::as_ref)
+				.sorted_by(|a, b| a.info.name.cmp(b.info.name))
 		}
 
 		#[cfg(feature = "auto_register")]
@@ -394,6 +397,7 @@ impl TrenchBroomConfig {
 				.values()
 				.map(Cow::as_ref)
 				.chain(class::GLOBAL_CLASS_REGISTRY.values().copied())
+				.sorted_by(|a, b| a.info.name.cmp(b.info.name))
 		}
 	}
 
