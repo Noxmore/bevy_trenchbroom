@@ -79,8 +79,8 @@ pub struct TrenchBroomConfig {
 	#[default(vec4(0.6, 0.6, 0.6, 1.0))]
 	#[builder(into)]
 	pub entity_default_color: Vec4,
-	/// An expression to evaluate how big entities' models are. (Default: `{{ scale == undefined -> 1, scale }}``)
-	#[default(Some("{{ scale == undefined -> 1, scale }}".s()))]
+	/// An expression to evaluate how big entities' models are. Any instances of the string "%%scale%%" will be replaced wit with this config's scale. (Default: `{{ scale == undefined -> %%scale%%, scale }}``)
+	#[default(Some("{{ scale == undefined -> %%scale%%, scale }}".s()))]
 	#[builder(into)]
 	pub entity_scale_expression: Option<String>,
 	/// Whether to set property defaults into an entity on creation, or leave them to use the default value that is defined in entity definitions. It is not recommended to use this.
@@ -363,6 +363,11 @@ impl TrenchBroomConfig {
 				},
 			}
 		})
+	}
+
+	/// Returns a copy of [`Self::entity_scale_expression`], replacing all instances of "%%scale%%" with this config's scale.
+	pub fn get_entity_scale_expression(&self) -> Option<String> {
+		self.entity_scale_expression.as_ref().map(|s| s.replace("%%scale%%", &self.scale.to_string()))
 	}
 
 	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).
@@ -765,8 +770,8 @@ impl TrenchBroomConfig {
 
 		let mut buf = json.pretty(4);
 
-		if let Some(expression) = &self.entity_scale_expression {
-			buf = buf.replace("\"$$scale$$\"", &expression.replace("$tb_scale$", &self.scale.to_string()));
+		if let Some(expression) = &self.get_entity_scale_expression() {
+			buf = buf.replace("\"$$scale$$\"", &expression);
 		}
 
 		fs::write(folder.join("GameConfig.cfg"), buf)?;
