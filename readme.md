@@ -266,10 +266,11 @@ If you are to use BSPs, i recommend turning off ambient light `.insert_resource(
 - `-nosoftware` - Explicitly drop support for software renderers.
 - `-path assets/materials` Replace the path with your material folder, this lets the compiler read your loose textures.
 
-`light -extra4 -novanilla -lightgrid`
+`light -extra4 -novanilla -lightgrid -path assets/materials`
 - `-extra4` - Multisampling, makes shadows smoother.
 - `-novanilla` - Writes colored light data into a BSPX lump, not writing legacy colorless light data.
 - `-lightgrid` - Calculate global illumination, dynamic objects won't have any lighting without this.
+- `-path assets/materials` - Same as above, mainly for color bouncing
 
 ## Physics/Collisions
 
