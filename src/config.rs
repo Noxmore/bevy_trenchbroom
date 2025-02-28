@@ -367,7 +367,9 @@ impl TrenchBroomConfig {
 
 	/// Returns a copy of [`Self::entity_scale_expression`], replacing all instances of "%%scale%%" with this config's scale.
 	pub fn get_entity_scale_expression(&self) -> Option<String> {
-		self.entity_scale_expression.as_ref().map(|s| s.replace("%%scale%%", &self.scale.to_string()))
+		self.entity_scale_expression
+			.as_ref()
+			.map(|s| s.replace("%%scale%%", &self.scale.to_string()))
 	}
 
 	/// Retrieves the entity class of `classname` from this config. If none is found and the `auto_register` feature is enabled, it'll try to find it in [`GLOBAL_CLASS_REGISTRY`](crate::class::GLOBAL_CLASS_REGISTRY).
@@ -775,7 +777,7 @@ impl TrenchBroomConfig {
 		let mut buf = json.pretty(4);
 
 		if let Some(expression) = &self.get_entity_scale_expression() {
-			buf = buf.replace("\"$$scale$$\"", &expression);
+			buf = buf.replace("\"$$scale$$\"", expression);
 		}
 
 		fs::write(folder.join("GameConfig.cfg"), buf)?;
