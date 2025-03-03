@@ -296,6 +296,6 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 # Supported Bevy && TrenchBroom Versions
 | Bevy | bevy_trenchbroom | TrenchBroom |
 ---|--|---
-| 0.15 | 0.6 | 2025.1 |
+| 0.15 | 0.6 | 2025.1-2025.2 |
 | 0.14 | 0.4-0.5 | 2024.1 |
 | 0.13 | 0.1-0.3 | 2024.1 |
