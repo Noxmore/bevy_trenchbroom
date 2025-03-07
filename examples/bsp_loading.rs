@@ -102,7 +102,7 @@ fn main() {
 		.insert_resource(AmbientLight::NONE)
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
-				.suppress_invalid_entity_definitions(false)
+				.suppress_invalid_entity_definitions(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<FuncWall>()
