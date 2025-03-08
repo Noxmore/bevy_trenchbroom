@@ -77,6 +77,7 @@ impl PhysicsPlugin {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;
 				};
+				#[rustfmt::skip]
 				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
 				colliders.push((position, Quat::IDENTITY, collider));
 			}
@@ -105,6 +106,7 @@ impl PhysicsPlugin {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;
 				};
+				#[rustfmt::skip]
 				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
 				colliders.push((position, Quat::IDENTITY, collider));
 			}
