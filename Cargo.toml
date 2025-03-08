@@ -4,7 +4,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.6.3"
+version = "0.6.4"
 description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2021"
 authors = ["Noxmore"]
@@ -25,7 +25,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.6.3", path = "macros" }
+bevy_trenchbroom_macros = { version = "0.6.4", path = "macros" }
 
 anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
