@@ -60,11 +60,11 @@ impl PhysicsPlugin {
 	#[cfg(feature = "rapier")]
 	pub fn create_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, &Brushes), (With<ConvexCollision>, Without<Collider>)>,
+		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
 		bsp_brush_assets: Res<Assets<BspBrushesAsset>>,
 	) {
-		for (entity, brushes) in &query {
+		for (entity, brushes, transform) in &query {
 			let mut colliders = Vec::new();
 			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &bsp_brush_assets) else { continue };
 
@@ -77,7 +77,8 @@ impl PhysicsPlugin {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;
 				};
-				colliders.push((Vec3::ZERO, Quat::IDENTITY, collider));
+				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
+				colliders.push((position, Quat::IDENTITY, collider));
 			}
 
 			commands.entity(entity).insert(Collider::compound(colliders));
@@ -87,11 +88,11 @@ impl PhysicsPlugin {
 	#[cfg(feature = "avian")]
 	pub fn create_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, &Brushes), (With<ConvexCollision>, Without<Collider>)>,
+		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
 		bsp_brush_assets: Res<Assets<BspBrushesAsset>>,
 	) {
-		for (entity, brushes) in &query {
+		for (entity, brushes, transform) in &query {
 			let mut colliders = Vec::new();
 			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &bsp_brush_assets) else { continue };
 
@@ -104,7 +105,8 @@ impl PhysicsPlugin {
 					error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
 					continue;
 				};
-				colliders.push((Vec3::ZERO, Quat::IDENTITY, collider));
+				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
+				colliders.push((position, Quat::IDENTITY, collider));
 			}
 
 			commands
