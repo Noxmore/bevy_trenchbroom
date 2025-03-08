@@ -46,16 +46,25 @@ impl AssetLoader for QuakeMapLoader {
 				let origin_point = map_entity
 					.brushes
 					.iter()
-					.find(|brush| {
+					.enumerate()
+					.find(|(_, brush)| {
 						brush
 							.surfaces
 							.iter()
 							.all(|surface| self.tb_server.config.origin_textures.contains(&surface.texture))
 					})
-					.map(|brush| self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3());
+					.map(|(brush_idx, brush)| (brush_idx, self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3()));
 
-				if let Some(origin_point) = origin_point {
+				if let Some((origin_brush_idx, origin_point)) = origin_point {
+					let Some(classname) = map_entity.properties.get("classname") else { continue };
+					let Some(class) = self.tb_server.config.get_class(classname) else { continue };
+
+					if !class.info.derives_from::<Transform>() {
+						error!("A `{classname}` has an origin brush, but does not have `Transform` as a base class! This will make it appear wrong!");
+					}
+
 					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string());
+					map_entity.brushes.remove(origin_brush_idx);
 				}
 			}
 
