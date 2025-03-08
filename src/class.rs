@@ -96,6 +96,21 @@ pub struct QuakeClassInfo {
 
 	pub properties: &'static [QuakeClassProperty],
 }
+impl QuakeClassInfo {
+	/// Recursively checks if this class uses a class by the name of `classname` as a base class. Does not return `true` if this class *is* `classname`.
+	///
+	/// You should probably use [`Self::derives_from`] instead.
+	pub fn derives_from_name(&self, classname: &str) -> bool {
+		self.base
+			.iter()
+			.any(|class| class.info.name == classname || class.info.derives_from_name(classname))
+	}
+
+	/// Recursively checks if this class is a subclass of `T`. Does not return `true` if this class *is* `T`.
+	pub fn derives_from<T: QuakeClass>(&self) -> bool {
+		self.derives_from_name(T::CLASS_INFO.name)
+	}
+}
 
 pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
