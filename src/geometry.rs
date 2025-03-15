@@ -74,10 +74,11 @@ pub struct GeometryProviderView<'w, 'l> {
 }
 
 pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
+pub type GeometryProviderFnOnce = dyn FnOnce(&mut GeometryProviderView) + Send + Sync;
 
 #[derive(Default)]
 pub struct GeometryProvider {
-	pub providers: Vec<Box<GeometryProviderFn>>,
+	pub providers: Vec<Box<GeometryProviderFnOnce>>,
 }
 
 impl GeometryProvider {
@@ -86,7 +87,7 @@ impl GeometryProvider {
 	}
 
 	/// Add a function to the settings' spawner stack.
-	pub fn push(mut self, provider: impl Fn(&mut GeometryProviderView) + Send + Sync + 'static) -> Self {
+	pub fn push(mut self, provider: impl FnOnce(&mut GeometryProviderView) + Send + Sync + 'static) -> Self {
 		self.providers.push(Box::new(provider));
 		self
 	}
