@@ -74,10 +74,11 @@ pub struct GeometryProviderView<'w, 'l> {
 }
 
 pub type GeometryProviderFn = dyn Fn(&mut GeometryProviderView) + Send + Sync;
+pub type GeometryProviderFnOnce = dyn FnOnce(&mut GeometryProviderView) + Send + Sync;
 
 #[derive(Default)]
 pub struct GeometryProvider {
-	pub providers: Vec<Box<GeometryProviderFn>>,
+	pub providers: Vec<Box<GeometryProviderFnOnce>>,
 }
 
 impl GeometryProvider {
@@ -86,7 +87,7 @@ impl GeometryProvider {
 	}
 
 	/// Add a function to the settings' spawner stack.
-	pub fn push(mut self, provider: impl Fn(&mut GeometryProviderView) + Send + Sync + 'static) -> Self {
+	pub fn push(mut self, provider: impl FnOnce(&mut GeometryProviderView) + Send + Sync + 'static) -> Self {
 		self.providers.push(Box::new(provider));
 		self
 	}
@@ -218,21 +219,30 @@ impl GeometryProvider {
 		self
 	}
 
+	/// Inserts a bundle onto the entity.
+	pub fn with(self, bundle: impl Bundle) -> Self {
+		self.push(move |view| {
+			view.world.entity_mut(view.entity).insert(bundle);
+		})
+	}
+	/// Inserts a bundle onto all mesh entities.
+	pub fn meshes_with(self, bundle: impl Bundle + Clone) -> Self {
+		self.push(move |view| {
+			for mesh_view in &view.meshes {
+				view.world.entity_mut(mesh_view.entity).insert(bundle.clone());
+			}
+		})
+	}
+
 	/// Inserts trimesh colliders on each mesh of this entity. This means that brushes will be hollow. Not recommended to use on physics objects.
 	#[cfg(any(feature = "rapier", feature = "avian"))]
 	pub fn trimesh_collider(self) -> Self {
-		self.push(|view| {
-			for mesh_view in &view.meshes {
-				view.world.entity_mut(mesh_view.entity).insert(physics::TrimeshCollision);
-			}
-		})
+		self.meshes_with(physics::TrimeshCollision)
 	}
 
 	/// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
 	#[cfg(any(feature = "rapier", feature = "avian"))]
 	pub fn convex_collider(self) -> Self {
-		self.push(|view| {
-			view.world.entity_mut(view.entity).insert(physics::ConvexCollision);
-		})
+		self.with(physics::ConvexCollision)
 	}
 }
