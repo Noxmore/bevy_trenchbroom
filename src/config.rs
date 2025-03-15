@@ -52,7 +52,7 @@ pub struct TrenchBroomConfig {
 	package_format: AssetPackageFormat,
 
 	/// The root directory to look for textures in the [`assets_path`](Self::assets_path). (Default: "textures")
-	/// 
+	///
 	/// NOTE: If you are using ericw-tools, this is currently hardcoded to only work with "textures". ([see issue](https://github.com/ericwa/ericw-tools/issues/451))
 	#[default("textures".into())]
 	#[builder(into)]
