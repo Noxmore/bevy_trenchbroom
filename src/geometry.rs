@@ -220,6 +220,8 @@ impl GeometryProvider {
 	}
 
 	/// Inserts a bundle onto the entity.
+	/// 
+	/// This is a convenience function, you should generally use required components instead of this if at all possible.
 	pub fn with(self, bundle: impl Bundle) -> Self {
 		self.push(move |view| {
 			view.world.entity_mut(view.entity).insert(bundle);
