@@ -5,7 +5,6 @@ use bevy::{
 
 use crate::*;
 
-
 pub trait ImageSamplerRepeatExt {
 	/// Sets the address mode of this sampler to repeat.
 	fn repeat(self) -> Self;

@@ -1,5 +1,6 @@
 use bevy::{
 	asset::{io::AssetReaderError, AssetLoadError, LoadContext},
+	image::{ImageLoaderSettings, ImageSampler},
 	render::render_asset::RenderAssetUsages,
 	utils::BoxedFuture,
 };
@@ -8,7 +9,7 @@ use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
-use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions};
+use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
 use crate::*;
 
@@ -231,6 +232,10 @@ pub struct TrenchBroomConfig {
 	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
 	pub global_geometry_provider: Hook<GeometryProviderFn>,
 
+	/// The image sampler used with textures loaded from maps. (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
+	#[default(Self::default_texture_sampler())]
+	pub texture_sampler: ImageSampler,
+
 	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
 	#[default(RenderAssetUsages::all())]
 	pub brush_mesh_asset_usages: RenderAssetUsages,
@@ -260,6 +265,16 @@ impl TrenchBroomConfig {
 	/// (See documentation on [`TrenchBroomConfig::face_tags`])
 	pub fn empty_face_tag() -> TrenchBroomTag {
 		TrenchBroomTag::new("empty", "__TB_empty").attributes([TrenchBroomTagAttribute::Transparent])
+	}
+
+	/// A repeating, nearest-neighbor sampler.
+	pub fn default_texture_sampler() -> ImageSampler {
+		ImageSampler::nearest().repeat()
+	}
+
+	/// Switches to using linear (smooth) filtering on textures.
+	pub fn linear_filtering(self) -> Self {
+		self.texture_sampler(ImageSampler::linear().repeat())
 	}
 
 	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
@@ -350,13 +365,25 @@ impl TrenchBroomConfig {
 				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
 			// Because i can't just check if an asset exists, i have to load it twice.
 			match view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await {
-				Ok(_) => view.load_context.load(path),
+				Ok(_) => {
+					let texture_sampler = view.tb_config.texture_sampler.clone();
+					view.load_context
+						.loader()
+						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
+						.load(path)
+				}
 				Err(err) => match err.error {
-					AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => view.load_context.load(
-						view.tb_config
-							.material_root
-							.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
-					),
+					AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => {
+						let texture_sampler = view.tb_config.texture_sampler.clone();
+						view.load_context
+							.loader()
+							.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
+							.load(
+								view.tb_config
+									.material_root
+									.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
+							)
+					}
 
 					err => {
 						error!("Loading map {}: {err}", view.load_context.asset_path());

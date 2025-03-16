@@ -24,11 +24,7 @@ use bevy_trenchbroom::prelude::*;
 fn main() {
     App::new()
         // ...
-        // TrenchBroom maps use repeating textures,
-        // and currently by default Bevy's images don't repeat.
-        // Use `repeating_image_sampler` to easily create a
-        // repeating sampler this that is optionally filtered.
-        .add_plugins(DefaultPlugins.set(ImagePlugin { default_sampler: repeating_image_sampler(false) }))
+        .add_plugins(DefaultPlugins)
         .add_plugins(TrenchBroomPlugin(
             // Here you can customize the resulting bevy_trenchbroom
             // and game configuration with a builder syntax

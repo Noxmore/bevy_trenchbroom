@@ -51,9 +51,7 @@ pub struct Light {
 
 fn main() {
 	App::new()
-		.add_plugins(DefaultPlugins.set(ImagePlugin {
-			default_sampler: repeating_image_sampler(false),
-		}))
+		.add_plugins(DefaultPlugins)
 		// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
 		.add_plugins(PlayerPlugin)
 		.insert_resource(MovementSettings {
