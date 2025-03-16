@@ -32,7 +32,7 @@ pub use crate::{
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	util::{repeating_image_sampler, IsSceneWorld, TrenchBroomGltfRotationFix},
+	util::{IsSceneWorld, TrenchBroomGltfRotationFix},
 	TrenchBroomPlugin, TrenchBroomServer,
 };
 
