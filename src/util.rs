@@ -5,6 +5,20 @@ use bevy::{
 
 use crate::*;
 
+/// Creates an image sampler with repeating textures, and optionally filtered.
+#[deprecated(
+	since = "0.6.5",
+	note = "TrenchBroomConfig has its own image sampler. If you still want an API like this, use `ImageSamplerRepeatExt` instead."
+)]
+pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
+	if filtered {
+		ImageSamplerDescriptor::linear()
+	} else {
+		ImageSamplerDescriptor::nearest()
+	}
+	.repeat()
+}
+
 pub trait ImageSamplerRepeatExt {
 	/// Sets the address mode of this sampler to repeat.
 	fn repeat(self) -> Self;
