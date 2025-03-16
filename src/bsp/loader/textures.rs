@@ -34,7 +34,7 @@ impl<'d> EmbeddedTextures<'d> {
 
 				let is_cutout_texture = name.starts_with('{');
 
-				let image = Image::new(
+				let mut image = Image::new(
 					Extent3d {
 						width: texture.header.width,
 						height: texture.header.height,
@@ -55,6 +55,7 @@ impl<'d> EmbeddedTextures<'d> {
 					TextureFormat::Rgba8UnormSrgb,
 					config.bsp_textures_asset_usages,
 				);
+				image.sampler = config.texture_sampler.clone();
 
 				let image_handle = ctx.load_context.get_label_handle(format!("{TEXTURE_PREFIX}{name}"));
 

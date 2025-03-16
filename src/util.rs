@@ -1,21 +1,45 @@
 use bevy::{
 	ecs::world::DeferredWorld,
-	image::{ImageAddressMode, ImageSamplerDescriptor},
+	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
 
 use crate::*;
 
 /// Creates an image sampler with repeating textures, and optionally filtered.
+#[deprecated(
+	since = "0.6.5",
+	note = "TrenchBroomConfig has its own image sampler. If you still want an API like this, use `ImageSamplerRepeatExt` instead."
+)]
 pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
-	ImageSamplerDescriptor {
-		address_mode_u: ImageAddressMode::Repeat,
-		address_mode_v: ImageAddressMode::Repeat,
-		address_mode_w: ImageAddressMode::Repeat,
-		..if filtered {
-			ImageSamplerDescriptor::linear()
-		} else {
-			ImageSamplerDescriptor::nearest()
+	if filtered {
+		ImageSamplerDescriptor::linear()
+	} else {
+		ImageSamplerDescriptor::nearest()
+	}
+	.repeat()
+}
+
+pub trait ImageSamplerRepeatExt {
+	/// Sets the address mode of this sampler to repeat.
+	fn repeat(self) -> Self;
+}
+impl ImageSamplerRepeatExt for ImageSamplerDescriptor {
+	fn repeat(self) -> Self {
+		Self {
+			address_mode_u: ImageAddressMode::Repeat,
+			address_mode_v: ImageAddressMode::Repeat,
+			address_mode_w: ImageAddressMode::Repeat,
+			..self
 		}
+	}
+}
+impl ImageSamplerRepeatExt for ImageSampler {
+	fn repeat(mut self) -> Self {
+		let descriptor = self.get_or_init_descriptor();
+		descriptor.address_mode_u = ImageAddressMode::Repeat;
+		descriptor.address_mode_v = ImageAddressMode::Repeat;
+		descriptor.address_mode_w = ImageAddressMode::Repeat;
+		self
 	}
 }
 
