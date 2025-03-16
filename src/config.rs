@@ -232,7 +232,9 @@ pub struct TrenchBroomConfig {
 	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
 	pub global_geometry_provider: Hook<GeometryProviderFn>,
 
-	/// The image sampler used with textures loaded from maps. (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
+	/// The image sampler used with textures loaded from maps.
+	/// Use [`Self::linear_filtering`] to easily switch to smooth texture interpolation.
+	/// (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
 	#[default(Self::default_texture_sampler())]
 	pub texture_sampler: ImageSampler,
 
