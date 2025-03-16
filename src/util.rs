@@ -6,7 +6,6 @@ use bevy::{
 use crate::*;
 
 /// Creates an image sampler with repeating textures, and optionally filtered.
-#[deprecated = "TrenchBroomConfig has its own image sampler instead"]
 pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
 	ImageSamplerDescriptor {
 		address_mode_u: ImageAddressMode::Repeat,
