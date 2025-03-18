@@ -31,7 +31,6 @@ anyhow = "1.0"
 bevy = { version = "0.15", default-features = false, features = [
 	"bevy_asset",
 	"bevy_scene",
-	"bevy_render",
 ] }
 bevy_reflect = { version = "0.15", features = ["documentation"] }
 bevy_materialize = { version = "^0.4.1", default-features = false, features = ["toml"] }
