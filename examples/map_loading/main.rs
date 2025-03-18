@@ -1,8 +1,10 @@
+#![allow(unexpected_cfgs)]
+
+#[cfg(feature = "example_client")]
+use bevy::ecs::{component::ComponentId, world::DeferredWorld};
 use bevy::math::*;
-use bevy::{
-	ecs::{component::ComponentId, world::DeferredWorld},
-	prelude::*,
-};
+use bevy::prelude::*;
+#[cfg(feature = "example_client")]
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
@@ -26,8 +28,9 @@ pub struct FuncDoor;
 #[no_register]
 #[reflect(Component)]
 #[require(Transform)]
-#[component(on_add = Self::on_add)]
+#[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
+#[cfg(feature = "example_client")]
 impl Cube {
 	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
 		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
@@ -49,16 +52,33 @@ pub struct Light {
 	pub light: f32,
 }
 
+struct ClientPlugin;
+impl Plugin for ClientPlugin {
+	fn build(&self, #[allow(unused)] app: &mut App) {
+		#[cfg(feature = "example_client")]
+		#[rustfmt::skip]
+		app
+			// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
+			.add_plugins(PlayerPlugin)
+			.insert_resource(MovementSettings {
+				sensitivity: 0.00005,
+				speed: 6.,
+			})
+			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+			.add_systems(Update, spawn_lights)
+		;
+	}
+}
+
 fn main() {
 	App::new()
-		.add_plugins(DefaultPlugins)
-		// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
-		.add_plugins(PlayerPlugin)
-		.insert_resource(MovementSettings {
-			sensitivity: 0.00005,
-			speed: 6.,
-		})
-		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+		.add_plugins((
+			DefaultPlugins.set(AssetPlugin {
+				file_path: "../../assets".s(),
+				..default()
+			}),
+			ClientPlugin,
+		))
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.no_bsp_lighting(true)
@@ -68,7 +88,6 @@ fn main() {
 				.register_class::<FuncDoor>(),
 		))
 		.add_systems(PostStartup, setup_scene)
-		.add_systems(Update, spawn_lights)
 		.run();
 }
 
@@ -76,11 +95,13 @@ fn main() {
 fn setup_scene(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
+	#[cfg(feature = "example_client")]
 	mut projection_query: Query<&mut Projection>,
 ) {
 	commands.spawn(SceneRoot(asset_server.load("maps/example.map#Scene")));
 
 	// Wide FOV
+	#[cfg(feature = "example_client")]
 	for mut projection in &mut projection_query {
 		*projection = Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
@@ -89,6 +110,7 @@ fn setup_scene(
 	}
 }
 
+#[cfg(feature = "example_client")]
 #[rustfmt::skip]
 fn spawn_lights(
 	mut commands: Commands,

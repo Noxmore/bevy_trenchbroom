@@ -76,6 +76,9 @@ impl Plugin for TrenchBroomPlugin {
 				geometry::GeometryPlugin,
 			))
 		;
+
+		#[cfg(not(feature = "client"))]
+		app.init_asset::<Mesh>().register_type::<Mesh3d>().register_type::<Aabb>();
 	}
 }
 impl TrenchBroomPlugin {

@@ -1,7 +1,6 @@
 use bevy::{
-	asset::{io::AssetReaderError, AssetLoadError, LoadContext},
+	asset::{io::AssetReaderError, AssetLoadError, LoadContext, RenderAssetUsages},
 	image::{ImageLoaderSettings, ImageSampler},
-	render::render_asset::RenderAssetUsages,
 	utils::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
@@ -302,11 +301,12 @@ impl TrenchBroomConfig {
 	}
 
 	/// Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
-	/// 
+	///
 	/// Also adds [`GenericMaterial3d`]s.
 	pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
 		let mut ent = view.world.entity_mut(view.entity);
 
+		#[cfg(feature = "client")]
 		if !ent.contains::<Visibility>() {
 			ent.insert(Visibility::default());
 		}
@@ -486,6 +486,7 @@ pub struct TextureLoadView<'a, 'b> {
 	pub load_context: &'a mut LoadContext<'b>,
 	pub entities: &'a QuakeMapEntities,
 	/// `Some` if it is determined that a specific alpha mode should be used for a material, such as in some embedded textures.
+	#[cfg(feature = "client")]
 	pub alpha_mode: Option<AlphaMode>,
 	/// If the map contains embedded textures, this will be a map of texture names to image handles.
 	/// This is useful for things like animated textures.

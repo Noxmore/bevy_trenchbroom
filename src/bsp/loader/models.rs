@@ -1,6 +1,6 @@
 use super::*;
 use crate::*;
-use bevy::render::mesh::{Indices, PrimitiveTopology};
+use bevy_mesh::{Indices, PrimitiveTopology};
 use bsp::*;
 
 #[derive(Default)]
@@ -74,6 +74,7 @@ pub async fn compute_models<'a, 'lc: 'a>(
 						tb_config: config,
 						load_context: ctx.load_context,
 						entities: ctx.entities,
+						#[cfg(feature = "client")]
 						alpha_mode: None,
 						embedded_textures: Some(&embedded_textures.images),
 					})

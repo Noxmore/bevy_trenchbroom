@@ -1,4 +1,4 @@
-use bevy::render::mesh::VertexAttributeValues;
+use bevy_mesh::VertexAttributeValues;
 use brush::Brush;
 #[cfg(feature = "client")]
 use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
