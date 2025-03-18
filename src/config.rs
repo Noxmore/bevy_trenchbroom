@@ -302,6 +302,8 @@ impl TrenchBroomConfig {
 	}
 
 	/// Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
+	/// 
+	/// Also adds [`GenericMaterial3d`]s.
 	pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
 		let mut ent = view.world.entity_mut(view.entity);
 
@@ -310,6 +312,12 @@ impl TrenchBroomConfig {
 		}
 		if !ent.contains::<Transform>() {
 			ent.insert(Transform::default());
+		}
+
+		for mesh_view in &view.meshes {
+			view.world
+				.entity_mut(mesh_view.entity)
+				.insert(GenericMaterial3d(mesh_view.texture.material.clone()));
 		}
 	}
 

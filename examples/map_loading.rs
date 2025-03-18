@@ -12,14 +12,14 @@ use nil::prelude::*;
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
 #[require(Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
