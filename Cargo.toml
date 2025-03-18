@@ -15,7 +15,7 @@ license = "MIT OR Apache-2.0"
 name = "bevy_trenchbroom"
 readme = "readme.md"
 categories = ["game-development"]
-exclude = ["/assets", "/ci", "/examples", "/compile_map.sh"]
+exclude = ["/assets", "/ci", "/compile_map.sh"]
 
 description.workspace = true
 version.workspace = true
