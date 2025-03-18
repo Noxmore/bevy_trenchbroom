@@ -16,14 +16,14 @@ use nil::prelude::*;
 #[no_register]
 #[reflect(Component)]
 #[require(BspWorldspawn)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
 #[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity, Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
 }
@@ -42,7 +42,7 @@ pub enum FlagsTest {
 #[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
@@ -56,7 +56,7 @@ pub struct FuncDetail;
 #[no_register]
 #[reflect(Component)]
 #[require(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]

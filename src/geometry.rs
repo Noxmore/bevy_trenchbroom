@@ -185,22 +185,6 @@ impl GeometryProvider {
 		})
 	}
 
-	/// Puts materials on mesh entities.
-	/// Will do nothing is your config is specified to be a server.
-	pub fn render(self) -> Self {
-		self.push(|view| {
-			if view.tb_server.config.is_server {
-				return;
-			}
-
-			for mesh_view in &view.meshes {
-				view.world
-					.entity_mut(mesh_view.entity)
-					.insert(GenericMaterial3d(mesh_view.texture.material.clone()));
-			}
-		})
-	}
-
 	/// Inserts lightmaps if available.
 	#[cfg(feature = "bevy_pbr")]
 	pub fn with_lightmaps(self) -> Self {
