@@ -1,6 +1,6 @@
 pub(crate) use anyhow::anyhow;
 pub(crate) use bevy::math::*;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
 pub(crate) use bevy::prelude::*;
 pub(crate) use bevy::render::primitives::Aabb;
@@ -20,7 +20,7 @@ pub use qbsp::{
 	Palette, QUAKE_PALETTE,
 };
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub use crate::{
 	bsp::{
 		lighting::{LightingAnimator, LightingAnimators},

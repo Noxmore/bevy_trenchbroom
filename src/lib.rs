@@ -19,7 +19,7 @@ pub mod geometry;
 pub mod physics;
 pub mod prelude;
 pub mod qmap;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub mod special_textures;
 pub mod util;
 
@@ -45,7 +45,7 @@ impl Plugin for TrenchBroomPlugin {
 		#[cfg(any(feature = "rapier", feature = "avian"))]
 		app.add_plugins(physics::PhysicsPlugin);
 
-		#[cfg(feature = "bevy_pbr")]
+		#[cfg(feature = "client")]
 		app.add_plugins(special_textures::SpecialTexturesPlugin);
 
 		#[cfg(feature = "auto_register")]
@@ -58,7 +58,7 @@ impl Plugin for TrenchBroomPlugin {
 			}
 		}
 
-		#[cfg(feature = "bevy_pbr")]
+		#[cfg(feature = "client")]
 		if config.lightmap_exposure.is_some() {
 			app.add_systems(Update, Self::set_lightmap_exposure);
 		}
@@ -79,7 +79,7 @@ impl Plugin for TrenchBroomPlugin {
 	}
 }
 impl TrenchBroomPlugin {
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	pub fn set_lightmap_exposure(
 		mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
 		mut standard_materials: ResMut<Assets<StandardMaterial>>,

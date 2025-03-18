@@ -23,9 +23,9 @@ fn convert_vec3(config: &TrenchBroomConfig) -> impl Fn(qbsp::glam::Vec3) -> Vec3
 	|x| config.to_bevy_space(Vec3::from_array(x.to_array()))
 }
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 type Lightmap = BspLightmap;
-#[cfg(not(feature = "bevy_pbr"))]
+#[cfg(not(feature = "client"))]
 type Lightmap = LightmapUvMap;
 
 pub async fn compute_models<'a, 'lc: 'a>(
@@ -34,9 +34,9 @@ pub async fn compute_models<'a, 'lc: 'a>(
 	embedded_textures: &EmbeddedTextures<'a>,
 ) -> Vec<InternalModel> {
 	let config = &ctx.loader.tb_server.config;
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	let lightmap_uvs = lightmap.as_ref().map(|lm| &lm.uv_map);
-	#[cfg(not(feature = "bevy_pbr"))]
+	#[cfg(not(feature = "client"))]
 	let lightmap_uvs = lightmap.as_ref();
 
 	let mut models = Vec::with_capacity(ctx.data.models.len());
@@ -84,7 +84,7 @@ pub async fn compute_models<'a, 'lc: 'a>(
 			model.meshes.push(InternalModelMesh {
 				texture: MapGeometryTexture {
 					material,
-					#[cfg(feature = "bevy_pbr")]
+					#[cfg(feature = "client")]
 					lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
 					name: exported_mesh.texture,
 					flags: exported_mesh.tex_flags,

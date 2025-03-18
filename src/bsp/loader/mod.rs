@@ -1,8 +1,8 @@
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 mod irradiance_volume;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub use irradiance_volume::IrradianceVolumeMultipliers;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 mod lightmap;
 mod models;
 mod scene;
@@ -10,9 +10,9 @@ mod textures;
 
 use bevy::asset::{AssetLoader, LoadContext};
 use bsp::*;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 use irradiance_volume::load_irradiance_volume;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 use lightmap::BspLightmap;
 use models::{compute_models, finalize_models};
 use qmap::QuakeMapEntities;
@@ -77,9 +77,9 @@ impl AssetLoader for BspLoader {
 
 			let embedded_textures = EmbeddedTextures::setup(&mut ctx).await?;
 
-			#[cfg(feature = "bevy_pbr")]
+			#[cfg(feature = "client")]
 			let lightmap = BspLightmap::compute(&mut ctx)?;
-			#[cfg(not(feature = "bevy_pbr"))]
+			#[cfg(not(feature = "client"))]
 			let lightmap = None;
 
 			let mut models = compute_models(&mut ctx, &lightmap, &embedded_textures).await;
@@ -90,15 +90,15 @@ impl AssetLoader for BspLoader {
 
 			let bsp_models = finalize_models(&mut ctx, models, &mut world)?;
 
-			#[cfg(feature = "bevy_pbr")]
+			#[cfg(feature = "client")]
 			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
 				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
 				embedded_textures,
-				#[cfg(feature = "bevy_pbr")]
+				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),
-				#[cfg(feature = "bevy_pbr")]
+				#[cfg(feature = "client")]
 				irradiance_volume,
 				models: bsp_models,
 
@@ -113,7 +113,7 @@ impl AssetLoader for BspLoader {
 	}
 }
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 #[test]
 fn bsp_loading() {
 	let mut app = App::new();

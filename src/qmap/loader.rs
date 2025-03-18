@@ -154,7 +154,7 @@ impl AssetLoader for QuakeMapLoader {
 							MapGeometryTexture {
 								name: texture.s(),
 								material,
-								#[cfg(feature = "bevy_pbr")]
+								#[cfg(feature = "client")]
 								lightmap: None,
 								flags: BspTexFlags::Normal,
 							},
@@ -219,7 +219,7 @@ impl AssetLoader for QuakeMapLoader {
 	}
 }
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 #[test]
 fn map_loading() {
 	let mut app = App::new();

@@ -59,15 +59,15 @@ bevy-inspector-egui = "0.30"
 
 [[example]]
 name = "bsp_loading"
-required-features = ["bevy_pbr", "auto_register"]
+required-features = ["client"]
 
 [[example]]
 name = "map_loading"
-required-features = ["bevy_pbr", "auto_register"]
+required-features = ["client"]
 
 [features]
-default = ["bevy_pbr", "auto_register"]
-bevy_pbr = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
+default = ["client", "auto_register"]
+client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
 auto_register = ["dep:inventory", "bevy_trenchbroom_macros/auto_register"]
