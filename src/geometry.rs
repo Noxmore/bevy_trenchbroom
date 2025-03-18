@@ -186,13 +186,8 @@ impl GeometryProvider {
 	}
 
 	/// Puts materials on mesh entities.
-	/// Will do nothing is your config is specified to be a server.
 	pub fn render(self) -> Self {
 		self.push(|view| {
-			if view.tb_server.config.is_server {
-				return;
-			}
-
 			for mesh_view in &view.meshes {
 				view.world
 					.entity_mut(mesh_view.entity)
