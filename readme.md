@@ -64,7 +64,7 @@ use bevy_trenchbroom::bsp::base_classes::*;
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
 #[require(BspWorldspawn)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn {
     pub fog_color: Color,
     pub fog_density: f32,
@@ -90,7 +90,7 @@ pub struct MyBaseClass {
 // components that don't implement QuakeClass,
 // or don't want to be a required component.
 #[base(Visibility, MyBaseClass)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().with_lightmaps())]
 // By default, names are converted into snake_case.
 // Using the classname attribute, you can define the case you want
 // it to be converted to instead.
@@ -105,7 +105,7 @@ pub struct FuncWall;
 // of useful compiler properties.
 #[require(BspSolidEntity)]
 // Don't include a collider for func_illusionary.
-#[geometry(GeometryProvider::new().smooth_by_default_angle().render().with_lightmaps())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 // A more advanced example
