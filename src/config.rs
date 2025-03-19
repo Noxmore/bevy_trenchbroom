@@ -214,6 +214,10 @@ pub struct TrenchBroomConfig {
 	/// `qbsp` settings when parsing BSP files.
 	pub bsp_parse_settings: BspParseSettings,
 
+	/// Whether to automatically register the types stored in [`Self::entity_classes`], reducing boilerplate. (Default: true)
+	#[default(true)]
+	pub register_entity_class_types: bool,
+
 	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes. (Default: [`default_quake_class_registry`])
 	#[default(default_quake_class_registry())]
 	#[builder(skip)]
@@ -302,7 +306,7 @@ impl TrenchBroomConfig {
 	}
 
 	/// Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
-	/// 
+	///
 	/// Also adds [`GenericMaterial3d`]s.
 	pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
 		let mut ent = view.world.entity_mut(view.entity);

@@ -48,8 +48,7 @@ impl Plugin for TrenchBroomPlugin {
 		#[cfg(feature = "bevy_pbr")]
 		app.add_plugins(special_textures::SpecialTexturesPlugin);
 
-		#[cfg(feature = "auto_register")]
-		{
+		if config.register_entity_class_types {
 			let type_registry = app.world().resource::<AppTypeRegistry>();
 			let mut type_registry = type_registry.write();
 			for class in config.class_iter() {

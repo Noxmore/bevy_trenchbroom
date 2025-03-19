@@ -180,7 +180,12 @@ pub enum CollisionType {
 }
 ```
 
-Then to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_folder`. Example:
+If the `auto_register` feature is enabled (default), just defining these classes will automatically register them with all `TrenchBroomConfig`s.
+Otherwise, you'll have to call `TrenchBroomConfig::register_class<Class>()` to register each one.
+
+The types themselves will also need to be registered with Bevy, but if `TrenchBroomConfig::register_entity_class_types` is enabled (default), that will also happen automatically.
+
+Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_folder`. Example:
 
 ```rust
 use bevy::prelude::*;
