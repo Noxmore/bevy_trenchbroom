@@ -1,6 +1,6 @@
-use bevy::render::mesh::VertexAttributeValues;
+use bevy_mesh::VertexAttributeValues;
 use brush::Brush;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
 use bsp::BspBrushesAsset;
 use qmap::QuakeMapEntity;
@@ -52,7 +52,7 @@ impl std::ops::Deref for BrushList {
 pub struct MapGeometryTexture {
 	pub name: String,
 	pub material: Handle<GenericMaterial>,
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	/// If the texture should be full-bright
 	pub flags: BspTexFlags,
@@ -186,7 +186,7 @@ impl GeometryProvider {
 	}
 
 	/// Inserts lightmaps if available.
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	pub fn with_lightmaps(self) -> Self {
 		self.push(|view| {
 			for mesh_view in &view.meshes {
@@ -198,7 +198,7 @@ impl GeometryProvider {
 			}
 		})
 	}
-	#[cfg(not(feature = "bevy_pbr"))]
+	#[cfg(not(feature = "client"))]
 	pub fn with_lightmaps(self) -> Self {
 		self
 	}

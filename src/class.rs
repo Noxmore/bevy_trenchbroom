@@ -2,7 +2,7 @@ use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use bsp::base_classes::*;
 use fgd::FgdType;
 use geometry::GeometryProvider;
-use qmap::{QuakeEntityError, QuakeMapEntity};
+use qmap::QuakeMapEntity;
 use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 
 use crate::*;
@@ -175,13 +175,19 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, ErasedQuakeClass>> {
 	// TODO would it be better if we use inventory instead?
 	macro_rules! registry {
-		{$($ty:ident),* $(,)?} => {
-			[$(($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS))),*].into()
+		{$($(#[$($attrs:meta)*])? $ty:ident),* $(,)?} => {
+			[
+				$(
+					$(#[$($attrs)*])?
+					($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS)
+				)),*
+			].into()
 		};
 	}
 
 	registry! {
 		Transform,
+		#[cfg(feature = "client")]
 		Visibility,
 
 		Target,
@@ -260,6 +266,7 @@ impl QuakeClass for Transform {
 	}
 }
 
+#[cfg(feature = "client")]
 impl QuakeClass for Visibility {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
@@ -292,7 +299,7 @@ impl QuakeClass for Visibility {
 			Some("Hidden") => Visibility::Hidden,
 			Some("Visible") => Visibility::Visible,
 			None => Visibility::default(),
-			Some(_) => Err(QuakeEntityError::PropertyParseError {
+			Some(_) => Err(qmap::QuakeEntityError::PropertyParseError {
 				property: "visibility".s(),
 				required_type: "Visibility",
 				error: "Must be either `Inherited`, `Hidden`, or `Visible`".s(),

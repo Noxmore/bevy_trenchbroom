@@ -19,6 +19,44 @@ pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
 	.repeat()
 }
 
+/// Container for meshes used for headless environments. This can't be the regular `Mesh3d` as it is provided by `bevy_render`
+#[cfg(not(feature = "client"))]
+#[derive(Component, Clone, Debug, Default, Deref, DerefMut, Reflect, PartialEq, Eq)]
+#[reflect(Component, Default)]
+#[require(Transform)]
+pub struct Mesh3d(pub Handle<Mesh>);
+
+/// Bevy's `Aabb` type is provided by `bevy_render`, but we need it in a headless context, so this is a few copied parts of it.
+#[cfg(not(feature = "client"))]
+#[derive(Component, Clone, Copy, Debug, Default, Reflect, PartialEq)]
+#[reflect(Component, Default, Debug, PartialEq)]
+pub struct Aabb {
+	pub center: Vec3A,
+	pub half_extents: Vec3A,
+}
+
+#[cfg(not(feature = "client"))]
+impl Aabb {
+	#[inline]
+	pub fn from_min_max(minimum: Vec3, maximum: Vec3) -> Self {
+		let minimum = Vec3A::from(minimum);
+		let maximum = Vec3A::from(maximum);
+		let center = 0.5 * (maximum + minimum);
+		let half_extents = 0.5 * (maximum - minimum);
+		Self { center, half_extents }
+	}
+
+	#[inline]
+	pub fn min(&self) -> Vec3A {
+		self.center - self.half_extents
+	}
+
+	#[inline]
+	pub fn max(&self) -> Vec3A {
+		self.center + self.half_extents
+	}
+}
+
 pub trait ImageSamplerRepeatExt {
 	/// Sets the address mode of this sampler to repeat.
 	fn repeat(self) -> Self;

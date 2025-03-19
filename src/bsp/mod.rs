@@ -1,5 +1,5 @@
 pub mod base_classes;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub mod lighting;
 pub mod loader;
 
@@ -7,7 +7,7 @@ use brush::{BrushPlane, ConvexHull};
 use class::{ErasedQuakeClass, QuakeClassType};
 use config::{EmbeddedTextureLoadView, TextureLoadView};
 use geometry::{Brushes, GeometryProviderMeshView, MapGeometryTexture};
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 use lighting::AnimatedLighting;
 use loader::BspLoader;
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -28,7 +28,7 @@ impl Plugin for BspPlugin {
 			.init_asset_loader::<BspLoader>()
 		;
 
-		#[cfg(feature = "bevy_pbr")]
+		#[cfg(feature = "client")]
 		if !app.world().resource::<TrenchBroomServer>().config.no_bsp_lighting {
 			app.add_plugins(lighting::BspLightingPlugin);
 		}
@@ -44,9 +44,9 @@ pub struct Bsp {
 	/// The main scene of everything put together.
 	pub scene: Handle<Scene>,
 	pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
-	#[cfg(feature = "bevy_pbr")]
+	#[cfg(feature = "client")]
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,

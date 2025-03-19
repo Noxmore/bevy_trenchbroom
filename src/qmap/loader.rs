@@ -131,6 +131,7 @@ impl AssetLoader for QuakeMapLoader {
 									tb_config: &self.tb_server.config,
 									load_context,
 									entities: &entities,
+									#[cfg(feature = "client")]
 									alpha_mode: None,
 									embedded_textures: None,
 								})
@@ -154,7 +155,7 @@ impl AssetLoader for QuakeMapLoader {
 							MapGeometryTexture {
 								name: texture.s(),
 								material,
-								#[cfg(feature = "bevy_pbr")]
+								#[cfg(feature = "client")]
 								lightmap: None,
 								flags: BspTexFlags::Normal,
 							},
@@ -219,7 +220,7 @@ impl AssetLoader for QuakeMapLoader {
 	}
 }
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 #[test]
 fn map_loading() {
 	let mut app = App::new();

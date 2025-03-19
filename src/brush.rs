@@ -1,7 +1,7 @@
 //! Contains Brush definitions, math, and mesh generation.
 
 use crate::*;
-use bevy::render::mesh::{Indices, PrimitiveTopology};
+use bevy_mesh::{Indices, PrimitiveTopology};
 use util::{AlmostEqual, ConvertZeroToOne};
 
 /// Represents an infinitely large plane in 3d space, used for defining convex hulls like [`Brush`]es.

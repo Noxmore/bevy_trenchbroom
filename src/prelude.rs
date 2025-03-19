@@ -1,9 +1,13 @@
+#[cfg(not(feature = "client"))]
+pub(crate) use crate::util::{Aabb, Mesh3d};
 pub(crate) use anyhow::anyhow;
 pub(crate) use bevy::math::*;
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
 pub(crate) use bevy::prelude::*;
+#[cfg(feature = "client")]
 pub(crate) use bevy::render::primitives::Aabb;
+pub(crate) use bevy_mesh::Mesh;
 pub(crate) use default_struct_builder::*;
 pub(crate) use itertools::*;
 pub(crate) use nil::prelude::*;
@@ -20,7 +24,7 @@ pub use qbsp::{
 	Palette, QUAKE_PALETTE,
 };
 
-#[cfg(feature = "bevy_pbr")]
+#[cfg(feature = "client")]
 pub use crate::{
 	bsp::{
 		lighting::{LightingAnimator, LightingAnimators},

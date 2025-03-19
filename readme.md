@@ -284,7 +284,7 @@ First, enable the `rapier` or `avian` feature on the crate, then either call `co
 
 ## Multiplayer
 
-For dedicated servers `bevy_trenchbroom` supports turning off its use of `bevy_pbr` by disabling a its own feature of the same name. e.g.
+For dedicated servers `bevy_trenchbroom` supports headless mode by turning off its `client` feature. e.g.
 ```toml
 bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
 ```

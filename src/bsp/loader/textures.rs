@@ -1,9 +1,7 @@
-use bevy::{
-	asset::{io::AssetReaderError, ReadAssetBytesError},
-	render::render_resource::{Extent3d, TextureDimension, TextureFormat},
-};
+use bevy::asset::{io::AssetReaderError, ReadAssetBytesError};
 use bsp::*;
 use loader::BspLoadCtx;
+use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 use crate::*;
 
@@ -66,6 +64,7 @@ impl<'d> EmbeddedTextures<'d> {
 		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity(images.len());
 
 		for (name, (image, image_handle)) in &images {
+			#[cfg(feature = "client")]
 			let is_cutout_texture = name.starts_with('{');
 
 			let material = (config.load_embedded_texture)(EmbeddedTextureLoadView {
@@ -74,6 +73,7 @@ impl<'d> EmbeddedTextures<'d> {
 					tb_config: config,
 					load_context: ctx.load_context,
 					entities: ctx.entities,
+					#[cfg(feature = "client")]
 					alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
 					embedded_textures: Some(&images),
 				},
