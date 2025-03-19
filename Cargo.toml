@@ -17,6 +17,7 @@ name = "bevy_trenchbroom"
 readme = "readme.md"
 categories = ["game-development"]
 exclude = ["/assets", "/ci", "/compile_map.sh"]
+keywords = ["bevy"]
 
 description.workspace = true
 version.workspace = true
