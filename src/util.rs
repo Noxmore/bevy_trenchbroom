@@ -5,20 +5,6 @@ use bevy::{
 
 use crate::*;
 
-/// Creates an image sampler with repeating textures, and optionally filtered.
-#[deprecated(
-	since = "0.6.5",
-	note = "TrenchBroomConfig has its own image sampler. If you still want an API like this, use `ImageSamplerRepeatExt` instead."
-)]
-pub fn repeating_image_sampler(filtered: bool) -> ImageSamplerDescriptor {
-	if filtered {
-		ImageSamplerDescriptor::linear()
-	} else {
-		ImageSamplerDescriptor::nearest()
-	}
-	.repeat()
-}
-
 /// Container for meshes used for headless environments. This can't be the regular `Mesh3d` as it is provided by `bevy_render`
 #[cfg(not(feature = "client"))]
 #[derive(Component, Clone, Debug, Default, Deref, DerefMut, Reflect, PartialEq, Eq)]
