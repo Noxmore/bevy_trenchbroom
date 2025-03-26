@@ -1,11 +1,12 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(feature = "example_client")]
-use bevy::ecs::{component::ComponentId, world::DeferredWorld};
+use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
+use bevy::pbr::VolumetricFog;
 use bevy::prelude::*;
-#[cfg(feature = "example_client")]
-use bevy_flycam::prelude::*;
+// #[cfg(feature = "example_client")]
+// use bevy_flycam::prelude::*;
 use bevy_trenchbroom::bsp::base_classes::*;
 use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
@@ -69,7 +70,7 @@ pub struct FuncIllusionary;
 pub struct Cube;
 #[cfg(feature = "example_client")]
 impl Cube {
-	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+	fn on_add(mut world: DeferredWorld, ctx: HookContext) {
 		// This isn't necessary because we get AssetServer here, this is mainly for example.
 		if world.is_scene_world() {
 			return;
@@ -78,7 +79,7 @@ impl Cube {
 		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
 		let material = asset_server.add(StandardMaterial::default());
 
-		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
+		world.commands().entity(ctx.entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
 	}
 }
 
@@ -92,7 +93,7 @@ pub struct Light;
 struct ClientPlugin;
 impl Plugin for ClientPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
-		#[cfg(feature = "example_client")]
+		/* #[cfg(feature = "example_client")]
 		#[rustfmt::skip]
 		app
 			// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
@@ -102,7 +103,7 @@ impl Plugin for ClientPlugin {
 				speed: 6.,
 			})
 			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		;
+		; */
 	}
 }
 
@@ -118,6 +119,7 @@ fn main() {
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
+				.bicubic_lightmap_filtering(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<FuncWall>()
@@ -152,6 +154,11 @@ fn setup_scene(
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
+
+	commands.spawn((
+		Camera3d::default(),
+		Transform::from_translation(Vec3::splat(10.)).looking_at(Vec3::ZERO, Dir3::Y),
+	));
 
 	// Wide FOV
 	#[cfg(feature = "example_client")]

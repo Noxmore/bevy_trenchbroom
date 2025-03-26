@@ -88,7 +88,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 			});
 			image.sampler = ImageSampler::linear();
 
-			let handle = ctx.load_context.add_labeled_asset(format!("IrradianceVolumeSlot{slot_idx}"), image);
+			let handle = ctx.load_context.add_labeled_asset(format!("IrradianceVolumeSlot{slot_idx}"), image).unwrap();
 			slot_idx += 1;
 			handle
 		});
@@ -103,13 +103,13 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 				},
 				TextureDimension::D3,
 			),
-		);
+		).unwrap();
 
 		let mut style_map_image = style_map_builder.build();
 		style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;
 		style_map_image.asset_usage = RenderAssetUsages::all(); // TODO: keep this in main world for image depth work-around
 
-		let styles = ctx.load_context.add_labeled_asset("IrradianceVolumeStyleMap".s(), style_map_image);
+		let styles = ctx.load_context.add_labeled_asset("IrradianceVolumeStyleMap".s(), style_map_image).unwrap();
 
 		let animated_lighting_handle = ctx.load_context.add_labeled_asset(
 			"IrradianceVolumeAnimator".s(),
@@ -119,7 +119,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 				input,
 				styles,
 			},
-		);
+		).unwrap();
 
 		let mins: Vec3 = light_grid.mins.to_array().into();
 		let scale: Vec3 = (light_grid.size.as_vec3() * light_grid.step).to_array().into();

@@ -1,7 +1,6 @@
 use bevy::{
-	asset::{io::AssetReaderError, AssetLoadError, LoadContext, RenderAssetUsages},
-	image::{ImageLoaderSettings, ImageSampler},
-	utils::BoxedFuture,
+	asset::{io::AssetReaderError, AssetLoadError, LoadContext, LoadDirectError, RenderAssetUsages, DuplicateLabelAssetError},
+	image::{ImageLoaderSettings, ImageSampler}, tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
@@ -238,6 +237,9 @@ pub struct TrenchBroomConfig {
 	#[default(Self::default_texture_sampler())]
 	pub texture_sampler: ImageSampler,
 
+	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering.
+	pub bicubic_lightmap_filtering: bool,
+
 	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
 	#[default(RenderAssetUsages::all())]
 	pub brush_mesh_asset_usages: RenderAssetUsages,
@@ -347,7 +349,7 @@ impl TrenchBroomConfig {
 			let generic_material = match special_textures::load_special_texture(&mut view, &material) {
 				Some(v) => v,
 				None => GenericMaterial {
-					handle: view.add_material(material).into(),
+					handle: view.add_material(material).unwrap().into(),
 					properties: default(),
 				},
 			};
@@ -358,6 +360,7 @@ impl TrenchBroomConfig {
 			view.parent_view
 				.load_context
 				.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
+				.unwrap()
 		})
 	}
 
@@ -381,8 +384,8 @@ impl TrenchBroomConfig {
 						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
 						.load(path)
 				}
-				Err(err) => match err.error {
-					AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) => {
+				Err(err) => match err {
+					LoadDirectError::LoadError { dependency: _, error: AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) } => {
 						let texture_sampler = view.tb_config.texture_sampler.clone();
 						view.load_context
 							.loader()
@@ -497,7 +500,7 @@ pub struct TextureLoadView<'a, 'b> {
 impl TextureLoadView<'_, '_> {
 	/// Shorthand for adding a material asset with the correct label.
 	#[cfg(feature = "client")]
-	pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
+	pub fn add_material<M: Material>(&mut self, material: M) -> Result<Handle<M>, DuplicateLabelAssetError> {
 		self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
 	}
 }

@@ -14,8 +14,8 @@ doc = false
 [dependencies]
 bevy.workspace = true
 bevy_trenchbroom = { path = "../..", default-features = false, features = ["auto_register"] }
-bevy_flycam = { workspace = true, optional = true }
-bevy-inspector-egui = { workspace = true, optional = true }
+# bevy_flycam = { workspace = true, optional = true }
+# bevy-inspector-egui = { workspace = true, optional = true }
 nil.workspace = true
 enumflags2.workspace = true
 
@@ -23,4 +23,5 @@ enumflags2.workspace = true
 
 [features]
 default = ["example_client"]
-example_client = ["bevy_trenchbroom/client", "dep:bevy_flycam", "dep:bevy-inspector-egui", "bevy/default"]
+example_client = ["bevy_trenchbroom/client", "bevy/default"]
+# example_client = ["bevy_trenchbroom/client", "dep:bevy_flycam", "dep:bevy-inspector-egui", "bevy/default"]

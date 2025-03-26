@@ -48,7 +48,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			let handle = view.add_material(LiquidMaterial {
 				base: material,
 				extension: default_fn(),
-			});
+			}).unwrap();
 
 			return Some(GenericMaterial {
 				handle: handle.into(),
@@ -94,15 +94,17 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			let fg = view
 				.parent_view
 				.load_context
-				.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
+				.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg)
+				.unwrap();
 
 			let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
 			let bg = view
 				.parent_view
 				.load_context
-				.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
+				.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg)
+				.unwrap();
 
-			let handle = view.add_material(QuakeSkyMaterial { fg, bg, ..default_fn() });
+			let handle = view.add_material(QuakeSkyMaterial { fg, bg, ..default_fn() }).unwrap();
 
 			return Some(GenericMaterial {
 				handle: handle.into(),
@@ -127,7 +129,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				frame_num += 1;
 			}
 
-			let handle = view.add_material(material);
+			let handle = view.add_material(material).unwrap();
 
 			let mut generic_material = GenericMaterial::new(handle);
 
@@ -137,7 +139,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 					next: None,
 					images: Some(MaterialAnimation {
 						fps,
-						value: bevy::utils::HashMap::from([("base_color_texture".s(), frames)]),
+						value: [("base_color_texture".s(), frames)].into_iter().collect(),
 						state: GenericMaterialAnimationState {
 							current_frame: texture_frame_idx.wrapping_sub(1) as usize,
 							next_frame_time: Duration::default(),

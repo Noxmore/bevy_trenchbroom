@@ -61,7 +61,7 @@ impl<'d> EmbeddedTextures<'d> {
 			})
 			.collect();
 
-		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity(images.len());
+		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity_and_hasher(images.len(), default());
 
 		for (name, (image, image_handle)) in &images {
 			#[cfg(feature = "client")]
@@ -98,7 +98,9 @@ impl<'d> EmbeddedTextures<'d> {
 	/// Loads the placeholder images, and returns the embedded textures.
 	pub fn finalize(self, ctx: &mut BspLoadCtx) -> HashMap<String, BspEmbeddedTexture> {
 		for (name, (image, _)) in self.images {
-			ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
+			if ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image).is_err() {
+				error!("Duplicate texture in {name}: {}", ctx.load_context.asset_path());
+			}
 		}
 
 		self.textures

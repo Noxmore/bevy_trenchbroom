@@ -15,6 +15,7 @@ pub(crate) use nil::std_prelude::*;
 pub(crate) use qbsp::prelude::*;
 pub(crate) use serde::*;
 pub(crate) use thiserror::Error;
+pub(crate) use bevy::platform_support::collections::HashMap;
 
 pub use bevy_materialize::prelude::*;
 pub use qbsp::{

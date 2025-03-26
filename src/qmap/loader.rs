@@ -1,6 +1,4 @@
-use std::collections::hash_map::Entry;
-
-use bevy::asset::{AssetLoader, AsyncReadExt};
+use bevy::{asset::{AssetLoader, AsyncReadExt, CompleteLoadedAsset}, platform_support::collections::hash_map::Entry, tasks::ConditionalSendFuture};
 use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
 use class::QuakeClassType;
 use config::TextureLoadView;
@@ -28,7 +26,7 @@ impl AssetLoader for QuakeMapLoader {
 		reader: &mut dyn bevy::asset::io::Reader,
 		_settings: &Self::Settings,
 		load_context: &mut bevy::asset::LoadContext,
-	) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
+	) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
 		Box::pin(async {
 			let mut input = String::new();
 			reader.read_to_string(&mut input).await?;
@@ -37,7 +35,7 @@ impl AssetLoader for QuakeMapLoader {
 			let mut entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
 			let mut mesh_handles = Vec::new();
-			let mut brush_lists = HashMap::new();
+			let mut brush_lists = HashMap::default();
 
 			let mut world = World::new();
 
@@ -118,7 +116,7 @@ impl AssetLoader for QuakeMapLoader {
 											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
 									)
 									.await
-									.map(|image: bevy::asset::LoadedAsset<Image>| image.take().size())
+									.map(|image: CompleteLoadedAsset<Image>| image.take().size())
 									.unwrap_or(UVec2::splat(1)),
 							),
 						};
@@ -187,14 +185,14 @@ impl AssetLoader for QuakeMapLoader {
 					(self.tb_server.config.global_geometry_provider)(&mut view);
 
 					for (entity, mesh, _) in meshes {
-						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
+						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh).unwrap();
 
 						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
 
 						mesh_handles.push(handle);
 					}
 
-					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
+					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone())).unwrap();
 					brush_lists.insert(map_entity_idx, brush_list_handle.clone());
 
 					world.entity_mut(entity_id).insert(Brushes::Shared(brush_list_handle));
@@ -207,7 +205,7 @@ impl AssetLoader for QuakeMapLoader {
 			}
 
 			Ok(QuakeMap {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)).unwrap(),
 				meshes: mesh_handles,
 				brush_lists,
 				entities,
