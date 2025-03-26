@@ -8,7 +8,7 @@ mod models;
 mod scene;
 mod textures;
 
-use bevy::asset::{AssetLoader, LoadContext};
+use bevy::{asset::{AssetLoader, LoadContext}, tasks::ConditionalSendFuture};
 use bsp::*;
 #[cfg(feature = "client")]
 use irradiance_volume::load_irradiance_volume;
@@ -51,7 +51,7 @@ impl AssetLoader for BspLoader {
 		reader: &mut dyn bevy::asset::io::Reader,
 		_settings: &Self::Settings,
 		load_context: &mut LoadContext,
-	) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
+	) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
 		Box::pin(async move {
 			let mut bytes = Vec::new();
 			reader.read_to_end(&mut bytes).await?;
@@ -94,7 +94,7 @@ impl AssetLoader for BspLoader {
 			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)).unwrap(),
 				embedded_textures,
 				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),

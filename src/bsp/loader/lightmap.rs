@@ -50,7 +50,7 @@ impl BspLightmap {
 						},
 						TextureDimension::D2,
 					),
-				);
+				).unwrap();
 
 				let mut i = 0;
 				let input = slots.map(|image| {
@@ -68,7 +68,7 @@ impl BspLightmap {
 							TextureFormat::Rgba8UnormSrgb,
 							config.bsp_textures_asset_usages,
 						),
-					);
+					).unwrap();
 
 					i += 1;
 					handle
@@ -87,7 +87,7 @@ impl BspLightmap {
 						TextureFormat::Rgba8Uint,
 						RenderAssetUsages::RENDER_WORLD,
 					),
-				);
+				).unwrap();
 
 				let handle = ctx.load_context.add_labeled_asset(
 					"LightmapAnimator".s(),
@@ -97,7 +97,7 @@ impl BspLightmap {
 						input,
 						styles,
 					},
-				);
+				).unwrap();
 
 				Ok(Some(Self {
 					animated_lighting: handle,

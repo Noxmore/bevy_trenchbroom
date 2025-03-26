@@ -52,8 +52,6 @@ impl Plugin for BspLightingPlugin {
 		#[rustfmt::skip]
 		app
 			.add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
-			.add_plugins(ExtractResourcePlugin::<IrradianceVolumeDepths>::default())
-			.init_resource::<IrradianceVolumeDepths>()
 
 			.register_type::<AnimatedLightingHandle>()
 
@@ -63,10 +61,7 @@ impl Plugin for BspLightingPlugin {
 
 			.init_asset::<AnimatedLighting>()
 
-			.add_systems(PreUpdate, (
-				Self::insert_animated_lightmaps,
-				Self::populate_irradiance_volume_depths,
-			))
+			.add_systems(PreUpdate, Self::insert_animated_lightmaps)
 		;
 
 		let render_app = app.sub_app_mut(RenderApp);
@@ -101,12 +96,14 @@ impl BspLightingPlugin {
 					commands.entity(entity).insert(Lightmap {
 						image: animated_lighting.output.clone(),
 						uv_rect: Rect::new(0., 0., 1., 1.),
+						bicubic_sampling: tb_server.config.bicubic_lightmap_filtering,
 					});
 				}
 				AnimatedLightingType::IrradianceVolume => {
 					commands.entity(entity).insert(IrradianceVolume {
 						voxels: animated_lighting.output.clone(),
 						intensity: tb_server.config.default_irradiance_volume_intensity,
+						affects_lightmapped_meshes: false, // TODO: This might help with normals?
 					});
 				}
 			}
@@ -186,30 +183,6 @@ impl BspLightingPlugin {
 			}
 		}
 	}
-
-	fn populate_irradiance_volume_depths(
-		mut depths: ResMut<IrradianceVolumeDepths>,
-		animated_lighting_assets: Res<Assets<AnimatedLighting>>,
-		images: Res<Assets<Image>>,
-	) {
-		for (id, animated_lighting) in animated_lighting_assets.iter() {
-			if animated_lighting.ty != AnimatedLightingType::IrradianceVolume {
-				continue;
-			}
-			if depths.values.contains_key(&id) {
-				continue;
-			}
-			let Some(image) = images.get(&animated_lighting.styles) else { continue };
-
-			depths.values.insert(id, image.texture_descriptor.size.depth_or_array_layers);
-		}
-	}
-}
-
-/// TODO: Workaround for [`GpuImage`] not storing depth until 0.16
-#[derive(Resource, ExtractResource, Clone, Default)]
-struct IrradianceVolumeDepths {
-	values: HashMap<AssetId<AnimatedLighting>, u32>,
 }
 
 #[derive(Resource, Default)]
@@ -345,14 +318,13 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 					pass.set_bind_group(1, globals_bind_group, &[]);
 
 					pass.dispatch_workgroups(
-						output_image.size.x.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
-						output_image.size.y.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
+						output_image.size.width.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
+						output_image.size.height.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
 						1,
 					);
 				}
 
 				AnimatedLightingType::IrradianceVolume => {
-					let Some(depth) = world.resource::<IrradianceVolumeDepths>().values.get(id).copied() else { continue };
 					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.irradiance_volume_pipeline) else { return Ok(()) };
 
 					pass.set_pipeline(pipeline);
@@ -361,9 +333,9 @@ impl bevy::render::render_graph::Node for AnimatedLightingNode {
 					pass.set_bind_group(1, globals_bind_group, &[]);
 
 					pass.dispatch_workgroups(
-						output_image.size.x.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
-						output_image.size.y.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
-						depth.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.size.width.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.size.height.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.size.depth_or_array_layers.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
 					);
 				}
 			}

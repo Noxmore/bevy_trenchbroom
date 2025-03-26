@@ -181,7 +181,7 @@ pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, Eras
 					$(#[$($attrs)*])?
 					($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS)
 				)),*
-			].into()
+			].into_iter().collect()
 		};
 	}
 
