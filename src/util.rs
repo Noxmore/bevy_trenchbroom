@@ -197,7 +197,7 @@ impl IsSceneWorld for DeferredWorld<'_> {
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
 /// Put this on an entity when spawning to counteract the rotation.
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct TrenchBroomGltfRotationFix;
 
 /// See docs on [`TrenchBroomGltfRotationFix`]
