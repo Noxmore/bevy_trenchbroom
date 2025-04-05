@@ -90,7 +90,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				);
 
 				image.sampler = view.tb_config.texture_sampler.clone();
-				
+
 				image
 			}
 
