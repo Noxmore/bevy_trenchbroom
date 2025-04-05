@@ -197,8 +197,8 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
         error!("Could not write TrenchBroom config: {err}");
     }
 
-    // This will write <folder_path>/GameConfig.cfg,
-    // and <folder_path>/example_game.fgd
+    // This will write <TB games folder>/example_game/GameConfig.cfg,
+    // and <TB games folder>/example_game/example_game.fgd
 }
 ```
 
