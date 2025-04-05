@@ -744,45 +744,19 @@ impl From<&DefaultFaceAttributes> for json::JsonValue {
 	}
 }
 
-/// Error type for errors related to writing the TrenchBroom game config into the default location.
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum DefaultTrenchBroomConfigPathError {
-	/// The target operating system is not supported.
+	#[error("Unsupported target OS: {0}")]
 	UnsupportedOs(String),
-	/// The home directory was not found.
+	#[error("Home directory not found")]
 	HomeDirNotFound,
-	/// The TrenchBroom user data directory was not found. (e.g. `~/.TrenchBroom` on Unix)
+	#[error("TrenchBroom user data not found at {}. Have you installed TrenchBroom?", .0.display())]
 	UserDataNotFound(PathBuf),
-	/// Failed to create the game config directory. (e.g. `~/.TrenchBroom/games/my_cool_bevy_game` on Unix)
+	#[error("Failed to create game config directory: {0}")]
 	CreateDirError(std::io::Error),
-	/// Failed to write the config to the default location.
-	WriteError {
-		/// The error that occurred.
-		error: std::io::Error,
-		/// The path to the config file that was being written to.
-		path: PathBuf,
-	},
+	#[error("Failed to write config to {}: {error}", path.display())]
+	WriteError { error: std::io::Error, path: PathBuf },
 }
-
-impl std::fmt::Display for DefaultTrenchBroomConfigPathError {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Self::UnsupportedOs(os) => write!(f, "Unsupported target OS: {os}"),
-			Self::HomeDirNotFound => write!(f, "Home directory not found"),
-			Self::UserDataNotFound(path) => {
-				write!(
-					f,
-					"TrenchBroom user data not found at {}. Have you installed TrenchBroom?",
-					path.display()
-				)
-			}
-			Self::CreateDirError(err) => write!(f, "Failed to create game config directory: {err}"),
-			Self::WriteError { error, path } => write!(f, "Failed to write config to {}: {error}", path.display()),
-		}
-	}
-}
-
-impl std::error::Error for DefaultTrenchBroomConfigPathError {}
 
 impl TrenchBroomConfig {
 	/// Writes the configuration into the [default TrenchBroom game config path].
