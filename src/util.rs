@@ -12,6 +12,9 @@ impl Plugin for UtilPlugin {
 		app
 			.register_type::<TrenchBroomGltfRotationFix>()
 		;
+
+		#[cfg(not(feature = "client"))]
+		app.register_type::<Mesh3d>().register_type::<Aabb>();
 	}
 }
 
