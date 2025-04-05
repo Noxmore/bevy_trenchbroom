@@ -191,7 +191,6 @@ Now to access the config from TrenchBroom, at some point in your application, yo
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
-// #[cfg(debug_assertions)]
 // app.add_systems(Startup, write_trenchbroom_config)
 
 fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
@@ -204,7 +203,7 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
 }
 ```
 
-This writes it out every time your app starts in debug mode, but depending on what you want to do, you might want to write it out some other time.
+This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
 After you write it out, you have to use the created game config in TrenchBroom's preferences and set the "Game path" to your project/game folder.
 
