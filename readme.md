@@ -128,11 +128,11 @@ pub struct FuncIllusionary;
 // Alternatively, you could create a system with a query
 // `Query<&StaticProp, Without<SceneRoot>>`
 // and spawn it through that.
-//
-// NOTE: If you're using a GLTF model, add
-// the TrenchBroomGltfRotationFix component when adding it.
 #[reflect(Component)]
-#[require(Transform, Visibility)]
+// NOTE: If you're using GLTF models, the rotation in-editor
+// will differ from in-Bevy if you don't add this component.
+#[require(TrenchBroomGltfRotationFix)]
+#[base(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {
