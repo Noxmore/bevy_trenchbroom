@@ -17,14 +17,13 @@ Integration and support for the following workflows:
 
 - Add the `TrenchBroomPlugin` with a supplied `TrenchBroomConfig` to your app like so:
 
-```rust
+```rust ignore
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 fn main() {
     App::new()
         // ...
-        .add_plugins(DefaultPlugins)
         .add_plugins(TrenchBroomPlugin(
             // Here you can customize the resulting bevy_trenchbroom
             // and game configuration with a builder syntax
@@ -129,8 +128,8 @@ pub struct FuncIllusionary;
 // `Query<&StaticProp, Without<SceneRoot>>`
 // and spawn it through that.
 //
-// NOTE: If you're using a GLTF model, add
-// the TrenchBroomGltfRotationFix component when adding it.
+// NOTE: If you're using a GLTF model, insert
+// the TrenchBroomGltfRotationFix component when spawning the model.
 #[reflect(Component)]
 #[require(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
@@ -194,18 +193,18 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, write_trenchbroom_config)
 
 fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
-    if let Err(err) = server.config.write_folder("<folder_path>") {
+    if let Err(err) = server.config.write_to_default_folder() {
         error!("Could not write TrenchBroom config: {err}");
     }
 
-    // This will write <folder_path>/GameConfig.cfg,
-    // and <folder_path>/example_game.fgd
+    // This will write <TB games folder>/example_game/GameConfig.cfg,
+    // and <TB games folder>/example_game/example_game.fgd
 }
 ```
 
 This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
-After you write it out, the folder the files need to end up in is your TrenchBroom games configuration folder which you can find the path of [here](https://trenchbroom.github.io/manual/latest/#game_configuration_files), and you have the set the "Game path" to your project/game folder in TrenchBroom preferences.
+After you write it out, you have to use the created game config in TrenchBroom's preferences and set the "Game path" to your project/game folder.
 
 ## Materials and `bevy_materialize`
 

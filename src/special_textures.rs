@@ -24,7 +24,7 @@ impl Plugin for SpecialTexturesPlugin {
 	}
 }
 
-/// If a [`SpecialTexturesConfig`] is part of the config in `view`, this attempts to load [Quake special textures](https://quakewiki.org/wiki/Textures) using the material provided as a base.
+/// If [`TrenchBroomConfig`] contains [Quake special textures](https://quakewiki.org/wiki/Textures), this attempts to load them using the material provided as a base.
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
 	// We save a teeny tiny bit of time by only cloning if we need to :)
 	let mut material = material.clone();

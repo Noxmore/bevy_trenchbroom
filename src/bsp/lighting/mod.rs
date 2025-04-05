@@ -81,7 +81,7 @@ impl Plugin for BspLightingPlugin {
 	}
 }
 impl BspLightingPlugin {
-	/// Inserts [`Lightmap`] components into entities with [`AnimatedLightmap`].
+	/// Inserts [`Lightmap`] components into entities with [`AnimatedLighting`].
 	pub fn insert_animated_lightmaps(
 		mut commands: Commands,
 		query: Query<(Entity, &AnimatedLightingHandle), (Without<Lightmap>, Without<IrradianceVolume>)>,

@@ -8,7 +8,7 @@ use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
-use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
+use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
 use crate::*;
 
@@ -301,8 +301,6 @@ impl TrenchBroomConfig {
 				.map(|name| format!("{classname} ({name})"))
 				.unwrap_or(classname),
 		));
-
-		trenchbroom_gltf_rotation_fix(entity);
 
 		Ok(())
 	}
@@ -752,14 +750,75 @@ impl From<&DefaultFaceAttributes> for json::JsonValue {
 	}
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum DefaultTrenchBroomConfigPathError {
+	#[error("Unsupported target OS: {0}")]
+	UnsupportedOs(String),
+	#[error("Home directory not found")]
+	HomeDirNotFound,
+	#[error("TrenchBroom user data not found at {}. Have you installed TrenchBroom?", .0.display())]
+	UserDataNotFound(PathBuf),
+	#[error("Failed to create game config directory: {0}")]
+	CreateDirError(io::Error),
+	#[error("Failed to write config to {}: {error}", path.display())]
+	WriteError { error: io::Error, path: PathBuf },
+}
+
 impl TrenchBroomConfig {
+	/// Writes the configuration into the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
+	///
+	/// If you want to customize the path, use [`write_folder`](Self::write_folder) instead.
+	pub fn write_to_default_folder(&self) -> Result<(), DefaultTrenchBroomConfigPathError> {
+		let path = self.get_default_trenchbroom_game_config_path()?;
+		if let Err(err) = self.write_folder(&path) {
+			return Err(DefaultTrenchBroomConfigPathError::WriteError { error: err, path });
+		}
+
+		Ok(())
+	}
+
+	/// Get the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files) with a subfolder of [`name`](Self::name).
+	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomConfigPathError> {
+		let trenchbroom_userdata = if cfg!(target_os = "linux") {
+			#[allow(deprecated)] // No longer deprecated starting from 1.86
+			env::home_dir().map(|path| path.join(".TrenchBroom"))
+		} else if cfg!(target_os = "windows") {
+			env::var("APPDATA").ok().map(|path| PathBuf::from(path).join("TrenchBroom"))
+		} else if cfg!(target_os = "macos") {
+			#[allow(deprecated)] // No longer deprecated starting from 1.86
+			env::home_dir().map(|path| path.join("Library").join("Application Support").join("TrenchBroom"))
+		} else {
+			return Err(DefaultTrenchBroomConfigPathError::UnsupportedOs(env::consts::OS.to_string()));
+		};
+
+		let Some(trenchbroom_userdata) = trenchbroom_userdata else {
+			return Err(DefaultTrenchBroomConfigPathError::HomeDirNotFound);
+		};
+
+		if !trenchbroom_userdata.exists() {
+			return Err(DefaultTrenchBroomConfigPathError::UserDataNotFound(trenchbroom_userdata));
+		}
+
+		let trenchbroom_game_config = trenchbroom_userdata.join("games").join(&self.name);
+
+		if !trenchbroom_game_config.exists() {
+			let err = fs::create_dir_all(&trenchbroom_game_config);
+			if let Err(err) = err {
+				return Err(DefaultTrenchBroomConfigPathError::CreateDirError(err));
+			}
+		}
+
+		Ok(trenchbroom_game_config)
+	}
+
 	/// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
+	///
+	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`](Self::write_to_default_folder) instead to use the default location.
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
 		if self.name.is_empty() {
-			return Err(io::Error::new(
-				io::ErrorKind::InvalidData,
+			return Err(io::Error::other(
 				"Please set a name for your TrenchBroom config. \
-				If you have, make sure you call `write_into` after the app is built. (e.g. In a startup system)",
+				If you have, make sure you call `write_folder` after the app is built. (e.g. In a startup system)",
 			));
 		}
 
@@ -834,6 +893,8 @@ impl TrenchBroomConfig {
 		//////////////////////////////////////////////////////////////////////////////////
 
 		fs::write(folder.join(format!("{}.fgd", self.name)), self.to_fgd())?;
+
+		info!("Successfully wrote TrenchBroom game to {}", folder.display());
 
 		Ok(())
 	}
