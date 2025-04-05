@@ -1,0 +1,24 @@
+[package]
+name = "avian"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "map_loading"
+path = "main.rs"
+test = false
+bench = false
+doc = false
+
+[dependencies]
+bevy = { workspace = true, features = ["default"] }
+avian3d = { version = "0.2" }
+bevy_trenchbroom = { path = "../..", default-features = false, features = [
+    "auto_register",
+    "avian",
+    "client",
+] }
+bevy_flycam = { workspace = true }
+bevy-inspector-egui = { workspace = true }
+nil.workspace = true
