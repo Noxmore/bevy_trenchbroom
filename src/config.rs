@@ -744,8 +744,103 @@ impl From<&DefaultFaceAttributes> for json::JsonValue {
 	}
 }
 
+/// Error type for errors related to writing the TrenchBroom game config into the default location.
+#[derive(Debug)]
+pub enum DefaultTrenchBroomConfigPathError {
+	/// The target operating system is not supported.
+	UnsupportedOs(String),
+	/// The home directory was not found.
+	HomeDirNotFound,
+	/// The TrenchBroom user data directory was not found. (e.g. `~/.TrenchBroom` on Unix)
+	UserDataNotFound(PathBuf),
+	/// Failed to create the game config directory. (e.g. `~/.TrenchBroom/games/my_cool_bevy_game` on Unix)
+	CreateDirError(std::io::Error),
+	/// Failed to write the config to the default location.
+	WriteError {
+		/// The error that occurred.
+		error: std::io::Error,
+		/// The path to the config file that was being written to.
+		path: PathBuf,
+	},
+}
+
+impl std::fmt::Display for DefaultTrenchBroomConfigPathError {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::UnsupportedOs(os) => write!(f, "Unsupported target OS: {os}"),
+			Self::HomeDirNotFound => write!(f, "Home directory not found"),
+			Self::UserDataNotFound(path) => {
+				write!(
+					f,
+					"TrenchBroom user data not found at {}. Have you installed TrenchBroom?",
+					path.display()
+				)
+			}
+			Self::CreateDirError(err) => write!(f, "Failed to create game config directory: {err}"),
+			Self::WriteError { error, path } => write!(f, "Failed to write config to {}: {error}", path.display()),
+		}
+	}
+}
+
+impl std::error::Error for DefaultTrenchBroomConfigPathError {}
+
 impl TrenchBroomConfig {
+	/// Writes the configuration into the [default TrenchBroom game config path].
+	///
+	/// If you want to customize the path, use [`write_folder`] instead.
+	///
+	/// [default TrenchBroom game config path]: https://trenchbroom.github.io/manual/latest/#game_configuration_files
+	/// [`write_folder`]: Self::write_folder
+	pub fn write_to_default_folder(&self) -> Result<(), DefaultTrenchBroomConfigPathError> {
+		let path = self.get_default_trenchbroom_game_config_path()?;
+		if let Err(err) = self.write_folder(&path) {
+			return Err(DefaultTrenchBroomConfigPathError::WriteError { error: err, path });
+		}
+
+		Ok(())
+	}
+
+	/// Get the [default TrenchBroom game config path].
+	///
+	/// [default TrenchBroom game config path]: https://trenchbroom.github.io/manual/latest/#game_configuration_files
+	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomConfigPathError> {
+		let trenchbroom_userdata = if cfg!(target_os = "linux") {
+			#[allow(deprecated)] // No longer deprecated starting from 1.86
+			std::env::home_dir().map(|path| path.join(".TrenchBroom"))
+		} else if cfg!(target_os = "windows") {
+			std::env::var("APPDATA").ok().map(|path| PathBuf::from(path).join("TrenchBroom"))
+		} else if cfg!(target_os = "macos") {
+			#[allow(deprecated)] // No longer deprecated starting from 1.86
+			std::env::home_dir().map(|path| path.join("Library").join("Application Support").join("TrenchBroom"))
+		} else {
+			return Err(DefaultTrenchBroomConfigPathError::UnsupportedOs(std::env::consts::OS.to_string()));
+		};
+
+		let Some(trenchbroom_userdata) = trenchbroom_userdata else {
+			return Err(DefaultTrenchBroomConfigPathError::HomeDirNotFound);
+		};
+
+		if !trenchbroom_userdata.exists() {
+			return Err(DefaultTrenchBroomConfigPathError::UserDataNotFound(trenchbroom_userdata));
+		}
+
+		let trenchbroom_game_config = trenchbroom_userdata.join("games").join(&self.name);
+
+		if !trenchbroom_game_config.exists() {
+			let err = std::fs::create_dir_all(&trenchbroom_game_config);
+			if let Err(err) = err {
+				return Err(DefaultTrenchBroomConfigPathError::CreateDirError(err));
+			}
+		}
+
+		Ok(trenchbroom_game_config)
+	}
+
 	/// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
+	///
+	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`] instead to use the default location.
+	///
+	/// [`write_to_default_folder`]: Self::write_to_default_folder
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
 		if self.name.is_empty() {
 			return Err(io::Error::new(
