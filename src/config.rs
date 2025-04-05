@@ -8,7 +8,7 @@ use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
-use util::{trenchbroom_gltf_rotation_fix, BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
+use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
 use crate::*;
 
@@ -298,8 +298,6 @@ impl TrenchBroomConfig {
 				.map(|name| format!("{classname} ({name})"))
 				.unwrap_or(classname),
 		));
-
-		trenchbroom_gltf_rotation_fix(entity);
 
 		Ok(())
 	}
