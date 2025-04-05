@@ -258,7 +258,7 @@ impl RenderAsset for AnimatedLighting {
 	}
 }
 
-/// Holds an [`AnimatedLighting`] handle and automatically inserts the output [`Lightmap`] or [`IrradianceVolume`] based on [`AnimatedLighting::ty`] onto the entity.
+/// Holds an [`AnimatedLighting`] handle and automatically inserts the output [`Lightmap`](bevy::pbr::Lightmap) or [`IrradianceVolume`] based on [`AnimatedLighting::ty`] onto the entity.
 #[derive(Component, Reflect, Debug, Clone, Default, PartialEq, Eq, Deref, DerefMut)]
 #[reflect(Component, Default)]
 pub struct AnimatedLightingHandle(pub Handle<AnimatedLighting>);

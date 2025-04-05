@@ -19,5 +19,8 @@ cargo clippy --tests --examples --features rapier
 echo "Running cargo test for avian"
 cargo test --features avian
 
+echo "Running cargo test for docs"
+LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian
+
 echo "Running cargo doc"
 cargo doc --no-deps
