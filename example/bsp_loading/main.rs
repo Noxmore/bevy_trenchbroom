@@ -166,7 +166,6 @@ fn setup_scene(
 fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>) {
 	#[cfg(not(target_family = "wasm"))]
 	{
-		std::fs::create_dir("target/example_config").ok();
-		server.config.write_folder("target/example_config").unwrap();
+		server.config.write_to_default_folder().unwrap();
 	}
 }
