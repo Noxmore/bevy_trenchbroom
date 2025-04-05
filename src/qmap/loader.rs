@@ -149,7 +149,6 @@ impl AssetLoader for QuakeMapLoader {
 						}
 
 						let mesh_entity = world.spawn(Name::new(texture.s())).id();
-						world.entity_mut(entity_id).add_child(mesh_entity);
 
 						meshes.push((
 							mesh_entity,
@@ -191,6 +190,9 @@ impl AssetLoader for QuakeMapLoader {
 					for (entity, mesh, _) in meshes {
 						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
 
+						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
+						world.entity_mut(entity_id).add_child(entity);
+						
 						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
 
 						mesh_handles.push(handle);
