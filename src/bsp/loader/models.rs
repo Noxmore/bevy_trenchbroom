@@ -120,7 +120,7 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, models: Vec<InternalModel>, world: 
 				.map(|(mesh_idx, model_mesh)| {
 					let mesh_handle = ctx
 						.load_context
-						.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), model_mesh.mesh).unwrap();
+						.add_labeled_asset(format!("Model{model_idx}Mesh{mesh_idx}"), model_mesh.mesh);
 
 					if let Some(mesh_entity) = model_mesh.entity {
 						world.entity_mut(mesh_entity).insert(Mesh3d(mesh_handle.clone()));
@@ -169,7 +169,7 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, models: Vec<InternalModel>, world: 
 								})
 								.collect(),
 						},
-					).unwrap();
+					);
 
 					if let Some(entity) = model.entity {
 						world.entity_mut(entity).insert(Brushes::Bsp(brushes_asset.clone()));

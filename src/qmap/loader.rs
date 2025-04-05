@@ -1,4 +1,8 @@
-use bevy::{asset::{AssetLoader, AsyncReadExt, CompleteLoadedAsset}, platform_support::collections::hash_map::Entry, tasks::ConditionalSendFuture};
+use bevy::{
+	asset::{AssetLoader, AsyncReadExt, LoadedAsset},
+	platform_support::collections::hash_map::Entry,
+	tasks::ConditionalSendFuture,
+};
 use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
 use class::QuakeClassType;
 use config::TextureLoadView;
@@ -116,7 +120,7 @@ impl AssetLoader for QuakeMapLoader {
 											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
 									)
 									.await
-									.map(|image: CompleteLoadedAsset<Image>| image.take().size())
+									.map(|image: LoadedAsset<Image>| image.take().size())
 									.unwrap_or(UVec2::splat(1)),
 							),
 						};
@@ -185,14 +189,14 @@ impl AssetLoader for QuakeMapLoader {
 					(self.tb_server.config.global_geometry_provider)(&mut view);
 
 					for (entity, mesh, _) in meshes {
-						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh).unwrap();
+						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
 
 						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
 
 						mesh_handles.push(handle);
 					}
 
-					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone())).unwrap();
+					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
 					brush_lists.insert(map_entity_idx, brush_list_handle.clone());
 
 					world.entity_mut(entity_id).insert(Brushes::Shared(brush_list_handle));
@@ -205,7 +209,7 @@ impl AssetLoader for QuakeMapLoader {
 			}
 
 			Ok(QuakeMap {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)).unwrap(),
+				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
 				meshes: mesh_handles,
 				brush_lists,
 				entities,

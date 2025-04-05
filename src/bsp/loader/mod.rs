@@ -8,7 +8,10 @@ mod models;
 mod scene;
 mod textures;
 
-use bevy::{asset::{AssetLoader, LoadContext}, tasks::ConditionalSendFuture};
+use bevy::{
+	asset::{AssetLoader, LoadContext},
+	tasks::ConditionalSendFuture,
+};
 use bsp::*;
 #[cfg(feature = "client")]
 use irradiance_volume::load_irradiance_volume;
@@ -94,7 +97,7 @@ impl AssetLoader for BspLoader {
 			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)).unwrap(),
+				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
 				embedded_textures,
 				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),

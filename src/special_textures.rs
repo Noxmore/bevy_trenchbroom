@@ -48,7 +48,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			let handle = view.add_material(LiquidMaterial {
 				base: material,
 				extension: default_fn(),
-			}).unwrap();
+			});
 
 			return Some(GenericMaterial {
 				handle: handle.into(),
@@ -94,17 +94,15 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			let fg = view
 				.parent_view
 				.load_context
-				.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg)
-				.unwrap();
+				.add_labeled_asset(format!("FG_{TEXTURE_PREFIX}{}", view.name), fg);
 
 			let bg = separate_sky_image(view, view.image.width() / 2..view.image.width(), false);
 			let bg = view
 				.parent_view
 				.load_context
-				.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg)
-				.unwrap();
+				.add_labeled_asset(format!("BG_{TEXTURE_PREFIX}{}", view.name), bg);
 
-			let handle = view.add_material(QuakeSkyMaterial { fg, bg, ..default_fn() }).unwrap();
+			let handle = view.add_material(QuakeSkyMaterial { fg, bg, ..default_fn() });
 
 			return Some(GenericMaterial {
 				handle: handle.into(),
@@ -129,7 +127,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				frame_num += 1;
 			}
 
-			let handle = view.add_material(material).unwrap();
+			let handle = view.add_material(material);
 
 			let mut generic_material = GenericMaterial::new(handle);
 
