@@ -771,7 +771,7 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	/// Get the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
+	/// Get the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files) with a subfolder of [`name`](Self::name).
 	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomConfigPathError> {
 		let trenchbroom_userdata = if cfg!(target_os = "linux") {
 			#[allow(deprecated)] // No longer deprecated starting from 1.86
