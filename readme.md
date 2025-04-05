@@ -129,8 +129,8 @@ pub struct FuncIllusionary;
 // `Query<&StaticProp, Without<SceneRoot>>`
 // and spawn it through that.
 //
-// NOTE: If you're using a GLTF model, add
-// the TrenchBroomGltfRotationFix component when adding it.
+// NOTE: If you're using a GLTF model, insert
+// the TrenchBroomGltfRotationFix component when spawning the model.
 #[reflect(Component)]
 #[require(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
