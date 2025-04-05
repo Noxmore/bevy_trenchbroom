@@ -1,5 +1,6 @@
 use avian3d::prelude::*;
-use bevy::ecs::{component::ComponentId, world::DeferredWorld};
+use bevy::ecs::component::HookContext;
+use bevy::ecs::world::DeferredWorld;
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_flycam::prelude::*;
@@ -28,12 +29,12 @@ pub struct FuncDoor;
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {
-	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+	fn on_add(mut world: DeferredWorld, ctx: HookContext) {
 		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
 		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
 		let material = asset_server.add(StandardMaterial::default());
 
-		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
+		world.commands().entity(ctx.entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
 	}
 }
 
