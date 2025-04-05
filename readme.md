@@ -17,14 +17,13 @@ Integration and support for the following workflows:
 
 - Add the `TrenchBroomPlugin` with a supplied `TrenchBroomConfig` to your app like so:
 
-```rust
+```rust ignore
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 fn main() {
     App::new()
         // ...
-        .add_plugins(DefaultPlugins)
         .add_plugins(TrenchBroomPlugin(
             // Here you can customize the resulting bevy_trenchbroom
             // and game configuration with a builder syntax
