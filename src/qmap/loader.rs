@@ -192,7 +192,7 @@ impl AssetLoader for QuakeMapLoader {
 
 						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 						world.entity_mut(entity_id).add_child(entity);
-						
+
 						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
 
 						mesh_handles.push(handle);
