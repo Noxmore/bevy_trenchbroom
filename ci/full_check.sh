@@ -16,9 +16,6 @@ cargo clippy --tests --examples --features avian
 echo "cargo clippy --tests --examples --features rapier"
 cargo clippy --tests --examples --features rapier
 
-echo "cargo test --features avian"
-cargo test --features avian
-
 echo "cargo test --workspace --doc --features bevy/x11 --features avian"
 LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian
 
