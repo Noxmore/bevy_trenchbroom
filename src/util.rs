@@ -215,6 +215,10 @@ impl TrenchBroomGltfRotationFix {
 		let mut entity = world.entity_mut(entity);
 		if entity.contains::<TrenchBroomGltfRotationFix>() {
 			if let Some(mut transform) = entity.get_mut::<Transform>() {
+<<<<<<< HEAD
+=======
+				println!("found");
+>>>>>>> 8af39d464815d088dd4f9fd573ff7a17bab3b28c
 				transform.rotate_local_y(std::f32::consts::PI / 2.);
 			}
 		}

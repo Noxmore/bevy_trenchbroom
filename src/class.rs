@@ -261,6 +261,7 @@ impl QuakeClass for Transform {
 				},
 			},
 		});
+		println!("insert transform");
 
 		Ok(())
 	}
