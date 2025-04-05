@@ -791,7 +791,7 @@ impl TrenchBroomConfig {
 	///
 	/// [default TrenchBroom game config path]: https://trenchbroom.github.io/manual/latest/#game_configuration_files
 	/// [`write_folder`]: Self::write_folder
-	pub fn write_default_config(&self) -> Result<(), DefaultTrenchBroomConfigPathError> {
+	pub fn write_to_default_folder(&self) -> Result<(), DefaultTrenchBroomConfigPathError> {
 		let path = self.get_default_trenchbroom_game_config_path()?;
 		if let Err(err) = self.write_folder(&path) {
 			return Err(DefaultTrenchBroomConfigPathError::WriteError { error: err, path });
@@ -838,9 +838,9 @@ impl TrenchBroomConfig {
 
 	/// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
 	///
-	/// If you have a standard TrenchBroom installation, you can use [`write_default_config`] instead to use the default location.
+	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`] instead to use the default location.
 	///
-	/// [`write_default_config`]: Self::write_default_config
+	/// [`write_to_default_folder`]: Self::write_to_default_folder
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
 		if self.name.is_empty() {
 			return Err(io::Error::new(

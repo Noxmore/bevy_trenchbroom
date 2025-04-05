@@ -195,7 +195,7 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, write_trenchbroom_config)
 
 fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
-    if let Err(err) = server.config.write_default_config() {
+    if let Err(err) = server.config.write_to_default_folder() {
         error!("Could not write TrenchBroom config: {err}");
     }
 
