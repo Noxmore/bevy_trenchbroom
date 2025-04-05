@@ -810,10 +810,9 @@ impl TrenchBroomConfig {
 	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`](Self::write_to_default_folder) instead to use the default location.
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
 		if self.name.is_empty() {
-			return Err(io::Error::new(
-				io::ErrorKind::InvalidData,
+			return Err(io::Error::other(
 				"Please set a name for your TrenchBroom config. \
-				If you have, make sure you call `write_into` after the app is built. (e.g. In a startup system)",
+				If you have, make sure you call `write_folder` after the app is built. (e.g. In a startup system)",
 			));
 		}
 
