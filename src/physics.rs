@@ -1,5 +1,5 @@
 use crate::*;
-use bevy::ecs::{component::ComponentId, world::DeferredWorld};
+use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use brush::ConvexHull;
 use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
@@ -17,7 +17,7 @@ use avian3d::prelude::*;
 #[reflect(Component)]
 pub struct ConvexCollision;
 impl ConvexCollision {
-	pub fn on_insert(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+	pub fn on_insert(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
 		world.commands().queue(move |world: &mut World| {
 			if world.get_entity(entity).is_err() {
 				return;
@@ -79,7 +79,7 @@ impl ConvexCollision {
 #[reflect(Component)]
 pub struct TrimeshCollision;
 impl TrimeshCollision {
-	pub fn on_insert(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
+	pub fn on_insert(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
 		world.commands().queue(move |world: &mut World| {
 			if world.get_entity(entity).is_err() {
 				return;

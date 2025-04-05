@@ -98,9 +98,7 @@ impl<'d> EmbeddedTextures<'d> {
 	/// Loads the placeholder images, and returns the embedded textures.
 	pub fn finalize(self, ctx: &mut BspLoadCtx) -> HashMap<String, BspEmbeddedTexture> {
 		for (name, (image, _)) in self.images {
-			if ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image).is_err() {
-				error!("Duplicate texture in {name}: {}", ctx.load_context.asset_path());
-			}
+			ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
 		}
 
 		self.textures

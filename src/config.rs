@@ -1,6 +1,7 @@
 use bevy::{
-	asset::{io::AssetReaderError, AssetLoadError, LoadContext, LoadDirectError, RenderAssetUsages, DuplicateLabelAssetError},
-	image::{ImageLoaderSettings, ImageSampler}, tasks::BoxedFuture,
+	asset::{io::AssetReaderError, AssetLoadError, LoadContext, LoadDirectError, RenderAssetUsages},
+	image::{ImageLoaderSettings, ImageSampler},
+	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
@@ -351,7 +352,7 @@ impl TrenchBroomConfig {
 			let generic_material = match special_textures::load_special_texture(&mut view, &material) {
 				Some(v) => v,
 				None => GenericMaterial {
-					handle: view.add_material(material).unwrap().into(),
+					handle: view.add_material(material).into(),
 					properties: default(),
 				},
 			};
@@ -362,7 +363,6 @@ impl TrenchBroomConfig {
 			view.parent_view
 				.load_context
 				.add_labeled_asset(format!("{GENERIC_MATERIAL_PREFIX}{}", view.name), generic_material)
-				.unwrap()
 		})
 	}
 
@@ -387,7 +387,10 @@ impl TrenchBroomConfig {
 						.load(path)
 				}
 				Err(err) => match err {
-					LoadDirectError::LoadError { dependency: _, error: AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)) } => {
+					LoadDirectError::LoadError {
+						dependency: _,
+						error: AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)),
+					} => {
 						let texture_sampler = view.tb_config.texture_sampler.clone();
 						view.load_context
 							.loader()
@@ -502,7 +505,7 @@ pub struct TextureLoadView<'a, 'b> {
 impl TextureLoadView<'_, '_> {
 	/// Shorthand for adding a material asset with the correct label.
 	#[cfg(feature = "client")]
-	pub fn add_material<M: Material>(&mut self, material: M) -> Result<Handle<M>, DuplicateLabelAssetError> {
+	pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
 		self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
 	}
 }
