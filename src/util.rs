@@ -5,6 +5,16 @@ use bevy::{
 
 use crate::*;
 
+pub struct UtilPlugin;
+impl Plugin for UtilPlugin {
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.register_type::<TrenchBroomGltfRotationFix>()
+		;
+	}
+}
+
 /// Container for meshes used for headless environments. This can't be the regular `Mesh3d` as it is provided by `bevy_render`
 #[cfg(not(feature = "client"))]
 #[derive(Component, Clone, Debug, Default, Deref, DerefMut, Reflect, PartialEq, Eq)]
@@ -197,7 +207,8 @@ impl IsSceneWorld for DeferredWorld<'_> {
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
 /// Put this on an entity when spawning to counteract the rotation.
-#[derive(Component, Default)]
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
 pub struct TrenchBroomGltfRotationFix;
 
 /// See docs on [`TrenchBroomGltfRotationFix`]

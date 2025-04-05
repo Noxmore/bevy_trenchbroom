@@ -73,6 +73,7 @@ impl Plugin for TrenchBroomPlugin {
 				qmap::QuakeMapPlugin,
 				bsp::BspPlugin,
 				geometry::GeometryPlugin,
+				util::UtilPlugin,
 			))
 		;
 
