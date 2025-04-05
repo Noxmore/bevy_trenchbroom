@@ -759,12 +759,9 @@ pub enum DefaultTrenchBroomConfigPathError {
 }
 
 impl TrenchBroomConfig {
-	/// Writes the configuration into the [default TrenchBroom game config path].
+	/// Writes the configuration into the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
 	///
-	/// If you want to customize the path, use [`write_folder`] instead.
-	///
-	/// [default TrenchBroom game config path]: https://trenchbroom.github.io/manual/latest/#game_configuration_files
-	/// [`write_folder`]: Self::write_folder
+	/// If you want to customize the path, use [`write_folder`](Self::write_folder) instead.
 	pub fn write_to_default_folder(&self) -> Result<(), DefaultTrenchBroomConfigPathError> {
 		let path = self.get_default_trenchbroom_game_config_path()?;
 		if let Err(err) = self.write_folder(&path) {
@@ -774,9 +771,7 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	/// Get the [default TrenchBroom game config path].
-	///
-	/// [default TrenchBroom game config path]: https://trenchbroom.github.io/manual/latest/#game_configuration_files
+	/// Get the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
 	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomConfigPathError> {
 		let trenchbroom_userdata = if cfg!(target_os = "linux") {
 			#[allow(deprecated)] // No longer deprecated starting from 1.86
@@ -812,9 +807,7 @@ impl TrenchBroomConfig {
 
 	/// Writes the configuration into a folder, it is your choice when to do this in your application, and where you want to save the config to.
 	///
-	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`] instead to use the default location.
-	///
-	/// [`write_to_default_folder`]: Self::write_to_default_folder
+	/// If you have a standard TrenchBroom installation, you can use [`write_to_default_folder`](Self::write_to_default_folder) instead to use the default location.
 	pub fn write_folder(&self, folder: impl AsRef<Path>) -> io::Result<()> {
 		if self.name.is_empty() {
 			return Err(io::Error::new(
