@@ -1,26 +1,26 @@
 #!/bin/bash
 set -e
 
-echo "Running cargo fmt"
+echo "cargo fmt --check --all"
 cargo fmt --check --all
 
-echo "Running cargo clippy for default features"
+echo "cargo clippy --tests --examples"
 cargo clippy --tests --examples
 
-echo "Running cargo clippy for no default features"
+echo "cargo clippy --tests --examples --no-default-features"
 cargo clippy --tests --examples --no-default-features
 
-echo "Running cargo clippy for avian"
+echo "cargo clippy --tests --examples --features avian"
 cargo clippy --tests --examples --features avian
 
-echo "Running cargo clippy for rapier"
+echo "cargo clippy --tests --examples --features rapier"
 cargo clippy --tests --examples --features rapier
 
-echo "Running cargo test for avian"
+echo "cargo test --features avian"
 cargo test --features avian
 
-echo "Running cargo test for docs"
+echo "cargo test --workspace --doc --features bevy/x11 --features avian"
 LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian
 
-echo "Running cargo doc"
+echo "cargo doc --no-deps"
 cargo doc --no-deps
