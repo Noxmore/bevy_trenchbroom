@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  # Sparse cargo registry for faster updates
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      # Handle cargo check and cargo clippy warnings as errors
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      - name: Run cargo clippy for default features
+        run: cargo clippy --tests --examples
+      - name: Run cargo clippy without default features
+        run: cargo clippy --tests --examples --no-default-features
+      - name: Run cargo clippy for avian
+        run: cargo clippy --tests --examples --features avian
+      - name: Run cargo clippy for rapier
+        run: cargo clippy --tests --examples --features rapier
+
+  format:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rustfmt
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Run cargo fmt
+        run: cargo fmt --check --all
+
+  doc:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+      RUSTDOCFLAGS: '--deny warnings'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      - name: Run cargo doc with default features
+        run: cargo doc --no-deps
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Cache Cargo build files
+        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      - name: Run tests with avian
+        run: |
+          cargo test --locked --workspace --all-targets --features bevy/x11 --features avian
+          # Running doc tests separately is a workaround for https://github.com/rust-lang/cargo/issues/6669
+          # Setting LD_LIBRARY_PATH is a workaround for https://github.com/TheBevyFlock/bevy_new_2d/pull/318#issuecomment-2585935350
+          LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian

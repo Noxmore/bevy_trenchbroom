@@ -544,7 +544,7 @@ pub enum BspLightAttenuation {
 	/// line of sight of the entity.
 	LocalMinLight = 4,
 	/// 1/(x^2) attenuation, but slightly more attenuated and
-	/// without the extra bright effect that [`ReciprocalSquare`](BspLightDelay::ReciprocalSquare) has
+	/// without the extra bright effect that [`ReciprocalSquare`](BspLightAttenuation::ReciprocalSquare) has
 	/// near the source.
 	ReciprocalSquareTweaked = 5,
 }
