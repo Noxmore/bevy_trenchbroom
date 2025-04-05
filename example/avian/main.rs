@@ -19,7 +19,7 @@ pub struct Worldspawn;
 #[no_register]
 #[reflect(Component)]
 #[require(Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
@@ -63,7 +63,7 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		.add_systems(Update, spawn_lights)
+		.add_systems(Update, make_unlit)
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.no_bsp_lighting(true)
@@ -89,16 +89,15 @@ fn spawn_cubes(mut commands: Commands, time: Res<Time>, mut local: Local<Option<
 	timer.tick(time.delta());
 
 	if timer.just_finished() {
-		commands.spawn((
-			Transform::from_translation(Vec3::new(0., 10., 0.)),
-			RigidBody::Dynamic,
-			Collider::cuboid(0.5, 0.5, 0.5),
-		));
+		commands.spawn((Transform::from_xyz(5., 10., 0.), RigidBody::Dynamic, Collider::cuboid(0.5, 0.5, 0.5)));
+
+		commands.spawn((Transform::from_xyz(-5., 10., 0.), RigidBody::Dynamic, Collider::cuboid(0.5, 0.5, 0.5)));
 	}
 }
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, mut projection_query: Query<&mut Projection>) {
-	commands.spawn(SceneRoot(asset_server.load("maps/example.map#Scene")));
+	commands.spawn((SceneRoot(asset_server.load("maps/example.map#Scene")), Transform::from_xyz(-5., 0., 0.)));
+	commands.spawn((SceneRoot(asset_server.load("maps/example.bsp#Scene")), Transform::from_xyz(5., 0., 0.)));
 
 	// Wide FOV
 
@@ -110,18 +109,13 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, mut proje
 	}
 }
 
-#[rustfmt::skip]
-fn spawn_lights(
-	mut commands: Commands,
-	query: Query<(Entity, &Light),
-	Changed<Light>>,
-) {
-	for (entity, light) in &query {
-		commands.entity(entity).insert(PointLight {
-			color: light._color,
-			intensity: light.light * 1000.,
-			shadows_enabled: true,
-			..default()
-		});
+// We don't care about lighting, just physics.
+fn make_unlit(mut materials: ResMut<Assets<StandardMaterial>>) {
+	if !materials.is_changed() {
+		return;
+	}
+
+	for (_, material) in materials.iter_mut() {
+		material.unlit = true;
 	}
 }
