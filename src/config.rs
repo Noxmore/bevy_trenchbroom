@@ -888,6 +888,8 @@ impl TrenchBroomConfig {
 
 		fs::write(folder.join(format!("{}.fgd", self.name)), self.to_fgd())?;
 
+		info!("Successfully wrote TrenchBroom game to {}", folder.display());
+
 		Ok(())
 	}
 }
