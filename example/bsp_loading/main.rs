@@ -3,10 +3,9 @@
 #[cfg(feature = "example_client")]
 use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
-use bevy::pbr::VolumetricFog;
 use bevy::prelude::*;
-// #[cfg(feature = "example_client")]
-// use bevy_flycam::prelude::*;
+#[cfg(feature = "example_client")]
+use bevy_flycam::prelude::*;
 use bevy_trenchbroom::bsp::base_classes::*;
 use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
@@ -93,7 +92,7 @@ pub struct Light;
 struct ClientPlugin;
 impl Plugin for ClientPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
-		/* #[cfg(feature = "example_client")]
+		#[cfg(feature = "example_client")]
 		#[rustfmt::skip]
 		app
 			// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
@@ -103,7 +102,7 @@ impl Plugin for ClientPlugin {
 				speed: 6.,
 			})
 			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		; */
+		;
 	}
 }
 
@@ -154,11 +153,6 @@ fn setup_scene(
 
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
-
-	commands.spawn((
-		Camera3d::default(),
-		Transform::from_translation(Vec3::splat(10.)).looking_at(Vec3::ZERO, Dir3::Y),
-	));
 
 	// Wide FOV
 	#[cfg(feature = "example_client")]
