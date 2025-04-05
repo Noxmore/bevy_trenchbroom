@@ -753,9 +753,9 @@ pub enum DefaultTrenchBroomConfigPathError {
 	#[error("TrenchBroom user data not found at {}. Have you installed TrenchBroom?", .0.display())]
 	UserDataNotFound(PathBuf),
 	#[error("Failed to create game config directory: {0}")]
-	CreateDirError(std::io::Error),
+	CreateDirError(io::Error),
 	#[error("Failed to write config to {}: {error}", path.display())]
-	WriteError { error: std::io::Error, path: PathBuf },
+	WriteError { error: io::Error, path: PathBuf },
 }
 
 impl TrenchBroomConfig {
@@ -780,14 +780,14 @@ impl TrenchBroomConfig {
 	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomConfigPathError> {
 		let trenchbroom_userdata = if cfg!(target_os = "linux") {
 			#[allow(deprecated)] // No longer deprecated starting from 1.86
-			std::env::home_dir().map(|path| path.join(".TrenchBroom"))
+			env::home_dir().map(|path| path.join(".TrenchBroom"))
 		} else if cfg!(target_os = "windows") {
-			std::env::var("APPDATA").ok().map(|path| PathBuf::from(path).join("TrenchBroom"))
+			env::var("APPDATA").ok().map(|path| PathBuf::from(path).join("TrenchBroom"))
 		} else if cfg!(target_os = "macos") {
 			#[allow(deprecated)] // No longer deprecated starting from 1.86
-			std::env::home_dir().map(|path| path.join("Library").join("Application Support").join("TrenchBroom"))
+			env::home_dir().map(|path| path.join("Library").join("Application Support").join("TrenchBroom"))
 		} else {
-			return Err(DefaultTrenchBroomConfigPathError::UnsupportedOs(std::env::consts::OS.to_string()));
+			return Err(DefaultTrenchBroomConfigPathError::UnsupportedOs(env::consts::OS.to_string()));
 		};
 
 		let Some(trenchbroom_userdata) = trenchbroom_userdata else {
@@ -801,7 +801,7 @@ impl TrenchBroomConfig {
 		let trenchbroom_game_config = trenchbroom_userdata.join("games").join(&self.name);
 
 		if !trenchbroom_game_config.exists() {
-			let err = std::fs::create_dir_all(&trenchbroom_game_config);
+			let err = fs::create_dir_all(&trenchbroom_game_config);
 			if let Err(err) = err {
 				return Err(DefaultTrenchBroomConfigPathError::CreateDirError(err));
 			}
