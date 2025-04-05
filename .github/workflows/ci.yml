@@ -70,8 +70,8 @@ jobs:
         uses: Leafwing-Studios/cargo-cache@v1
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
-      - name: Run cargo doc
-        run: cargo doc --no-deps --features avian
+      - name: Run cargo doc with default features
+        run: cargo doc --no-deps
 
   test:
     runs-on: ubuntu-latest
