@@ -1,5 +1,4 @@
 use crate::*;
-use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use brush::ConvexHull;
 use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
@@ -16,106 +15,11 @@ use avian3d::prelude::*;
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 pub struct ConvexCollision;
-impl ConvexCollision {
-	pub fn on_insert(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-		world.commands().queue(move |world: &mut World| {
-			if world.get_entity(entity).is_err() {
-				return;
-			}
-
-			let Some((brushes, transform)) = world.entity(entity).get_components::<(&Brushes, &Transform)>() else { return };
-
-			let mut colliders = Vec::new();
-			let Some(brush_vertices) = calculate_brushes_vertices(
-				brushes,
-				world.resource::<Assets<BrushList>>(),
-				world.resource::<Assets<BspBrushesAsset>>(),
-			) else {
-				error!("Couldn't make collider for {entity}, brushes asset not found/loaded.");
-				return;
-			};
-
-			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
-				if vertices.is_empty() {
-					continue;
-				}
-
-				macro_rules! fail {
-					() => {
-						error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
-						continue;
-					};
-				}
-
-				#[cfg(feature = "avian")]
-				let Some(collider) = Collider::convex_hull(vertices) else {
-					fail!();
-				};
-
-				#[cfg(feature = "rapier")]
-				let Some(collider) = Collider::convex_hull(&vertices) else {
-					fail!();
-				};
-
-				#[rustfmt::skip]
-				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
-				colliders.push((position, Quat::IDENTITY, collider));
-			}
-
-			#[cfg(feature = "avian")]
-			world
-				.entity_mut(entity)
-				.insert(Collider::compound(colliders))
-				.insert_if_new(RigidBody::Static);
-
-			#[cfg(feature = "rapier")]
-			world.entity_mut(entity).insert(Collider::compound(colliders));
-		});
-	}
-}
 
 /// Automatically creates trimesh colliders for entities with [`Mesh3d`].
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 pub struct TrimeshCollision;
-impl TrimeshCollision {
-	pub fn on_insert(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-		world.commands().queue(move |world: &mut World| {
-			if world.get_entity(entity).is_err() {
-				return;
-			}
-
-			let Some(mesh3d) = world.entity(entity).get::<Mesh3d>() else { return };
-			let Some(mesh) = world.resource::<Assets<Mesh>>().get(mesh3d.id()) else {
-				error!("Couldn't make collider for {entity}, mesh not found/loaded.");
-				return;
-			};
-
-			macro_rules! fail {
-				() => {
-					error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format.");
-					return;
-				};
-			}
-
-			#[cfg(feature = "avian")]
-			{
-				let Some(collider) = Collider::trimesh_from_mesh(mesh) else {
-					fail!();
-				};
-				world.entity_mut(entity).insert(collider).insert_if_new(RigidBody::Static);
-			}
-
-			#[cfg(feature = "rapier")]
-			{
-				let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh(default())) else {
-					fail!();
-				};
-				world.entity_mut(entity).insert(collider);
-			}
-		});
-	}
-}
 
 pub type BrushVertices = Vec<Vec3>;
 
@@ -147,14 +51,160 @@ impl Plugin for PhysicsPlugin {
 		app
 			.register_type::<ConvexCollision>()
 			.register_type::<TrimeshCollision>()
+
+			.init_resource::<SceneCollidersReadyTests>()
+
+			.add_systems(PostUpdate, (
+				Self::add_convex_colliders,
+				Self::add_trimesh_colliders,
+				Self::trigger_scene_colliders_ready,
+			).chain())
 		;
-
-		app.world_mut()
-			.register_component_hooks::<TrimeshCollision>()
-			.on_insert(TrimeshCollision::on_insert);
-
-		app.world_mut()
-			.register_component_hooks::<ConvexCollision>()
-			.on_insert(ConvexCollision::on_insert);
 	}
+}
+impl PhysicsPlugin {
+	pub fn add_convex_colliders(
+		mut commands: Commands,
+		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
+		brush_lists: Res<Assets<BrushList>>,
+		brush_assets: Res<Assets<BspBrushesAsset>>,
+		mut tests: ResMut<SceneCollidersReadyTests>,
+	) {
+		for (entity, brushes, transform) in &query {
+			let mut colliders = Vec::new();
+			let Some(brush_vertices) = calculate_brushes_vertices(
+				brushes,
+				&brush_lists,
+				&brush_assets,
+			) else {
+				continue;
+			};
+
+			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
+				if vertices.is_empty() {
+					continue;
+				}
+
+				macro_rules! fail {
+					() => {
+						error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
+						continue;
+					};
+				}
+
+				#[cfg(feature = "avian")]
+				let Some(collider) = Collider::convex_hull(vertices) else {
+					fail!();
+				};
+
+				#[cfg(feature = "rapier")]
+				let Some(collider) = Collider::convex_hull(&vertices) else {
+					fail!();
+				};
+
+				#[rustfmt::skip]
+				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
+				colliders.push((position, Quat::IDENTITY, collider));
+			}
+
+			#[cfg(feature = "avian")]
+			commands
+				.entity(entity)
+				.insert(Collider::compound(colliders))
+				.insert_if_new(RigidBody::Static);
+
+			#[cfg(feature = "rapier")]
+			commands.entity(entity).insert(Collider::compound(colliders));
+
+			tests.added_colliders_to_entities.insert(entity);
+		}
+		
+	}
+
+	pub fn add_trimesh_colliders(
+		mut commands: Commands,
+		query: Query<(Entity, &Mesh3d), (With<TrimeshCollision>, Without<Collider>)>,
+		meshes: Res<Assets<Mesh>>,
+		mut tests: ResMut<SceneCollidersReadyTests>,
+	) {
+		for (entity, mesh3d) in &query {
+			let Some(mesh) = meshes.get(mesh3d.id()) else {
+				continue;
+			};
+	
+			macro_rules! fail {
+				() => {
+					error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format.");
+					continue;
+				};
+			}
+	
+			#[cfg(feature = "avian")]
+			{
+				let Some(collider) = Collider::trimesh_from_mesh(mesh) else {
+					fail!();
+				};
+				commands.entity(entity).insert(collider).insert_if_new(RigidBody::Static);
+			}
+	
+			#[cfg(feature = "rapier")]
+			{
+				let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh(default())) else {
+					fail!();
+				};
+				commands.entity(entity).insert(collider);
+			}
+
+			tests.added_colliders_to_entities.insert(entity);
+		}
+	}
+
+	pub fn trigger_scene_colliders_ready(
+		mut commands: Commands,
+		mut tests: ResMut<SceneCollidersReadyTests>,
+
+		parent_query: Query<&ChildOf>,
+		has_scene_root: Query<(), With<SceneRoot>>,
+		
+		children_query: Query<&Children>,
+		has_collider: Query<(), With<Collider>>,
+		still_not_collider_query: Query<(), (Or<(With<ConvexCollision>, With<TrimeshCollision>)>, Without<Collider>)>,
+	) {
+		let mut scene_roots = HashSet::new();
+		
+		for entity in tests.added_colliders_to_entities.iter().copied() {
+			// Go up the hierarchy and collect the scene root if it exists.
+			if let Some(entity) = parent_query.iter_ancestors(entity).find(|entity| has_scene_root.contains(*entity)) {
+				scene_roots.insert(entity);
+			}
+		}
+
+		tests.added_colliders_to_entities.clear();
+		
+		'scene_root_loop: for scene_root_entity in scene_roots {
+			let mut collider_entities = Vec::new();
+			
+			for entity in children_query.iter_descendants(scene_root_entity) {
+				if still_not_collider_query.contains(entity) {
+					continue 'scene_root_loop;
+				} else if has_collider.contains(entity) {
+					collider_entities.push(entity);
+				}
+			}
+
+			commands.trigger_targets(SceneCollidersReady { collider_entities }, scene_root_entity);
+		}
+	}
+}
+
+/// Used to mark which entities need to be tested to produce [`SceneCollidersReady`]. You probably shouldn't interact with this unless you know what you're doing.
+#[derive(Resource, Default)]
+pub struct SceneCollidersReadyTests {
+	pub added_colliders_to_entities: HashSet<Entity>,
+}
+
+/// Triggered when all the colliders of a scene are done constructing.
+#[derive(Event, Debug, Clone)]
+pub struct SceneCollidersReady {
+	pub collider_entities: Vec<Entity>,
 }
