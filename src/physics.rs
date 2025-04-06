@@ -72,11 +72,7 @@ impl PhysicsPlugin {
 	) {
 		for (entity, brushes, transform) in &query {
 			let mut colliders = Vec::new();
-			let Some(brush_vertices) = calculate_brushes_vertices(
-				brushes,
-				&brush_lists,
-				&brush_assets,
-			) else {
+			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &brush_assets) else {
 				continue;
 			};
 
@@ -118,7 +114,6 @@ impl PhysicsPlugin {
 
 			tests.added_colliders_to_entities.insert(entity);
 		}
-		
 	}
 
 	pub fn add_trimesh_colliders(
@@ -131,14 +126,14 @@ impl PhysicsPlugin {
 			let Some(mesh) = meshes.get(mesh3d.id()) else {
 				continue;
 			};
-	
+
 			macro_rules! fail {
 				() => {
 					error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format.");
 					continue;
 				};
 			}
-	
+
 			#[cfg(feature = "avian")]
 			{
 				let Some(collider) = Collider::trimesh_from_mesh(mesh) else {
@@ -146,7 +141,7 @@ impl PhysicsPlugin {
 				};
 				commands.entity(entity).insert(collider).insert_if_new(RigidBody::Static);
 			}
-	
+
 			#[cfg(feature = "rapier")]
 			{
 				let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh(default())) else {
@@ -165,13 +160,13 @@ impl PhysicsPlugin {
 
 		parent_query: Query<&ChildOf>,
 		has_scene_root: Query<(), With<SceneRoot>>,
-		
+
 		children_query: Query<&Children>,
 		has_collider: Query<(), With<Collider>>,
 		still_not_collider_query: Query<(), (Or<(With<ConvexCollision>, With<TrimeshCollision>)>, Without<Collider>)>,
 	) {
 		let mut scene_roots = HashSet::new();
-		
+
 		for entity in tests.added_colliders_to_entities.iter().copied() {
 			// Go up the hierarchy and collect the scene root if it exists.
 			if let Some(entity) = parent_query.iter_ancestors(entity).find(|entity| has_scene_root.contains(*entity)) {
@@ -180,10 +175,10 @@ impl PhysicsPlugin {
 		}
 
 		tests.added_colliders_to_entities.clear();
-		
+
 		'scene_root_loop: for scene_root_entity in scene_roots {
 			let mut collider_entities = Vec::new();
-			
+
 			for entity in children_query.iter_descendants(scene_root_entity) {
 				if still_not_collider_query.contains(entity) {
 					continue 'scene_root_loop;
