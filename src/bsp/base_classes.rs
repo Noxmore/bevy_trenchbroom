@@ -19,7 +19,7 @@ impl Plugin for BspBaseClassesPlugin {
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[class(no_register)]
 pub struct BspSolidEntity {
 	/// Generates an `LMSHIFT` BSPX lump for use by a light util. Note that both scaled and unscaled lighting will normally be used.
 	pub _lmscale: Option<u32>,
@@ -197,7 +197,7 @@ pub struct BspSolidEntity {
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
 #[require(BspSolidEntity)]
-#[no_register]
+#[class(no_register)]
 pub struct BspWorldspawn {
 	/// (Not documented, but hopefully self-explanatory.)
 	pub _maxlight: Option<f32>,
@@ -360,7 +360,7 @@ pub enum DirtMode {
 /// Contains properties used by the `ericw-tools` compiler for any entity with a classname starting with the first five letters "light". E.g. "light", "light_globe", "light_flame_small_yellow", etc.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[class(no_register)]
 pub struct BspLight {
 	/// Set the light intensity. Negative values are also allowed and will cause the entity to subtract light cast by other entities. Default 300.
 	#[default(300.)]
@@ -568,7 +568,7 @@ pub enum BspLightAttenuation {
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
 #[require(Transform)]
-#[no_register]
+#[class(no_register)]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.
 	#[no_default]
@@ -591,3 +591,11 @@ pub struct BspExternalMap {
 	#[default(Vec3::ONE)]
 	pub _external_map_scale: Vec3,
 }
+
+#[derive(PointClass, Component, Reflect)]
+#[reflect(Component)]
+#[class(
+	base = {BspWorldspawn},
+	// no_register,
+)]
+pub struct Worldspawn;

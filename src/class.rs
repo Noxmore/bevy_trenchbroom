@@ -317,7 +317,7 @@ impl QuakeClass for Visibility {
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[class(no_register)]
 pub struct Target {
 	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
 	pub target: Option<String>,
@@ -330,7 +330,7 @@ pub struct Target {
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[class(no_register)]
 pub struct Targetable {
 	/// The name for entities with [`Target`] components to point to.
 	pub targetname: Option<String>,

@@ -1,3 +1,5 @@
+use darling::*;
+use punctuated::Punctuated;
 use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -7,26 +9,35 @@ pub(super) enum QuakeClassType {
 	Solid,
 }
 
-#[derive(Default)]
-struct Opts {
-	model: Option<TokenStream>,
-	color: Option<TokenStream>,
-	iconsprite: Option<TokenStream>,
-	size: Option<TokenStream>,
-	geometry: Option<TokenStream>,
-	classname: Option<TokenStream>,
-
-	/// `true` if the `#[base(...)]` attribute is used to override, otherwise uses `#[require(...)]`
-	base_override: bool,
-	base: Vec<Type>,
-	no_register: bool,
-	doc: Option<String>,
+struct Tokens(pub TokenStream);
+impl FromMeta for Tokens {
+	fn from_meta(item: &Meta) -> darling::Result<Self> {
+		match item {
+			Meta::Path(_) => Self::from_word(),
+			Meta::List(list) => Ok(Self(list.tokens.clone())),
+			Meta::NameValue(ref value) => Self::from_expr(&value.value),
+		}
+	}
 }
 
-fn extract_type_list(tokens: TokenStream) -> impl Iterator<Item = Type> {
-	let types: syn::punctuated::Punctuated<Type, Token![,]> = syn::parse_quote!(#tokens);
+/* #[derive(Default, FromMeta)]
+#[darling(default)]
+struct ClassOpts {
+	
+} */
 
-	types.into_iter()
+#[derive(Default, FromDeriveInput)]
+#[darling(default, attributes(class), forward_attrs(doc))]
+struct Opts {
+	model: Option<Tokens>,
+	color: Option<Tokens>,
+	iconsprite: Option<Tokens>,
+	size: Option<Tokens>,
+	geometry: Option<Expr>,
+	classname: Option<Tokens>,
+	base: Punctuated<Type, Token![,]>,
+	no_register: bool,
+	doc: Option<String>,
 }
 
 fn extract_doc(meta: MetaNameValue, doc: &mut Option<String>) {
@@ -47,46 +58,17 @@ fn extract_doc(meta: MetaNameValue, doc: &mut Option<String>) {
 }
 
 pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
+	let mut opts = match Opts::from_derive_input(&input) {
+		Ok(x) => x,
+		Err(err) => panic!("Parsing attributes: {err}"),
+	};
 	let DeriveInput { ident, attrs, data, .. } = input;
 	let ty_ident = format_ident!("{ty:?}");
 
-	let mut opts = Opts::default();
-
 	for attr in attrs {
-		match attr.meta {
-			Meta::NameValue(meta) => {
-				if ty != QuakeClassType::Base && compare_path(&meta.path, "doc") {
-					extract_doc(meta, &mut opts.doc);
-				}
-			}
-			Meta::List(meta) => {
-				if compare_path(&meta.path, "model") {
-					opts.model = Some(meta.tokens);
-				} else if compare_path(&meta.path, "color") {
-					opts.color = Some(meta.tokens);
-				} else if compare_path(&meta.path, "iconsprite") {
-					opts.iconsprite = Some(meta.tokens);
-				} else if compare_path(&meta.path, "size") {
-					opts.size = Some(meta.tokens);
-				} else if compare_path(&meta.path, "geometry") {
-					opts.geometry = Some(meta.tokens);
-				} else if compare_path(&meta.path, "classname") {
-					opts.classname = Some(meta.tokens);
-				} else if compare_path(&meta.path, "require") && !opts.base_override {
-					opts.base.extend(extract_type_list(meta.tokens));
-				} else if compare_path(&meta.path, "base") {
-					if !opts.base_override {
-						opts.base.clear();
-					}
-					opts.base_override = true;
-
-					opts.base.extend(extract_type_list(meta.tokens));
-				}
-			}
-			Meta::Path(path) => {
-				if compare_path(&path, "no_register") {
-					opts.no_register = true;
-				}
+		if let Meta::NameValue(meta) = attr.meta {
+			if opts.doc.is_none() && ty != QuakeClassType::Base && compare_path(&meta.path, "doc") {
+				extract_doc(meta, &mut opts.doc);
 			}
 		}
 	}
@@ -185,7 +167,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 
 	let name = opts
 		.classname
-		.and_then(|tokens| tokens.into_iter().next())
+		.and_then(|tokens| tokens.0.into_iter().next())
 		.map(|tree| match tree {
 			TokenTree::Literal(lit) => lit,
 			TokenTree::Ident(ident) => match ident.to_string().as_str() {
@@ -202,15 +184,15 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		.unwrap_or_else(|| Literal::string(&ident.to_string().to_snake_case()));
 	let description = option(opts.doc);
 
-	let bases = opts.base;
+	let bases = opts.base.into_iter();
 
-	let model = option(opts.model.map(|model| quote! { stringify!(#model) }));
-	let color = option(opts.color.map(|color| quote! { stringify!(#color) }));
-	let iconsprite = option(opts.iconsprite.map(|iconsprite| quote! { stringify!(#iconsprite) }));
-	let size = option(opts.size.map(|size| quote! { stringify!(#size) }));
+	let model = option(opts.model.map(|Tokens(model)| quote! { stringify!(#model) }));
+	let color = option(opts.color.map(|Tokens(color)| quote! { stringify!(#color) }));
+	let iconsprite = option(opts.iconsprite.map(|Tokens(iconsprite)| quote! { stringify!(#iconsprite) }));
+	let size = option(opts.size.map(|Tokens(size)| quote! { stringify!(#size) }));
 
-	let geometry_provider = opts.geometry.map(|tokens| {
-		quote! { (|| #tokens) }
+	let geometry_provider = opts.geometry.map(|expr| {
+		quote! { (|| #expr) }
 	});
 
 	quote! {
