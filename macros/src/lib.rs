@@ -24,7 +24,7 @@ use syn::*;
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
+#[proc_macro_derive(PointClass, attributes(class, no_default))]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Point).into()
 }
@@ -43,7 +43,7 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(SolidClass, attributes(geometry, classname, base, no_register, no_default))]
+#[proc_macro_derive(SolidClass, attributes(class, no_default))]
 pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Solid).into()
 }
@@ -53,7 +53,7 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// If the `auto_register` feature is enabled, this will automatically register the type with `bevy_trenchbroom`.
 ///
 /// It has the same attributes as [`PointClass`].
-#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
+#[proc_macro_derive(BaseClass, attributes(class, no_default))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Base).into()
 }

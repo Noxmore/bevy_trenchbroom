@@ -15,10 +15,12 @@ use nil::prelude::*;
 // TODO: We aren't using inventory to register here because it's broken on wasm.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspWorldspawn)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
+#[class(
+	base(BspWorldspawn),
+	geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps()),
+	no_register,
+)]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
