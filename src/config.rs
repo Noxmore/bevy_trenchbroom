@@ -1,8 +1,5 @@
 use bevy::{
-	asset::{
-		io::{AssetReaderError, AssetSourceId},
-		LoadContext, RenderAssetUsages,
-	},
+	asset::{io::AssetReaderError, AssetPath, LoadContext, RenderAssetUsages},
 	image::{ImageLoaderSettings, ImageSampler},
 	utils::BoxedFuture,
 };
@@ -376,13 +373,20 @@ impl TrenchBroomConfig {
 				.material_root
 				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
 
+			// Extract the asset source out of load_context without borrowing it.
+			// This is hacky, but i can't think of a better way to keep the borrow checker pleased.
+			// SAFETY: The other things load_context is used for in this function don't interact with asset_path at all.
+			let source = unsafe { (*std::ptr::from_ref(view.load_context)).asset_path().source() };
+			let generic_material_path = AssetPath::from_path(&generic_material_path).with_source(source);
+
+			#[allow(clippy::unnecessary_to_owned)]
 			match view
 				.asset_server
-				.get_source(AssetSourceId::Default)
+				.get_source(view.load_context.asset_path().source())
 				.expect("Could not find asset source")
 				.reader()
 				// Annoying clone, but the borrow checker demands it!
-				.read(&generic_material_path.clone())
+				.read(&generic_material_path.path().to_path_buf())
 				.await
 			{
 				Ok(_) => {
@@ -395,14 +399,15 @@ impl TrenchBroomConfig {
 				Err(err) => match err {
 					AssetReaderError::NotFound(_) => {
 						let texture_sampler = view.tb_config.texture_sampler.clone();
+						let image_path = view
+							.tb_config
+							.material_root
+							.join(format!("{}.{}", view.name, view.tb_config.texture_extension));
+
 						view.load_context
 							.loader()
 							.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-							.load(
-								view.tb_config
-									.material_root
-									.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
-							)
+							.load(AssetPath::from_path(&image_path).with_source(source))
 					}
 
 					err => {
