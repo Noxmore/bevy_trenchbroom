@@ -10,6 +10,7 @@ impl Plugin for UtilPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(not(feature = "client"))]
 		app.register_type::<Mesh3d>().register_type::<Aabb>();
+		app.register_type::<TrenchBroomGltfRotationFix>();
 	}
 }
 
@@ -207,7 +208,8 @@ impl IsSceneWorld for DeferredWorld<'_> {
 /// Put this on an entity to counteract the rotation.
 ///
 /// The rotation counteraction works via `on_add` component hook, so only do this when initially spawning.
-#[derive(Component)]
+#[derive(Component, Reflect, Debug, Default)]
+#[reflect(Component)]
 #[component(on_add = Self::on_add)]
 pub struct TrenchBroomGltfRotationFix;
 impl TrenchBroomGltfRotationFix {
