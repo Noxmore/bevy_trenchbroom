@@ -118,7 +118,7 @@ pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
 	const CLASS_INFO: QuakeClassInfo;
 
-	fn class_spawn(server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>;
+	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>;
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -223,7 +223,7 @@ impl QuakeClass for PointLight {
 		],
 	};
 
-	fn class_spawn(_server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let default = PointLight::default();
 
 		#[allow(clippy::needless_update)]
@@ -333,7 +333,7 @@ impl QuakeClass for SpotLight {
 		],
 	};
 
-	fn class_spawn(_server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let default = SpotLight::default();
 
 		#[allow(clippy::needless_update)]
@@ -409,7 +409,7 @@ impl QuakeClass for DirectionalLight {
 		],
 	};
 
-	fn class_spawn(_server: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
 		let default = DirectionalLight::default();
 
 		#[allow(clippy::needless_update)]
