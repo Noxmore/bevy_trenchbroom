@@ -41,6 +41,7 @@ impl Cube {
 	}
 }
 
+// This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[no_register]
 #[reflect(Component)]

@@ -4,7 +4,7 @@ use bevy::{
 	utils::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
-use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
+use class::{builtin::default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
