@@ -889,7 +889,7 @@ impl TrenchBroomConfig {
 		}
 
 		if let Some(bounds) = self.soft_map_bounds {
-			json.insert("softMapBounds", bounds.fgd_to_string()).unwrap();
+			json.insert("softMapBounds", bounds.fgd_to_string_unquoted()).unwrap();
 		}
 
 		let mut buf = json.pretty(4);

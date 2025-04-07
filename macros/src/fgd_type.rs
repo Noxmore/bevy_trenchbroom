@@ -98,7 +98,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 				}
 			}
 
-			fn fgd_to_string(&self) -> String {
+			fn fgd_to_string_unquoted(&self) -> String {
 				match self {
 					#(Self::#variant_idents => #variant_strings.to_string(),)*
 				}
