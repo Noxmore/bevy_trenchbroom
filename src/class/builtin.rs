@@ -175,7 +175,7 @@ impl QuakeClass for PointLight {
 				name: "intensity",
 				title: Some("Light Intensity"),
 				description: Some("Luminous power in lumens, representing the amount of light emitted by this source in all directions."),
-				default_value: Some(|| "1_000_000".s()),
+				default_value: Some(|| PointLight::default().intensity.fgd_to_string_quoted()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -203,7 +203,7 @@ impl QuakeClass for PointLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_depth_bias",
 				title: Some("Shadow Depth Bias"),
-				description: Some("A bias used when sampling shadow maps to avoid \"shadow-acne\", or false shadow occlusions that happen as a result of shadow-map fragments not mapping 1:1 to screen-space fragments."),
+				description: Some("A bias used when sampling shadow maps to avoid 'shadow-acne', or false shadow occlusions that happen as a result of shadow-map fragments not mapping 1:1 to screen-space fragments."),
 				default_value: Some(|| PointLight::DEFAULT_SHADOW_DEPTH_BIAS.fgd_to_string_quoted()),
 			},
 			QuakeClassProperty {
@@ -270,7 +270,7 @@ impl QuakeClass for SpotLight {
 				name: "intensity",
 				title: Some("Light Intensity"),
 				description: Some("Luminous power in lumens, representing the amount of light emitted by this source in all directions."),
-				default_value: Some(|| "1_000_000".s()),
+				default_value: Some(|| SpotLight::default().intensity.fgd_to_string_quoted()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -320,15 +320,15 @@ impl QuakeClass for SpotLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "outer_angle",
 				title: Some("Light Cone Outer Angle"),
-				description: Some("Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect."),
-				default_value: Some(|| "45".s()),
+				description: Some("Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees."),
+				default_value: Some(|| "\"45\"".s()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
 				name: "inner_angle",
 				title: Some("Light Cone Inner Angle"),
 				description: Some("Angle defining the distance from the spot light direction to the inner limit of the light's cone of effect in degrees."),
-				default_value: Some(|| "0".s()),
+				default_value: Some(|| "\"0\"".s()),
 			},
 		],
 	};
@@ -346,8 +346,8 @@ impl QuakeClass for SpotLight {
 			shadow_depth_bias: src_entity.get("shadow_depth_bias").unwrap_or(default.shadow_depth_bias),
 			shadow_normal_bias: src_entity.get("shadow_normal_bias").unwrap_or(default.shadow_normal_bias),
 			shadow_map_near_z: src_entity.get("shadow_map_near_z").unwrap_or(default.shadow_map_near_z),
-			outer_angle: src_entity.get("outer_angle").unwrap_or(default.outer_angle),
-			inner_angle: src_entity.get("inner_angle").unwrap_or(default.inner_angle),
+			outer_angle: src_entity.get("outer_angle").map(f32::to_radians).unwrap_or(default.outer_angle),
+			inner_angle: src_entity.get("inner_angle").map(f32::to_radians).unwrap_or(default.inner_angle),
 			// For soft shadows
 			..default
 		});
