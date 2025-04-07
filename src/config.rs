@@ -128,7 +128,6 @@ pub struct TrenchBroomConfig {
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
 	#[cfg(feature = "client")]
 	#[default(Some(10_000.))]
-	#[builder(into)]
 	pub lightmap_exposure: Option<f32>,
 	#[cfg(feature = "client")]
 	#[default(500.)]
