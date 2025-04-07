@@ -33,6 +33,7 @@ pub use crate::{
 	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
 };
 pub use crate::{
+	class::builtin::{Target, Targetable},
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
