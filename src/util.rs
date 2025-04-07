@@ -9,7 +9,7 @@ pub struct UtilPlugin;
 impl Plugin for UtilPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(not(feature = "client"))]
-		app.register_type::<Mesh3d>().register_type::<Aabb>();
+		app.register_type::<(Mesh3d, Aabb)>();
 		app.register_type::<TrenchBroomGltfRotationFix>();
 	}
 }
