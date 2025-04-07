@@ -2,6 +2,7 @@
 
 use bsp::base_classes::*;
 use fgd::FgdType;
+use qmap::{QuakeEntityError, QuakeEntityErrorResultExt};
 use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 
 use super::*;
@@ -75,27 +76,31 @@ impl QuakeClass for Transform {
 	};
 
 	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
-		let rotation = src_entity
-			.get::<Vec3>("mangle")
+		let rotation = match src_entity.get::<Vec3>("mangle") {
 			// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
 			// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
-			.map(if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
-				mangle_to_quat
-			} else {
-				angles_to_quat
-			})
-			.or_else(|_| src_entity.get::<Vec3>("angles").map(angles_to_quat))
-			.unwrap_or_else(|_| angle_to_quat(src_entity.get::<f32>("angle").unwrap_or_default()));
+			Ok(x) => {
+				if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
+					mangle_to_quat(x)
+				} else {
+					angles_to_quat(x)
+				}
+			}
+			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match src_entity.get::<Vec3>("angles") {
+				Ok(x) => angles_to_quat(x),
+				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(src_entity.get::<f32>("angle").with_default(0.)?),
+				Err(err) => return Err(err.into()),
+			},
+			Err(err) => return Err(err.into()),
+		};
 
 		entity.insert(Transform {
-			translation: config.to_bevy_space(src_entity.get::<Vec3>("origin").unwrap_or(Vec3::ZERO)),
+			translation: config.to_bevy_space(src_entity.get::<Vec3>("origin").with_default(Vec3::ZERO)?),
 			rotation,
 			scale: match src_entity.get::<f32>("scale") {
 				Ok(scale) => Vec3::splat(scale),
-				Err(_) => match src_entity.get::<Vec3>("scale") {
-					Ok(scale) => scale.xzy(),
-					Err(_) => Vec3::ONE,
-				},
+				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => Vec3::ONE,
+				Err(_) => src_entity.get::<Vec3>("scale")?.xzy(),
 			},
 		});
 
@@ -228,14 +233,14 @@ impl QuakeClass for PointLight {
 
 		#[allow(clippy::needless_update)]
 		entity.insert(PointLight {
-			color: src_entity.get("color").unwrap_or(default.color),
-			intensity: src_entity.get("intensity").unwrap_or(default.intensity),
-			range: src_entity.get("range").unwrap_or(default.range),
-			radius: src_entity.get("radius").unwrap_or(default.radius),
-			shadows_enabled: src_entity.get("shadows_enabled").unwrap_or(default.shadows_enabled),
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").unwrap_or(default.shadow_depth_bias),
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").unwrap_or(default.shadow_normal_bias),
-			shadow_map_near_z: src_entity.get("shadow_map_near_z").unwrap_or(default.shadow_map_near_z),
+			color: src_entity.get("color").with_default(default.color)?,
+			intensity: src_entity.get("intensity").with_default(default.intensity)?,
+			range: src_entity.get("range").with_default(default.range)?,
+			radius: src_entity.get("radius").with_default(default.radius)?,
+			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
+			shadow_map_near_z: src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
 			// For soft shadows
 			..default
 		});
@@ -338,16 +343,16 @@ impl QuakeClass for SpotLight {
 
 		#[allow(clippy::needless_update)]
 		entity.insert(SpotLight {
-			color: src_entity.get("color").unwrap_or(default.color),
-			intensity: src_entity.get("intensity").unwrap_or(default.intensity),
-			range: src_entity.get("range").unwrap_or(default.range),
-			radius: src_entity.get("radius").unwrap_or(default.radius),
-			shadows_enabled: src_entity.get("shadows_enabled").unwrap_or(default.shadows_enabled),
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").unwrap_or(default.shadow_depth_bias),
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").unwrap_or(default.shadow_normal_bias),
-			shadow_map_near_z: src_entity.get("shadow_map_near_z").unwrap_or(default.shadow_map_near_z),
-			outer_angle: src_entity.get("outer_angle").map(f32::to_radians).unwrap_or(default.outer_angle),
-			inner_angle: src_entity.get("inner_angle").map(f32::to_radians).unwrap_or(default.inner_angle),
+			color: src_entity.get("color").with_default(default.color)?,
+			intensity: src_entity.get("intensity").with_default(default.intensity)?,
+			range: src_entity.get("range").with_default(default.range)?,
+			radius: src_entity.get("radius").with_default(default.radius)?,
+			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
+			shadow_map_near_z: src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
+			outer_angle: src_entity.get("outer_angle").map(f32::to_radians).with_default(default.outer_angle)?,
+			inner_angle: src_entity.get("inner_angle").map(f32::to_radians).with_default(default.inner_angle)?,
 			// For soft shadows
 			..default
 		});
@@ -414,11 +419,11 @@ impl QuakeClass for DirectionalLight {
 
 		#[allow(clippy::needless_update)]
 		entity.insert(DirectionalLight {
-			color: src_entity.get("color").unwrap_or(default.color),
-			illuminance: src_entity.get("illuminance").unwrap_or(default.illuminance),
-			shadows_enabled: src_entity.get("shadows_enabled").unwrap_or(default.shadows_enabled),
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").unwrap_or(default.shadow_depth_bias),
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").unwrap_or(default.shadow_normal_bias),
+			color: src_entity.get("color").with_default(default.color)?,
+			illuminance: src_entity.get("illuminance").with_default(default.illuminance)?,
+			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			// For soft shadows
 			..default
 		});
