@@ -115,8 +115,7 @@ fn setup_scene(
 #[rustfmt::skip]
 fn spawn_lights(
 	mut commands: Commands,
-	query: Query<(Entity, &Light),
-	Changed<Light>>,
+	query: Query<(Entity, &Light), Changed<Light>>,
 ) {
 	for (entity, light) in &query {
 		commands.entity(entity).insert(PointLight {
