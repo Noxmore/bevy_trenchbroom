@@ -24,6 +24,7 @@ use crate::*;
 pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub loader: &'a BspLoader,
 	pub load_context: &'a mut LoadContext<'lc>,
+	pub asset_server: &'a AssetServer,
 	pub data: &'a BspData,
 	pub entities: &'a QuakeMapEntities,
 }
@@ -71,6 +72,7 @@ impl AssetLoader for BspLoader {
 			let mut ctx = BspLoadCtx {
 				loader: self,
 				load_context,
+				asset_server: &self.asset_server,
 				data: &data,
 				entities: &entities,
 			};

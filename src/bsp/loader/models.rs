@@ -73,6 +73,7 @@ pub async fn compute_models<'a, 'lc: 'a>(
 						name: &exported_mesh.texture,
 						tb_config: config,
 						load_context: ctx.load_context,
+						asset_server: ctx.asset_server,
 						entities: ctx.entities,
 						#[cfg(feature = "client")]
 						alpha_mode: None,
