@@ -9,22 +9,27 @@ use nil::prelude::*;
 // TODO: We aren't using inventory to register here because it's broken on wasm.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
+#[class(
+	geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider()),
+	no_register,
+)]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[class(
+	base(Transform),
+	geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider()),
+	no_register,
+)]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
+#[class(base(Transform), no_register)]
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {
@@ -35,17 +40,6 @@ impl Cube {
 
 		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
 	}
-}
-
-#[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[no_register]
-#[reflect(Component)]
-#[require(Transform)]
-pub struct Light {
-	#[default(Color::srgb(1., 1., 1.))]
-	pub _color: Color,
-	#[default(300.)]
-	pub light: f32,
 }
 
 fn main() {
@@ -62,13 +56,11 @@ fn main() {
 			speed: 6.,
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		.add_systems(Update, spawn_lights)
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.no_bsp_lighting(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
-				.register_class::<Light>()
 				.register_class::<FuncDoor>(),
 		))
 		.add_systems(PostStartup, setup_scene)
@@ -104,22 +96,6 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, mut proje
 	for mut projection in &mut projection_query {
 		*projection = Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
-			..default()
-		});
-	}
-}
-
-#[rustfmt::skip]
-fn spawn_lights(
-	mut commands: Commands,
-	query: Query<(Entity, &Light),
-	Changed<Light>>,
-) {
-	for (entity, light) in &query {
-		commands.entity(entity).insert(PointLight {
-			color: light._color,
-			intensity: light.light * 1000.,
-			shadows_enabled: true,
 			..default()
 		});
 	}

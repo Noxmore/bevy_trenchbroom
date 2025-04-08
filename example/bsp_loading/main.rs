@@ -24,10 +24,12 @@ use nil::prelude::*;
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity, Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
+#[class(
+	base(BspSolidEntity, Transform),
+	geometry = GeometryProvider::new().smooth_by_default_angle().with_lightmaps(),
+	no_register,
+)]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
 }
@@ -43,30 +45,36 @@ pub enum FlagsTest {
 }
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
+#[class(
+	base(BspSolidEntity),
+	geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps()),
+	no_register,
+)]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
-#[geometry(GeometryProvider::new())] // Compiler-handled
+#[class(
+	base(BspSolidEntity),
+	geometry(default()), // Compiler-handled
+	no_register,
+)]
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
+#[class(
+	base(BspSolidEntity),
+	geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps()),
+	no_register,
+)]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
+#[class(base(Transform), no_register)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -85,10 +93,13 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]
-#[no_register]
 #[reflect(Component)]
-#[require(BspLight, Transform)]
-#[size(-8 -8 -8, 8 8 8)]
+#[require(Transform)]
+#[class(
+	base(BspLight, Transform),
+	size(-8 -8 -8, 8 8 8),
+	no_register,
+)]
 pub struct Light;
 
 struct ClientPlugin;

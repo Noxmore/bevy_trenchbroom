@@ -594,8 +594,5 @@ pub struct BspExternalMap {
 
 #[derive(PointClass, Component, Reflect)]
 #[reflect(Component)]
-#[class(
-	base = {BspWorldspawn},
-	// no_register,
-)]
+#[class(base(BspWorldspawn), no_register)]
 pub struct Worldspawn;

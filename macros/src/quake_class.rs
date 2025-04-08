@@ -1,6 +1,5 @@
-use darling::*;
-use punctuated::Punctuated;
 use crate::*;
+use deluxe::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum QuakeClassType {
@@ -9,8 +8,13 @@ pub(super) enum QuakeClassType {
 	Solid,
 }
 
-struct Tokens(pub TokenStream);
-impl FromMeta for Tokens {
+struct Tokens(TokenStream);
+impl ParseMetaItem for Tokens {
+	fn parse_meta_item(input: parse::ParseStream, _mode: ParseMode) -> syn::Result<Self> {
+		input.parse::<TokenStream>().map(Self)
+	}
+}
+/* impl FromMeta for Tokens {
 	fn from_meta(item: &Meta) -> darling::Result<Self> {
 		match item {
 			Meta::Path(_) => Self::from_word(),
@@ -18,24 +22,73 @@ impl FromMeta for Tokens {
 			Meta::NameValue(ref value) => Self::from_expr(&value.value),
 		}
 	}
-}
+} */
 
 /* #[derive(Default, FromMeta)]
 #[darling(default)]
 struct ClassOpts {
-	
+
 } */
 
-#[derive(Default, FromDeriveInput)]
-#[darling(default, attributes(class), forward_attrs(doc))]
+struct Size {
+	from_x: f32,
+	from_y: f32,
+	from_z: f32,
+	to_x: f32,
+	to_y: f32,
+	to_z: f32,
+}
+impl ParseMetaItem for Size {
+	fn parse_meta_item(input: parse::ParseStream, mode: ParseMode) -> syn::Result<Self> {
+		fn parse_number(input: parse::ParseStream, mode: ParseMode, msg: &str) -> f32 {
+			if let Ok(i) = i32::parse_meta_item(input, mode) {
+				return i as f32;
+			}
+			f32::parse_meta_item(input, mode).expect(msg)
+		}
+
+		let from_x = parse_number(input, mode, "from_x");
+		let from_y = parse_number(input, mode, "from_y");
+		let from_z = parse_number(input, mode, "from_z");
+		input.parse::<Token![,]>().expect("Size: expected comma");
+		let to_x = parse_number(input, mode, "to_x");
+		let to_y = parse_number(input, mode, "to_y");
+		let to_z = parse_number(input, mode, "to_z");
+
+		Ok(Self {
+			from_x,
+			from_y,
+			from_z,
+			to_x,
+			to_y,
+			to_z,
+		})
+	}
+}
+impl std::fmt::Display for Size {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let Self {
+			from_x,
+			from_y,
+			from_z,
+			to_x,
+			to_y,
+			to_z,
+		} = self;
+		write!(f, "{from_x} {from_y} {from_z}, {to_x} {to_y} {to_z}")
+	}
+}
+
+#[derive(Default, ExtractAttributes)]
+#[deluxe(default, attributes(class))]
 struct Opts {
 	model: Option<Tokens>,
 	color: Option<Tokens>,
 	iconsprite: Option<Tokens>,
-	size: Option<Tokens>,
+	size: Option<Size>,
 	geometry: Option<Expr>,
 	classname: Option<Tokens>,
-	base: Punctuated<Type, Token![,]>,
+	base: Vec<Type>,
 	no_register: bool,
 	doc: Option<String>,
 }
@@ -57,8 +110,8 @@ fn extract_doc(meta: MetaNameValue, doc: &mut Option<String>) {
 	}
 }
 
-pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStream {
-	let mut opts = match Opts::from_derive_input(&input) {
+pub(super) fn class_derive(mut input: DeriveInput, ty: QuakeClassType) -> TokenStream {
+	let mut opts = match Opts::extract_attributes(&mut input) {
 		Ok(x) => x,
 		Err(err) => panic!("Parsing attributes: {err}"),
 	};
@@ -189,7 +242,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 	let model = option(opts.model.map(|Tokens(model)| quote! { stringify!(#model) }));
 	let color = option(opts.color.map(|Tokens(color)| quote! { stringify!(#color) }));
 	let iconsprite = option(opts.iconsprite.map(|Tokens(iconsprite)| quote! { stringify!(#iconsprite) }));
-	let size = option(opts.size.map(|Tokens(size)| quote! { stringify!(#size) }));
+	let size = option(opts.size.map(|size| size.to_string().to_token_stream()));
 
 	let geometry_provider = opts.geometry.map(|expr| {
 		quote! { (|| #expr) }

@@ -12,22 +12,27 @@ use nil::prelude::*;
 // TODO: We aren't using inventory to register here because it's broken on wasm.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[class(
+	geometry(GeometryProvider::new().smooth_by_default_angle()),
+	no_register,
+)]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[class(
+	base(Transform),
+	geometry(GeometryProvider::new().smooth_by_default_angle()),
+	no_register,
+)]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
+#[class(base(Transform), no_register)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -43,9 +48,9 @@ impl Cube {
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[no_register]
 #[reflect(Component)]
 #[require(Transform)]
+#[class(base(Transform), no_register)]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
 	pub _color: Color,
