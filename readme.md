@@ -228,7 +228,7 @@ base_color_texture = "example.png"
 ```
 it can get a bit repetitive.
 
-You can also configure the rest of the properties of the default `StandardMaterial` in `MaterializePlugin`.
+You can also configure the rest of the properties of the default material in `MaterializePlugin`.
 
 ## Loading maps
 
