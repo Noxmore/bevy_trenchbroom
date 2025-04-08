@@ -38,17 +38,6 @@ impl Cube {
 	}
 }
 
-#[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[no_register]
-#[reflect(Component)]
-#[require(Transform)]
-pub struct Light {
-	#[default(Color::srgb(1., 1., 1.))]
-	pub _color: Color,
-	#[default(300.)]
-	pub light: f32,
-}
-
 fn main() {
 	App::new()
 		.add_plugins((DefaultPlugins.set(AssetPlugin {
@@ -69,7 +58,6 @@ fn main() {
 				.no_bsp_lighting(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
-				.register_class::<Light>()
 				.register_class::<FuncDoor>(),
 		))
 		.add_systems(PostStartup, setup_scene)
