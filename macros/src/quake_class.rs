@@ -14,21 +14,6 @@ impl ParseMetaItem for Tokens {
 		input.parse::<TokenStream>().map(Self)
 	}
 }
-/* impl FromMeta for Tokens {
-	fn from_meta(item: &Meta) -> darling::Result<Self> {
-		match item {
-			Meta::Path(_) => Self::from_word(),
-			Meta::List(list) => Ok(Self(list.tokens.clone())),
-			Meta::NameValue(ref value) => Self::from_expr(&value.value),
-		}
-	}
-} */
-
-/* #[derive(Default, FromMeta)]
-#[darling(default)]
-struct ClassOpts {
-
-} */
 
 struct Size {
 	from_x: f32,

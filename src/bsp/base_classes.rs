@@ -591,8 +591,3 @@ pub struct BspExternalMap {
 	#[default(Vec3::ONE)]
 	pub _external_map_scale: Vec3,
 }
-
-#[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
-#[class(base(BspWorldspawn), no_register)]
-pub struct Worldspawn;
