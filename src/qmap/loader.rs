@@ -11,11 +11,13 @@ use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture}
 use super::*;
 
 pub struct QuakeMapLoader {
+	pub asset_server: AssetServer,
 	pub tb_server: TrenchBroomServer,
 }
 impl FromWorld for QuakeMapLoader {
 	fn from_world(world: &mut World) -> Self {
 		Self {
+			asset_server: world.resource::<AssetServer>().clone(),
 			tb_server: world.resource::<TrenchBroomServer>().clone(),
 		}
 	}
@@ -65,7 +67,7 @@ impl AssetLoader for QuakeMapLoader {
 						error!("A `{classname}` has an origin brush, but does not have `Transform` as a base class! This will make it appear wrong!");
 					}
 
-					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string());
+					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string_unquoted());
 					map_entity.brushes.remove(origin_brush_idx);
 				}
 			}
@@ -132,6 +134,7 @@ impl AssetLoader for QuakeMapLoader {
 									name: texture,
 									tb_config: &self.tb_server.config,
 									load_context,
+									asset_server: &self.asset_server,
 									entities: &entities,
 									#[cfg(feature = "client")]
 									alpha_mode: None,

@@ -519,25 +519,13 @@
 }
 // entity 1
 {
-"classname" "cube"
-"origin" "-40 -40 40"
-"angles" "-45 -45 0"
-}
-// entity 2
-{
-"classname" "cube"
-"origin" "36.6863 32 40"
-"mangle" "0 -45 0"
-}
-// entity 3
-{
 "classname" "light"
 "origin" "-36 28 40"
 "_color" "255 204 178"
 "light" "300"
 "delay" "5"
 }
-// entity 4
+// entity 2
 {
 "classname" "func_door"
 "angles" "0 0 0"
@@ -563,7 +551,7 @@
 ( 48 -32 32 ) ( 48 -32 33 ) ( 48 -31 32 ) origin [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 5
+// entity 3
 {
 "classname" "func_detail"
 // brush 0
@@ -580,7 +568,7 @@
 ( -48 -44 128 ) ( -48 -52 0 ) ( -48 -52 128 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 6
+// entity 4
 {
 "classname" "func_detail"
 // brush 0
@@ -595,7 +583,7 @@
 ( -48 64 128 ) ( -48 60 0 ) ( -48 60 128 ) bricks [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 7
+// entity 5
 {
 "classname" "func_detail"
 // brush 0
@@ -612,13 +600,13 @@
 ( 64 64 144 ) ( 64 60 0 ) ( 64 60 144 ) bricks [ 2.220446049250313e-16 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
 }
-// entity 8
+// entity 6
 {
 "classname" "info_player_start"
 "origin" "-8 -40 72"
 "angle" "-2"
 }
-// entity 9
+// entity 7
 {
 "classname" "light"
 "origin" "168 -4 48"
@@ -627,27 +615,16 @@
 "style" "5"
 "delay" "5"
 }
-// entity 10
+// entity 8
 {
 "classname" "light"
 "origin" "40 -52 112"
 "_color" "228 204 255"
-"light" "w"
+"light" "300"
 "style" "1"
 "delay" "5"
 }
-// entity 11
-{
-"classname" "cube"
-"origin" "-8 8 120"
-}
-// entity 12
-{
-"classname" "cube"
-"origin" "122.343 8 22.202"
-"angles" "-15 0 0"
-}
-// entity 13
+// entity 9
 {
 "classname" "light"
 "origin" "0 172 56"
@@ -656,9 +633,32 @@
 "style" "5"
 "delay" "5"
 }
-// entity 14
+// entity 10
+{
+"classname" "cube"
+"origin" "36.6863 32 40"
+"mangle" "0 -45 0"
+}
+// entity 11
+{
+"classname" "cube"
+"origin" "-40 -40 40"
+"angles" "-45 -45 0"
+}
+// entity 12
 {
 "classname" "cube"
 "origin" "-5.657 136 22.202"
+"angle" "-15"
+}
+// entity 13
+{
+"classname" "cube"
+"origin" "122.343 8 22.202"
 "angles" "-15 0 0"
+}
+// entity 14
+{
+"classname" "cube"
+"origin" "-8 8 120"
 }

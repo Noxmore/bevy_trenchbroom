@@ -136,7 +136,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				let description = option(doc);
 
 				let default_value_fn = if defaulted {
-					quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string_quoted(&<Self as Default>::default().#field_ident_or_number)) }
+					quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number)) }
 				} else {
 					quote! { None }
 				};
@@ -154,7 +154,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
 
 				let not_found_handler = if defaulted {
-					quote! { .unwrap_or(default.#field_ident_or_number) }
+					quote! { .with_default(default.#field_ident_or_number)? }
 				} else {
 					quote! { ? }
 				};
@@ -231,6 +231,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 
 			#[allow(unused)]
 			fn class_spawn(config: &::bevy_trenchbroom::config::TrenchBroomConfig, src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity, entity: &mut ::bevy::ecs::world::EntityWorldMut) -> ::bevy_trenchbroom::anyhow::Result<()> {
+				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
 				entity.insert(#spawn_constructor);
 				Ok(())

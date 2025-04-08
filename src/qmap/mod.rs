@@ -111,3 +111,22 @@ pub enum QuakeEntityError {
 	#[error("Entity class {classname} has a base of {base_name}, but that class does not exist")]
 	InvalidBase { classname: String, base_name: String },
 }
+
+pub trait QuakeEntityErrorResultExt {
+	type Value;
+
+	/// If this result is a [`RequiredPropertyNotFound`](QuakeEntityError::RequiredPropertyNotFound) error,
+	/// returns [`Ok`] with the specified default value, otherwise simply returns `self`.
+	fn with_default(self, default: Self::Value) -> Self;
+}
+
+impl<T> QuakeEntityErrorResultExt for Result<T, QuakeEntityError> {
+	type Value = T;
+
+	fn with_default(self, default: Self::Value) -> Self {
+		match self {
+			Err(QuakeEntityError::RequiredPropertyNotFound { property: _ }) => Ok(default),
+			res => res,
+		}
+	}
+}

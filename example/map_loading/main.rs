@@ -41,6 +41,7 @@ impl Cube {
 	}
 }
 
+// This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[no_register]
 #[reflect(Component)]
@@ -114,8 +115,7 @@ fn setup_scene(
 #[rustfmt::skip]
 fn spawn_lights(
 	mut commands: Commands,
-	query: Query<(Entity, &Light),
-	Changed<Light>>,
+	query: Query<(Entity, &Light), Changed<Light>>,
 ) {
 	for (entity, light) in &query {
 		commands.entity(entity).insert(PointLight {

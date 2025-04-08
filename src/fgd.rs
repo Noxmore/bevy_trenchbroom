@@ -115,13 +115,13 @@ pub trait FgdType: Sized {
 	/// Parses a string into `Self` FGD-style. Used for parsing entity properties.
 	fn fgd_parse(input: &str) -> anyhow::Result<Self>;
 	/// Converts this value into a string used for writing FGDs.
-	fn fgd_to_string(&self) -> String;
-	/// Calls `fgd_to_string`, but if `FGD_IS_QUOTED` is true, surrounds the output with quotes.
-	fn fgd_to_string_quoted(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String;
+	/// Calls `fgd_to_string_unquoted`, but if `FGD_IS_QUOTED` is true, surrounds the output with quotes.
+	fn fgd_to_string(&self) -> String {
 		if Self::FGD_IS_QUOTED {
-			format!("\"{}\"", self.fgd_to_string())
+			format!("\"{}\"", self.fgd_to_string_unquoted())
 		} else {
-			self.fgd_to_string()
+			self.fgd_to_string_unquoted()
 		}
 	}
 }
@@ -132,7 +132,7 @@ impl FgdType for String {
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 		Ok(input.to_string())
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		self.clone()
 	}
 }
@@ -144,7 +144,7 @@ impl FgdType for &str {
 		// Lifetimes don't allow me to just return Some(input) unfortunately.
 		unimplemented!("use String::fgd_parse instead");
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		self.to_string()
 	}
 }
@@ -158,7 +158,7 @@ macro_rules! simple_fgd_type_impl {
 			fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 				Ok(input.parse()?)
 			}
-			fn fgd_to_string(&self) -> String {
+			fn fgd_to_string_unquoted(&self) -> String {
 				self.to_string()
 			}
 		}
@@ -193,7 +193,7 @@ impl FgdType for IntBool {
 		i64::fgd_parse(input).map(|v| Self(v > 0))
 	}
 
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		if self.0 {
 			"1".s()
 		} else {
@@ -221,7 +221,7 @@ impl FgdType for IntBoolOverride {
 			1.. => Self::Enable,
 		})
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		match self {
 			Self::Enable => "1".s(),
 			Self::Inherit => "0".s(),
@@ -238,7 +238,7 @@ impl FgdType for Aabb {
 		let values = <[f32; 6]>::fgd_parse(input)?;
 		Ok(Aabb::from_min_max(Vec3::from_slice(&values[0..3]), Vec3::from_slice(&values[3..6])))
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		let min = self.min();
 		let max = self.max();
 		format!("{} {} {}, {} {} {}", min.x, min.y, min.z, max.x, max.y, max.z)
@@ -251,7 +251,7 @@ impl FgdType for Vec4 {
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 		<[f32; 4]>::fgd_parse(input).map(Vec4::from)
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		format!("{} {} {} {}", self.x, self.y, self.z, self.w)
 	}
 }
@@ -261,7 +261,7 @@ impl FgdType for Vec3 {
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 		<[f32; 3]>::fgd_parse(input).map(Vec3::from)
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		format!("{} {} {}", self.x, self.y, self.z)
 	}
 }
@@ -271,7 +271,7 @@ impl FgdType for Vec2 {
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 		<[f32; 2]>::fgd_parse(input).map(Vec2::from)
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		format!("{} {}", self.x, self.y)
 	}
 }
@@ -282,8 +282,8 @@ impl FgdType for Color {
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
 		Srgba::fgd_parse(input).map(Self::Srgba)
 	}
-	fn fgd_to_string(&self) -> String {
-		self.to_srgba().fgd_to_string()
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.to_srgba().fgd_to_string_unquoted()
 	}
 }
 
@@ -303,7 +303,7 @@ impl FgdType for Srgba {
 			.map(Into::into)
 			.or(<[f32; 4]>::fgd_parse(input).map(truncate_byte_color_range).map(Self::from_f32_array))
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		format!("{} {} {} {}", self.red, self.green, self.blue, self.alpha)
 	}
 }
@@ -332,7 +332,7 @@ impl FgdType for Srgb {
 			.map(truncate_byte_color_range)
 			.map(|[red, green, blue]| Self { red, green, blue })
 	}
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		format!("{} {} {}", self.red, self.green, self.blue)
 	}
 }
@@ -355,8 +355,8 @@ impl FgdType for LightmapStyle {
 		u8::fgd_parse(input).map(Self)
 	}
 
-	fn fgd_to_string(&self) -> String {
-		self.0.fgd_to_string()
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.0.fgd_to_string_unquoted()
 	}
 }
 
@@ -418,8 +418,8 @@ impl<
 		N::fgd_parse(input).map(T::from_bits_truncate).map(Into::into)
 	}
 
-	fn fgd_to_string(&self) -> String {
-		self.value.fgd_to_string()
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.value.fgd_to_string_unquoted()
 	}
 }
 
@@ -439,8 +439,8 @@ impl<T: FgdType + Default + Copy, const N: usize> FgdType for [T; N] {
 
 		Ok(out)
 	}
-	fn fgd_to_string(&self) -> String {
-		self.iter().map(T::fgd_to_string).join(" ")
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.iter().map(T::fgd_to_string_unquoted).join(" ")
 	}
 }
 
@@ -455,9 +455,9 @@ impl<T: FgdType> FgdType for Option<T> {
 		T::fgd_parse(input).map(Some)
 	}
 
-	fn fgd_to_string(&self) -> String {
+	fn fgd_to_string_unquoted(&self) -> String {
 		match self {
-			Some(v) => v.fgd_to_string(),
+			Some(v) => v.fgd_to_string_unquoted(),
 			None => String::new(),
 		}
 	}

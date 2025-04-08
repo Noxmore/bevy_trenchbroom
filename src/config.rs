@@ -1,10 +1,10 @@
 use bevy::{
-	asset::{io::AssetReaderError, AssetLoadError, LoadContext, LoadDirectError, RenderAssetUsages},
+	asset::{io::AssetReaderError, AssetPath, LoadContext, RenderAssetUsages},
 	image::{ImageLoaderSettings, ImageSampler},
 	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
-use class::{default_quake_class_registry, ErasedQuakeClass, QuakeClass};
+use class::{builtin::default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::{QuakeMapEntities, QuakeMapEntity};
@@ -128,7 +128,6 @@ pub struct TrenchBroomConfig {
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
 	#[cfg(feature = "client")]
 	#[default(Some(10_000.))]
-	#[builder(into)]
 	pub lightmap_exposure: Option<f32>,
 	#[cfg(feature = "client")]
 	#[default(500.)]
@@ -371,33 +370,46 @@ impl TrenchBroomConfig {
 	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extension`](Self::generic_material_extension), as a fallback tries [`texture_extension`](Self::texture_extension).
 	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
 		Box::pin(async move {
-			let path = view
+			let generic_material_path = view
 				.tb_config
 				.material_root
 				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
-			// Because i can't just check if an asset exists, i have to load it twice.
-			match view.load_context.loader().immediate().load::<GenericMaterial>(path.clone()).await {
+
+			// Extract the asset source out of load_context without borrowing it.
+			// This is hacky, but i can't think of a better way to keep the borrow checker pleased.
+			// SAFETY: The other things load_context is used for in this function don't interact with asset_path at all.
+			let source = unsafe { (*std::ptr::from_ref(view.load_context)).asset_path().source() };
+			let generic_material_path = AssetPath::from_path(&generic_material_path).with_source(source);
+
+			#[allow(clippy::unnecessary_to_owned)]
+			match view
+				.asset_server
+				.get_source(view.load_context.asset_path().source())
+				.expect("Could not find asset source")
+				.reader()
+				// Annoying clone, but the borrow checker demands it!
+				.read(&generic_material_path.path().to_path_buf())
+				.await
+			{
 				Ok(_) => {
 					let texture_sampler = view.tb_config.texture_sampler.clone();
 					view.load_context
 						.loader()
 						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-						.load(path)
+						.load(generic_material_path)
 				}
 				Err(err) => match err {
-					LoadDirectError::LoadError {
-						dependency: _,
-						error: AssetLoadError::AssetReaderError(AssetReaderError::NotFound(_)),
-					} => {
+					AssetReaderError::NotFound(_) => {
 						let texture_sampler = view.tb_config.texture_sampler.clone();
+						let image_path = view
+							.tb_config
+							.material_root
+							.join(format!("{}.{}", view.name, view.tb_config.texture_extension));
+
 						view.load_context
 							.loader()
 							.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-							.load(
-								view.tb_config
-									.material_root
-									.join(format!("{}.{}", view.name, view.tb_config.texture_extension)),
-							)
+							.load(AssetPath::from_path(&image_path).with_source(source))
 					}
 
 					err => {
@@ -492,6 +504,8 @@ pub struct TextureLoadView<'a, 'b> {
 	pub name: &'a str,
 	pub tb_config: &'a TrenchBroomConfig,
 	pub load_context: &'a mut LoadContext<'b>,
+	/// Because [`LoadContext`] doesn't expose its [`AssetServer`], this does it for you, allowing you do do things you couldn't with just the load context.
+	pub asset_server: &'a AssetServer,
 	pub entities: &'a QuakeMapEntities,
 	/// `Some` if it is determined that a specific alpha mode should be used for a material, such as in some embedded textures.
 	#[cfg(feature = "client")]
@@ -877,7 +891,7 @@ impl TrenchBroomConfig {
 		}
 
 		if let Some(bounds) = self.soft_map_bounds {
-			json.insert("softMapBounds", bounds.fgd_to_string()).unwrap();
+			json.insert("softMapBounds", bounds.fgd_to_string_unquoted()).unwrap();
 		}
 
 		let mut buf = json.pretty(4);
