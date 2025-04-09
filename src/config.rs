@@ -237,7 +237,7 @@ pub struct TrenchBroomConfig {
 	#[default(Self::default_texture_sampler())]
 	pub texture_sampler: ImageSampler,
 
-	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering.
+	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
 	pub bicubic_lightmap_filtering: bool,
 
 	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
