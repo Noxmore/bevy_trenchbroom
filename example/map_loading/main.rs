@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(feature = "example_client")]
-use bevy::ecs::{component::ComponentId, world::DeferredWorld};
+use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
 #[cfg(feature = "example_client")]
@@ -32,12 +32,12 @@ pub struct FuncDoor;
 pub struct Cube;
 #[cfg(feature = "example_client")]
 impl Cube {
-	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+	fn on_add(mut world: DeferredWorld, ctx: HookContext) {
 		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
 		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
 		let material = asset_server.add(StandardMaterial::default());
 
-		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
+		world.commands().entity(ctx.entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
 	}
 }
 

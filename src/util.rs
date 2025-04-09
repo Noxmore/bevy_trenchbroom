@@ -1,5 +1,5 @@
 use bevy::{
-	ecs::{component::ComponentId, world::DeferredWorld},
+	ecs::{component::HookContext, world::DeferredWorld},
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
 
@@ -211,8 +211,8 @@ impl IsSceneWorld for DeferredWorld<'_> {
 #[component(on_add = Self::on_add)]
 pub struct TrenchBroomGltfRotationFix;
 impl TrenchBroomGltfRotationFix {
-	pub fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
-		let mut entity = world.entity_mut(entity);
+	pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+		let mut entity = world.entity_mut(ctx.entity);
 		if entity.contains::<TrenchBroomGltfRotationFix>() {
 			if let Some(mut transform) = entity.get_mut::<Transform>() {
 				transform.rotate_local_y(std::f32::consts::PI / 2.);

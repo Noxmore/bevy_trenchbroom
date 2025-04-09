@@ -61,7 +61,7 @@ impl<'d> EmbeddedTextures<'d> {
 			})
 			.collect();
 
-		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity(images.len());
+		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity_and_hasher(images.len(), default());
 
 		for (name, (image, image_handle)) in &images {
 			#[cfg(feature = "client")]

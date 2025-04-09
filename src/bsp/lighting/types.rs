@@ -252,8 +252,9 @@ impl RenderAsset for AnimatedLighting {
 
 	fn prepare_asset(
 		source_asset: Self::SourceAsset,
-		_: &mut bevy::ecs::system::SystemParamItem<Self::Param>,
-	) -> Result<Self, bevy::render::render_asset::PrepareAssetError<Self::SourceAsset>> {
+		_asset_id: AssetId<Self::SourceAsset>,
+		_param: &mut bevy::ecs::system::SystemParamItem<Self::Param>,
+	) -> std::result::Result<Self, bevy::render::render_asset::PrepareAssetError<Self::SourceAsset>> {
 		Ok(source_asset)
 	}
 }
