@@ -3,7 +3,9 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-Integration and support for the following workflows:
+Quake level loading for Bevy!
+
+More specifically, integration and support for the following workflows:
 - TrenchBroom -> .map -> Bevy
 - TrenchBroom -> .map -> ericw-tools -> .bsp -> Bevy
 
