@@ -135,16 +135,11 @@ fn bsp_loading() {
 		.init_asset_loader::<BspLoader>()
 	;
 
-	let bsp_handle = app.world().resource::<AssetServer>().load::<Bsp>("maps/example.bsp");
-
-	for _ in 0..1000 {
-		match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
-			bevy::asset::LoadState::Loaded => return,
-			bevy::asset::LoadState::Failed(err) => panic!("{err}"),
-			_ => std::thread::sleep(std::time::Duration::from_millis(5)),
-		}
-
-		app.update();
-	}
-	panic!("Bsp took longer than 5 seconds to load.");
+	smol::block_on(async {
+		app.world()
+			.resource::<AssetServer>()
+			.load_untyped_async("maps/example.bsp")
+			.await
+			.unwrap();
+	});
 }
