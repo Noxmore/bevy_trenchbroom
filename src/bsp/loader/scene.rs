@@ -63,6 +63,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 					tb_server: &ctx.loader.tb_server,
 					map_entity,
 					map_entity_idx,
+					class,
 					meshes,
 				};
 

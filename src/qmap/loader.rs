@@ -180,6 +180,7 @@ impl AssetLoader for QuakeMapLoader {
 						tb_server: &self.tb_server,
 						map_entity,
 						map_entity_idx,
+						class,
 						meshes: mesh_views,
 					};
 
