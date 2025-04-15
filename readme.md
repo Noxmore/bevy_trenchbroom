@@ -210,7 +210,7 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
 
 This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
-After you write it out, you have to use the created game config in TrenchBroom's preferences and set the "Game path" to your project/game folder.
+After you write it out, you have to select the created game config in TrenchBroom's preferences when creating a new map.
 
 ## Materials and `bevy_materialize`
 
