@@ -835,7 +835,7 @@ impl TrenchBroomConfig {
 	pub fn write_preferences_to_default_directory(&self) -> Result<(), DefaultTrenchBroomPreferencesError> {
 		let path = self
 			.get_default_preferences_path()
-			.map_err(|err| DefaultTrenchBroomPreferencesError::UserdataDirError(err))?;
+			.map_err(DefaultTrenchBroomPreferencesError::UserdataDirError)?;
 
 		if !path.exists() {
 			return Err(DefaultTrenchBroomPreferencesError::PreferencesNotFoundError(path));
@@ -880,7 +880,7 @@ impl TrenchBroomConfig {
 	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomGameConfigError> {
 		let trenchbroom_userdata = self
 			.get_default_trenchbroom_userdata_path()
-			.map_err(|err| DefaultTrenchBroomGameConfigError::UserdataDirError(err))?;
+			.map_err(DefaultTrenchBroomGameConfigError::UserdataDirError)?;
 		let trenchbroom_game_config = trenchbroom_userdata.join("games").join(&self.name);
 		Ok(trenchbroom_game_config)
 	}
