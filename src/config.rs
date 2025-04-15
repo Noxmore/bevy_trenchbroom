@@ -800,6 +800,10 @@ pub enum DefaultTrenchBroomPreferencesError {
 	ReadError { error: io::Error, path: PathBuf },
 	#[error("Failed to deserialize preferences to JSON from {}: {error}", path.display())]
 	DeserializeError { error: serde_json::Error, path: PathBuf },
+	#[error("Failed read from preferences at {} as a JSON object", path.display())]
+	JsonObjectError { path: PathBuf },
+	#[error("Failed to serialize preferences back to JSON: {error}")]
+	SerializeError { error: serde_json::Error },
 	#[error("Failed to find path to current executable: {error}")]
 	CurrentExeError { error: io::Error },
 	#[error("Failed to convert path {path} to string. Is the path of the current executable not valid UTF-8?", path = path.display())]
@@ -896,11 +900,14 @@ impl TrenchBroomConfig {
 			path: path.to_path_buf(),
 		})?;
 
-		let mut preferences: json::JsonValue =
+		let mut preferences: serde_json::Value =
 			serde_json::from_str(&preferences).map_err(|err| DefaultTrenchBroomPreferencesError::DeserializeError {
 				error: err,
 				path: path.to_path_buf(),
 			})?;
+		let preferences = preferences
+			.as_object_mut()
+			.ok_or(DefaultTrenchBroomPreferencesError::JsonObjectError { path: path.to_path_buf() })?;
 
 		// add the game config to the preferences
 		let key = format!("Games/{}/Path", self.name);
@@ -909,11 +916,15 @@ impl TrenchBroomConfig {
 		let value = current_exe;
 		let game_dir = value
 			.to_str()
-			.ok_or_else(|| DefaultTrenchBroomPreferencesError::PathToStringError { path: value })?;
-		preferences.insert(&key, game_dir);
+			.ok_or_else(|| DefaultTrenchBroomPreferencesError::PathToStringError { path: value.clone() })?
+			.to_string();
+
+		preferences.insert(key, serde_json::Value::String(game_dir));
+		let preferences =
+			serde_json::to_string_pretty(&preferences).map_err(|err| DefaultTrenchBroomPreferencesError::SerializeError { error: err })?;
 
 		// write the preferences file back to the same path
-		fs::write(path, preferences.to_string()).map_err(|err| DefaultTrenchBroomPreferencesError::WriteError {
+		fs::write(path, preferences).map_err(|err| DefaultTrenchBroomPreferencesError::WriteError {
 			error: err,
 			path: path.to_path_buf(),
 		})?;
