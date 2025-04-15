@@ -784,9 +784,14 @@ pub enum DefaultTrenchBroomGameConfigError {
 	WriteError { error: io::Error, path: PathBuf },
 }
 
-/// Errors that can occur when trying to use [`TrenchBroomConfig::write_trenchbroom_preferences_to_default_directory`]
+/// Errors that can occur when trying to use [`TrenchBroomConfig::write_preferences_to_default_directory`]
 #[derive(thiserror::Error, Debug)]
 pub enum DefaultTrenchBroomPreferencesError {
+	#[error(
+		"Please set a name for your TrenchBroom config. \
+		If you have, make sure you call `write_preferences` after the app is built. (e.g. In a startup system)"
+	)]
+	UninitializedError,
 	#[error("Failed to find TrenchBroom user data directory: {0}")]
 	UserdataDirError(DefaultTrenchBroomUserdataDirError),
 	#[error("Preferences file not found at {0}")]
@@ -823,15 +828,15 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	pub fn write_trenchbroom_preferences_to_default_directory(&self) -> Result<(), DefaultTrenchBroomPreferencesError> {
+	pub fn write_preferences_to_default_directory(&self) -> Result<(), DefaultTrenchBroomPreferencesError> {
 		let path = self
-			.get_default_trenchbroom_preferences_path()
+			.get_default_preferences_path()
 			.map_err(|err| DefaultTrenchBroomPreferencesError::UserdataDirError(err))?;
 
 		if !path.exists() {
 			return Err(DefaultTrenchBroomPreferencesError::PreferencesNotFoundError(path));
 		}
-		self.write_trenchbroom_preferences(&path)?;
+		self.write_preferences(&path)?;
 		Ok(())
 	}
 
@@ -860,7 +865,7 @@ impl TrenchBroomConfig {
 	}
 
 	/// Gets $TRENCHBROOM_DIR/Preferences.json
-	fn get_default_trenchbroom_preferences_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
+	fn get_default_preferences_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
 		let trenchbroom_userdata = self.get_default_trenchbroom_userdata_path()?;
 		let preferences_path = trenchbroom_userdata.join("Preferences.json");
 
@@ -878,8 +883,12 @@ impl TrenchBroomConfig {
 
 	/// Writes the TrenchBroom preferences to a file. It is your choice when to do this in your application, and where you want to save the preferences to.
 	///
-	/// If you have a standard TrenchBroom installation, you can use [`write_trenchbroom_preferences_to_default_directory`](Self::write_trenchbroom_preferences_to_default_directory) instead to use the default location.
-	pub fn write_trenchbroom_preferences(&self, path: impl AsRef<Path>) -> Result<(), DefaultTrenchBroomPreferencesError> {
+	/// If you have a standard TrenchBroom installation, you can use [`write_preferences_to_default_directory`](Self::write_preferences_to_default_directory) instead to use the default location.
+	pub fn write_preferences(&self, path: impl AsRef<Path>) -> Result<(), DefaultTrenchBroomPreferencesError> {
+		if self.name.is_empty() {
+			return Err(DefaultTrenchBroomPreferencesError::UninitializedError);
+		}
+
 		let path = path.as_ref();
 		// read the preferences file as json
 		let preferences = fs::read_to_string(path).map_err(|err| DefaultTrenchBroomPreferencesError::ReadError {
@@ -919,7 +928,7 @@ impl TrenchBroomConfig {
 		if self.name.is_empty() {
 			return Err(io::Error::other(
 				"Please set a name for your TrenchBroom config. \
-				If you have, make sure you call `write_folder` after the app is built. (e.g. In a startup system)",
+				If you have, make sure you call `write_game_config` after the app is built. (e.g. In a startup system)",
 			));
 		}
 
