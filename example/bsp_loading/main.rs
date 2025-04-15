@@ -86,7 +86,9 @@ impl Cube {
 #[no_register]
 #[reflect(Component)]
 #[require(BspLight, Transform)]
+// This is the default size, this is just to make sure it produces a valid fgd.
 #[size(-8 -8 -8, 8 8 8)]
+#[iconsprite({ path: "point_light.png", scale: 0.1 })]
 pub struct Light;
 
 struct ClientPlugin;
