@@ -186,7 +186,7 @@ Otherwise, you'll have to call `TrenchBroomConfig::register_class<Class>()` to r
 
 The types themselves will also need to be registered with Bevy, but if `TrenchBroomConfig::register_entity_class_types` is enabled (default), that will also happen automatically.
 
-Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::write_preferences`. Example:
+Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
 
 ```rust
 use bevy::prelude::*;
@@ -202,7 +202,7 @@ fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
     }
 
     // And this will add our game to <TB folder>/Preferences.json
-    if let Err(err) = server.config.write_preferences_to_default_directory() {
+    if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
         error!("Could not write TrenchBroom preferences: {err}");
     }
 }

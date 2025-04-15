@@ -784,7 +784,7 @@ pub enum DefaultTrenchBroomGameConfigError {
 	WriteError { error: io::Error, path: PathBuf },
 }
 
-/// Errors that can occur when trying to use [`TrenchBroomConfig::write_preferences_to_default_directory`]
+/// Errors that can occur when trying to use [`TrenchBroomConfig::add_game_to_preferences_in_default_directory`]
 #[derive(thiserror::Error, Debug)]
 pub enum DefaultTrenchBroomPreferencesError {
 	#[error(
@@ -832,7 +832,10 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	pub fn write_preferences_to_default_directory(&self) -> Result<(), DefaultTrenchBroomPreferencesError> {
+	/// Adds the game to the preferences file by using the default TrenchBroom user data directory.
+	///
+	/// If you want to customize the path, use [`add_game_to_preferences`](Self::add_game_to_preferences) instead.
+	pub fn add_game_to_preferences_in_default_directory(&self) -> Result<(), DefaultTrenchBroomPreferencesError> {
 		let path = self
 			.get_default_preferences_path()
 			.map_err(DefaultTrenchBroomPreferencesError::UserdataDirError)?;
@@ -840,7 +843,7 @@ impl TrenchBroomConfig {
 		if !path.exists() {
 			return Err(DefaultTrenchBroomPreferencesError::PreferencesNotFoundError(path));
 		}
-		self.write_preferences(&path)?;
+		self.add_game_to_preferences(&path)?;
 		Ok(())
 	}
 
@@ -885,10 +888,11 @@ impl TrenchBroomConfig {
 		Ok(trenchbroom_game_config)
 	}
 
-	/// Writes the TrenchBroom preferences to a file. It is your choice when to do this in your application, and where you want to save the preferences to.
+	/// Adds the game to the preferences file by using the current directory as the game path.
+	/// It is your choice when to do this in your application, and where the preferences file is located.
 	///
-	/// If you have a standard TrenchBroom installation, you can use [`write_preferences_to_default_directory`](Self::write_preferences_to_default_directory) instead to use the default location.
-	pub fn write_preferences(&self, path: impl AsRef<Path>) -> Result<(), DefaultTrenchBroomPreferencesError> {
+	/// If you have a standard TrenchBroom installation, you can use [`add_game_to_preferences_in_default_directory`](Self::add_game_to_preferences_in_default_directory) instead to use the default location.
+	pub fn add_game_to_preferences(&self, path: impl AsRef<Path>) -> Result<(), DefaultTrenchBroomPreferencesError> {
 		if self.name.is_empty() {
 			return Err(DefaultTrenchBroomPreferencesError::UninitializedError);
 		}
