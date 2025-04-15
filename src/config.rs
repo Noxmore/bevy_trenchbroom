@@ -804,9 +804,9 @@ pub enum DefaultTrenchBroomPreferencesError {
 	JsonObjectError { path: PathBuf },
 	#[error("Failed to serialize preferences back to JSON: {error}")]
 	SerializeError { error: serde_json::Error },
-	#[error("Failed to find path to current executable: {error}")]
-	CurrentExeError { error: io::Error },
-	#[error("Failed to convert path {path} to string. Is the path of the current executable not valid UTF-8?", path = path.display())]
+	#[error("Failed to find path to current directory: {error}")]
+	CurrentDirError { error: io::Error },
+	#[error("Failed to convert path {path} to string. Is the path of the current directory not valid UTF-8?", path = path.display())]
 	PathToStringError { path: PathBuf },
 	#[error("Failed to write preferences to {}: {error}", path.display())]
 	WriteError { error: io::Error, path: PathBuf },
@@ -911,12 +911,10 @@ impl TrenchBroomConfig {
 
 		// add the game config to the preferences
 		let key = format!("Games/{}/Path", self.name);
-		let mut current_exe = env::current_exe().map_err(|err| DefaultTrenchBroomPreferencesError::CurrentExeError { error: err })?;
-		current_exe.pop();
-		let value = current_exe;
-		let game_dir = value
+		let game_dir = env::current_dir().map_err(|err| DefaultTrenchBroomPreferencesError::CurrentDirError { error: err })?;
+		let game_dir = game_dir
 			.to_str()
-			.ok_or_else(|| DefaultTrenchBroomPreferencesError::PathToStringError { path: value.clone() })?
+			.ok_or_else(|| DefaultTrenchBroomPreferencesError::PathToStringError { path: game_dir.clone() })?
 			.to_string();
 
 		preferences.insert(key, serde_json::Value::String(game_dir));
@@ -928,6 +926,8 @@ impl TrenchBroomConfig {
 			error: err,
 			path: path.to_path_buf(),
 		})?;
+
+		info!("Successfully wrote TrenchBroom preferences to {}", path.display());
 
 		Ok(())
 	}
@@ -1015,7 +1015,7 @@ impl TrenchBroomConfig {
 
 		fs::write(folder.join(format!("{}.fgd", self.name)), self.to_fgd())?;
 
-		info!("Successfully wrote TrenchBroom game to {}", folder.display());
+		info!("Successfully wrote TrenchBroom game config to {}", folder.display());
 
 		Ok(())
 	}
