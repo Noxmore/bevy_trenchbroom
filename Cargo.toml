@@ -27,7 +27,7 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.15", default-features = false, features = ["png"] } # For examples
+bevy = { version = "0.15", default-features = false, features = ["png", "bevy_gltf"] } # For examples
 nil = "0.14"
 bevy_flycam = "0.15"
 bevy-inspector-egui = "0.30"

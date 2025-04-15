@@ -41,6 +41,15 @@ impl Cube {
 	}
 }
 
+#[derive(PointClass, Component, Reflect)]
+#[no_register]
+#[reflect(Component)]
+#[require(Transform)]
+#[model("models/mushroom.glb")]
+#[size(-4 -4 0, 4 4 16)]
+#[component(on_add = spawn_class_gltf::<Mushroom>)]
+pub struct Mushroom;
+
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[no_register]
@@ -85,6 +94,7 @@ fn main() {
 				.no_bsp_lighting(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
+				.register_class::<Mushroom>()
 				.register_class::<Light>()
 				.register_class::<FuncDoor>(),
 		))
