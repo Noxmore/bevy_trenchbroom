@@ -1,4 +1,5 @@
 pub mod builtin;
+pub mod spawn_util;
 
 use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;

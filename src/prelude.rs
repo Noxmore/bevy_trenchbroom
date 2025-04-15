@@ -33,7 +33,10 @@ pub use crate::{
 	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
 };
 pub use crate::{
-	class::builtin::{Target, Targetable},
+	class::{
+		builtin::{Target, Targetable},
+		spawn_util::spawn_class_gltf,
+	},
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,

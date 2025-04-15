@@ -82,6 +82,15 @@ impl Cube {
 	}
 }
 
+#[derive(PointClass, Component, Reflect)]
+#[no_register]
+#[reflect(Component)]
+#[require(Transform)]
+#[model("models/mushroom.glb")]
+#[size(-4 -4 0, 4 4 16)]
+#[component(on_add = spawn_class_gltf::<Mushroom>)]
+pub struct Mushroom;
+
 #[derive(PointClass, Component, Reflect, SmartDefault)]
 #[no_register]
 #[reflect(Component)]
@@ -122,6 +131,7 @@ fn main() {
 				.suppress_invalid_entity_definitions(true)
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
+				.register_class::<Mushroom>()
 				.register_class::<FuncWall>()
 				.register_class::<Light>()
 				.register_class::<FuncDoor>(),
