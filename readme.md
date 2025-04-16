@@ -186,7 +186,7 @@ Otherwise, you'll have to call `TrenchBroomConfig::register_class<Class>()` to r
 
 The types themselves will also need to be registered with Bevy, but if `TrenchBroomConfig::register_entity_class_types` is enabled (default), that will also happen automatically.
 
-Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_folder`. Example:
+Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
 
 ```rust
 use bevy::prelude::*;
@@ -195,18 +195,22 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, write_trenchbroom_config)
 
 fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
-    if let Err(err) = server.config.write_to_default_folder() {
-        error!("Could not write TrenchBroom config: {err}");
+    // This will write <TB folder>/games/example_game/GameConfig.cfg,
+    // and <TB folder>/games/example_game/example_game.fgd
+    if let Err(err) = server.config.write_game_config_to_default_directory() {
+        error!("Could not write TrenchBroom game config: {err}");
     }
 
-    // This will write <TB games folder>/example_game/GameConfig.cfg,
-    // and <TB games folder>/example_game/example_game.fgd
+    // And this will add our game to <TB folder>/Preferences.json
+    if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
+        error!("Could not write TrenchBroom preferences: {err}");
+    }
 }
 ```
 
 This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
-After you write it out, you have to use the created game config in TrenchBroom's preferences and set the "Game path" to your project/game folder.
+After you write it out, you have to select the created game config in TrenchBroom's preferences when creating a new map.
 
 ## Materials and `bevy_materialize`
 

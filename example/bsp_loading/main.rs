@@ -178,6 +178,7 @@ fn setup_scene(
 fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>) {
 	#[cfg(not(target_family = "wasm"))]
 	{
-		server.config.write_to_default_folder().unwrap();
+		server.config.write_game_config_to_default_directory().unwrap();
+		server.config.add_game_to_preferences_in_default_directory().unwrap();
 	}
 }
