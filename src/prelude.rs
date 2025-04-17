@@ -36,6 +36,7 @@ pub use crate::{
 	class::{
 		builtin::{Target, Targetable},
 		spawn_util::spawn_class_gltf,
+		QuakeClass,
 	},
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
