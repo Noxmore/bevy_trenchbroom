@@ -6,6 +6,8 @@ use class::QuakeClassType;
 use config::TextureLoadView;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
 
+use crate::class::QuakeClassSpawnView;
+
 use super::*;
 
 pub struct QuakeMapLoader {
@@ -84,7 +86,12 @@ impl AssetLoader for QuakeMapLoader {
 				let entity_id = entity.id();
 
 				class
-					.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
+					.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+						config: &self.tb_server.config,
+						src_entity: map_entity,
+						entity: &mut entity,
+						load_context,
+					})
 					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
 				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {

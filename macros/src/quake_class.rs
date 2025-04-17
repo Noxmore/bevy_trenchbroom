@@ -160,7 +160,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				};
 
 				field_constructors.push(quote! {
-					#setter src_entity.get(#field_name)#not_found_handler,
+					#setter view.src_entity.get(#field_name)#not_found_handler,
 				});
 			}
 
@@ -229,11 +229,10 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				properties: &[#(#properties)*],
 			};
 
-			#[allow(unused)]
-			fn class_spawn(config: &::bevy_trenchbroom::config::TrenchBroomConfig, src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity, entity: &mut ::bevy::ecs::world::EntityWorldMut) -> ::bevy_trenchbroom::anyhow::Result<()> {
+			fn class_spawn(view: &mut ::bevy_trenchbroom::class::QuakeClassSpawnView) -> ::bevy_trenchbroom::anyhow::Result<()> {
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
-				entity.insert(#spawn_constructor);
+				view.entity.insert(#spawn_constructor);
 				Ok(())
 			}
 		}

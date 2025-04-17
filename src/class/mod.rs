@@ -1,6 +1,7 @@
 pub mod builtin;
 pub mod spawn_util;
 
+use bevy::asset::LoadContext;
 use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
@@ -112,20 +113,30 @@ impl QuakeClassInfo {
 	}
 }
 
+/// Inputs provided when spawning an entity into the scene world of a loading map.
+pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
+	pub config: &'l TrenchBroomConfig,
+	pub src_entity: &'l QuakeMapEntity,
+	/// Entity in the scene world.
+	pub entity: &'l mut EntityWorldMut<'sw>,
+	pub load_context: &'l mut LoadContext<'w>,
+}
+
 pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
 	///
-	/// NOTE: Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
+	/// Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
 	const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
 	const CLASS_INFO: QuakeClassInfo;
 
-	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>;
+	/// Spawns into the scene world when the map is loaded.
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()>;
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
 	pub info: QuakeClassInfo,
-	pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
+	pub spawn_fn: fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>,
 	pub get_type_registration: fn() -> TypeRegistration,
 	pub register_type_dependencies: fn(&mut TypeRegistry),
 }
@@ -139,17 +150,12 @@ impl ErasedQuakeClass {
 		}
 	}
 
-	pub fn apply_spawn_fn_recursive(
-		&self,
-		config: &TrenchBroomConfig,
-		src_entity: &QuakeMapEntity,
-		entity: &mut EntityWorldMut,
-	) -> anyhow::Result<()> {
+	pub fn apply_spawn_fn_recursive(&self, view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		for base in self.info.base {
-			base.apply_spawn_fn_recursive(config, src_entity, entity)?;
+			base.apply_spawn_fn_recursive(view)?;
 		}
 
-		(self.spawn_fn)(config, src_entity, entity)?;
+		(self.spawn_fn)(view)?;
 
 		Ok(())
 	}

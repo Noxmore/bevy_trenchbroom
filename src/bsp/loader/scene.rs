@@ -1,5 +1,5 @@
 use super::*;
-use crate::*;
+use crate::{class::QuakeClassSpawnView, *};
 use bsp::*;
 use models::InternalModel;
 
@@ -23,7 +23,12 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 		let entity_id = entity.id();
 
 		class
-			.apply_spawn_fn_recursive(config, map_entity, &mut entity)
+			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+				config,
+				src_entity: map_entity,
+				entity: &mut entity,
+				load_context: ctx.load_context,
+			})
 			.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
 		if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
