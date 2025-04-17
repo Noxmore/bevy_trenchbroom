@@ -47,7 +47,7 @@ impl Cube {
 #[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
-#[component(on_add = spawn_class_gltf::<Mushroom>)]
+#[spawn_hook(spawn_class_gltf::<Self>)]
 pub struct Mushroom;
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.

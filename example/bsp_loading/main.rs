@@ -88,7 +88,7 @@ impl Cube {
 #[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
-#[component(on_add = spawn_class_gltf::<Mushroom>)]
+#[spawn_hook(spawn_class_gltf::<Self>)]
 pub struct Mushroom;
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]

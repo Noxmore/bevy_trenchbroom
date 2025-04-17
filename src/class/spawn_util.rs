@@ -1,7 +1,4 @@
-use bevy::{
-	asset::AssetPath,
-	ecs::{component::ComponentId, world::DeferredWorld},
-};
+use bevy::asset::AssetPath;
 
 use super::*;
 use crate::*;
@@ -12,8 +9,7 @@ use crate::*;
 /// For general use, you should use functions like [`spawn_class_gltf`] for better ergonomics.
 ///
 /// NOTE: This currently only works for simple paths (e.g. `#[model("path/to/model")]`), more advanced uses of the `model` property won't work.
-pub fn spawn_class_model_internal<T: QuakeClass>(mut world: DeferredWorld, entity: Entity, label: Option<&'static str>) {
-	let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
+pub fn spawn_class_model_internal<T: QuakeClass>(view: &mut QuakeClassSpawnView, label: Option<&'static str>) {
 	let model_path = T::CLASS_INFO
 		.model
 		.expect("`spawn_class_model` called but `model` property not specified!");
@@ -24,14 +20,14 @@ pub fn spawn_class_model_internal<T: QuakeClass>(mut world: DeferredWorld, entit
 		model_path = model_path.with_label(label);
 	}
 
-	let model_handle = asset_server.load(model_path);
+	let model_handle = view.load_context.load(model_path);
 
-	world.commands().entity(entity).insert(SceneRoot(model_handle));
+	view.entity.insert(SceneRoot(model_handle));
 }
 
-/// Spawns the model stored in this class' `model` property as a gltf.
+/// Spawns the model stored in this class' `model` property as a gltf, and runs [`trenchbroom_gltf_rotation_fix`].
 ///
-/// This function exists in such a way that you can directly use it as a component hook for your class, or call it from within an existing component hook.
+/// This function exists in such a way that you can directly use it as a spawn hook for your class, or call it from within an existing spawn hook.
 ///
 /// NOTE: This currently only works for simple paths (e.g. `#[model("path/to/model")]`), more advanced uses of the `model` property won't work.
 ///
@@ -44,13 +40,11 @@ pub fn spawn_class_model_internal<T: QuakeClass>(mut world: DeferredWorld, entit
 /// #[base(Transform)]
 /// #[model("models/mushroom.glb")]
 /// #[size(-4 -4 0, 4 4 16)]
-/// #[component(on_add = spawn_class_gltf::<Mushroom>)]
+/// #[spawn_hook(spawn_class_gltf::<Self>)]
 /// pub struct Mushroom;
 /// ```
-pub fn spawn_class_gltf<T: QuakeClass>(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
-	if world.is_scene_world() {
-		return;
-	}
-	world.commands().entity(entity).insert(TrenchBroomGltfRotationFix);
-	spawn_class_model_internal::<T>(world, entity, Some("Scene0"))
+pub fn spawn_class_gltf<T: QuakeClass>(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+	trenchbroom_gltf_rotation_fix(view.entity);
+	spawn_class_model_internal::<T>(view, Some("Scene0"));
+	Ok(())
 }
