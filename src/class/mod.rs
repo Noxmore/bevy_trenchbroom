@@ -111,6 +111,29 @@ impl QuakeClassInfo {
 	pub fn derives_from<T: QuakeClass>(&self) -> bool {
 		self.derives_from_name(T::CLASS_INFO.name)
 	}
+
+	/// Returns the path of the in-editor model of this class.
+	///
+	/// TODO: This currently only works for classes with the syntax `#[model("path/to/model")]`, anything more complex will produce `None`.
+	///
+	/// # Examples
+	/// ```
+	/// # use bevy::prelude::*;
+	/// # use bevy_trenchbroom::prelude::*;
+	/// #[derive(PointClass, Reflect, Component)]
+	/// #[reflect(Component)]
+	/// #[model("models/my_class.glb")]
+	/// struct MyClass;
+	///
+	/// assert_eq!(MyClass::CLASS_INFO.model_path(), Some("models/my_class.glb"));
+	/// ```
+	pub fn model_path(&self) -> Option<&str> {
+		let model = self.model?;
+		if !model.starts_with('"') || !model.ends_with('"') {
+			return None;
+		}
+		Some(model.trim_matches('"'))
+	}
 }
 
 /// Inputs provided when spawning an entity into the scene world of a loading map.
