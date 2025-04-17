@@ -17,10 +17,8 @@ struct Opts {
 	size: Option<TokenStream>,
 	geometry: Option<Expr>,
 	classname: Option<TokenStream>,
-
-	/// `true` if the `#[base(...)]` attribute is used to override, otherwise uses `#[require(...)]`
-	base_override: bool,
 	base: Vec<Type>,
+
 	no_register: bool,
 	doc: Option<String>,
 }
@@ -74,14 +72,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.geometry = Some(Expr::parse.parse2(meta.tokens).expect("`geometry` attribute not an expression"));
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
-				} else if compare_path(&meta.path, "require") && !opts.base_override {
-					opts.base.extend(extract_type_list(meta.tokens));
 				} else if compare_path(&meta.path, "base") {
-					if !opts.base_override {
-						opts.base.clear();
-					}
-					opts.base_override = true;
-
 					opts.base.extend(extract_type_list(meta.tokens));
 				}
 			}

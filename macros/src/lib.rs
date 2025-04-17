@@ -18,8 +18,7 @@ use syn::*;
 /// - `#[size(<-x> <-y> <-z>, <+x> <+y> <+z>)]` The bounding box of the entity in-editor.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
-/// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
-/// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[base(<type ...>)]` Adds base classes to inherit.
 /// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes
@@ -37,8 +36,7 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// - `#[geometry(<rust expression>)]` Required. An expression that produces a `GeometryProvider` to control how the geometry appears in the world.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
-/// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
-/// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[base(<type ...>)]` Adds base classes to inherit.
 /// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes

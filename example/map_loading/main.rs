@@ -20,14 +20,14 @@ pub struct Worldspawn;
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -44,7 +44,7 @@ impl Cube {
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[component(on_add = spawn_class_gltf::<Mushroom>)]
@@ -54,7 +54,7 @@ pub struct Mushroom;
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
 	pub _color: Color,

@@ -41,7 +41,7 @@ pub fn spawn_class_model_internal<T: QuakeClass>(mut world: DeferredWorld, entit
 /// # use bevy_trenchbroom::prelude::*;
 /// #[derive(PointClass, Component, Reflect)]
 /// #[reflect(Component)]
-/// #[require(Transform)]
+/// #[base(Transform)]
 /// #[model("models/mushroom.glb")]
 /// #[size(-4 -4 0, 4 4 16)]
 /// #[component(on_add = spawn_class_gltf::<Mushroom>)]
