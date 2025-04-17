@@ -35,7 +35,7 @@ pub use crate::{
 pub use crate::{
 	class::{
 		builtin::{Target, Targetable},
-		spawn_util::spawn_class_gltf,
+		spawn_util::*,
 		QuakeClass,
 	},
 	config::TrenchBroomConfig,
