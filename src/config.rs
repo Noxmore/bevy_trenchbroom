@@ -776,7 +776,7 @@ pub enum DefaultTrenchBroomUserdataDirError {
 /// Errors that can occur when trying to use [`TrenchBroomConfig::write_game_config_to_default_directory`]
 #[derive(thiserror::Error, Debug)]
 pub enum DefaultTrenchBroomGameConfigError {
-	#[error("Failed to find TrenchBroom user data directory: {0}")]
+	#[error("{0}")]
 	UserdataDirError(DefaultTrenchBroomUserdataDirError),
 	#[error("Failed to create game config directory: {0}")]
 	CreateDirError(io::Error),
@@ -792,7 +792,7 @@ pub enum DefaultTrenchBroomPreferencesError {
 		If you have, make sure you call `write_preferences` after the app is built. (e.g. In a startup system)"
 	)]
 	UninitializedError,
-	#[error("Failed to find TrenchBroom user data directory: {0}")]
+	#[error("{0}")]
 	UserdataDirError(DefaultTrenchBroomUserdataDirError),
 	#[error("Preferences file not found at {0}")]
 	PreferencesNotFoundError(PathBuf),
