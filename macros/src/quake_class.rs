@@ -1,3 +1,5 @@
+use syn::parse::{Parse, Parser};
+
 use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,7 +15,7 @@ struct Opts {
 	color: Option<TokenStream>,
 	iconsprite: Option<TokenStream>,
 	size: Option<TokenStream>,
-	geometry: Option<TokenStream>,
+	geometry: Option<Expr>,
 	classname: Option<TokenStream>,
 
 	/// `true` if the `#[base(...)]` attribute is used to override, otherwise uses `#[require(...)]`
@@ -69,7 +71,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				} else if compare_path(&meta.path, "size") {
 					opts.size = Some(meta.tokens);
 				} else if compare_path(&meta.path, "geometry") {
-					opts.geometry = Some(meta.tokens);
+					opts.geometry = Some(Expr::parse.parse2(meta.tokens).expect("`geometry` attribute not an expression"));
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
 				} else if compare_path(&meta.path, "require") && !opts.base_override {
