@@ -196,7 +196,7 @@ pub struct BspSolidEntity {
 /// Contains properties used by the `ericw-tools` compiler for the `worldspawn` entity.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 #[no_register]
 pub struct BspWorldspawn {
 	/// (Not documented, but hopefully self-explanatory.)
@@ -567,7 +567,7 @@ pub enum BspLightAttenuation {
 /// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[require(Transform)]
+#[base(Transform)]
 #[no_register]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.

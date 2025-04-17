@@ -17,14 +17,14 @@ pub struct Worldspawn;
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {
@@ -40,7 +40,7 @@ impl Cube {
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
 	pub _color: Color,

@@ -49,7 +49,7 @@ fn main() {
 
 NOTE: By default, `TrenchbroomConfig::auto_remove_textures` contains `__TB_empty`, meaning that when loading `.map`s, any face without a texture will be automatically ignored, saving processing and render time.
 
-Quake's entity classes and their base classes are treated as an analog to Bevy's components and their required components.
+Quake's entity classes are treated as an analog to Bevy's components.
 
 You can define your components like so to turn them into quake classes.
 
@@ -62,22 +62,25 @@ use bevy_trenchbroom::bsp::base_classes::*;
 // world geometry and settings. Exactly one exists in every map.
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
+// Quake classes use an inheritance system alike OOP
+// programming languages.
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
-#[require(BspWorldspawn)]
+#[base(BspWorldspawn)]
 #[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn {
+    /// A useful example property.
     pub fog_color: Color,
     pub fog_density: f32,
 }
 
 // BaseClass doesn't appear in editor, only giving properties to
-// those which use it as a base class,
-// either by using the `require` or `base` attribute.
+// those which use it as a base class
+// by using the `base` attribute.
 #[derive(BaseClass, Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct MyBaseClass {
-    /// MY AWESOME VALUE!!
+    /// Documentation comments will be visible in-editor!
     pub my_value: u32,
 }
 
@@ -85,11 +88,6 @@ pub struct MyBaseClass {
 // contain its own geometry, such as a door or breakable
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(Visibility)]
-// You can also use the #[base()] attribute which will take
-// precedence over the require attribute if you want to require
-// components that don't implement QuakeClass,
-// or don't want to be a required component.
 #[base(Visibility, MyBaseClass)]
 #[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
 // By default, names are converted into snake_case.
@@ -104,7 +102,7 @@ pub struct FuncWall;
 #[reflect(Component)]
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 // Don't include a collider for func_illusionary.
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
@@ -133,7 +131,7 @@ pub struct FuncIllusionary;
 // NOTE: If you're using a GLTF model, insert
 // the TrenchBroomGltfRotationFix component when spawning the model.
 #[reflect(Component)]
-#[require(Transform, Visibility)]
+#[base(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {
@@ -165,7 +163,7 @@ impl Default for StaticProp {
 // Here you'd use #[component(on_add = "<function>")] or a system to
 // add a RigidBody of your preferred physics engine.
 #[reflect(Component)]
-#[require(StaticProp)]
+#[base(StaticProp)]
 pub struct PhysicsProp;
 
 // For `choices` properties, you can derive FgdType on a unit enum.

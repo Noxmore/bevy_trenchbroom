@@ -17,14 +17,14 @@ use nil::prelude::*;
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspWorldspawn)]
+#[base(BspWorldspawn)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity, Transform)]
+#[base(BspSolidEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
@@ -43,28 +43,28 @@ pub enum FlagsTest {
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -85,7 +85,7 @@ impl Cube {
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[component(on_add = spawn_class_gltf::<Mushroom>)]
@@ -94,7 +94,7 @@ pub struct Mushroom;
 #[derive(PointClass, Component, Reflect, SmartDefault)]
 #[no_register]
 #[reflect(Component)]
-#[require(BspLight, Transform)]
+#[base(BspLight, Transform)]
 // This is the default size, this is just to make sure it produces a valid fgd.
 #[size(-8 -8 -8, 8 8 8)]
 #[iconsprite({ path: "point_light.png", scale: 0.1 })]
