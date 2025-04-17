@@ -10,11 +10,11 @@ use crate::*;
 ///
 /// NOTE: This currently only works for simple paths (e.g. `#[model("path/to/model")]`), more advanced uses of the `model` property won't work.
 pub fn spawn_class_model_internal<T: QuakeClass>(view: &mut QuakeClassSpawnView, label: Option<&'static str>) {
-	let model_path = T::CLASS_INFO
-		.model
-		.expect("`spawn_class_model` called but `model` property not specified!");
-
-	let mut model_path = AssetPath::from(model_path.trim_matches('"'));
+	let mut model_path = AssetPath::from(
+		T::CLASS_INFO
+			.model_path()
+			.expect("`spawn_class_model` called but `model` property missing/invalid!"),
+	);
 
 	if let Some(label) = label {
 		model_path = model_path.with_label(label);
