@@ -114,22 +114,19 @@ pub struct FuncIllusionary;
 
 /// A GLTF model with no physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you would probably do a
-// #[component(on_add = "<function>")] to spawn the GLTF scene when
-// this component is added.
-// Make sure to remember that `on_add` is run both in the scene world
-// stored in the map asset, and main world.
-//
-// The utility function `DeferredWorld::is_scene_world` is a
-// handy shorthand to early return if the hook is being run
-// in a scene.
+// Here you would do a
+// #[spawn_hook(<function>)] to spawn the GLTF scene when
+// this entity is spawned in the scene world.
 //
 // Alternatively, you could create a system with a query
 // `Query<&StaticProp, Without<SceneRoot>>`
-// and spawn it through that.
+// and spawn it through that, but .
 //
-// NOTE: If you're using a GLTF model, insert
-// the TrenchBroomGltfRotationFix component when spawning the model.
+// NOTE: If you're using a GLTF model, use
+// the trenchbroom_gltf_rotation_fix function when spawning the model.
+//
+// If your entity has a hardcoded model, you can use a function
+// like `spawn_class_gltf` to do the above automatically.
 #[reflect(Component)]
 #[base(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
@@ -160,7 +157,7 @@ impl Default for StaticProp {
 
 /// A GLTF model with physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you'd use #[component(on_add = "<function>")] or a system to
+// Here you'd use #[spawn_hook(<function>)], a component hook, or a system to
 // add a RigidBody of your preferred physics engine.
 #[reflect(Component)]
 #[base(StaticProp)]

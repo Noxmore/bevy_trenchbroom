@@ -1,5 +1,5 @@
 use bevy::{
-	ecs::{component::ComponentId, world::DeferredWorld},
+	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
 
@@ -204,20 +204,10 @@ impl IsSceneWorld for DeferredWorld<'_> {
 
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
-/// Put this on an entity to counteract the rotation.
-///
-/// The rotation counteraction works via `on_add` component hook, so only do this when initially spawning.
-#[derive(Component)]
-#[component(on_add = Self::on_add)]
-pub struct TrenchBroomGltfRotationFix;
-impl TrenchBroomGltfRotationFix {
-	pub fn on_add(mut world: DeferredWorld, entity: Entity, _: ComponentId) {
-		let mut entity = world.entity_mut(entity);
-		if entity.contains::<TrenchBroomGltfRotationFix>() {
-			if let Some(mut transform) = entity.get_mut::<Transform>() {
-				transform.rotate_local_y(std::f32::consts::PI / 2.);
-			}
-		}
+/// Apply this on an entity to counteract the rotation.
+pub fn trenchbroom_gltf_rotation_fix(entity: &mut EntityWorldMut) {
+	if let Some(mut transform) = entity.get_mut::<Transform>() {
+		transform.rotate_local_y(std::f32::consts::PI / 2.);
 	}
 }
 

@@ -133,10 +133,13 @@ pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()>;
 }
 
+/// Function that spawns a [`QuakeClass`] into a scene world. Also used for spawning hooks.
+pub type QuakeClassSpawnFn = fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>;
+
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
 	pub info: QuakeClassInfo,
-	pub spawn_fn: fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>,
+	pub spawn_fn: QuakeClassSpawnFn,
 	pub get_type_registration: fn() -> TypeRegistration,
 	pub register_type_dependencies: fn(&mut TypeRegistry),
 }

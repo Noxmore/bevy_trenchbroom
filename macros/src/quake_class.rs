@@ -18,6 +18,7 @@ struct Opts {
 	geometry: Option<Expr>,
 	classname: Option<TokenStream>,
 	base: Vec<Type>,
+	spawn_hook: Option<Expr>,
 
 	no_register: bool,
 	doc: Option<String>,
@@ -74,6 +75,8 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.classname = Some(meta.tokens);
 				} else if compare_path(&meta.path, "base") {
 					opts.base.extend(extract_type_list(meta.tokens));
+				} else if compare_path(&meta.path, "spawn_hook") {
+					opts.spawn_hook = Some(Expr::parse.parse2(meta.tokens).expect("`spawn_hook` attribute not an expression"));
 				}
 			}
 			Meta::Path(path) => {
@@ -206,6 +209,13 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		quote! { (|| #tokens) }
 	});
 
+	let spawn_hook = opts.spawn_hook.map(|hook| {
+		quote! {
+			let hook: ::bevy_trenchbroom::class::QuakeClassSpawnFn = #hook; // For invalid type errors
+			(hook)(view)?;
+		}
+	});
+
 	quote! {
 		impl ::bevy_trenchbroom::class::QuakeClass for #ident {
 			const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
@@ -226,6 +236,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
 				view.entity.insert(#spawn_constructor);
+				#spawn_hook
 				Ok(())
 			}
 		}
