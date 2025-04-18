@@ -205,22 +205,53 @@ impl IsSceneWorld for DeferredWorld<'_> {
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
 /// Apply this on an entity to counteract the rotation.
-pub fn trenchbroom_gltf_rotation_fix(entity: &mut EntityWorldMut) {
+///
+/// If you want to use this on a command, there is a helpful extension method you can use like so
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_trenchbroom::prelude::*;
+/// fn example(mut commands: Commands, entity: Entity) {
+///     commands.entity(entity)
+///         .trenchbroom_gltf_rotation_fix()
+///         // ...
+/// # ;
+/// }
+/// ```
+#[allow(private_bounds)]
+pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut) {
 	if let Some(mut transform) = entity.get_mut::<Transform>() {
 		transform.rotate_local_y(std::f32::consts::PI / 2.);
+	}
+}
+
+/// I looked for an easier solution, like an [`Into`] implementation to turn an [`EntityWorldMut`] into an [`EntityMut`], but found nothing.
+trait EntityMutOrEntityWorldMut {
+	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>>;
+}
+impl EntityMutOrEntityWorldMut for EntityMut<'_> {
+	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>> {
+		EntityMut::get_mut(self)
+	}
+}
+impl EntityMutOrEntityWorldMut for EntityWorldMut<'_> {
+	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>> {
+		EntityWorldMut::get_mut(self)
+	}
+}
+
+pub trait TrenchBroomGltfRotationFixEntityCommandsExt {
+	/// Bundles [`trenchbroom_gltf_rotation_fix`] into a command.
+	fn trenchbroom_gltf_rotation_fix(&mut self) -> &mut Self;
+}
+impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
+	fn trenchbroom_gltf_rotation_fix(&mut self) -> &mut Self {
+		self.queue(|mut entity: EntityWorldMut| trenchbroom_gltf_rotation_fix(&mut entity))
 	}
 }
 
 /// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
-	// Quat::from_euler(
-	//     // Honestly, i don't know why this works, i got here through hours of trial and error
-	//     EulerRot::YXZ,
-	//     (angles.y - 90.).to_radians(),
-	//     -angles.x.to_radians(),
-	//     -angles.z.to_radians(),
-	// )
 	let yaw = Quat::from_rotation_y((angles.y - 90.).to_radians()); // We must be east-pointing
 	let pitch = Quat::from_rotation_x(-angles.x.to_radians());
 	let roll = Quat::from_rotation_z(-angles.z.to_radians());
