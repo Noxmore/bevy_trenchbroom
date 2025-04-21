@@ -794,8 +794,6 @@ pub enum DefaultTrenchBroomPreferencesError {
 	UninitializedError,
 	#[error("{0}")]
 	UserdataDirError(DefaultTrenchBroomUserdataDirError),
-	#[error("Preferences file not found at {0}")]
-	PreferencesNotFoundError(PathBuf),
 	#[error("Failed to read preferences from {}: {error}", path.display())]
 	ReadError { error: io::Error, path: PathBuf },
 	#[error("Failed to deserialize preferences to JSON from {}: {error}", path.display())]
@@ -840,9 +838,6 @@ impl TrenchBroomConfig {
 			.get_default_preferences_path()
 			.map_err(DefaultTrenchBroomPreferencesError::UserdataDirError)?;
 
-		if !path.exists() {
-			return Err(DefaultTrenchBroomPreferencesError::PreferencesNotFoundError(path));
-		}
 		self.add_game_to_preferences(&path)?;
 		Ok(())
 	}
@@ -899,10 +894,14 @@ impl TrenchBroomConfig {
 
 		let path = path.as_ref();
 		// read the preferences file as json
-		let preferences = fs::read_to_string(path).map_err(|err| DefaultTrenchBroomPreferencesError::ReadError {
-			error: err,
-			path: path.to_path_buf(),
-		})?;
+		let preferences = if path.exists() {
+			fs::read_to_string(path).map_err(|err| DefaultTrenchBroomPreferencesError::ReadError {
+				error: err,
+				path: path.to_path_buf(),
+			})?
+		} else {
+			"{}".to_string()
+		};
 
 		let mut preferences: serde_json::Value =
 			serde_json::from_str(&preferences).map_err(|err| DefaultTrenchBroomPreferencesError::DeserializeError {
