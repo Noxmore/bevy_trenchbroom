@@ -123,8 +123,17 @@ fn bsp_loading() {
 	// Can't find a better solution than this mess :(
 	#[rustfmt::skip]
 	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin, MaterializePlugin::new(TomlMaterialDeserializer)))
-		.insert_resource(TrenchBroomServer::new(default()))
+		.add_plugins((
+			AssetPlugin::default(),
+			TaskPoolPlugin::default(),
+			bevy::time::TimePlugin,
+			MaterializePlugin::new(TomlMaterialDeserializer),
+			ImagePlugin::default(),
+		))
+		.insert_resource(TrenchBroomServer::new(
+			TrenchBroomConfig::default()
+				.suppress_invalid_entity_definitions(true)
+		))
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
 		.init_asset::<AnimatedLighting>()

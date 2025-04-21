@@ -129,8 +129,13 @@ fn preloading() {
 			bevy::render::mesh::MeshPlugin,
 			MaterializePlugin::new(TomlMaterialDeserializer),
 			bevy::gltf::GltfPlugin::default(),
+			ImagePlugin::default(),
 		))
-		.insert_resource(TrenchBroomServer::new(TrenchBroomConfig::default().register_class::<Mushroom>()))
+		.insert_resource(TrenchBroomServer::new(
+			TrenchBroomConfig::default()
+				.suppress_invalid_entity_definitions(true)
+				.register_class::<Mushroom>(),
+		))
 		.register_type::<Mushroom>()
 		.register_type::<bevy::pbr::LightProbe>()
 		.register_type::<Visibility>()
