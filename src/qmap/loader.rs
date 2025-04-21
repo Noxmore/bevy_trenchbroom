@@ -239,7 +239,7 @@ fn map_loading() {
 	// Can't find a better solution than this mess :(
 	#[rustfmt::skip]
 	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin, MaterializePlugin::new(TomlMaterialDeserializer)))
+		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
 		.insert_resource(TrenchBroomServer::new(default()))
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()

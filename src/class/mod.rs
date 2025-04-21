@@ -15,6 +15,7 @@ impl Plugin for QuakeClassPlugin {
 		app
 			.register_type::<Target>()
 			.register_type::<Targetable>()
+			.register_type::<PreloadedAssets>()
 		;
 	}
 }
@@ -143,6 +144,12 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	/// Entity in the scene world.
 	pub entity: &'l mut EntityWorldMut<'sw>,
 	pub load_context: &'l mut LoadContext<'w>,
+}
+impl QuakeClassSpawnView<'_, '_, '_> {
+	/// Store an asset that you wish to load, but not use for anything yet.
+	pub fn preload_asset(&mut self, handle: UntypedHandle) {
+		self.entity.entry::<PreloadedAssets>().or_default().0.push(handle);
+	}
 }
 
 pub trait QuakeClass: Component + GetTypeRegistration + Sized {

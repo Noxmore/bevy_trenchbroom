@@ -66,6 +66,7 @@ enumflags2.workspace = true
 serde_json = "1.0.140"
 
 [dev-dependencies]
+bevy = { version = "0.15", default-features = false, features = ["png", "bevy_gltf"] } # For tests
 smol = "2"
 
 [features]
