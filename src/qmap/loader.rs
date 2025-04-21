@@ -213,8 +213,13 @@ impl AssetLoader for QuakeMapLoader {
 
 				let mut entity = world.entity_mut(entity_id);
 
-				(self.tb_server.config.global_spawner)(&self.tb_server.config, map_entity, &mut entity)
-					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+				(self.tb_server.config.global_spawner)(&mut QuakeClassSpawnView {
+					config: &self.tb_server.config,
+					src_entity: map_entity,
+					entity: &mut entity,
+					load_context,
+				})
+				.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
 			}
 
 			Ok(QuakeMap {

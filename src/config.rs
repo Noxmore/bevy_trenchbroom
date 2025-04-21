@@ -7,14 +7,14 @@ use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{builtin::default_quake_class_registry, ErasedQuakeClass, QuakeClass};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
-use qmap::{QuakeMapEntities, QuakeMapEntity};
+use qmap::QuakeMapEntities;
 use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
-use crate::*;
+use crate::{class::QuakeClassSpawnView, *};
 
 pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
-pub type SpawnFn = dyn Fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()> + Send + Sync;
+pub type SpawnFn = dyn Fn(&mut QuakeClassSpawnView) -> anyhow::Result<()> + Send + Sync;
 
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
@@ -281,18 +281,18 @@ impl TrenchBroomConfig {
 	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
 	///
 	/// If the entity is a brush entity, rotation is reset.
-	pub fn default_global_spawner(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
-		let classname = src_entity.classname()?.s();
+	pub fn default_global_spawner(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		let classname = view.src_entity.classname()?.s();
 
 		// For things like doors where the `angles` property means open direction.
-		if let Some(mut transform) = entity.get_mut::<Transform>() {
-			if config.get_class(&classname).map(|class| class.info.ty.is_solid()) == Some(true) {
+		if let Some(mut transform) = view.entity.get_mut::<Transform>() {
+			if view.config.get_class(&classname).map(|class| class.info.ty.is_solid()) == Some(true) {
 				transform.rotation = Quat::IDENTITY;
 			}
 		}
 
-		entity.insert(Name::new(
-			src_entity
+		view.entity.insert(Name::new(
+			view.src_entity
 				.get::<String>("targetname")
 				.map(|name| format!("{classname} ({name})"))
 				.unwrap_or(classname),

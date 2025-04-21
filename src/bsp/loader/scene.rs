@@ -82,8 +82,13 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 		let mut entity = world.entity_mut(entity_id);
 
-		(config.global_spawner)(config, map_entity, &mut entity)
-			.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+		(config.global_spawner)(&mut QuakeClassSpawnView {
+			config,
+			src_entity: map_entity,
+			entity: &mut entity,
+			load_context: ctx.load_context,
+		})
+		.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
 	}
 
 	Ok(world)
