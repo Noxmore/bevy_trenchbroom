@@ -84,10 +84,10 @@ pub fn preload_model<T: QuakeClass>(view: &mut QuakeClassSpawnView) -> anyhow::R
 /// Hacky component that stores a preloaded asset in the scene for just long enough for it not to be detected unused and removed.
 #[derive(Component, Reflect, Debug, Clone, Default)]
 #[reflect(Component)]
-#[component(storage = "SparseSet", on_insert = Self::on_insert)]
+#[component(storage = "SparseSet", on_replace = Self::on_replace)]
 pub struct PreloadedAssets(#[reflect(ignore)] pub Vec<UntypedHandle>);
 impl PreloadedAssets {
-	pub fn on_insert(mut world: DeferredWorld, entity: Entity, id: ComponentId) {
+	pub fn on_replace(mut world: DeferredWorld, entity: Entity, id: ComponentId) {
 		if world.entity(entity).get::<Self>().map(|model| model.0.is_empty()) != Some(true) {
 			return;
 		}
