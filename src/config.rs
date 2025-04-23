@@ -37,6 +37,8 @@ pub struct TrenchBroomConfig {
 	pub name: String,
 
 	/// Optional icon for the TrenchBroom UI. Contains the data of a PNG file. Should be 32x32 or it will look weird in the UI.
+	/// By default, the Bevy logo is used.
+	#[default(Some(include_bytes!("inline_assets/icon.png").to_vec()))]
 	pub icon: Option<Vec<u8>>,
 	/// Supported map file formats. Currently, only the loading of [`Valve`](MapFileFormat::Valve) is supported.
 	///
