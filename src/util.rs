@@ -10,6 +10,8 @@ impl Plugin for UtilPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(not(feature = "client"))]
 		app.register_type::<Mesh3d>().register_type::<Aabb>();
+		app.register_type::<FixTrenchbroomGltfRotation>();
+		app.add_observer(fix_gltf_rotation);
 	}
 }
 
@@ -205,6 +207,7 @@ impl IsSceneWorld for DeferredWorld<'_> {
 /// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
 ///
 /// Apply this on an entity to counteract the rotation.
+/// If you want to automatically apply this to all glTFs in your scene, add the [`FixTrenchbroomGltfRotation`] component to your level's root entity instead.
 ///
 /// If you want to use this on a command, there is a helpful extension method you can use like so
 /// ```
@@ -221,6 +224,45 @@ impl IsSceneWorld for DeferredWorld<'_> {
 pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut) {
 	if let Some(mut transform) = entity.get_mut::<Transform>() {
 		transform.rotate_local_y(std::f32::consts::PI / 2.);
+	}
+}
+
+/// TrenchBroom [displays glTFs with a 90 degree rotation](https://github.com/TrenchBroom/TrenchBroom/issues/4447),
+/// so we need to replicate that on the scene in order to get the same orientation in our game as in TrenchBroom.
+/// Add this to your level's root entity to fix the rotation for all glTFs in the scene.
+/// If you want to do this manually for each glTF, you can use [`trenchbroom_gltf_rotation_fix`].
+///
+/// # Example
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_trenchbroom::prelude::*;
+///
+/// fn spawn_cathedral_of_doom(mut commands: Commands, asset_server: Res<AssetServer>) {
+///     commands.spawn((
+///         Name::new("Cathedral of Doom Level"),
+///         SceneRoot(asset_server.load("maps/cathedral_of_doom.map#Scene")),
+///         FixTrenchbroomGltfRotation,
+///     ));
+/// }
+/// ```
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub struct FixTrenchbroomGltfRotation;
+
+fn fix_gltf_rotation(
+	trigger: Trigger<OnAdd, SceneRoot>,
+	parents: Query<&Parent>,
+	fix_marker: Query<(), With<FixTrenchbroomGltfRotation>>,
+	mut transform: Query<&mut Transform>,
+) {
+	let scene: Entity = trigger.entity();
+	for entity in parents.iter_ancestors(scene) {
+		if fix_marker.contains(entity) {
+			if let Ok(mut transform) = transform.get_mut(scene) {
+				transform.rotate_local_y(std::f32::consts::PI / 2.);
+				break;
+			}
+		}
 	}
 }
 

@@ -292,7 +292,7 @@ bevy_trenchbroom = { version = "...", default-features = false, features = ["aut
 ## Known Bugs
 
 If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
-To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in its spawner.
+To fix this, add the `FixTrenchbroomGltfRotation` Component to your level entity.
 
 # Possible future plans
 - Entity IO
