@@ -256,12 +256,9 @@ fn fix_gltf_rotation(
 	mut transform: Query<&mut Transform>,
 ) {
 	let scene: Entity = trigger.entity();
-	for entity in parents.iter_ancestors(scene) {
-		if fix_marker.contains(entity) {
-			if let Ok(mut transform) = transform.get_mut(scene) {
-				transform.rotate_local_y(std::f32::consts::PI / 2.);
-				break;
-			}
+	if parents.iter_ancestors(scene).any(|parent| fix_marker.contains(parent)) {
+		if let Ok(mut transform) = transform.get_mut(scene) {
+			transform.rotate_local_y(std::f32::consts::PI / 2.);
 		}
 	}
 }
