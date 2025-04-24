@@ -261,7 +261,7 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
 	let pitch = angles.x.to_radians();
 	let yaw = angles.y.to_radians();
 	let roll = angles.z.to_radians();
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::ZXYEx, roll, pitch, yaw)
+	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
 }
 
 /// `mangle` is yaw, negative pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
@@ -272,7 +272,7 @@ pub fn mangle_to_quat(mangle: Vec3) -> Quat {
 	let yaw = mangle.x.to_radians();
 	let pitch = -mangle.y.to_radians();
 	let roll = mangle.z.to_radians();
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::ZXYEx, roll, pitch, yaw)
+	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
 }
 
 /// `angle` is the rotation around the Y axis. Converts from degrees to radians. `0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
