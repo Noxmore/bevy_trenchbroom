@@ -220,7 +220,7 @@ impl IsSceneWorld for DeferredWorld<'_> {
 #[allow(private_bounds)]
 pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut) {
 	if let Some(mut transform) = entity.get_mut::<Transform>() {
-		transform.rotate_local_y(std::f32::consts::PI / 2.);
+		transform.rotate_local_y(-FRAC_PI_2);
 	}
 }
 
