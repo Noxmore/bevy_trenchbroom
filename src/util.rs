@@ -249,14 +249,16 @@ impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
 	}
 }
 
-fn quake_fwd_to_bevy_fwd() -> Quat {
+/// Rotate from Quake's +X to Bevy's -Z.
+#[inline]
+pub fn quake_fwd_to_bevy_fwd() -> Quat {
 	Quat::from_rotation_y(FRAC_PI_2)
 }
 
 /// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::XYZ, angles.x.to_radians(), angles.y.to_radians(), angles.z.to_radians())
+	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, angles.y.to_radians(), angles.x.to_radians(), angles.z.to_radians())
 }
 
 /// `mangle` is yaw, pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
@@ -330,10 +332,5 @@ fn rotation_property_to_quat() {
 	assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::X, Vec3::NEG_X, MARGIN);
 	assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
 	assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::Z, MARGIN);
-	assert_almost_eq!(
-		angles_to_quat(vec3(-45., -45., 0.)) * Vec3::X,
-		// A vector pointing in the upper-right corner of a unit cube
-		vec3(1.0, 1.0, -2.0_f32.sqrt()).normalize(),
-		MARGIN
-	);
+	assert_almost_eq!(angles_to_quat(vec3(-45., -45., 0.)) * Vec3::X, vec3(1.0, 0.0, -1.0).normalize(), MARGIN);
 }
