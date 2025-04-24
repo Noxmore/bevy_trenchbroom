@@ -261,12 +261,12 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
 	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, angles.y.to_radians(), angles.x.to_radians(), angles.z.to_radians())
 }
 
-/// `mangle` is yaw, pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
+/// `mangle` is yaw, negative pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
 ///
 /// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”.
 #[inline]
 pub fn mangle_to_quat(mangle: Vec3) -> Quat {
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, mangle.x.to_radians(), mangle.y.to_radians(), mangle.z.to_radians())
+	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, mangle.x.to_radians(), -mangle.y.to_radians(), mangle.z.to_radians())
 }
 
 /// `angle` is the rotation around the Y axis. Converts from degrees to radians. `0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
