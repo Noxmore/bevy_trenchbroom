@@ -88,7 +88,8 @@ pub fn preload_model<T: QuakeClass>(view: &mut QuakeClassSpawnView) -> anyhow::R
 pub struct PreloadedAssets(#[reflect(ignore)] pub Vec<UntypedHandle>);
 impl PreloadedAssets {
 	pub fn on_insert(mut world: DeferredWorld, entity: Entity, id: ComponentId) {
-		if world.entity(entity).get::<Self>().map(|model| model.0.is_empty()) != Some(true) {
+		// We have to check `is_scene_world` because the vector starts empty.
+		if world.is_scene_world() || world.entity(entity).get::<Self>().map(|model| model.0.is_empty()) != Some(true) {
 			return;
 		}
 
@@ -111,7 +112,7 @@ fn preloading() {
 		pub fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
 			let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
 			// Loads the scene after adding to the main world.
-			let handle = asset_server.load(Self::CLASS_INFO.model_path().unwrap().s() + "#Scene0");
+			let handle = asset_server.load(GltfAssetLabel::Scene(0).from_asset(Self::CLASS_INFO.model_path().unwrap()));
 
 			world.commands().entity(entity).insert(SceneRoot(handle));
 		}
@@ -152,8 +153,7 @@ fn preloading() {
 		.init_asset::<crate::bsp::Bsp>()
 		.init_asset_loader::<crate::bsp::loader::BspLoader>()
 		.add_systems(Startup, setup)
-		.add_systems(PostUpdate, spawn_scene)
-		.add_systems(Update, handle_events)
+		.add_systems(Update, spawn_scene)
 		.add_systems(Last, exit)
 		.add_observer(validate_mesh)
 		.add_observer(validate_material)
@@ -183,15 +183,6 @@ fn preloading() {
 
 		if *ticks > 3 {
 			exit.send_default();
-		}
-	}
-
-	fn handle_events(mut asset_events: EventReader<AssetEvent<Mesh>>, asset_server: Res<AssetServer>) {
-		for event in asset_events.read() {
-			println!("{event:?}");
-			if let AssetEvent::Unused { id } = event {
-				println!("{:?}", asset_server.get_path(*id));
-			}
 		}
 	}
 
