@@ -252,10 +252,12 @@ impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
 /// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
-	let yaw = Quat::from_rotation_y((angles.y - 90.).to_radians()); // We must be east-pointing
-	let pitch = Quat::from_rotation_x(-angles.x.to_radians());
-	let roll = Quat::from_rotation_z(-angles.z.to_radians());
-	yaw * pitch * roll
+	Quat::from_euler(
+		EulerRot::XYZ,
+		angles.x.to_radians(),
+		angles.y.to_radians() + FRAC_PI_2, // convert from (forward = X) to (forward = -Z)
+		angles.z.to_radians(),
+	)
 }
 
 /// `mangle` is yaw, pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
@@ -263,10 +265,12 @@ pub fn angles_to_quat(angles: Vec3) -> Quat {
 /// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”.
 #[inline]
 pub fn mangle_to_quat(mangle: Vec3) -> Quat {
-	let yaw = Quat::from_rotation_y((mangle.x - 90.).to_radians()); // We must be east-pointing
-	let pitch = Quat::from_rotation_x(mangle.y.to_radians());
-	let roll = Quat::from_rotation_z(-mangle.z.to_radians());
-	yaw * pitch * roll
+	Quat::from_euler(
+		EulerRot::YXZ,
+		mangle.x.to_radians() + FRAC_PI_2, // convert from (forward = X) to (forward = -Z)
+		mangle.y.to_radians(),
+		mangle.z.to_radians(),
+	)
 }
 
 /// `angle` is the rotation around the Y axis. Converts from degrees to radians. `0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
@@ -278,7 +282,7 @@ pub fn angle_to_quat(angle: f32) -> Quat {
 	match angle {
 		-1. => Quat::from_rotation_x(FRAC_PI_2),
 		-2. => Quat::from_rotation_x(-FRAC_PI_2),
-		angle => Quat::from_rotation_y((angle - 90.).to_radians()),
+		angle => Quat::from_rotation_y(angle.to_radians() + FRAC_PI_2), // convert from (forward = X) to (forward = -Z)
 	}
 }
 
