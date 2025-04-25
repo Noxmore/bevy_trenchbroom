@@ -28,7 +28,7 @@ license.workspace = true
 
 [workspace.dependencies]
 bevy = { version = "0.16.0", default-features = false, features = ["png"] } # For examples
-nil = "0.14"
+nil = "0.15"
 bevy_flycam = "0.15"
 bevy-inspector-egui = "0.30"
 enumflags2 = "0.7"
@@ -67,7 +67,7 @@ enumflags2.workspace = true
 serde_json = "1.0.140"
 
 [dev-dependencies]
-bevy = { version = "0.15", default-features = false, features = ["png", "bevy_gltf"] } # For tests
+bevy = { version = "0.16", default-features = false, features = ["png", "bevy_gltf"] } # For tests
 smol = "2"
 
 [features]
