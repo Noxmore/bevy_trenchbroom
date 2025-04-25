@@ -18,14 +18,14 @@ pub struct Worldspawn;
 #[derive(SolidClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
 #[no_register]
 #[reflect(Component)]
-#[require(Transform)]
+#[base(Transform)]
 #[component(on_add = Self::on_add)]
 pub struct Cube;
 impl Cube {

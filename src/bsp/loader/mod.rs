@@ -126,8 +126,17 @@ fn bsp_loading() {
 	// Can't find a better solution than this mess :(
 	#[rustfmt::skip]
 	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin, MaterializePlugin::new(TomlMaterialDeserializer)))
-		.insert_resource(TrenchBroomServer::new(default()))
+		.add_plugins((
+			AssetPlugin::default(),
+			TaskPoolPlugin::default(),
+			bevy::time::TimePlugin,
+			MaterializePlugin::new(TomlMaterialDeserializer),
+			ImagePlugin::default(),
+		))
+		.insert_resource(TrenchBroomServer::new(
+			TrenchBroomConfig::default()
+				.suppress_invalid_entity_definitions(true)
+		))
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
 		.init_asset::<AnimatedLighting>()
@@ -138,16 +147,11 @@ fn bsp_loading() {
 		.init_asset_loader::<BspLoader>()
 	;
 
-	let bsp_handle = app.world().resource::<AssetServer>().load::<Bsp>("maps/example.bsp");
-
-	for _ in 0..1000 {
-		match app.world().resource::<AssetServer>().load_state(&bsp_handle) {
-			bevy::asset::LoadState::Loaded => return,
-			bevy::asset::LoadState::Failed(err) => panic!("{err}"),
-			_ => std::thread::sleep(std::time::Duration::from_millis(5)),
-		}
-
-		app.update();
-	}
-	panic!("Bsp took longer than 5 seconds to load.");
+	smol::block_on(async {
+		app.world()
+			.resource::<AssetServer>()
+			.load_untyped_async("maps/example.bsp")
+			.await
+			.unwrap();
+	});
 }

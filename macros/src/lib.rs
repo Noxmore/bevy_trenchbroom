@@ -14,17 +14,20 @@ use syn::*;
 /// - `#[model(<path expression>)]` Displays the entity as the specified model in-editor.
 /// - `#[model({ "path": <path expr>, "skin": <skin expr>, "frame": <frame expr>, "scale": <scale expr> })]` Same as above attribute, but with greater control over how the model is shown. Note that any of these properties can be left out.
 /// - `#[color(<red> <green> <blue>)]` Changes the wireframe color of the entity. Each number has a range from 0 to 255.
-/// - `#[iconsprite(<path expression>)]` Displays the entity as the specified image, presented as a billboard (always facing the camera).
+/// - `#[iconsprite(...)]` Alias for `model`. When this or `model` is set to an image, it displays the entity as said image, presented as a billboard (always facing the camera).
 /// - `#[size(<-x> <-y> <-z>, <+x> <+y> <+z>)]` The bounding box of the entity in-editor.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
-/// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
-/// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[base(<type ...>)]` Adds base classes to inherit.
+/// - `#[spawn_hook(<QuakeClassSpawnFn expression>)]` A custom function to run inside the spawn function of this class. Use for things like spawning models.
 /// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
+#[proc_macro_derive(
+	PointClass,
+	attributes(model, color, iconsprite, size, classname, base, spawn_hook, no_register, no_default)
+)]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Point).into()
 }
@@ -37,8 +40,7 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// - `#[geometry(<rust expression>)]` Required. An expression that produces a `GeometryProvider` to control how the geometry appears in the world.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
-/// - `#[require(<type ...>)]` From `Component` macro, this also sets this entity's base classes in the `FGD.
-/// - `#[base(<type ...>)]` Overrides `require` attribute. Use if you want separate base classes and required components.
+/// - `#[base(<type ...>)]` Adds base classes to inherit.
 /// - `#[no_register]` Doesn't automatically register even if the `auto_register` feature is enabled.
 ///
 /// # Field attributes
@@ -53,7 +55,10 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// If the `auto_register` feature is enabled, this will automatically register the type with `bevy_trenchbroom`.
 ///
 /// It has the same attributes as [`PointClass`].
-#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, no_register, no_default))]
+#[proc_macro_derive(
+	BaseClass,
+	attributes(model, color, iconsprite, size, classname, base, spawn_hook, no_register, no_default)
+)]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Base).into()
 }

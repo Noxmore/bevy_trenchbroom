@@ -22,7 +22,8 @@ cargo clippy --all-targets --features rapier
 
 
 { echo; echo; echo "Run tests with avian"; } 2> /dev/null
-LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian
+cargo test --locked --workspace --features bevy/x11 --features avian,client
+LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client
 
 
 { echo; echo; echo "Run cargo doc with default features"; } 2> /dev/null

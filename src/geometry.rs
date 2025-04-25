@@ -5,7 +5,7 @@ use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
 use bsp::BspBrushesAsset;
 use qmap::QuakeMapEntity;
 
-use crate::*;
+use crate::{class::ErasedQuakeClass, *};
 
 /// A good starting threshold in radians for interpolating similar normals, creating smoother curved surfaces.
 pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
@@ -70,6 +70,8 @@ pub struct GeometryProviderView<'w, 'l> {
 	pub tb_server: &'w TrenchBroomServer,
 	pub map_entity: &'w QuakeMapEntity,
 	pub map_entity_idx: usize,
+	pub class: &'w ErasedQuakeClass,
+
 	pub meshes: Vec<GeometryProviderMeshView<'l>>,
 }
 

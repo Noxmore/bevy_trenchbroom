@@ -1,5 +1,7 @@
 pub mod builtin;
+pub mod spawn_util;
 
+use bevy::asset::LoadContext;
 use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
@@ -13,6 +15,7 @@ impl Plugin for QuakeClassPlugin {
 		app
 			.register_type::<Target>()
 			.register_type::<Targetable>()
+			.register_type::<PreloadedAssets>()
 		;
 	}
 }
@@ -109,22 +112,64 @@ impl QuakeClassInfo {
 	pub fn derives_from<T: QuakeClass>(&self) -> bool {
 		self.derives_from_name(T::CLASS_INFO.name)
 	}
+
+	/// Returns the path of the in-editor model of this class.
+	///
+	/// TODO: This currently only works for classes with the syntax `#[model("path/to/model")]`, anything more complex will produce `None`.
+	///
+	/// # Examples
+	/// ```
+	/// # use bevy::prelude::*;
+	/// # use bevy_trenchbroom::prelude::*;
+	/// #[derive(PointClass, Reflect, Component)]
+	/// #[reflect(Component)]
+	/// #[model("models/my_class.glb")]
+	/// struct MyClass;
+	///
+	/// assert_eq!(MyClass::CLASS_INFO.model_path(), Some("models/my_class.glb"));
+	/// ```
+	pub fn model_path(&self) -> Option<&str> {
+		let model = self.model?;
+		if !model.starts_with('"') || !model.ends_with('"') {
+			return None;
+		}
+		Some(model.trim_matches('"'))
+	}
+}
+
+/// Inputs provided when spawning an entity into the scene world of a loading map.
+pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
+	pub config: &'l TrenchBroomConfig,
+	pub src_entity: &'l QuakeMapEntity,
+	/// Entity in the scene world.
+	pub entity: &'l mut EntityWorldMut<'sw>,
+	pub load_context: &'l mut LoadContext<'w>,
+}
+impl QuakeClassSpawnView<'_, '_, '_> {
+	/// Store an asset that you wish to load, but not use for anything yet.
+	pub fn preload_asset(&mut self, handle: UntypedHandle) {
+		self.entity.entry::<PreloadedAssets>().or_default().0.push(handle);
+	}
 }
 
 pub trait QuakeClass: Component + GetTypeRegistration + Sized {
 	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
 	///
-	/// NOTE: Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
+	/// Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
 	const ERASED_CLASS: &ErasedQuakeClass = &ErasedQuakeClass::of::<Self>();
 	const CLASS_INFO: QuakeClassInfo;
 
-	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()>;
+	/// Spawns into the scene world when the map is loaded.
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()>;
 }
+
+/// Function that spawns a [`QuakeClass`] into a scene world. Also used for spawning hooks.
+pub type QuakeClassSpawnFn = fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
 	pub info: QuakeClassInfo,
-	pub spawn_fn: fn(&TrenchBroomConfig, &QuakeMapEntity, &mut EntityWorldMut) -> anyhow::Result<()>,
+	pub spawn_fn: QuakeClassSpawnFn,
 	pub get_type_registration: fn() -> TypeRegistration,
 	pub register_type_dependencies: fn(&mut TypeRegistry),
 }
@@ -138,17 +183,12 @@ impl ErasedQuakeClass {
 		}
 	}
 
-	pub fn apply_spawn_fn_recursive(
-		&self,
-		config: &TrenchBroomConfig,
-		src_entity: &QuakeMapEntity,
-		entity: &mut EntityWorldMut,
-	) -> anyhow::Result<()> {
+	pub fn apply_spawn_fn_recursive(&self, view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		for base in self.info.base {
-			base.apply_spawn_fn_recursive(config, src_entity, entity)?;
+			base.apply_spawn_fn_recursive(view)?;
 		}
 
-		(self.spawn_fn)(config, src_entity, entity)?;
+		(self.spawn_fn)(view)?;
 
 		Ok(())
 	}

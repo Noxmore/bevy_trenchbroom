@@ -1,3 +1,5 @@
+use syn::parse::{Parse, Parser};
+
 use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,12 +15,11 @@ struct Opts {
 	color: Option<TokenStream>,
 	iconsprite: Option<TokenStream>,
 	size: Option<TokenStream>,
-	geometry: Option<TokenStream>,
+	geometry: Option<Expr>,
 	classname: Option<TokenStream>,
-
-	/// `true` if the `#[base(...)]` attribute is used to override, otherwise uses `#[require(...)]`
-	base_override: bool,
 	base: Vec<Type>,
+	spawn_hook: Option<Expr>,
+
 	no_register: bool,
 	doc: Option<String>,
 }
@@ -69,18 +70,13 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				} else if compare_path(&meta.path, "size") {
 					opts.size = Some(meta.tokens);
 				} else if compare_path(&meta.path, "geometry") {
-					opts.geometry = Some(meta.tokens);
+					opts.geometry = Some(Expr::parse.parse2(meta.tokens).expect("`geometry` attribute not an expression"));
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
-				} else if compare_path(&meta.path, "require") && !opts.base_override {
-					opts.base.extend(extract_type_list(meta.tokens));
 				} else if compare_path(&meta.path, "base") {
-					if !opts.base_override {
-						opts.base.clear();
-					}
-					opts.base_override = true;
-
 					opts.base.extend(extract_type_list(meta.tokens));
+				} else if compare_path(&meta.path, "spawn_hook") {
+					opts.spawn_hook = Some(Expr::parse.parse2(meta.tokens).expect("`spawn_hook` attribute not an expression"));
 				}
 			}
 			Meta::Path(path) => {
@@ -160,7 +156,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				};
 
 				field_constructors.push(quote! {
-					#setter src_entity.get(#field_name)#not_found_handler,
+					#setter view.src_entity.get(#field_name)#not_found_handler,
 				});
 			}
 
@@ -213,6 +209,13 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		quote! { (|| #tokens) }
 	});
 
+	let spawn_hook = opts.spawn_hook.map(|hook| {
+		quote! {
+			let hook: ::bevy_trenchbroom::class::QuakeClassSpawnFn = #hook; // For invalid type errors
+			(hook)(view)?;
+		}
+	});
+
 	quote! {
 		impl ::bevy_trenchbroom::class::QuakeClass for #ident {
 			const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
@@ -229,11 +232,11 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				properties: &[#(#properties)*],
 			};
 
-			#[allow(unused)]
-			fn class_spawn(config: &::bevy_trenchbroom::config::TrenchBroomConfig, src_entity: &::bevy_trenchbroom::qmap::QuakeMapEntity, entity: &mut ::bevy::ecs::world::EntityWorldMut) -> ::bevy_trenchbroom::anyhow::Result<()> {
+			fn class_spawn(view: &mut ::bevy_trenchbroom::class::QuakeClassSpawnView) -> ::bevy_trenchbroom::anyhow::Result<()> {
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
-				entity.insert(#spawn_constructor);
+				view.entity.insert(#spawn_constructor);
+				#spawn_hook
 				Ok(())
 			}
 		}

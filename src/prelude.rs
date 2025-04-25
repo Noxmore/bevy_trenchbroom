@@ -34,11 +34,15 @@ pub use crate::{
 	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
 };
 pub use crate::{
-	class::builtin::{Target, Targetable},
+	class::{
+		builtin::{Target, Targetable},
+		spawn_util::*,
+		QuakeClass,
+	},
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	util::{IsSceneWorld, TrenchBroomGltfRotationFix},
+	util::{trenchbroom_gltf_rotation_fix, IsSceneWorld, TrenchBroomGltfRotationFixEntityCommandsExt},
 	TrenchBroomPlugin, TrenchBroomServer,
 };
 

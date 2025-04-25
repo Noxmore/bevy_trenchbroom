@@ -3,7 +3,9 @@
 [![crates.io](https://img.shields.io/crates/v/bevy_trenchbroom)](https://crates.io/crates/bevy_trenchbroom)
 [![docs.rs](https://docs.rs/bevy_trenchbroom/badge.svg)](https://docs.rs/bevy_trenchbroom)
 
-Integration and support for the following workflows:
+Quake level loading for Bevy!
+
+More specifically, integration and support for the following workflows:
 - TrenchBroom -> .map -> Bevy
 - TrenchBroom -> .map -> ericw-tools -> .bsp -> Bevy
 
@@ -47,7 +49,7 @@ fn main() {
 
 NOTE: By default, `TrenchbroomConfig::auto_remove_textures` contains `__TB_empty`, meaning that when loading `.map`s, any face without a texture will be automatically ignored, saving processing and render time.
 
-Quake's entity classes and their base classes are treated as an analog to Bevy's components and their required components.
+Quake's entity classes are treated as an analog to Bevy's components.
 
 You can define your components like so to turn them into quake classes.
 
@@ -60,22 +62,25 @@ use bevy_trenchbroom::bsp::base_classes::*;
 // world geometry and settings. Exactly one exists in every map.
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
+// Quake classes use an inheritance system alike OOP
+// programming languages.
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
-#[require(BspWorldspawn)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().with_lightmaps())]
+#[base(BspWorldspawn)]
+#[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn {
+    /// A useful example property.
     pub fog_color: Color,
     pub fog_density: f32,
 }
 
 // BaseClass doesn't appear in editor, only giving properties to
-// those which use it as a base class,
-// either by using the `require` or `base` attribute.
+// those which use it as a base class
+// by using the `base` attribute.
 #[derive(BaseClass, Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct MyBaseClass {
-    /// MY AWESOME VALUE!!
+    /// Documentation comments will be visible in-editor!
     pub my_value: u32,
 }
 
@@ -83,13 +88,8 @@ pub struct MyBaseClass {
 // contain its own geometry, such as a door or breakable
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[require(Visibility)]
-// You can also use the #[base()] attribute which will take
-// precedence over the require attribute if you want to require
-// components that don't implement QuakeClass,
-// or don't want to be a required component.
 #[base(Visibility, MyBaseClass)]
-#[geometry(GeometryProvider::new().convex_collider().smooth_by_default_angle().with_lightmaps())]
+#[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
 // By default, names are converted into snake_case.
 // Using the classname attribute, you can define the case you want
 // it to be converted to instead.
@@ -102,7 +102,7 @@ pub struct FuncWall;
 #[reflect(Component)]
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
-#[require(BspSolidEntity)]
+#[base(BspSolidEntity)]
 // Don't include a collider for func_illusionary.
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
@@ -114,24 +114,21 @@ pub struct FuncIllusionary;
 
 /// A GLTF model with no physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you would probably do a
-// #[component(on_add = "<function>")] to spawn the GLTF scene when
-// this component is added.
-// Make sure to remember that `on_add` is run both in the scene world
-// stored in the map asset, and main world.
-//
-// The utility function `DeferredWorld::is_scene_world` is a
-// handy shorthand to early return if the hook is being run
-// in a scene.
+// Here you would do a
+// #[spawn_hook(<function>)] to spawn the GLTF scene when
+// this entity is spawned in the scene world.
 //
 // Alternatively, you could create a system with a query
 // `Query<&StaticProp, Without<SceneRoot>>`
-// and spawn it through that.
+// and spawn it through that, but .
 //
-// NOTE: If you're using a GLTF model, insert
-// the TrenchBroomGltfRotationFix component when spawning the model.
+// NOTE: If you're using a GLTF model, use
+// the trenchbroom_gltf_rotation_fix function when spawning the model.
+//
+// If your entity has a hardcoded model, you can use a function
+// like `spawn_class_gltf` to do the above automatically.
 #[reflect(Component)]
-#[require(Transform, Visibility)]
+#[base(Transform, Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {
@@ -160,10 +157,10 @@ impl Default for StaticProp {
 
 /// A GLTF model with physics.
 #[derive(PointClass, Component, Reflect)]
-// Here you'd use #[component(on_add = "<function>")] or a system to
+// Here you'd use #[spawn_hook(<function>)], a component hook, or a system to
 // add a RigidBody of your preferred physics engine.
 #[reflect(Component)]
-#[require(StaticProp)]
+#[base(StaticProp)]
 pub struct PhysicsProp;
 
 // For `choices` properties, you can derive FgdType on a unit enum.
@@ -184,7 +181,7 @@ Otherwise, you'll have to call `TrenchBroomConfig::register_class<Class>()` to r
 
 The types themselves will also need to be registered with Bevy, but if `TrenchBroomConfig::register_entity_class_types` is enabled (default), that will also happen automatically.
 
-Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_folder`. Example:
+Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
 
 ```rust
 use bevy::prelude::*;
@@ -193,18 +190,22 @@ use bevy_trenchbroom::prelude::*;
 // app.add_systems(Startup, write_trenchbroom_config)
 
 fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
-    if let Err(err) = server.config.write_to_default_folder() {
-        error!("Could not write TrenchBroom config: {err}");
+    // This will write <TB folder>/games/example_game/GameConfig.cfg,
+    // and <TB folder>/games/example_game/example_game.fgd
+    if let Err(err) = server.config.write_game_config_to_default_directory() {
+        error!("Could not write TrenchBroom game config: {err}");
     }
 
-    // This will write <TB games folder>/example_game/GameConfig.cfg,
-    // and <TB games folder>/example_game/example_game.fgd
+    // And this will add our game to <TB folder>/Preferences.json
+    if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
+        error!("Could not write TrenchBroom preferences: {err}");
+    }
 }
 ```
 
 This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
 
-After you write it out, you have to use the created game config in TrenchBroom's preferences and set the "Game path" to your project/game folder.
+After you write it out, you have to select the created game config in TrenchBroom's preferences when creating a new map.
 
 ## Materials and `bevy_materialize`
 

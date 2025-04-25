@@ -64,6 +64,11 @@ ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }
 strum = { version = "0.27", features = ["derive"] }
 enumflags2.workspace = true
+serde_json = "1.0.140"
+
+[dev-dependencies]
+bevy = { version = "0.15", default-features = false, features = ["png", "bevy_gltf"] } # For tests
+smol = "2"
 
 [features]
 default = ["client", "auto_register"]

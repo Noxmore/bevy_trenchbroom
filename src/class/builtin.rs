@@ -75,32 +75,32 @@ impl QuakeClass for Transform {
 		],
 	};
 
-	fn class_spawn(config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
-		let rotation = match src_entity.get::<Vec3>("mangle") {
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		let rotation = match view.src_entity.get::<Vec3>("mangle") {
 			// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
 			// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
 			Ok(x) => {
-				if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
+				if view.src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
 					mangle_to_quat(x)
 				} else {
 					angles_to_quat(x)
 				}
 			}
-			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match src_entity.get::<Vec3>("angles") {
+			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match view.src_entity.get::<Vec3>("angles") {
 				Ok(x) => angles_to_quat(x),
-				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(src_entity.get::<f32>("angle").with_default(0.)?),
+				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(view.src_entity.get::<f32>("angle").with_default(0.)?),
 				Err(err) => return Err(err.into()),
 			},
 			Err(err) => return Err(err.into()),
 		};
 
-		entity.insert(Transform {
-			translation: config.to_bevy_space(src_entity.get::<Vec3>("origin").with_default(Vec3::ZERO)?),
+		view.entity.insert(Transform {
+			translation: view.config.to_bevy_space(view.src_entity.get::<Vec3>("origin").with_default(Vec3::ZERO)?),
 			rotation,
-			scale: match src_entity.get::<f32>("scale") {
+			scale: match view.src_entity.get::<f32>("scale") {
 				Ok(scale) => Vec3::splat(scale),
 				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => Vec3::ONE,
-				Err(_) => src_entity.get::<Vec3>("scale")?.xzy(),
+				Err(_) => view.src_entity.get::<Vec3>("scale")?.xzy(),
 			},
 		});
 
@@ -135,8 +135,8 @@ impl QuakeClass for Visibility {
 		}],
 	};
 
-	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
-		let visibility = match src_entity.properties.get("visibility").map(String::as_str) {
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		let visibility = match view.src_entity.properties.get("visibility").map(String::as_str) {
 			Some("Inherited") => Visibility::Inherited,
 			Some("Hidden") => Visibility::Hidden,
 			Some("Visible") => Visibility::Visible,
@@ -148,7 +148,7 @@ impl QuakeClass for Visibility {
 			})?,
 		};
 
-		entity.insert(visibility);
+		view.entity.insert(visibility);
 
 		Ok(())
 	}
@@ -228,19 +228,19 @@ impl QuakeClass for PointLight {
 		],
 	};
 
-	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let default = PointLight::default();
 
 		#[allow(clippy::needless_update)]
-		entity.insert(PointLight {
-			color: src_entity.get("color").with_default(default.color)?,
-			intensity: src_entity.get("intensity").with_default(default.intensity)?,
-			range: src_entity.get("range").with_default(default.range)?,
-			radius: src_entity.get("radius").with_default(default.radius)?,
-			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
-			shadow_map_near_z: src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
+		view.entity.insert(PointLight {
+			color: view.src_entity.get("color").with_default(default.color)?,
+			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
+			range: view.src_entity.get("range").with_default(default.range)?,
+			radius: view.src_entity.get("radius").with_default(default.radius)?,
+			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
+			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
 			// For soft shadows
 			..default
 		});
@@ -338,21 +338,29 @@ impl QuakeClass for SpotLight {
 		],
 	};
 
-	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let default = SpotLight::default();
 
 		#[allow(clippy::needless_update)]
-		entity.insert(SpotLight {
-			color: src_entity.get("color").with_default(default.color)?,
-			intensity: src_entity.get("intensity").with_default(default.intensity)?,
-			range: src_entity.get("range").with_default(default.range)?,
-			radius: src_entity.get("radius").with_default(default.radius)?,
-			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
-			shadow_map_near_z: src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
-			outer_angle: src_entity.get("outer_angle").map(f32::to_radians).with_default(default.outer_angle)?,
-			inner_angle: src_entity.get("inner_angle").map(f32::to_radians).with_default(default.inner_angle)?,
+		view.entity.insert(SpotLight {
+			color: view.src_entity.get("color").with_default(default.color)?,
+			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
+			range: view.src_entity.get("range").with_default(default.range)?,
+			radius: view.src_entity.get("radius").with_default(default.radius)?,
+			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
+			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
+			outer_angle: view
+				.src_entity
+				.get("outer_angle")
+				.map(f32::to_radians)
+				.with_default(default.outer_angle)?,
+			inner_angle: view
+				.src_entity
+				.get("inner_angle")
+				.map(f32::to_radians)
+				.with_default(default.inner_angle)?,
 			// For soft shadows
 			..default
 		});
@@ -414,16 +422,16 @@ impl QuakeClass for DirectionalLight {
 		],
 	};
 
-	fn class_spawn(_config: &TrenchBroomConfig, src_entity: &QuakeMapEntity, entity: &mut EntityWorldMut) -> anyhow::Result<()> {
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let default = DirectionalLight::default();
 
 		#[allow(clippy::needless_update)]
-		entity.insert(DirectionalLight {
-			color: src_entity.get("color").with_default(default.color)?,
-			illuminance: src_entity.get("illuminance").with_default(default.illuminance)?,
-			shadows_enabled: src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
-			shadow_depth_bias: src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
-			shadow_normal_bias: src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
+		view.entity.insert(DirectionalLight {
+			color: view.src_entity.get("color").with_default(default.color)?,
+			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
+			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
+			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			// For soft shadows
 			..default
 		});

@@ -18,7 +18,8 @@ cargo clippy --all-targets --features rapier || exit /b 1
 
 
 echo Run tests with avian
-cargo test --features avian || exit /b 1
+cargo test --locked --workspace --features avian,client || exit /b 1
+cargo test --locked --workspace --doc --features avian,client || exit /b 1
 
 
 echo Run cargo doc with default features

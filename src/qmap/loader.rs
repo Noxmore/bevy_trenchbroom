@@ -8,6 +8,8 @@ use class::QuakeClassType;
 use config::TextureLoadView;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
 
+use crate::class::QuakeClassSpawnView;
+
 use super::*;
 
 pub struct QuakeMapLoader {
@@ -86,7 +88,12 @@ impl AssetLoader for QuakeMapLoader {
 				let entity_id = entity.id();
 
 				class
-					.apply_spawn_fn_recursive(&self.tb_server.config, map_entity, &mut entity)
+					.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+						config: &self.tb_server.config,
+						src_entity: map_entity,
+						entity: &mut entity,
+						load_context,
+					})
 					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
 				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
@@ -181,6 +188,7 @@ impl AssetLoader for QuakeMapLoader {
 						tb_server: &self.tb_server,
 						map_entity,
 						map_entity_idx,
+						class,
 						meshes: mesh_views,
 					};
 
@@ -209,8 +217,13 @@ impl AssetLoader for QuakeMapLoader {
 
 				let mut entity = world.entity_mut(entity_id);
 
-				(self.tb_server.config.global_spawner)(&self.tb_server.config, map_entity, &mut entity)
-					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+				(self.tb_server.config.global_spawner)(&mut QuakeClassSpawnView {
+					config: &self.tb_server.config,
+					src_entity: map_entity,
+					entity: &mut entity,
+					load_context,
+				})
+				.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
 			}
 
 			Ok(QuakeMap {
@@ -235,8 +248,11 @@ fn map_loading() {
 	// Can't find a better solution than this mess :(
 	#[rustfmt::skip]
 	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin, MaterializePlugin::new(TomlMaterialDeserializer)))
-		.insert_resource(TrenchBroomServer::new(default()))
+		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
+		.insert_resource(TrenchBroomServer::new(
+			TrenchBroomConfig::default()
+				.suppress_invalid_entity_definitions(true)
+		))
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
 		.init_asset::<Mesh>()
@@ -245,16 +261,11 @@ fn map_loading() {
 		.init_asset_loader::<QuakeMapLoader>()
 	;
 
-	let map_handle = app.world().resource::<AssetServer>().load::<QuakeMap>("maps/example.map");
-
-	for _ in 0..1000 {
-		match app.world().resource::<AssetServer>().load_state(&map_handle) {
-			bevy::asset::LoadState::Loaded => return,
-			bevy::asset::LoadState::Failed(err) => panic!("{err}"),
-			_ => std::thread::sleep(std::time::Duration::from_millis(5)),
-		}
-
-		app.update();
-	}
-	panic!("Map took longer than 5 seconds to load.");
+	smol::block_on(async {
+		app.world()
+			.resource::<AssetServer>()
+			.load_untyped_async("maps/example.map")
+			.await
+			.unwrap();
+	});
 }
