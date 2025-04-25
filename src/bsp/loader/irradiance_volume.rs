@@ -6,7 +6,7 @@ use bevy::{
 	render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bsp::*;
-use lighting::{new_animated_lighting_output_image, AnimatedLightingHandle, AnimatedLightingType};
+use lighting::{AnimatedLightingHandle, AnimatedLightingType, new_animated_lighting_output_image};
 use ndshape::{RuntimeShape, Shape};
 use qbsp::data::bspx::LightGridCell;
 

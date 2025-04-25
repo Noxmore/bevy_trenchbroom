@@ -3,7 +3,7 @@ use bevy::{
 	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
-use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
+use brush::{BrushSurfacePolygon, ConvexHull, generate_mesh_from_brush_polygons};
 use class::QuakeClassType;
 use config::TextureLoadView;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};

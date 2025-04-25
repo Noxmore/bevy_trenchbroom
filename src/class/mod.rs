@@ -148,7 +148,7 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 impl QuakeClassSpawnView<'_, '_, '_> {
 	/// Store an asset that you wish to load, but not use for anything yet.
 	pub fn preload_asset(&mut self, handle: UntypedHandle) {
-		self.entity.entry::<PreloadedAssets>().or_default().0.push(handle);
+		self.entity.entry::<PreloadedAssets>().or_default().get_mut().0.push(handle);
 	}
 }
 

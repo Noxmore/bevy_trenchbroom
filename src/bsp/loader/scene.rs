@@ -39,7 +39,10 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 				// Assign model entity
 				if model.entity.is_some() {
-					error!("Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!", class.info.name);
+					error!(
+						"Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!",
+						class.info.name
+					);
 				}
 				model.entity = Some(entity_id);
 

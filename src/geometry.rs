@@ -1,8 +1,8 @@
 use bevy_mesh::VertexAttributeValues;
 use brush::Brush;
+use bsp::BspBrushesAsset;
 #[cfg(feature = "client")]
 use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
-use bsp::BspBrushesAsset;
 use qmap::QuakeMapEntity;
 
 use crate::{class::ErasedQuakeClass, *};
@@ -117,15 +117,21 @@ impl GeometryProvider {
 			// It's either a map or a doubly-connected edge list, the prior seems to work well enough.
 			let mut vertex_map: HashMap<Vec3Ord, Vec<&mut [f32; 3]>> = default();
 
-
 			let ent_index = view.map_entity_idx; // Borrow checker
 			// We go through all the meshes and add all their normals into vertex_map
 			for mesh_view in &mut view.meshes {
 				// SAFETY: Getting ATTRIBUTE_POSITION and ATTRIBUTE_NORMAL gives us 2 different attributes, but the borrow checker doesn't know that!
 				let mesh2 = unsafe { &mut *std::ptr::from_mut(&mut mesh_view.mesh) };
 
-				let Some(positions) = mesh_view.mesh.attribute(Mesh::ATTRIBUTE_POSITION).and_then(VertexAttributeValues::as_float3) else {
-					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!", mesh_view.entity, ent_index);
+				let Some(positions) = mesh_view
+					.mesh
+					.attribute(Mesh::ATTRIBUTE_POSITION)
+					.and_then(VertexAttributeValues::as_float3)
+				else {
+					error!(
+						"[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_POSITION doesn't exist on mesh!",
+						mesh_view.entity, ent_index
+					);
 					return;
 				};
 				let positions_len = positions.len();
@@ -134,13 +140,19 @@ impl GeometryProvider {
 					VertexAttributeValues::Float32x3(v) => Some(v),
 					_ => None,
 				}) else {
-					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!", mesh_view.entity, ent_index);
+					error!(
+						"[entity {} (map entity {:?})] Tried to smooth by angle, but the ATTRIBUTE_NORMAL doesn't exist on mesh!",
+						mesh_view.entity, ent_index
+					);
 					return;
 				};
 				let normals_len = normals.len();
 
 				if normals_len != positions_len {
-					error!("[entity {} (map entity {:?})] Tried to smooth by angle, but ATTRIBUTE_NORMAL len doesn't match ATTRIBUTE_POSITION len! ({} and {})", mesh_view.entity, ent_index, normals_len, positions_len);
+					error!(
+						"[entity {} (map entity {:?})] Tried to smooth by angle, but ATTRIBUTE_NORMAL len doesn't match ATTRIBUTE_POSITION len! ({} and {})",
+						mesh_view.entity, ent_index, normals_len, positions_len
+					);
 					return;
 				}
 
@@ -152,11 +164,11 @@ impl GeometryProvider {
 				}
 			}
 
-
 			for (_position, mut normals) in vertex_map {
 				use disjoint_sets::*;
 
-				if normals.len() <= 1 { // There are no duplicates
+				if normals.len() <= 1 {
+					// There are no duplicates
 					continue;
 				}
 

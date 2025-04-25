@@ -160,7 +160,7 @@ impl QuakeClass for PointLight {
 		ty: QuakeClassType::Base,
 		name: "bevy_point_light",
 		description: None,
-		base: &[ Transform::ERASED_CLASS, Visibility::ERASED_CLASS ],
+		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
 		model: None,
 		color: None,
@@ -186,7 +186,9 @@ impl QuakeClass for PointLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "range",
 				title: Some("Light Range"),
-				description: Some("Cut-off for the light's area-of-effect. Fragments outside this range will not be affected by this light at all, so it's important to tune this together with `intensity` to prevent hard lighting cut-offs."),
+				description: Some(
+					"Cut-off for the light's area-of-effect. Fragments outside this range will not be affected by this light at all, so it's important to tune this together with `intensity` to prevent hard lighting cut-offs.",
+				),
 				default_value: Some(|| PointLight::default().range.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -208,14 +210,18 @@ impl QuakeClass for PointLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_depth_bias",
 				title: Some("Shadow Depth Bias"),
-				description: Some("A bias used when sampling shadow maps to avoid 'shadow-acne', or false shadow occlusions that happen as a result of shadow-map fragments not mapping 1:1 to screen-space fragments."),
+				description: Some(
+					"A bias used when sampling shadow maps to avoid 'shadow-acne', or false shadow occlusions that happen as a result of shadow-map fragments not mapping 1:1 to screen-space fragments.",
+				),
 				default_value: Some(|| PointLight::DEFAULT_SHADOW_DEPTH_BIAS.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_normal_bias",
 				title: Some("Shadow Normal Bias"),
-				description: Some("A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it can be small close to the camera and gets larger further away."),
+				description: Some(
+					"A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it can be small close to the camera and gets larger further away.",
+				),
 				default_value: Some(|| PointLight::DEFAULT_SHADOW_NORMAL_BIAS.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -255,7 +261,7 @@ impl QuakeClass for SpotLight {
 		ty: QuakeClassType::Base,
 		name: "bevy_spot_light",
 		description: None,
-		base: &[ Transform::ERASED_CLASS, Visibility::ERASED_CLASS ],
+		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
 		model: None,
 		color: None,
@@ -281,7 +287,9 @@ impl QuakeClass for SpotLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "range",
 				title: Some("Light Range"),
-				description: Some("Range in meters that this light illuminates. Note that this value affects resolution of the shadow maps; generally, the higher you set it, the lower-resolution your shadow maps will be."),
+				description: Some(
+					"Range in meters that this light illuminates. Note that this value affects resolution of the shadow maps; generally, the higher you set it, the lower-resolution your shadow maps will be.",
+				),
 				default_value: Some(|| SpotLight::default().range.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -303,14 +311,18 @@ impl QuakeClass for SpotLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_depth_bias",
 				title: Some("Shadow Depth Bias"),
-				description: Some("A value that adjusts the tradeoff between self-shadowing artifacts and proximity of shadows to their casters. This value frequently must be tuned to the specific scene; this is normal and a well-known part of the shadow mapping workflow."),
+				description: Some(
+					"A value that adjusts the tradeoff between self-shadowing artifacts and proximity of shadows to their casters. This value frequently must be tuned to the specific scene; this is normal and a well-known part of the shadow mapping workflow.",
+				),
 				default_value: Some(|| SpotLight::DEFAULT_SHADOW_DEPTH_BIAS.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_normal_bias",
 				title: Some("Shadow Normal Bias"),
-				description: Some("A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it can be small close to the camera and gets larger further away."),
+				description: Some(
+					"A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it can be small close to the camera and gets larger further away.",
+				),
 				default_value: Some(|| SpotLight::DEFAULT_SHADOW_NORMAL_BIAS.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -325,14 +337,18 @@ impl QuakeClass for SpotLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "outer_angle",
 				title: Some("Light Cone Outer Angle"),
-				description: Some("Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees."),
+				description: Some(
+					"Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees.",
+				),
 				default_value: Some(|| "\"45\"".s()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
 				name: "inner_angle",
 				title: Some("Light Cone Inner Angle"),
-				description: Some("Angle defining the distance from the spot light direction to the inner limit of the light's cone of effect in degrees."),
+				description: Some(
+					"Angle defining the distance from the spot light direction to the inner limit of the light's cone of effect in degrees.",
+				),
 				default_value: Some(|| "\"0\"".s()),
 			},
 		],
@@ -375,7 +391,7 @@ impl QuakeClass for DirectionalLight {
 		ty: QuakeClassType::Base,
 		name: "bevy_directional_light",
 		description: None,
-		base: &[ Transform::ERASED_CLASS, Visibility::ERASED_CLASS ],
+		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
 		model: None,
 		color: None,
@@ -394,7 +410,9 @@ impl QuakeClass for DirectionalLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "illuminance",
 				title: Some("Light Illuminance"),
-				description: Some("Illuminance in lux (lumens per square meter), representing the amount of light projected onto surfaces by this light source."),
+				description: Some(
+					"Illuminance in lux (lumens per square meter), representing the amount of light projected onto surfaces by this light source.",
+				),
 				default_value: Some(|| light_consts::lux::AMBIENT_DAYLIGHT.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -409,14 +427,18 @@ impl QuakeClass for DirectionalLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_depth_bias",
 				title: Some("Shadow Depth Bias"),
-				description: Some("A value that adjusts the tradeoff between self-shadowing artifacts and proximity of shadows to their casters. This value frequently must be tuned to the specific scene; this is normal and a well-known part of the shadow mapping workflow."),
+				description: Some(
+					"A value that adjusts the tradeoff between self-shadowing artifacts and proximity of shadows to their casters. This value frequently must be tuned to the specific scene; this is normal and a well-known part of the shadow mapping workflow.",
+				),
 				default_value: Some(|| DirectionalLight::DEFAULT_SHADOW_DEPTH_BIAS.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
 				name: "shadow_normal_bias",
 				title: Some("Shadow Normal Bias"),
-				description: Some("A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it is automatically adjusted to the orthographic projection."),
+				description: Some(
+					"A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it is automatically adjusted to the orthographic projection.",
+				),
 				default_value: Some(|| DirectionalLight::DEFAULT_SHADOW_NORMAL_BIAS.fgd_to_string()),
 			},
 		],

@@ -194,11 +194,7 @@ impl FgdType for IntBool {
 	}
 
 	fn fgd_to_string_unquoted(&self) -> String {
-		if self.0 {
-			"1".s()
-		} else {
-			"0".s()
-		}
+		if self.0 { "1".s() } else { "0".s() }
 	}
 }
 
@@ -395,9 +391,9 @@ impl<T: BitFlag + fmt::Debug> fmt::Display for FgdFlags<T> {
 }
 
 impl<
-		N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>,
-		T: BitFlag + enumflags2::_internal::RawBitFlags<Numeric = N> + Enum + GetTypeRegistration + FromReflect,
-	> FgdType for FgdFlags<T>
+	N: FgdType + enumflags2::_internal::BitFlagNum + Into<u32>,
+	T: BitFlag + enumflags2::_internal::RawBitFlags<Numeric = N> + Enum + GetTypeRegistration + FromReflect,
+> FgdType for FgdFlags<T>
 {
 	const FGD_IS_QUOTED: bool = false;
 

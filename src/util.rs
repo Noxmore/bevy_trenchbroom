@@ -1,9 +1,9 @@
+use crate::*;
+use bevy::ecs::component::Mutable;
 use bevy::{
-	ecs::{component::HookContext, world::DeferredWorld},
+	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
-
-use crate::*;
 
 pub struct UtilPlugin;
 impl Plugin for UtilPlugin {
@@ -176,11 +176,7 @@ pub trait ConvertZeroToOne {
 
 impl ConvertZeroToOne for f32 {
 	fn convert_zero_to_one(self) -> Self {
-		if self == 0. {
-			1.
-		} else {
-			self
-		}
+		if self == 0. { 1. } else { self }
 	}
 }
 
@@ -226,15 +222,15 @@ pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut
 
 /// I looked for an easier solution, like an [`Into`] implementation to turn an [`EntityWorldMut`] into an [`EntityMut`], but found nothing.
 trait EntityMutOrEntityWorldMut {
-	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>>;
+	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>>;
 }
 impl EntityMutOrEntityWorldMut for EntityMut<'_> {
-	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>> {
+	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>> {
 		EntityMut::get_mut(self)
 	}
 }
 impl EntityMutOrEntityWorldMut for EntityWorldMut<'_> {
-	fn get_mut<T: Component>(&mut self) -> Option<Mut<'_, T>> {
+	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>> {
 		EntityWorldMut::get_mut(self)
 	}
 }

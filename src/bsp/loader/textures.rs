@@ -1,4 +1,4 @@
-use bevy::asset::{io::AssetReaderError, ReadAssetBytesError};
+use bevy::asset::{ReadAssetBytesError, io::AssetReaderError};
 use bsp::*;
 use loader::BspLoadCtx;
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};

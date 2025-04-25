@@ -6,6 +6,7 @@ use bevy::{
 	image::ImageSampler,
 	pbr::Lightmap,
 	render::{
+		Render, RenderApp, RenderSet,
 		extract_resource::{ExtractResource, ExtractResourcePlugin},
 		globals::{GlobalsBuffer, GlobalsUniform},
 		render_asset::{RenderAssetPlugin, RenderAssetUsages, RenderAssets},
@@ -13,7 +14,6 @@ use bevy::{
 		render_resource::{binding_types::*, *},
 		renderer::{RenderDevice, RenderQueue},
 		texture::GpuImage,
-		Render, RenderApp, RenderSet,
 	},
 };
 

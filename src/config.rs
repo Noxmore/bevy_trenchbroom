@@ -1,10 +1,10 @@
 use bevy::{
-	asset::{io::AssetReaderError, AssetPath, LoadContext, RenderAssetUsages},
+	asset::{AssetPath, LoadContext, RenderAssetUsages, io::AssetReaderError},
 	image::{ImageLoaderSettings, ImageSampler},
 	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
-use class::{builtin::default_quake_class_registry, ErasedQuakeClass, QuakeClass};
+use class::{ErasedQuakeClass, QuakeClass, builtin::default_quake_class_registry};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::QuakeMapEntities;

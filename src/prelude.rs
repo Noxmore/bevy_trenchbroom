@@ -19,12 +19,23 @@ pub(crate) use thiserror::Error;
 
 pub use bevy_materialize::prelude::*;
 pub use qbsp::{
-	self,
+	self, Palette, QUAKE_PALETTE,
 	data::bsp::{BspTexFlags, LightmapStyle},
 	mesh::lighting::{ComputeLightmapSettings, LightmapAtlas, Lightmaps},
-	Palette, QUAKE_PALETTE,
 };
 
+pub use crate::{
+	TrenchBroomPlugin, TrenchBroomServer,
+	class::{
+		QuakeClass,
+		builtin::{Target, Targetable},
+		spawn_util::*,
+	},
+	config::TrenchBroomConfig,
+	geometry::{GeometryProvider, GeometryProviderView},
+	qmap::QuakeMapEntity,
+	util::{IsSceneWorld, TrenchBroomGltfRotationFixEntityCommandsExt, trenchbroom_gltf_rotation_fix},
+};
 #[cfg(feature = "client")]
 pub use crate::{
 	bsp::{
@@ -32,18 +43,6 @@ pub use crate::{
 		loader::IrradianceVolumeMultipliers,
 	},
 	special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial},
-};
-pub use crate::{
-	class::{
-		builtin::{Target, Targetable},
-		spawn_util::*,
-		QuakeClass,
-	},
-	config::TrenchBroomConfig,
-	geometry::{GeometryProvider, GeometryProviderView},
-	qmap::QuakeMapEntity,
-	util::{trenchbroom_gltf_rotation_fix, IsSceneWorld, TrenchBroomGltfRotationFixEntityCommandsExt},
-	TrenchBroomPlugin, TrenchBroomServer,
 };
 
 pub use bevy_trenchbroom_macros::*;
