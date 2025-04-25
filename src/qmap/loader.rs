@@ -1,6 +1,6 @@
 use bevy::{
 	asset::{AssetLoader, AsyncReadExt, LoadedAsset},
-	platform_support::collections::hash_map::Entry,
+	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
 use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
