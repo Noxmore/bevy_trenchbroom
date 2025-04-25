@@ -45,7 +45,7 @@ bevy = { version = "0.16.0", default-features = false, features = [
 bevy_reflect = { version = "0.16.0", features = ["documentation"] }
 bevy_mesh = "0.16.0"
 wgpu-types = "24.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { version = "0.5.0", default-features = false, features = ["toml", "bevy_image"] }
+bevy_materialize = { version = "0.5", default-features = false, features = ["toml", "bevy_image"] }
 bevy_rapier3d = { version = "0.29", optional = true }
 avian3d = { version = "0.2", optional = true }
 default-struct-builder = "0.5.0"
