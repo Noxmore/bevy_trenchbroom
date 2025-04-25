@@ -1,5 +1,5 @@
 use bevy::{
-	ecs::world::DeferredWorld,
+	ecs::{component::HookContext, world::DeferredWorld},
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
 

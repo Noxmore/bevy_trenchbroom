@@ -1,6 +1,8 @@
-use std::collections::hash_map::Entry;
-
-use bevy::asset::{AssetLoader, AsyncReadExt};
+use bevy::{
+	asset::{AssetLoader, AsyncReadExt, LoadedAsset},
+	platform::collections::hash_map::Entry,
+	tasks::ConditionalSendFuture,
+};
 use brush::{generate_mesh_from_brush_polygons, BrushSurfacePolygon, ConvexHull};
 use class::QuakeClassType;
 use config::TextureLoadView;
@@ -32,7 +34,7 @@ impl AssetLoader for QuakeMapLoader {
 		reader: &mut dyn bevy::asset::io::Reader,
 		_settings: &Self::Settings,
 		load_context: &mut bevy::asset::LoadContext,
-	) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
+	) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
 		Box::pin(async {
 			let mut input = String::new();
 			reader.read_to_string(&mut input).await?;
@@ -41,7 +43,7 @@ impl AssetLoader for QuakeMapLoader {
 			let mut entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
 			let mut mesh_handles = Vec::new();
-			let mut brush_lists = HashMap::new();
+			let mut brush_lists = HashMap::default();
 
 			let mut world = World::new();
 
@@ -127,7 +129,7 @@ impl AssetLoader for QuakeMapLoader {
 											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
 									)
 									.await
-									.map(|image: bevy::asset::LoadedAsset<Image>| image.take().size())
+									.map(|image: LoadedAsset<Image>| image.take().size())
 									.unwrap_or(UVec2::splat(1)),
 							),
 						};
@@ -157,7 +159,6 @@ impl AssetLoader for QuakeMapLoader {
 						}
 
 						let mesh_entity = world.spawn(Name::new(texture.s())).id();
-						world.entity_mut(entity_id).add_child(mesh_entity);
 
 						meshes.push((
 							mesh_entity,
@@ -199,6 +200,9 @@ impl AssetLoader for QuakeMapLoader {
 
 					for (entity, mesh, _) in meshes {
 						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
+
+						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
+						world.entity_mut(entity_id).add_child(entity);
 
 						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
 

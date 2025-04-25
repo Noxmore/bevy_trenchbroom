@@ -51,7 +51,6 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 					}
 
 					let mesh_entity = world.spawn(Name::new(model_mesh.texture.name.clone())).id();
-					world.entity_mut(entity_id).add_child(mesh_entity);
 
 					meshes.push(GeometryProviderMeshView {
 						entity: mesh_entity,
@@ -77,6 +76,11 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 				}
 
 				(config.global_geometry_provider)(&mut view);
+
+				// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
+				for mesh_view in view.meshes {
+					world.entity_mut(entity_id).add_child(mesh_view.entity);
+				}
 			}
 		}
 

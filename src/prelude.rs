@@ -4,6 +4,7 @@ pub(crate) use anyhow::anyhow;
 pub(crate) use bevy::math::*;
 #[cfg(feature = "client")]
 pub(crate) use bevy::pbr::irradiance_volume::IrradianceVolume;
+pub(crate) use bevy::platform::collections::HashMap;
 pub(crate) use bevy::prelude::*;
 #[cfg(feature = "client")]
 pub(crate) use bevy::render::primitives::Aabb;

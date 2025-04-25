@@ -1,7 +1,7 @@
 use bevy::{
 	asset::{io::AssetReaderError, AssetPath, LoadContext, RenderAssetUsages},
 	image::{ImageLoaderSettings, ImageSampler},
-	utils::BoxedFuture,
+	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
 use class::{builtin::default_quake_class_registry, ErasedQuakeClass, QuakeClass};
@@ -208,7 +208,9 @@ pub struct TrenchBroomConfig {
 	/// It's worth noting that `wgpu` has a [texture size limit of 2048](https://github.com/gfx-rs/wgpu/discussions/2952), which can be expanded via [`RenderPlugin`](bevy::render::RenderPlugin) if needed.
 	///
 	/// NOTE: `special_lighting_color` is set to gray (`75`) by default instead of white (`255`), because otherwise all textures with it look way too bright and washed out, not sure why.
-	#[default(ComputeLightmapSettings { special_lighting_color: [75; 3], ..default() })]
+	///
+	/// (Default: [`Self::default_compute_lightmap_settings`])
+	#[default(Self::default_compute_lightmap_settings())]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
 	/// `qbsp` settings when parsing BSP files.
@@ -238,6 +240,11 @@ pub struct TrenchBroomConfig {
 	/// (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
 	#[default(Self::default_texture_sampler())]
 	pub texture_sampler: ImageSampler,
+
+	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
+	///
+	/// NOTE: It's recommended you add a pixel of padding in [`compute_lightmap_settings`](Self::compute_lightmap_settings), otherwise there will be obvious lightmap leaking.
+	pub bicubic_lightmap_filtering: bool,
 
 	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
 	#[default(RenderAssetUsages::all())]
@@ -278,6 +285,13 @@ impl TrenchBroomConfig {
 	/// Switches to using linear (smooth) filtering on textures.
 	pub fn linear_filtering(self) -> Self {
 		self.texture_sampler(ImageSampler::linear().repeat())
+	}
+
+	pub fn default_compute_lightmap_settings() -> ComputeLightmapSettings {
+		ComputeLightmapSettings {
+			special_lighting_color: [75; 3],
+			..default()
+		}
 	}
 
 	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])

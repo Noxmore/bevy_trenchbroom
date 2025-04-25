@@ -170,7 +170,7 @@ impl GeometryProvider {
 				}
 
 				// Put the groups into an easily iterable structure, then average the normals in each group
-				let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
+				let mut groups: HashMap<usize, Vec<usize>> = HashMap::default();
 				for i in 0..normals.len() {
 					let root = uf.find(i);
 					groups.entry(root).or_default().push(i);

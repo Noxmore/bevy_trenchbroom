@@ -4,7 +4,7 @@ use bevy::{
 	pbr::{ExtendedMaterial, MaterialExtension},
 	render::render_resource::{AsBindGroup, Extent3d, TextureDimension},
 };
-use bevy_materialize::animation::{GenericMaterialAnimationState, MaterialAnimation, MaterialAnimations};
+use bevy_materialize::animation::{GenericMaterialAnimationState, ImagesAnimation, MaterialAnimations};
 use bsp::TEXTURE_PREFIX;
 use config::EmbeddedTextureLoadView;
 
@@ -139,9 +139,9 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				GenericMaterial::ANIMATION,
 				MaterialAnimations {
 					next: None,
-					images: Some(MaterialAnimation {
+					images: Some(ImagesAnimation {
 						fps,
-						value: bevy::utils::HashMap::from([("base_color_texture".s(), frames)]),
+						fields: [("base_color_texture".s(), frames)].into_iter().collect(),
 						state: GenericMaterialAnimationState {
 							current_frame: texture_frame_idx.wrapping_sub(1) as usize,
 							next_frame_time: Duration::default(),

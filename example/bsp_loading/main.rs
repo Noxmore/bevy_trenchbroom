@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(feature = "example_client")]
-use bevy::ecs::{component::ComponentId, world::DeferredWorld};
+use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
 #[cfg(feature = "example_client")]
@@ -69,7 +69,7 @@ pub struct FuncIllusionary;
 pub struct Cube;
 #[cfg(feature = "example_client")]
 impl Cube {
-	fn on_add(mut world: DeferredWorld, entity: Entity, _id: ComponentId) {
+	fn on_add(mut world: DeferredWorld, ctx: HookContext) {
 		// This isn't necessary because we get AssetServer here, this is mainly for example.
 		if world.is_scene_world() {
 			return;
@@ -78,7 +78,7 @@ impl Cube {
 		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
 		let material = asset_server.add(StandardMaterial::default());
 
-		world.commands().entity(entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
+		world.commands().entity(ctx.entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
 	}
 }
 
@@ -129,6 +129,11 @@ fn main() {
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
+				.bicubic_lightmap_filtering(true)
+				.compute_lightmap_settings(ComputeLightmapSettings {
+					padding: 1, // For bicubic filtering
+					..TrenchBroomConfig::default_compute_lightmap_settings()
+				})
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<Mushroom>()
