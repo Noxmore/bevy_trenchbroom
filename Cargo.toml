@@ -77,6 +77,6 @@ avian = ["dep:avian3d"]
 auto_register = ["dep:inventory", "bevy_trenchbroom_macros/auto_register"]
 
 [patch.crates-io]
-avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "bevy-0.16" }
+avian3d = { git = "https://github.com/Jondolf/avian.git" }
 bevy_flycam = { git = "https://github.com/kristoff3r/bevy_flycam.git" }
-bevy_rapier3d = { git = "https://github.com/mnmaita/bevy_rapier.git", branch = "mnmaita/bevy-0.16" }
+# bevy_rapier3d = { git = "https://github.com/mnmaita/bevy_rapier.git", branch = "mnmaita/bevy-0.16" }
