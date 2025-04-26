@@ -15,7 +15,6 @@ doc = false
 bevy = { workspace = true, features = ["default"] }
 avian3d = { version = "0.2" }
 bevy_trenchbroom = { path = "../..", default-features = false, features = [
-	"auto_register",
 	"avian",
 	"client",
 ] }

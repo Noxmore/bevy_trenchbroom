@@ -9,23 +9,20 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm.
+// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
@@ -42,7 +39,6 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[model("models/mushroom.glb")]
@@ -52,7 +48,6 @@ pub struct Mushroom;
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
