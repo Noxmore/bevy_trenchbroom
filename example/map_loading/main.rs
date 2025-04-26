@@ -55,11 +55,26 @@ pub struct Mushroom;
 #[no_register]
 #[reflect(Component)]
 #[base(Transform)]
+#[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
 	pub _color: Color,
 	#[default(300.)]
 	pub light: f32,
+}
+impl Light {
+	pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+		world.commands().entity(ctx.entity).queue(|mut entity: EntityWorldMut| {
+			let Some(light) = entity.get::<Self>() else { return };
+
+			entity.insert(PointLight {
+				color: light._color,
+				intensity: light.light * 1000.,
+				shadows_enabled: true,
+				..default()
+			});
+		});
+	}
 }
 
 struct ClientPlugin;
@@ -76,7 +91,6 @@ impl Plugin for ClientPlugin {
 			})
 			.add_plugins(bevy_inspector_egui::bevy_egui::EguiPlugin { enable_multipass_for_primary_context: true })
 			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-			.add_systems(Update, spawn_lights)
 		;
 	}
 }
@@ -117,22 +131,6 @@ fn setup_scene(
 	for mut projection in &mut projection_query {
 		*projection = Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
-			..default()
-		});
-	}
-}
-
-#[cfg(feature = "example_client")]
-#[rustfmt::skip]
-fn spawn_lights(
-	mut commands: Commands,
-	query: Query<(Entity, &Light), Changed<Light>>,
-) {
-	for (entity, light) in &query {
-		commands.entity(entity).insert(PointLight {
-			color: light._color,
-			intensity: light.light * 1000.,
-			shadows_enabled: true,
 			..default()
 		});
 	}
