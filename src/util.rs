@@ -328,9 +328,13 @@ pub fn quake_light_to_lux(light: f32) -> f32 {
 
 #[test]
 fn coordinate_conversions() {
-	assert_eq!(Vec3::X.trenchbroom_to_bevy(), Vec3::X);
-	assert_eq!(Vec3::Y.trenchbroom_to_bevy(), Vec3::NEG_Z);
+	assert_eq!(Vec3::X.trenchbroom_to_bevy(), Vec3::NEG_Z);
+	assert_eq!(Vec3::Y.trenchbroom_to_bevy(), Vec3::NEG_X);
 	assert_eq!(Vec3::Z.trenchbroom_to_bevy(), Vec3::Y);
+
+	assert_eq!(Vec3::X.bevy_to_trenchbroom(), Vec3::NEG_Y);
+	assert_eq!(Vec3::Y.bevy_to_trenchbroom(), Vec3::Z);
+	assert_eq!(Vec3::Z.bevy_to_trenchbroom(), Vec3::NEG_X);
 
 	assert_eq!(Vec3::X.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::X);
 	assert_eq!(Vec3::Y.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Y);
