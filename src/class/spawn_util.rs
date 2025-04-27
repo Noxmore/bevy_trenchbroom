@@ -97,6 +97,8 @@ impl PreloadedAssets {
 #[test]
 #[cfg(feature = "client")]
 fn preloading() {
+	use bevy::render::view::VisibilityClass;
+
 	#[derive(PointClass, Component, Reflect)]
 	#[reflect(Component)]
 	#[no_register]
@@ -142,6 +144,7 @@ fn preloading() {
 		.register_type::<PreloadedAssets>()
 		.register_type::<MeshMaterial3d<StandardMaterial>>()
 		.register_type::<Aabb>()
+		.register_type::<VisibilityClass>()
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
 		.init_asset::<crate::bsp::lighting::AnimatedLighting>()

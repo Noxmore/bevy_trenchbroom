@@ -5,6 +5,7 @@ flat! {
 	writing;
 }
 
+pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
 	asset::{AssetPath, LoadContext, RenderAssetUsages, io::AssetReaderError},
 	image::{ImageLoaderSettings, ImageSampler},
@@ -122,7 +123,7 @@ pub struct TrenchBroomConfig {
 	/// The file extension used when loading [`GenericMaterial`]s.
 	///
 	/// With the default loose texture loader, if a file with this asset doesn't exist,
-	/// it tries to load it with [`SimpleGenericMaterialLoader`](bevy_materialize::load::SimpleGenericMaterialLoader)
+	/// it tries to load it with [`SimpleGenericMaterialLoader`]
 	/// with this config's [`texture_extension`](Self::texture_extension)
 	///
 	/// (Default: "material")
