@@ -9,6 +9,8 @@ env:
   CARGO_TERM_COLOR: always
   # Sparse cargo registry for faster updates
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUSTFLAGS: "-D warnings"
+  RUSTDOCFLAGS: '--deny warnings'
 
 jobs:
   lint:
@@ -39,8 +41,6 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "-D warnings"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -56,9 +56,6 @@ jobs:
 
   doc:
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "-D warnings"
-      RUSTDOCFLAGS: '--deny warnings'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -92,3 +89,30 @@ jobs:
           # Running doc tests separately is a workaround for https://github.com/rust-lang/cargo/issues/6669
           # Setting LD_LIBRARY_PATH is a workaround for https://github.com/TheBevyFlock/bevy_new_2d/pull/318#issuecomment-2585935350
           LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client
+
+  # Check that the crate builds for web.
+  build-web:
+    name: Build for web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install dependencies
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Populate target directory from cache
+        uses: Leafwing-Studios/cargo-cache@v2
+
+      - name: Install Bevy CLI
+        run: cargo install --git=https://github.com/TheBevyFlock/bevy_cli --locked bevy_cli
+
+      - name: Build for web
+        run: |
+          cd example/map_loading
+          bevy build --locked --bin map_loading --all-targets --yes web

@@ -57,6 +57,8 @@ pub struct Light {
 	#[default(300.)]
 	pub light: f32,
 }
+
+#[cfg(feature = "example_client")]
 impl Light {
 	pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
 		world.commands().entity(ctx.entity).queue(|mut entity: EntityWorldMut| {
