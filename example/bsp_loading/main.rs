@@ -12,17 +12,15 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm.
+// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspWorldspawn)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspSolidEntity, Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
@@ -41,28 +39,24 @@ pub enum FlagsTest {
 }
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
@@ -83,7 +77,6 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[model("models/mushroom.glb")]
@@ -92,7 +85,6 @@ impl Cube {
 pub struct Mushroom;
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]
-#[no_register]
 #[reflect(Component)]
 #[base(BspLight, Transform)]
 // This is the default size, this is just to make sure it produces a valid fgd.

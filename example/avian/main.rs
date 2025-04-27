@@ -7,23 +7,20 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm.
+// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[component(on_add = Self::on_add)]

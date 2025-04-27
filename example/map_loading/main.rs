@@ -9,23 +9,20 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm.
+// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
@@ -42,7 +39,6 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
 #[model("models/mushroom.glb")]
@@ -52,14 +48,28 @@ pub struct Mushroom;
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[no_register]
 #[reflect(Component)]
 #[base(Transform)]
+#[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
 	pub _color: Color,
 	#[default(300.)]
 	pub light: f32,
+}
+impl Light {
+	pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+		world.commands().entity(ctx.entity).queue(|mut entity: EntityWorldMut| {
+			let Some(light) = entity.get::<Self>() else { return };
+
+			entity.insert(PointLight {
+				color: light._color,
+				intensity: light.light * 1000.,
+				shadows_enabled: true,
+				..default()
+			});
+		});
+	}
 }
 
 struct ClientPlugin;
@@ -76,7 +86,6 @@ impl Plugin for ClientPlugin {
 			})
 			.add_plugins(bevy_inspector_egui::bevy_egui::EguiPlugin { enable_multipass_for_primary_context: true })
 			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-			.add_systems(Update, spawn_lights)
 		;
 	}
 }
@@ -117,22 +126,6 @@ fn setup_scene(
 	for mut projection in &mut projection_query {
 		*projection = Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
-			..default()
-		});
-	}
-}
-
-#[cfg(feature = "example_client")]
-#[rustfmt::skip]
-fn spawn_lights(
-	mut commands: Commands,
-	query: Query<(Entity, &Light), Changed<Light>>,
-) {
-	for (entity, light) in &query {
-		commands.entity(entity).insert(PointLight {
-			color: light._color,
-			intensity: light.light * 1000.,
-			shadows_enabled: true,
 			..default()
 		});
 	}
