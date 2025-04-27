@@ -1,8 +1,5 @@
 [workspace]
-members = [
-	"example/*",
-	"macros",
-]
+members = ["example/*", "macros"]
 
 [workspace.package]
 version = "0.8.0-dev"
@@ -27,7 +24,9 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.16.0", default-features = false, features = ["png"] } # For examples
+bevy = { version = "0.16.0", default-features = false, features = [
+	"png",
+] } # For examples
 nil = "0.15"
 bevy_flycam = "0.15"
 bevy-inspector-egui = "0.31"
@@ -45,7 +44,10 @@ bevy = { version = "0.16.0", default-features = false, features = [
 bevy_reflect = { version = "0.16.0", features = ["documentation"] }
 bevy_mesh = "0.16.0"
 wgpu-types = "24.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { version = "0.5", default-features = false, features = ["toml", "bevy_image"] }
+bevy_materialize = { version = "0.5", default-features = false, features = [
+	"toml",
+	"bevy_image",
+] }
 bevy_rapier3d = { version = "0.29", optional = true }
 avian3d = { version = "0.2", optional = true }
 default-struct-builder = "0.5.0"
@@ -54,7 +56,9 @@ image = { version = "0.25", default-features = false }
 itertools = "0.14"
 json = "0.12"
 quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
-serde = { version = "1", features = ["derive"] } # serde isn't optional because bevy_materialize requires it anyway
+serde = { version = "1", features = [
+	"derive",
+] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
 qbsp = { version = "0.4", features = ["bevy_reflect", "serde"] }
@@ -66,7 +70,10 @@ enumflags2.workspace = true
 serde_json = "1.0.140"
 
 [dev-dependencies]
-bevy = { version = "0.16", default-features = false, features = ["png", "bevy_gltf"] } # For tests
+bevy = { version = "0.16", default-features = false, features = [
+	"png",
+	"bevy_gltf",
+] } # For tests
 smol = "2"
 
 [features]
@@ -77,6 +84,6 @@ avian = ["dep:avian3d"]
 auto_register = ["dep:inventory", "bevy_trenchbroom_macros/auto_register"]
 
 [patch.crates-io]
-avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "bevy-0.16" }
+avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "main" }
 bevy_flycam = { git = "https://github.com/kristoff3r/bevy_flycam.git" }
 bevy_rapier3d = { git = "https://github.com/mnmaita/bevy_rapier.git", branch = "mnmaita/bevy-0.16" }
