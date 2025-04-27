@@ -76,33 +76,65 @@ impl ImageSamplerRepeatExt for ImageSampler {
 }
 
 pub trait BevyTrenchbroomCoordinateConversions {
-	/// Converts from a z-up, y-forward coordinate space to a y-up, negative-z-forward coordinate space.
-	fn z_up_to_y_up(self) -> Self;
+	/// Converts from TrenchBroom:
+	/// * Forward: X
+	/// * Right: -Y
+	/// * Up: Z
+	///
+	/// To Bevy:
+	/// * Forward: -Z
+	/// * Right: X
+	/// * Up: Y
+	fn trenchbroom_to_bevy(self) -> Self;
 
-	/// Converts from a y-up, negative-z-forward coordinate space to a z-up, y-forward coordinate space.
-	fn y_up_to_z_up(self) -> Self;
+	/// Converts from Bevy:
+	/// * Forward: -Z
+	/// * Right: X
+	/// * Up: Y
+	///
+	/// To TrenchBroom:
+	/// * Forward: X
+	/// * Right: -Y
+	/// * Up: Z
+	fn bevy_to_trenchbroom(self) -> Self;
 }
 
 impl BevyTrenchbroomCoordinateConversions for DVec3 {
 	#[inline]
-	fn z_up_to_y_up(self) -> Self {
-		dvec3(self.x, self.z, -self.y)
+	fn trenchbroom_to_bevy(self) -> Self {
+		Self {
+			x: -self.y,
+			y: self.z,
+			z: -self.x,
+		}
 	}
 
 	#[inline]
-	fn y_up_to_z_up(self) -> Self {
-		dvec3(self.x, -self.z, self.y)
+	fn bevy_to_trenchbroom(self) -> Self {
+		Self {
+			x: -self.z,
+			y: -self.x,
+			z: self.y,
+		}
 	}
 }
 impl BevyTrenchbroomCoordinateConversions for Vec3 {
 	#[inline]
-	fn z_up_to_y_up(self) -> Self {
-		vec3(self.x, self.z, -self.y)
+	fn trenchbroom_to_bevy(self) -> Self {
+		Self {
+			x: -self.y,
+			y: self.z,
+			z: -self.x,
+		}
 	}
 
 	#[inline]
-	fn y_up_to_z_up(self) -> Self {
-		vec3(self.x, -self.z, self.y)
+	fn bevy_to_trenchbroom(self) -> Self {
+		Self {
+			x: -self.z,
+			y: -self.x,
+			z: self.y,
+		}
 	}
 }
 
@@ -296,13 +328,13 @@ pub fn quake_light_to_lux(light: f32) -> f32 {
 
 #[test]
 fn coordinate_conversions() {
-	assert_eq!(Vec3::X.z_up_to_y_up(), Vec3::X);
-	assert_eq!(Vec3::Y.z_up_to_y_up(), Vec3::NEG_Z);
-	assert_eq!(Vec3::Z.z_up_to_y_up(), Vec3::Y);
+	assert_eq!(Vec3::X.trenchbroom_to_bevy(), Vec3::X);
+	assert_eq!(Vec3::Y.trenchbroom_to_bevy(), Vec3::NEG_Z);
+	assert_eq!(Vec3::Z.trenchbroom_to_bevy(), Vec3::Y);
 
-	assert_eq!(Vec3::X.z_up_to_y_up().y_up_to_z_up(), Vec3::X);
-	assert_eq!(Vec3::Y.z_up_to_y_up().y_up_to_z_up(), Vec3::Y);
-	assert_eq!(Vec3::Z.z_up_to_y_up().y_up_to_z_up(), Vec3::Z);
+	assert_eq!(Vec3::X.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::X);
+	assert_eq!(Vec3::Y.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Y);
+	assert_eq!(Vec3::Z.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Z);
 }
 
 #[test]

@@ -238,21 +238,21 @@ impl TrenchBroomConfig {
 
 	/// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
 	pub fn to_bevy_space(&self, vec: Vec3) -> Vec3 {
-		vec.z_up_to_y_up() / self.scale
+		vec.trenchbroom_to_bevy() / self.scale
 	}
 
 	/// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
 	pub fn to_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
-		vec.z_up_to_y_up() / self.scale as f64
+		vec.trenchbroom_to_bevy() / self.scale as f64
 	}
 
 	/// The opposite of [`Self::to_bevy_space`], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
 	pub fn from_bevy_space(&self, vec: Vec3) -> Vec3 {
-		vec.y_up_to_z_up() * self.scale
+		vec.bevy_to_trenchbroom() * self.scale
 	}
 
 	/// The opposite of [`Self::to_bevy_space_f64`], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
 	pub fn from_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
-		vec.y_up_to_z_up() * self.scale as f64
+		vec.bevy_to_trenchbroom() * self.scale as f64
 	}
 }

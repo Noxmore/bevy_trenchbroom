@@ -161,7 +161,7 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, models: Vec<InternalModel>, world: 
 									brush.planes.extend(model_brush.planes.iter().map(|plane| {
 										// We need to invert it because brush math expects normals to point inwards
 										BrushPlane {
-											normal: plane.normal.as_dvec3().z_up_to_y_up(),
+											normal: plane.normal.as_dvec3().trenchbroom_to_bevy(),
 											distance: -plane.dist as f64 / config.scale as f64,
 										}
 									}));
