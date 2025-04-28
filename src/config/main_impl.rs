@@ -222,18 +222,51 @@ impl TrenchBroomConfig {
 		}
 	}
 
-	/// Registers a [`QuakeClass`] into this config. It will be outputted into the fgd, and will be used when loading entities into scenes.
-	///
-	/// If the `auto_register` feature is enabled, you don't have to do this, as it automatically puts classes into a global registry when [`QuakeClass`] is derived.
-	pub fn register_class<T: QuakeClass>(mut self) -> Self {
-		self.entity_classes.insert(T::CLASS_INFO.name, Cow::Borrowed(T::ERASED_CLASS));
+	fn try_register_class_internal(&mut self, name: &'static str, class: Cow<'static, ErasedQuakeClass>) -> Result<(), ClassRegisterError> {
+		#[cfg(feature = "auto_register")]
+		if class::GLOBAL_CLASS_REGISTRY.contains_key(name) {
+			return Err(ClassRegisterError::InGlobalRegistry);
+		}
+		if let Some(existing_class) = self.entity_classes.get(name) {
+			if existing_class.info.ty.is_base() {
+				return Err(ClassRegisterError::BaseClassAlreadyRegistered);
+			}
+		}
+
+		self.entity_classes.insert(name, class);
+		Ok(())
+	}
+	fn register_class_internal(mut self, name: &'static str, class: Cow<'static, ErasedQuakeClass>) -> Self {
+		if let Err(ClassRegisterError::BaseClassAlreadyRegistered) = self.try_register_class_internal(name, class) {
+			error!("Attempted to register BaseClass `{name}` twice");
+		}
 		self
 	}
 
-	/// Register an owned [`ErasedQuakeClass`] directly for dynamic classes. You almost always want to be using [`Self::register_class`] instead.
-	pub fn register_class_dynamic(mut self, class: ErasedQuakeClass) -> Self {
-		self.entity_classes.insert(class.info.name, Cow::Owned(class));
-		self
+	/// Attempts to register a [`QuakeClass`] into this config. It will be outputted into the fgd, and will be used when loading entities into scenes.
+	/// 
+	/// This is the fallible version of [`register_class`](Self::register_class). It will not quietly fail.
+	pub fn try_register_class<T: QuakeClass>(&mut self) -> Result<(), ClassRegisterError> {
+		self.try_register_class_internal(T::CLASS_INFO.name, Cow::Borrowed(T::ERASED_CLASS))
+	}
+
+	/// This is the fallible version of [`register_class_dynamic`](Self::register_class_dynamic). It will not quietly fail.
+	pub fn try_register_class_dynamic(&mut self, class: ErasedQuakeClass) -> Result<(), ClassRegisterError> {
+		self.try_register_class_internal(class.info.name, Cow::Owned(class))
+	}
+
+	/// Registers a [`QuakeClass`] into this config. It will be outputted into the fgd, and will be used when loading entities into scenes.
+	///
+	/// If the `auto_register` feature is enabled, you don't have to do this, as it automatically puts classes into a global registry when [`QuakeClass`] is derived.
+	/// 
+	/// NOTE: The `auto_register` class registry always takes priority, if a class by the same name is registered in it, this will quietly fail.
+	pub fn register_class<T: QuakeClass>(self) -> Self {
+		self.register_class_internal(T::CLASS_INFO.name, Cow::Borrowed(T::ERASED_CLASS))
+	}
+
+	/// Register an owned [`ErasedQuakeClass`] directly. You almost always want to be using [`Self::register_class`] instead.
+	pub fn register_class_dynamic(self, class: ErasedQuakeClass) -> Self {
+		self.register_class_internal(class.info.name, Cow::Owned(class))
 	}
 
 	/// Converts from a z-up coordinate space to a y-up coordinate space, and scales everything down by this config's scale.
@@ -255,4 +288,14 @@ impl TrenchBroomConfig {
 	pub fn from_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
 		vec.bevy_to_trenchbroom() * self.scale as f64
 	}
+}
+
+/// Errors that may occur when trying to register a class with [`TrenchBroomConfig`].
+#[derive(Error, Debug, Clone)]
+pub enum ClassRegisterError {
+	#[cfg(feature = "auto_register")]
+	#[error("Class already registered in global registry")]
+	InGlobalRegistry,
+	#[error("BaseClass already registered")]
+	BaseClassAlreadyRegistered,
 }
