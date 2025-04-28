@@ -24,7 +24,7 @@ impl TrenchBroomConfig {
 			s.write_fmt(format_args!($($arg)*)).ok()
 		};}
 
-		for class in self.class_iter() {
+		'class_loop: for class in self.class_iter() {
 			// If this is a base class, and nothing depends on it, we shouldn't write it.
 			// This checks names instead of references because i'm still not 100% sure const static refs are stable.
 			if class.info.ty.is_base()
@@ -33,6 +33,22 @@ impl TrenchBroomConfig {
 					.all(|checking_class| !checking_class.info.base.iter().any(|base| base.info.name == class.info.name))
 			{
 				continue;
+			}
+
+			// Validate that all inherited classes are registered BaseClasses.
+			for base in class.info.base {
+				if self.get_class(base.info.name).is_none() {
+					error!("`{}`'s base class `{}` isn't registered, skipping", class.info.name, base.info.name);
+					continue 'class_loop;
+				}
+
+				if !base.info.ty.is_base() {
+					error!(
+						"`{}`'s base class `{}` is a {}Class, expected a BaseClass, skipping",
+						class.info.name, base.info.name, base.info.ty
+					);
+					continue 'class_loop;
+				}
 			}
 
 			write!("@{}Class ", class.info.ty);
