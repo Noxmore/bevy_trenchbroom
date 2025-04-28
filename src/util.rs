@@ -102,39 +102,23 @@ pub trait BevyTrenchbroomCoordinateConversions {
 impl BevyTrenchbroomCoordinateConversions for DVec3 {
 	#[inline]
 	fn trenchbroom_to_bevy(self) -> Self {
-		Self {
-			x: -self.y,
-			y: self.z,
-			z: -self.x,
-		}
+		dvec3(self.x, self.z, -self.y)
 	}
 
 	#[inline]
 	fn bevy_to_trenchbroom(self) -> Self {
-		Self {
-			x: -self.z,
-			y: -self.x,
-			z: self.y,
-		}
+		dvec3(self.x, -self.z, self.y)
 	}
 }
 impl BevyTrenchbroomCoordinateConversions for Vec3 {
 	#[inline]
 	fn trenchbroom_to_bevy(self) -> Self {
-		Self {
-			x: -self.y,
-			y: self.z,
-			z: -self.x,
-		}
+		vec3(self.x, self.z, -self.y)
 	}
 
 	#[inline]
 	fn bevy_to_trenchbroom(self) -> Self {
-		Self {
-			x: -self.z,
-			y: -self.x,
-			z: self.y,
-		}
+		vec3(self.x, -self.z, self.y)
 	}
 }
 
