@@ -61,7 +61,8 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.4", features = ["bevy_reflect", "serde"] }
+# qbsp = { version = "0.4", features = ["bevy_reflect", "serde"] }
+qbsp = { git = "https://github.com/Noxmore/qbsp.git", rev = "cc0b9e3", features = ["bevy_reflect", "serde"] }
 nil.workspace = true
 ndshape = "0.3.0"
 inventory = { version = "0.3", optional = true }

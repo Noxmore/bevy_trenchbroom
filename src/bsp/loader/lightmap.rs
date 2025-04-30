@@ -6,10 +6,10 @@ use bevy::{
 };
 use bsp::*;
 use lighting::{AnimatedLightingType, new_animated_lighting_output_image};
-use qbsp::mesh::lighting::ComputeLightmapAtlasError;
+use qbsp::mesh::lightmap::ComputeLightmapAtlasError;
 
 /// Writes lightmaps to target/lightmaps folder
-const WRITE_DEBUG_FILES: bool = false;
+const WRITE_DEBUG_FILES: bool = true;
 
 pub struct BspLightmap {
 	pub animated_lighting: Handle<AnimatedLighting>,
@@ -26,18 +26,21 @@ impl BspLightmap {
 
 		match ctx
 			.data
-			.compute_lightmap_atlas(config.compute_lightmap_settings, LightmapAtlasType::PerSlot)
+			.compute_lightmap_atlas(PerSlotLightmapPacker::new(config.compute_lightmap_settings))
 		{
 			Ok(atlas) => {
 				let size = atlas.data.size();
-				let LightmapAtlasData::PerSlot { slots, styles } = atlas.data else { unreachable!() };
 
 				if WRITE_DEBUG_FILES {
 					fs::create_dir("target/lightmaps").ok();
-					for (i, image) in slots.iter().enumerate() {
+					for (i, image) in atlas.data.slots.iter().enumerate() {
 						image.save_with_format(format!("target/lightmaps/{i}.png"), image::ImageFormat::Png).ok();
 					}
-					styles.save_with_format("target/lightmaps/styles.png", image::ImageFormat::Png).ok();
+					atlas
+						.data
+						.styles
+						.save_with_format("target/lightmaps/styles.png", image::ImageFormat::Png)
+						.ok();
 				}
 
 				let output = ctx.load_context.add_labeled_asset(
@@ -53,7 +56,7 @@ impl BspLightmap {
 				);
 
 				let mut i = 0;
-				let input = slots.map(|image| {
+				let input = atlas.data.slots.map(|image| {
 					let handle = ctx.load_context.add_labeled_asset(
 						format!("LightmapInput{i}"),
 						Image::new(
@@ -83,7 +86,7 @@ impl BspLightmap {
 							depth_or_array_layers: 1,
 						},
 						TextureDimension::D2,
-						styles.into_vec(),
+						atlas.data.styles.into_vec(),
 						TextureFormat::Rgba8Uint,
 						RenderAssetUsages::RENDER_WORLD,
 					),

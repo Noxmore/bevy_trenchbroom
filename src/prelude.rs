@@ -21,7 +21,7 @@ pub use bevy_materialize::prelude::*;
 pub use qbsp::{
 	self, Palette, QUAKE_PALETTE,
 	data::bsp::{BspTexFlags, LightmapStyle},
-	mesh::lighting::{ComputeLightmapSettings, LightmapAtlas, Lightmaps},
+	mesh::lightmap::{ComputeLightmapSettings, LightmapAtlas},
 };
 
 pub use crate::{
