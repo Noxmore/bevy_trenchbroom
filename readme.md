@@ -297,9 +297,14 @@ To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in it
 # Possible future plans
 - Entity IO
 
-# Supported Bevy && TrenchBroom Versions
-| Bevy | bevy_trenchbroom | TrenchBroom |
----|--|---
-| 0.15 | 0.6-0.7 | 2025.1-2025.2 |
-| 0.14 | 0.4-0.5 | 2024.1 |
-| 0.13 | 0.1-0.3 | 2024.1 |
+# Version support table
+| Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools |
+|------|------------------|---------------|-------------|
+| 0.16 | 0.8              | 2025.3        | 2.0.0-alpha9
+| 0.15 | 0.6-0.7          | 2025.1-2025.2 | N/A
+| 0.14 | 0.4-0.5          | 2024.1        | N/A
+| 0.13 | 0.1-0.3          | 2024.1        | N/A
+
+<sup>There is a good chance other versions of TrenchBroom and ericw-tools will work, especially close ones, these are just the versions we officially support.</sup>
+
+<sup>Versions before 0.8 didn't target a clear version of ericw-tools, or didn't support BSPs at all, which is why they are N/A.</sup>
