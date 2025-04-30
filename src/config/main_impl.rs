@@ -1,3 +1,5 @@
+use crate::util::AssetServerExistsExt;
+
 use super::*;
 
 impl TrenchBroomConfig {
@@ -125,57 +127,46 @@ impl TrenchBroomConfig {
 		self.load_loose_texture.set(provider);
 		self
 	}
-	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extension`](Self::generic_material_extension), as a fallback tries [`texture_extension`](Self::texture_extension).
+	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extensions`](Self::generic_material_extensions), as a fallback tries [`texture_extensions`](Self::texture_extensions).
 	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
 		Box::pin(async move {
-			let generic_material_path = view
-				.tb_config
-				.material_root
-				.join(format!("{}.{}", view.name, view.tb_config.generic_material_extension));
+			let texture_sampler = view.tb_config.texture_sampler.clone();
+			let source = view.load_context.asset_path().source().clone_owned();
 
-			// Extract the asset source out of load_context without borrowing it.
-			// This is hacky, but i can't think of a better way to keep the borrow checker pleased.
-			// SAFETY: The other things load_context is used for in this function don't interact with asset_path at all.
-			let source = unsafe { (*std::ptr::from_ref(view.load_context)).asset_path().source() };
-			let generic_material_path = AssetPath::from_path(&generic_material_path).with_source(source);
+			// Search for material files
+			for ext in &view.tb_config.generic_material_extensions {
+				let path = view
+					.tb_config
+					.material_root
+					.join(format!("{}.{}", view.name, ext));
 
-			#[allow(clippy::unnecessary_to_owned)]
-			match view
-				.asset_server
-				.get_source(view.load_context.asset_path().source())
-				.expect("Could not find asset source")
-				.reader()
-				// Annoying clone, but the borrow checker demands it!
-				.read(&generic_material_path.path().to_path_buf())
-				.await
-			{
-				Ok(_) => {
-					let texture_sampler = view.tb_config.texture_sampler.clone();
-					view.load_context
+				if view.asset_server.exists(&source, &path).await {
+					// We found one, let's load it!
+					return view.load_context
 						.loader()
 						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-						.load(generic_material_path)
+						.load(AssetPath::from_path(&path).with_source(source));
 				}
-				Err(err) => match err {
-					AssetReaderError::NotFound(_) => {
-						let texture_sampler = view.tb_config.texture_sampler.clone();
-						let image_path = view
-							.tb_config
-							.material_root
-							.join(format!("{}.{}", view.name, view.tb_config.texture_extension));
-
-						view.load_context
-							.loader()
-							.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-							.load(AssetPath::from_path(&image_path).with_source(source))
-					}
-
-					err => {
-						error!("Loading map {}: {err}", view.load_context.asset_path());
-						Handle::default()
-					}
-				},
 			}
+			
+			// None found, look for image files
+
+			for ext in &view.tb_config.texture_extensions {
+				let path = view
+					.tb_config
+					.material_root
+					.join(format!("{}.{}", view.name, ext));
+
+				if view.asset_server.exists(&source, &path).await {
+					return view.load_context
+						.loader()
+						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
+						.load(AssetPath::from_path(&path).with_source(source));
+				}
+			}
+
+			error!("Failed to find a texture \"{}\" with the GenericMaterial extension(s) {:?} or the image extension(s) {:?}", view.name, view.tb_config.generic_material_extensions, view.tb_config.texture_extensions);
+			Handle::default()
 		})
 	}
 

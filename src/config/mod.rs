@@ -7,7 +7,7 @@ flat! {
 
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
-	asset::{AssetPath, LoadContext, RenderAssetUsages, io::AssetReaderError},
+	asset::{AssetPath, LoadContext, RenderAssetUsages},
 	image::{ImageLoaderSettings, ImageSampler},
 	tasks::BoxedFuture,
 };
@@ -60,10 +60,12 @@ pub struct TrenchBroomConfig {
 	#[default("textures".into())]
 	#[builder(into)]
 	pub material_root: PathBuf,
-	/// The extension of your texture files. This is also used for material loading as a fallback. (Default: "png")
-	#[default("png".into())]
+	/// The supported extensions of your texture files. This is also used for material loading as a fallback. (Default: ["png"])
+	///
+	/// Each one of these adds a filesystem call to check if the file exists when loading loose textures, so try to keep this to what you absolutely need.
+	#[default(["png".s()].into())]
 	#[builder(into)]
-	pub texture_extension: String,
+	pub texture_extensions: Vec<String>,
 	/// The palette file path and data used for WADs. The path roots from your [`AssetServer`]'s assets folder.
 	///
 	/// For the default quake palette (what you most likely want to use), there is a [free download on the Quake wiki](https://quakewiki.org/wiki/File:quake_palette.zip),
@@ -124,12 +126,14 @@ pub struct TrenchBroomConfig {
 	///
 	/// With the default loose texture loader, if a file with this asset doesn't exist,
 	/// it tries to load it with [`SimpleGenericMaterialLoader`]
-	/// with this config's [`texture_extension`](Self::texture_extension)
+	/// with this config's [`texture_extensions`](Self::texture_extensions)
+	///
+	/// Each one of these adds a filesystem call to check if the file exists when loading loose textures, so try to keep this to what you absolutely need.
 	///
 	/// (Default: "material")
-	#[default("material".s())]
+	#[default(["material".s()].into())]
 	#[builder(into)]
-	pub generic_material_extension: String,
+	pub generic_material_extensions: Vec<String>,
 
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
 	#[cfg(feature = "client")]

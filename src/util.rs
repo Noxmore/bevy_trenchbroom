@@ -75,6 +75,21 @@ impl ImageSamplerRepeatExt for ImageSampler {
 	}
 }
 
+pub trait AssetServerExistsExt {
+	/// Workaround, attempts to get a reader for a path via an asset source. If it succeeds, return `true`, else `false`.
+	fn exists(&self, source: &AssetSourceId<'_>, path: &Path) -> impl std::future::Future<Output = bool> + Send;
+}
+impl AssetServerExistsExt for AssetServer {
+	async fn exists(&self, source: &AssetSourceId<'_>, path: &Path) -> bool {
+		self.get_source(source)
+			.expect("Could not find asset source")
+			.reader()
+			.read(path)
+			.await
+			.is_ok()
+	}
+}
+
 pub trait BevyTrenchbroomCoordinateConversions {
 	/// Converts from TrenchBroom:
 	/// * Forward: X
