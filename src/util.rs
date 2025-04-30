@@ -1,4 +1,5 @@
 use crate::*;
+use bevy::asset::io::AssetSourceId;
 use bevy::ecs::component::Mutable;
 use bevy::{
 	ecs::world::DeferredWorld,
@@ -263,7 +264,7 @@ impl IsSceneWorld for DeferredWorld<'_> {
 #[allow(private_bounds)]
 pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut) {
 	if let Some(mut transform) = entity.get_mut::<Transform>() {
-		transform.rotate_local_y(-FRAC_PI_2);
+		transform.rotate_local_y(FRAC_PI_2);
 	}
 }
 
@@ -292,44 +293,37 @@ impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
 	}
 }
 
-/// Rotate from Quake's +X to Bevy's -Z.
-#[inline]
-pub fn quake_fwd_to_bevy_fwd() -> Quat {
-	Quat::from_rotation_y(FRAC_PI_2)
-}
-
-/// `angles` is pitch, yaw, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
+/// `angles` is pitch, negative yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
-	let pitch = angles.x.to_radians();
+	let pitch = -angles.x.to_radians();
 	let yaw = angles.y.to_radians();
-	let roll = angles.z.to_radians();
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
+	let roll = -angles.z.to_radians();
+	Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
 }
 
-/// `mangle` is yaw, negative pitch, roll. Converts from degrees to radians. `0 0 0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
+/// `mangle` is yaw, pitch, roll. Converts from degrees to radians.
 ///
-/// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”.
+/// NOTE: TrenchBroom docs dictate that this function should only be called when the entity classname begins with "light", otherwise "mangle" is a synonym for “angles”. Assumes a Bevy coordinate space.
 #[inline]
 pub fn mangle_to_quat(mangle: Vec3) -> Quat {
 	let yaw = mangle.x.to_radians();
-	let pitch = -mangle.y.to_radians();
+	let pitch = mangle.y.to_radians();
 	let roll = mangle.z.to_radians();
-	quake_fwd_to_bevy_fwd() * Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
+	Quat::from_euler(EulerRot::YXZEx, yaw, pitch, roll)
 }
 
-/// `angle` is the rotation around the Y axis. Converts from degrees to radians. `0` [points east](https://www.gamers.org/dEngine/quake/QDP/qmapspec.html#2.1.1).
+/// `angle` is the rotation around the Y axis. Converts from degrees to radians. Assumes a Bevy coordinate space.
 /// # Special Values
-/// - -1: Up
-/// - -2: Down
+/// - -1: Up (90° X axis)
+/// - -2: Down (-90° X axis)
 #[inline]
 pub fn angle_to_quat(angle: f32) -> Quat {
-	quake_fwd_to_bevy_fwd()
-		* match angle {
-			-1. => Quat::from_rotation_z(FRAC_PI_2),
-			-2. => Quat::from_rotation_z(-FRAC_PI_2),
-			angle => Quat::from_rotation_y(angle.to_radians()),
-		}
+	match angle {
+		-1. => Quat::from_rotation_x(FRAC_PI_2),
+		-2. => Quat::from_rotation_x(-FRAC_PI_2),
+		angle => Quat::from_rotation_y(angle.to_radians()),
+	}
 }
 
 pub const QUAKE_LIGHT_TO_LUX_DIVISOR: f32 = 50_000.;
@@ -361,29 +355,27 @@ fn rotation_property_to_quat() {
 	const MARGIN: f32 = 0.0001;
 
 	// angle
-	assert_almost_eq!(angle_to_quat(0.) * Vec3::X, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(angle_to_quat(90.) * Vec3::X, Vec3::NEG_X, MARGIN);
+	assert_almost_eq!(angle_to_quat(0.) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
+	assert_almost_eq!(angle_to_quat(90.) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
 	assert_almost_eq!(angle_to_quat(0.) * Vec3::Y, Vec3::Y, MARGIN);
-	assert_almost_eq!(angle_to_quat(-1.) * Vec3::X, Vec3::Y, MARGIN);
-	assert_almost_eq!(angle_to_quat(-2.) * Vec3::X, Vec3::NEG_Y, MARGIN);
+	assert_almost_eq!(angle_to_quat(-1.) * Vec3::NEG_Z, Vec3::Y, MARGIN);
+	assert_almost_eq!(angle_to_quat(-2.) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
 	assert_almost_eq!(angle_to_quat(-2.) * Vec3::Y, Vec3::NEG_Z, MARGIN);
 
 	// mangle
-	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
+	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
 	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
 
-	assert_almost_eq!(mangle_to_quat(vec3(90., 0., 0.)) * Vec3::X, Vec3::NEG_X, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., -90., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., 90., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::Z, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(45., 45., 0.)) * Vec3::X, vec3(-1., 0., -1.).normalize(), MARGIN);
+	assert_almost_eq!(mangle_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
+	assert_almost_eq!(mangle_to_quat(vec3(0., -90., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+	assert_almost_eq!(mangle_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::Y, MARGIN);
+	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::NEG_X, MARGIN);
 
 	// angles
-	assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
+	assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
 	assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
 
-	assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::X, Vec3::NEG_X, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::X, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::Z, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(-45., -45., 0.)) * Vec3::X, vec3(1.0, 0.0, -1.0).normalize(), MARGIN);
+	assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+	assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
+	assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::X, MARGIN);
 }
