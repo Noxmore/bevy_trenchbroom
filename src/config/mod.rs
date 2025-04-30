@@ -130,8 +130,8 @@ pub struct TrenchBroomConfig {
 	///
 	/// Each one of these adds a filesystem call to check if the file exists when loading loose textures, so try to keep this to what you absolutely need.
 	///
-	/// (Default: "material")
-	#[default(["material".s()].into())]
+	/// (Default: "toml" because the default material deserializer is toml)
+	#[default(["toml".s()].into())]
 	#[builder(into)]
 	pub generic_material_extensions: Vec<String>,
 
