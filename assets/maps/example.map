@@ -718,6 +718,6 @@
 // entity 19
 {
 "classname" "mushroom"
-"origin" "-12 20.6569 -2.34315"
+"origin" "-12 20 0"
 "angles" "0 0 0"
 }
