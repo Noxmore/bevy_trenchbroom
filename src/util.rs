@@ -293,7 +293,7 @@ impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
 	}
 }
 
-/// `angles` is pitch, negative yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
+/// `angles` is negative pitch, yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
 	let pitch = -angles.x.to_radians();
