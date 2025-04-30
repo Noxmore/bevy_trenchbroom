@@ -1,6 +1,5 @@
 use crate::*;
 use bevy::asset::io::AssetSourceId;
-use bevy::ecs::component::Mutable;
 use bevy::{
 	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
@@ -243,53 +242,6 @@ pub trait IsSceneWorld {
 impl IsSceneWorld for DeferredWorld<'_> {
 	fn is_scene_world(&self) -> bool {
 		!self.contains_resource::<AppTypeRegistry>()
-	}
-}
-
-/// Band-aid fix for a [TrenchBroom bug](https://github.com/TrenchBroom/TrenchBroom/issues/4447) where GLTF models are rotated be 90 degrees on the Y axis.
-///
-/// Apply this on an entity to counteract the rotation.
-///
-/// If you want to use this on a command, there is a helpful extension method you can use like so
-/// ```
-/// # use bevy::prelude::*;
-/// # use bevy_trenchbroom::prelude::*;
-/// fn example(mut commands: Commands, entity: Entity) {
-///     commands.entity(entity)
-///         .trenchbroom_gltf_rotation_fix()
-///         // ...
-/// # ;
-/// }
-/// ```
-#[allow(private_bounds)]
-pub fn trenchbroom_gltf_rotation_fix(entity: &mut impl EntityMutOrEntityWorldMut) {
-	if let Some(mut transform) = entity.get_mut::<Transform>() {
-		transform.rotate_local_y(FRAC_PI_2);
-	}
-}
-
-/// I looked for an easier solution, like an [`Into`] implementation to turn an [`EntityWorldMut`] into an [`EntityMut`], but found nothing.
-trait EntityMutOrEntityWorldMut {
-	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>>;
-}
-impl EntityMutOrEntityWorldMut for EntityMut<'_> {
-	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>> {
-		EntityMut::get_mut(self)
-	}
-}
-impl EntityMutOrEntityWorldMut for EntityWorldMut<'_> {
-	fn get_mut<T: Component<Mutability = Mutable>>(&mut self) -> Option<Mut<'_, T>> {
-		EntityWorldMut::get_mut(self)
-	}
-}
-
-pub trait TrenchBroomGltfRotationFixEntityCommandsExt {
-	/// Bundles [`trenchbroom_gltf_rotation_fix`] into a command.
-	fn trenchbroom_gltf_rotation_fix(&mut self) -> &mut Self;
-}
-impl TrenchBroomGltfRotationFixEntityCommandsExt for EntityCommands<'_> {
-	fn trenchbroom_gltf_rotation_fix(&mut self) -> &mut Self {
-		self.queue(|mut entity: EntityWorldMut| trenchbroom_gltf_rotation_fix(&mut entity))
 	}
 }
 

@@ -122,9 +122,6 @@ pub struct FuncIllusionary;
 // `Query<&StaticProp, Without<SceneRoot>>`
 // and spawn it through that, but .
 //
-// NOTE: If you're using a GLTF model, use
-// the trenchbroom_gltf_rotation_fix function when spawning the model.
-//
 // If your entity has a hardcoded model, you can use a function
 // like `spawn_class_gltf` to do the above automatically.
 #[reflect(Component)]
@@ -288,11 +285,6 @@ For dedicated servers `bevy_trenchbroom` supports headless mode by turning off i
 ```toml
 bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
 ```
-
-## Known Bugs
-
-If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
-To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in its spawner.
 
 # Possible future plans
 - Entity IO

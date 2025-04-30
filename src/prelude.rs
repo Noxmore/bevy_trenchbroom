@@ -34,7 +34,7 @@ pub use crate::{
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	util::{IsSceneWorld, TrenchBroomGltfRotationFixEntityCommandsExt, trenchbroom_gltf_rotation_fix},
+	util::IsSceneWorld,
 };
 #[cfg(feature = "client")]
 pub use crate::{
