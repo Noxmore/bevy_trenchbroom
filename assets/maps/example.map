@@ -13,6 +13,7 @@
 "_dirtscale" "1.1"
 "_dirtdepth" "32"
 "_bouncecolorscale" "1"
+"_bouncescale" "2"
 // brush 0
 {
 ( -64 -64 -16 ) ( -64 -63 -16 ) ( -64 -64 -15 ) wood [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -647,9 +648,11 @@
 "classname" "light"
 "origin" "40 -52 112"
 "_color" "228 204 255"
-"light" "300"
+"light" "800"
 "style" "1"
 "delay" "5"
+"mangle" "0 -90 0"
+"angle" "60"
 }
 // entity 9
 {
@@ -676,7 +679,7 @@
 {
 "classname" "cube"
 "origin" "-5.657 136 22.202"
-"angle" "-15"
+"angle" "-36"
 }
 // entity 13
 {
@@ -715,6 +718,6 @@
 // entity 19
 {
 "classname" "mushroom"
-"origin" "-12 19 0"
-"angles" "0 -90 0"
+"origin" "-12 20.6569 -2.34315"
+"angles" "0 0 0"
 }
