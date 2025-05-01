@@ -125,7 +125,7 @@ pub struct FuncIllusionary;
 // If your entity has a hardcoded model, you can use a function
 // like `spawn_class_gltf` to do the above automatically.
 #[reflect(Component)]
-#[base(Transform, Visibility)]
+#[base(Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
 pub struct StaticProp {

@@ -243,6 +243,15 @@ pub struct TrenchBroomConfig {
 	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
 	pub global_geometry_provider: Hook<GeometryProviderFn>,
 
+	/// Whether to apply the translation and rotation fields regardless of having [`Transform`] as a base class.
+	/// Adds convenance and removes a foot-gun, but is less flexible, hence why it is disableable.
+	///
+	/// NOTE: This doesn't use the scale field as it is not hardcoded unlike the others. If you want to use it, then you should use [`Transform`] as a base class.
+	///
+	/// (Default: `true`)
+	#[default(true)]
+	pub global_transform_application: bool,
+
 	/// The image sampler used with textures loaded from maps.
 	/// Use [`Self::linear_filtering`] to easily switch to smooth texture interpolation.
 	/// (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))

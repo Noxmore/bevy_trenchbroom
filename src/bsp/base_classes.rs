@@ -567,7 +567,6 @@ pub enum BspLightAttenuation {
 /// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Component, Default, Serialize, Deserialize)]
-#[base(Transform)]
 #[no_register]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.
