@@ -91,6 +91,7 @@ impl AssetLoader for QuakeMapLoader {
 					.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
 						config: &self.tb_server.config,
 						src_entity: map_entity,
+						class,
 						entity: &mut entity,
 						load_context,
 					})
@@ -226,6 +227,7 @@ impl AssetLoader for QuakeMapLoader {
 				(self.tb_server.config.global_spawner)(&mut QuakeClassSpawnView {
 					config: &self.tb_server.config,
 					src_entity: map_entity,
+					class,
 					entity: &mut entity,
 					load_context,
 				})

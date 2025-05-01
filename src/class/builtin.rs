@@ -38,6 +38,32 @@ pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, Eras
 	}
 }
 
+/// Reads the `origin` property, converting it to Bevy's coordinate space. Defaults to [`Vec3::ZERO`].
+pub fn read_translation_from_entity(src_entity: &QuakeMapEntity, tb_config: &TrenchBroomConfig) -> Result<Vec3, QuakeEntityError> {
+	Ok(tb_config.to_bevy_space(src_entity.get::<Vec3>("origin").with_default(Vec3::ZERO)?))
+}
+
+/// Tries to read `mangle`, `angles`, and `angle` in that order to produce a quaternion. Defaults to [`Quat::IDENTITY`].
+pub fn read_rotation_from_entity(src_entity: &QuakeMapEntity) -> Result<Quat, QuakeEntityError> {
+	Ok(match src_entity.get::<Vec3>("mangle") {
+		// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
+		// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
+		Ok(x) => {
+			if src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
+				mangle_to_quat(x)
+			} else {
+				angles_to_quat(x)
+			}
+		}
+		Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match src_entity.get::<Vec3>("angles") {
+			Ok(x) => angles_to_quat(x),
+			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(src_entity.get::<f32>("angle").with_default(0.)?),
+			Err(err) => return Err(err.into()),
+		},
+		Err(err) => return Err(err.into()),
+	})
+}
+
 impl QuakeClass for Transform {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
@@ -76,34 +102,15 @@ impl QuakeClass for Transform {
 	};
 
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		let rotation = match view.src_entity.get::<Vec3>("mangle") {
-			// According to TrenchBroom docs https://trenchbroom.github.io/manual/latest/#editing-objects
-			// “mangle” is interpreted as “yaw pitch roll” if the entity classnames begins with “light”, otherwise it’s a synonym for “angles”
-			Ok(x) => {
-				if view.src_entity.classname().map(|s| s.starts_with("light")) == Ok(true) {
-					mangle_to_quat(x)
-				} else {
-					angles_to_quat(x)
-				}
-			}
-			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match view.src_entity.get::<Vec3>("angles") {
-				Ok(x) => angles_to_quat(x),
-				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(view.src_entity.get::<f32>("angle").with_default(0.)?),
-				Err(err) => return Err(err.into()),
-			},
-			Err(err) => return Err(err.into()),
-		};
-
 		view.entity.insert(Transform {
-			translation: view.config.to_bevy_space(view.src_entity.get::<Vec3>("origin").with_default(Vec3::ZERO)?),
-			rotation,
+			translation: read_translation_from_entity(view.src_entity, view.config)?,
+			rotation: read_rotation_from_entity(view.src_entity)?,
 			scale: match view.src_entity.get::<f32>("scale") {
 				Ok(scale) => Vec3::splat(scale),
 				Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => Vec3::ONE,
 				Err(_) => view.src_entity.get::<Vec3>("scale")?.xzy(),
 			},
 		});
-
 		Ok(())
 	}
 }
