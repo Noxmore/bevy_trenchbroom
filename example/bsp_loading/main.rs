@@ -122,6 +122,8 @@ fn main() {
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
+				.bicubic_lightmap_filtering(true)
+				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() })
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<Mushroom>()
