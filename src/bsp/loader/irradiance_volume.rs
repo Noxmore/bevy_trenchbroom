@@ -39,7 +39,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 			for x in 0..size.x {
 				for y in 0..size.y {
 					for z in 0..size.z {
-						let LightGridCell::Filled(samples) = leaf.get_cell(x, z, y) else { continue };
+						let LightGridCell::Filled(samples) = leaf.get_cell(z, x, y) else { continue };
 						let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
 						let mut style_map: [u8; 4] = [255; 4];
 
