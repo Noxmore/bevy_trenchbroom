@@ -1,5 +1,5 @@
 use bevy::{
-	asset::{AssetLoader, AsyncReadExt, LoadedAsset},
+	asset::{AssetLoader, AsyncReadExt},
 	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
@@ -118,20 +118,26 @@ impl AssetLoader for QuakeMapLoader {
 
 						let texture_size = *match texture_size_cache.entry(texture) {
 							Entry::Occupied(x) => x.into_mut(),
-							Entry::Vacant(x) => x.insert(
-								load_context
-									.loader()
-									.immediate()
-									.load::<Image>(
-										self.tb_server
-											.config
-											.material_root
-											.join(format!("{}.{}", &polygons[0].surface.texture, self.tb_server.config.texture_extension)),
-									)
-									.await
-									.map(|image: LoadedAsset<Image>| image.take().size())
-									.unwrap_or(UVec2::splat(1)),
-							),
+							Entry::Vacant(x) => x.insert('size_searcher: {
+								for ext in &self.tb_server.config.texture_extensions {
+									if let Ok(image) = load_context
+										.loader()
+										.immediate()
+										.load::<Image>(
+											self.tb_server
+												.config
+												.material_root
+												.join(format!("{}.{}", &polygons[0].surface.texture, ext)),
+										)
+										.await
+									{
+										break 'size_searcher image.take().size();
+									}
+								}
+
+								// We don't send out an error here because whatever went wrong will print an error when loading the material just below.
+								UVec2::splat(1)
+							}),
 						};
 
 						let material = match material_cache.entry(texture) {

@@ -26,7 +26,7 @@ pub fn spawn_class_model_internal<T: QuakeClass>(view: &mut QuakeClassSpawnView,
 	view.entity.insert(SceneRoot(model_handle));
 }
 
-/// Spawns the model stored in this class' `model` property as a gltf, and runs [`trenchbroom_gltf_rotation_fix`].
+/// Spawns the model stored in this class' `model` property as a gltf.
 ///
 /// This function exists in such a way that you can directly use it as a spawn hook for your class, or call it from within an existing spawn hook.
 ///
@@ -46,7 +46,6 @@ pub fn spawn_class_model_internal<T: QuakeClass>(view: &mut QuakeClassSpawnView,
 /// ```
 #[track_caller]
 pub fn spawn_class_gltf<T: QuakeClass>(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-	trenchbroom_gltf_rotation_fix(view.entity);
 	spawn_class_model_internal::<T>(view, Some("Scene0"));
 	Ok(())
 }

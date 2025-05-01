@@ -122,9 +122,6 @@ pub struct FuncIllusionary;
 // `Query<&StaticProp, Without<SceneRoot>>`
 // and spawn it through that, but .
 //
-// NOTE: If you're using a GLTF model, use
-// the trenchbroom_gltf_rotation_fix function when spawning the model.
-//
 // If your entity has a hardcoded model, you can use a function
 // like `spawn_class_gltf` to do the above automatically.
 #[reflect(Component)]
@@ -289,17 +286,17 @@ For dedicated servers `bevy_trenchbroom` supports headless mode by turning off i
 bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
 ```
 
-## Known Bugs
-
-If you are using GLTF models, you might notice that they are rotated 90 degrees in TrenchBroom, compared to in Bevy.
-To fix this, add the `TrenchBroomGltfRotationFix` Component to your entity in its spawner.
-
 # Possible future plans
 - Entity IO
 
-# Supported Bevy && TrenchBroom Versions
-| Bevy | bevy_trenchbroom | TrenchBroom |
----|--|---
-| 0.15 | 0.6-0.7 | 2025.1-2025.2 |
-| 0.14 | 0.4-0.5 | 2024.1 |
-| 0.13 | 0.1-0.3 | 2024.1 |
+# Version support table
+| Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools |
+|------|------------------|---------------|-------------|
+| 0.16 | 0.8              | 2025.3        | 2.0.0-alpha9
+| 0.15 | 0.6-0.7          | 2025.1-2025.2 | N/A
+| 0.14 | 0.4-0.5          | 2024.1        | N/A
+| 0.13 | 0.1-0.3          | 2024.1        | N/A
+
+<sup>There is a good chance other versions of TrenchBroom and ericw-tools will work, especially close ones, these are just the versions we officially support.</sup>
+
+<sup>Versions before 0.8 didn't target a clear version of ericw-tools, or didn't support BSPs at all, which is why they are N/A.</sup>

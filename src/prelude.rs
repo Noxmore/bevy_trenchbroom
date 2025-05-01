@@ -21,7 +21,7 @@ pub use bevy_materialize::prelude::*;
 pub use qbsp::{
 	self, Palette, QUAKE_PALETTE,
 	data::bsp::{BspTexFlags, LightmapStyle},
-	mesh::lighting::{ComputeLightmapSettings, LightmapAtlas, Lightmaps},
+	mesh::lightmap::{ComputeLightmapSettings, LightmapAtlas},
 };
 
 pub use crate::{
@@ -34,7 +34,7 @@ pub use crate::{
 	config::TrenchBroomConfig,
 	geometry::{GeometryProvider, GeometryProviderView},
 	qmap::QuakeMapEntity,
-	util::{IsSceneWorld, TrenchBroomGltfRotationFixEntityCommandsExt, trenchbroom_gltf_rotation_fix},
+	util::IsSceneWorld,
 };
 #[cfg(feature = "client")]
 pub use crate::{
