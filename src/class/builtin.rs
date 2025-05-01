@@ -58,9 +58,9 @@ pub fn read_rotation_from_entity(src_entity: &QuakeMapEntity) -> Result<Quat, Qu
 		Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => match src_entity.get::<Vec3>("angles") {
 			Ok(x) => angles_to_quat(x),
 			Err(QuakeEntityError::RequiredPropertyNotFound { .. }) => angle_to_quat(src_entity.get::<f32>("angle").with_default(0.)?),
-			Err(err) => return Err(err.into()),
+			Err(err) => return Err(err),
 		},
-		Err(err) => return Err(err.into()),
+		Err(err) => return Err(err),
 	})
 }
 
