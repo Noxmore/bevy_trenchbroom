@@ -26,6 +26,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
 				config,
 				src_entity: map_entity,
+				class,
 				entity: &mut entity,
 				load_context: ctx.load_context,
 			})
@@ -92,6 +93,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 		(config.global_spawner)(&mut QuakeClassSpawnView {
 			config,
 			src_entity: map_entity,
+			class,
 			entity: &mut entity,
 			load_context: ctx.load_context,
 		})

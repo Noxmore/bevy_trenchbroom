@@ -22,7 +22,7 @@ pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(Component)]
-#[base(BspSolidEntity, Transform)]
+#[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
@@ -58,7 +58,6 @@ pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
 #[reflect(Component)]
-#[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -78,7 +77,6 @@ impl Cube {
 
 #[derive(PointClass, Component, Reflect)]
 #[reflect(Component)]
-#[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[spawn_hook(spawn_class_gltf::<Self>)]
@@ -122,6 +120,8 @@ fn main() {
 		.add_plugins(TrenchBroomPlugin(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
+				.bicubic_lightmap_filtering(true)
+				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() })
 				.register_class::<Worldspawn>()
 				.register_class::<Cube>()
 				.register_class::<Mushroom>()

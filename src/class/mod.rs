@@ -141,6 +141,8 @@ impl QuakeClassInfo {
 pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	pub config: &'l TrenchBroomConfig,
 	pub src_entity: &'l QuakeMapEntity,
+	/// The class of the entity that is being spawned. Not the class of the [`QuakeClass`] in which this view is passed to (if it is a base class).
+	pub class: &'l ErasedQuakeClass,
 	/// Entity in the scene world.
 	pub entity: &'l mut EntityWorldMut<'sw>,
 	pub load_context: &'l mut LoadContext<'w>,

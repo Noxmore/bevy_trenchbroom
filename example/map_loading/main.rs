@@ -18,13 +18,11 @@ pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(Component)]
-#[base(Transform)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
 #[reflect(Component)]
-#[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -40,7 +38,6 @@ impl Cube {
 
 #[derive(PointClass, Component, Reflect)]
 #[reflect(Component)]
-#[base(Transform)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[spawn_hook(spawn_class_gltf::<Self>)]
@@ -49,7 +46,6 @@ pub struct Mushroom;
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
 #[reflect(Component)]
-#[base(Transform)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]

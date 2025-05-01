@@ -1,4 +1,4 @@
-use crate::util::AssetServerExistsExt;
+use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, util::AssetServerExistsExt};
 
 use super::*;
 
@@ -47,6 +47,14 @@ impl TrenchBroomConfig {
 	pub fn default_global_spawner(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
+		if view.config.global_transform_application && !view.class.info.derives_from::<Transform>() {
+			view.entity.insert(Transform {
+				translation: read_translation_from_entity(view.src_entity, view.config)?,
+				rotation: read_rotation_from_entity(view.src_entity)?,
+				scale: Vec3::ONE,
+			});
+		}
+		
 		// For things like doors where the `angles` property means open direction.
 		if let Some(mut transform) = view.entity.get_mut::<Transform>() {
 			if view.config.get_class(&classname).map(|class| class.info.ty.is_solid()) == Some(true) {
