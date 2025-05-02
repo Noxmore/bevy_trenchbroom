@@ -23,7 +23,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		let mut light_grid = light_grid?;
 		light_grid.mins = config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
 		// We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
-		light_grid.size = light_grid.size.xzy() + 1;
+		light_grid.size = light_grid.size.yzx() + 1;
 		light_grid.step = config.to_bevy_space(light_grid.step.to_array().into()).to_array().into();
 
 		let mut input_builders: [Option<IrradianceVolumeBuilder>; 4] = [(); 4].map(|_| None);
@@ -33,13 +33,13 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		let mut style_map_builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [255; 4], IrradianceVolumeMultipliers::IDENTITY);
 
 		for mut leaf in light_grid.leafs {
-			leaf.mins = leaf.mins.xzy();
-			let size = leaf.size().xzy();
+			leaf.mins = leaf.mins.yzx();
+			let size = leaf.size().yzx();
 
 			for x in 0..size.x {
 				for y in 0..size.y {
 					for z in 0..size.z {
-						let LightGridCell::Filled(samples) = leaf.get_cell(x, z, y) else { continue };
+						let LightGridCell::Filled(samples) = leaf.get_cell(z, x, y) else { continue };
 						let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
 						let mut style_map: [u8; 4] = [255; 4];
 
