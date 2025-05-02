@@ -35,6 +35,9 @@ impl UtilPlugin {
 		rotation_fix_query: Query<(), With<FixGltfRotationsUnderMe>>,
 		do_not_fix_query: Query<(), With<DoNotFixGltfRotationsUnderMe>>,
 	) {
+		// If entities have FixGltfRotationsUnderMe added in the same tick as entities under them are fixed, rotation_fix_query will fail because Commands is differed
+		let mut going_to_add_marker = Vec::new();
+
 		for DeferredGltfRotationFix(entity) in events.read() {
 			let entity = *entity;
 			let Ok((mut transform, scene_root)) = scene_root_query.get_mut(entity) else { return };
@@ -45,11 +48,12 @@ impl UtilPlugin {
 				"map" | "bsp" => {
 					if !do_not_fix_query.contains(entity) {
 						commands.entity(entity).insert(FixGltfRotationsUnderMe);
+						going_to_add_marker.push(entity);
 					}
 				}
 				"glb" | "gltf" => {
 					for entity in ancestor_query.iter_ancestors(entity) {
-						if rotation_fix_query.contains(entity) {
+						if rotation_fix_query.contains(entity) || going_to_add_marker.contains(&entity) {
 							if transform.scale.x.is_sign_positive() {
 								transform.scale.x = -transform.scale.x;
 							}
