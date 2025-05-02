@@ -2,7 +2,6 @@
 /.vscode
 /.idea
 /.cargo
-/Cargo.lock
 
 /assets/maps/autosave
 /assets/maps/arcane
