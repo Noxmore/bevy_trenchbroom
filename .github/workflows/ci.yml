@@ -26,8 +26,10 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Populate target directory from cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}  
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run cargo clippy for default features
@@ -49,8 +51,10 @@ jobs:
         with:
           toolchain: nightly
           components: rustfmt
-      - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Populate target directory from cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}  
       - name: Run cargo fmt
         run: cargo fmt --check --all
 
@@ -63,8 +67,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Populate target directory from cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}  
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run cargo doc with default features
@@ -79,8 +85,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      - name: Cache Cargo build files
-        uses: Leafwing-Studios/cargo-cache@v1
+      - name: Populate target directory from cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}  
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run tests with avian
@@ -107,7 +115,9 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
 
       - name: Populate target directory from cache
-        uses: Leafwing-Studios/cargo-cache@v2
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}  
 
       - name: Install Bevy CLI
         run: cargo install --git=https://github.com/TheBevyFlock/bevy_cli --locked bevy_cli
