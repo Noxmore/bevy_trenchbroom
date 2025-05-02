@@ -144,18 +144,23 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, models: Vec<InternalModel>, world: 
 								.map(|model_brush| {
 									let min = config.to_bevy_space(model_brush.bound.min).as_dvec3();
 									let max = config.to_bevy_space(model_brush.bound.max).as_dvec3();
+									// Something about the conversion makes the asserts below fail, this ensures they don't.
+									let (min, max) = ((-min).min(-max), (-min).max(-max));
+									debug_assert!(min.x < max.x);
+									debug_assert!(min.y < max.y);
+									debug_assert!(min.z < max.z);
 
 									let mut brush = BspBrush::default();
 									brush.planes.reserve(4 + model_brush.planes.len());
 
 									#[rustfmt::skip]
 									brush.planes.extend([
-										BrushPlane { normal: DVec3::Y, distance: -max.y },
-										BrushPlane { normal: DVec3::NEG_Y, distance: min.y },
-										BrushPlane { normal: DVec3::X, distance: -max.x },
-										BrushPlane { normal: DVec3::NEG_X, distance: min.x },
-										BrushPlane { normal: DVec3::Z, distance: -min.z },
-										BrushPlane { normal: DVec3::NEG_Z, distance: max.z },
+										BrushPlane { normal: DVec3::Y,     distance:  min.y },
+										BrushPlane { normal: DVec3::NEG_Y, distance: -max.y },
+										BrushPlane { normal: DVec3::X,     distance:  min.x },
+										BrushPlane { normal: DVec3::NEG_X, distance: -max.x },
+										BrushPlane { normal: DVec3::Z,     distance:  min.z },
+										BrushPlane { normal: DVec3::NEG_Z, distance: -max.z },
 									]);
 
 									brush.planes.extend(model_brush.planes.iter().map(|plane| {

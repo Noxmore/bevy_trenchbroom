@@ -103,6 +103,14 @@ impl PhysicsPlugin {
 				colliders.push((position, Quat::IDENTITY, collider));
 			}
 
+			if colliders.is_empty() {
+				error!(
+					"No colliders produced by brushes for entity {entity}, removing ConvexCollision component. If this is expected behavior, make an issue and i will remove this message."
+				);
+				commands.entity(entity).remove::<ConvexCollision>();
+				continue;
+			}
+
 			#[cfg(feature = "avian")]
 			commands
 				.entity(entity)
