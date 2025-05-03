@@ -99,18 +99,11 @@ pub struct QuakeClassInfo {
 	pub properties: &'static [QuakeClassProperty],
 }
 impl QuakeClassInfo {
-	/// Recursively checks if this class uses a class by the name of `classname` as a base class. Does not return `true` if this class *is* `classname`.
-	///
-	/// You should probably use [`Self::derives_from`] instead.
-	pub fn derives_from_name(&self, classname: &str) -> bool {
-		self.base
-			.iter()
-			.any(|class| class.info.name == classname || class.info.derives_from_name(classname))
-	}
-
 	/// Recursively checks if this class is a subclass of `T`. Does not return `true` if this class *is* `T`.
 	pub fn derives_from<T: QuakeClass>(&self) -> bool {
-		self.derives_from_name(T::CLASS_INFO.name)
+		self.base
+			.iter()
+			.any(|class| class.id() == TypeId::of::<T>() || class.info.derives_from::<T>())
 	}
 
 	/// Returns the path of the in-editor model of this class.
@@ -170,6 +163,8 @@ pub type QuakeClassSpawnFn = fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
+	/// The Rust type of this class. Is a function because `TypeId::of` is not yet stable as a const fn.
+	pub type_id: fn() -> TypeId,
 	pub info: QuakeClassInfo,
 	pub spawn_fn: QuakeClassSpawnFn,
 	pub get_type_registration: fn() -> TypeRegistration,
@@ -178,6 +173,7 @@ pub struct ErasedQuakeClass {
 impl ErasedQuakeClass {
 	pub const fn of<T: QuakeClass>() -> Self {
 		Self {
+			type_id: TypeId::of::<T>,
 			info: T::CLASS_INFO,
 			spawn_fn: T::class_spawn,
 			get_type_registration: T::get_type_registration,
@@ -194,6 +190,12 @@ impl ErasedQuakeClass {
 
 		Ok(())
 	}
+
+	/// The Rust type of this [`QuakeClass`]. Not called `type_id` as to not shadow [`Any`].
+	#[inline]
+	pub fn id(&self) -> TypeId {
+		(self.type_id)()
+	}
 }
 
 #[cfg(feature = "auto_register")]
@@ -207,3 +209,16 @@ pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuak
 		.map(|class| (class.info.name, class))
 		.collect()
 });
+
+#[cfg(feature = "client")]
+#[test]
+fn derives_from() {
+	use crate::bsp::base_classes::*;
+
+	assert!(PointLight::CLASS_INFO.derives_from::<Transform>());
+	assert!(PointLight::CLASS_INFO.derives_from::<Visibility>());
+	assert!(!PointLight::CLASS_INFO.derives_from::<BspLight>());
+	assert!(!PointLight::CLASS_INFO.derives_from::<BspWorldspawn>());
+
+	assert!(!Transform::CLASS_INFO.derives_from::<Transform>());
+}
