@@ -1546,6 +1546,7 @@ name = "bevy_trenchbroom"
 version = "0.8.0-dev"
 dependencies = [
  "anyhow",
+ "atomicow",
  "avian3d",
  "bevy",
  "bevy_materialize",
@@ -4918,9 +4919,9 @@ dependencies = [
 
 [[package]]
 name = "ruzstd"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c581601827da5c717bfae77d7b187e54293d23d8fb6b700b4b5e9b5828a13cc3"
+checksum = "3640bec8aad418d7d03c72ea2de10d5c646a598f9883c7babc160d91e3c1b26c"
 dependencies = [
  "twox-hash",
 ]
