@@ -1,5 +1,8 @@
 use crate::*;
+use atomicow::CowArc;
 use bevy::asset::io::AssetSourceId;
+use bevy::asset::meta::AssetHash;
+use bevy::asset::{AssetPath, ErasedLoadedAsset, UntypedAssetId};
 use bevy::scene::scene_spawner_system;
 use bevy::{
 	ecs::world::DeferredWorld,
@@ -163,6 +166,61 @@ impl AssetServerExistsExt for AssetServer {
 			.await
 			.is_ok()
 	}
+}
+
+// This cursed thing removes boilerplate when dealing with testing related to asset loaders.
+
+#[allow(unused)]
+struct DummyLabeledAsset {
+	asset: ErasedLoadedAsset,
+	handle: UntypedHandle,
+}
+
+#[allow(unused)]
+struct DummyLoadContext<'a> {
+	asset_server: &'a AssetServer,
+	should_load_dependencies: bool,
+	populate_hashes: bool,
+	asset_path: AssetPath<'static>,
+	dependencies: bevy::platform::collections::HashSet<UntypedAssetId>,
+	/// Direct dependencies used by this loader.
+	loader_dependencies: bevy::platform::collections::HashMap<AssetPath<'static>, AssetHash>,
+	labeled_assets: bevy::platform::collections::HashMap<CowArc<'static, str>, DummyLabeledAsset>,
+}
+
+/// Hacks a public version of `LoadContext::new()`.
+#[cfg(test)]
+pub(crate) fn create_load_context<'a>(
+	asset_server: &'a AssetServer,
+	asset_path: AssetPath<'static>,
+	should_load_dependencies: bool,
+	populate_hashes: bool,
+) -> bevy::asset::LoadContext<'a> {
+	let dummy = DummyLoadContext {
+		asset_server,
+		asset_path,
+		populate_hashes,
+		should_load_dependencies,
+		dependencies: default(),
+		loader_dependencies: default(),
+		labeled_assets: default(),
+	};
+
+	// SAFETY: DummyLoadContext and LoadContext are of the exact same structure, meaning they should match bits 1-1.
+	unsafe { mem::transmute(dummy) }
+}
+
+/// Creates a simple [`AssetServer`] for tests.
+#[cfg(test)]
+pub(crate) fn create_test_asset_server() -> AssetServer {
+	let mut builders = bevy::asset::io::AssetSourceBuilders::default();
+	builders.init_default_source("assets", None);
+	AssetServer::new(
+		builders.build_sources(false, false),
+		bevy::asset::AssetServerMode::Unprocessed,
+		false,
+		default(),
+	)
 }
 
 pub trait BevyTrenchbroomCoordinateConversions {

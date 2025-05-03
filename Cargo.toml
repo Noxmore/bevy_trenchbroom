@@ -69,6 +69,7 @@ inventory = { version = "0.3", optional = true }
 strum = { version = "0.27", features = ["derive"] }
 enumflags2.workspace = true
 serde_json = "1.0.140"
+atomicow = "1.1.0" # For dummy LoadContext hack, must stay the same version as Bevy's
 
 [dev-dependencies]
 bevy = { version = "0.16", default-features = false, features = [
