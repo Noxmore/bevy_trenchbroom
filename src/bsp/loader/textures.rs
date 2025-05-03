@@ -1,4 +1,3 @@
-use bevy::asset::{ReadAssetBytesError, io::AssetReaderError};
 use bsp::*;
 use loader::BspLoadCtx;
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
@@ -14,10 +13,9 @@ impl<'d> EmbeddedTextures<'d> {
 	pub async fn setup<'a: 'd, 'lc>(ctx: &mut BspLoadCtx<'a, 'lc>) -> anyhow::Result<Self> {
 		let config = &ctx.loader.tb_server.config;
 
-		let palette = match ctx.load_context.read_asset_bytes(config.texture_pallette.as_path()).await {
-			Ok(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", config.texture_pallette))?,
-			Err(ReadAssetBytesError::AssetReaderError(AssetReaderError::NotFound(_))) => QUAKE_PALETTE.clone(),
-			Err(err) => return Err(err.into()),
+		let palette = match ctx.load_context.read_asset_bytes(config.texture_pallette.as_path()).await.ok() {
+			Some(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", config.texture_pallette))?,
+			None => QUAKE_PALETTE.clone(),
 		};
 
 		let images: HashMap<&str, (Image, Handle<Image>)> = ctx
