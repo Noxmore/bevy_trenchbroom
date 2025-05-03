@@ -270,4 +270,8 @@ fn spawn_deduplication() {
 			load_context: &mut load_context,
 		})
 		.unwrap();
+
+	// They should've been called exactly once.
+	assert!(unsafe { BASE_CALLED });
+	assert!(unsafe { CLASS_CALLED });
 }
