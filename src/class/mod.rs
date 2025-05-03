@@ -1,7 +1,7 @@
 pub mod builtin;
 pub mod spawn_util;
 
-use bevy::asset::LoadContext;
+use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
@@ -182,8 +182,16 @@ impl ErasedQuakeClass {
 	}
 
 	pub fn apply_spawn_fn_recursive(&self, view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		self.apply_spawn_fn_recursive_internal(view, &mut default())
+	}
+
+	fn apply_spawn_fn_recursive_internal(&self, view: &mut QuakeClassSpawnView, spawned_classes: &mut HashSet<TypeId>) -> anyhow::Result<()> {
 		for base in self.info.base {
-			base.apply_spawn_fn_recursive(view)?;
+			if spawned_classes.contains(&base.id()) {
+				continue;
+			}
+			base.apply_spawn_fn_recursive_internal(view, spawned_classes)?;
+			spawned_classes.insert(base.id());
 		}
 
 		(self.spawn_fn)(view)?;
@@ -221,4 +229,45 @@ fn derives_from() {
 	assert!(!PointLight::CLASS_INFO.derives_from::<BspWorldspawn>());
 
 	assert!(!Transform::CLASS_INFO.derives_from::<Transform>());
+}
+
+#[test]
+fn spawn_deduplication() {
+	use crate::util::*;
+
+	static mut BASE_CALLED: bool = false;
+	static mut CLASS_CALLED: bool = false;
+
+	#[derive(BaseClass, Component, Reflect)]
+	#[no_register]
+	#[spawn_hook(|_| {
+		assert!(unsafe { !BASE_CALLED });
+		unsafe { BASE_CALLED = true; }
+		Ok(())
+	})]
+	struct Base;
+
+	#[allow(clippy::duplicated_attributes)]
+	#[derive(PointClass, Component, Reflect)]
+	#[base(Base, Base)]
+	#[no_register]
+	#[spawn_hook(|_| {
+		assert!(unsafe { !CLASS_CALLED });
+		unsafe { CLASS_CALLED = true; }
+		Ok(())
+	})]
+	struct Class;
+
+	let asset_server = create_test_asset_server();
+	let mut load_context = create_load_context(&asset_server, "".into(), false, false);
+
+	Class::ERASED_CLASS
+		.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+			config: &default(),
+			src_entity: &default(),
+			class: Class::ERASED_CLASS,
+			entity: &mut World::new().spawn_empty(),
+			load_context: &mut load_context,
+		})
+		.unwrap();
 }
