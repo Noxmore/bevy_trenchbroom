@@ -2,7 +2,7 @@ pub mod builtin;
 pub mod spawn_util;
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
-use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistration, TypeRegistry};
+use bevy_reflect::{FromType, TypeRegistry};
 use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
 
@@ -157,7 +157,7 @@ impl QuakeClassSpawnView<'_, '_, '_> {
 	}
 }
 
-pub trait QuakeClass: Component + GetTypeRegistration + Sized {
+pub trait QuakeClass: Component + Reflect + Sized {
 	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
 	///
 	/// Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
@@ -177,8 +177,6 @@ pub struct ErasedQuakeClass {
 	pub type_id: fn() -> TypeId,
 	pub info: QuakeClassInfo,
 	pub spawn_fn: QuakeClassSpawnFn,
-	pub get_type_registration: fn() -> TypeRegistration,
-	pub register_type_dependencies: fn(&mut TypeRegistry),
 }
 impl ErasedQuakeClass {
 	pub const fn of<T: QuakeClass>() -> Self {
@@ -186,8 +184,6 @@ impl ErasedQuakeClass {
 			type_id: TypeId::of::<T>,
 			info: T::CLASS_INFO,
 			spawn_fn: T::class_spawn,
-			get_type_registration: T::get_type_registration,
-			register_type_dependencies: T::register_type_dependencies,
 		}
 	}
 
