@@ -66,6 +66,13 @@ pub async fn compute_models<'a, 'lc: 'a>(
 			}
 			mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
 
+			if let Err(err) = mesh.generate_tangents() {
+				error!(
+					"Failed to generate tangents for model {model_idx}, mesh with texture {}: {err}",
+					exported_mesh.texture
+				);
+			}
+
 			let material = match embedded_textures.textures.get(&exported_mesh.texture) {
 				Some(embedded_texture) => embedded_texture.material.clone(),
 				None => {
