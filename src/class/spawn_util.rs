@@ -97,8 +97,7 @@ fn preloading() {
 	use bevy::render::view::VisibilityClass;
 
 	#[derive(PointClass, Component, Reflect)]
-	#[reflect(Component)]
-	#[no_register]
+	#[reflect(QuakeClass, Component)]
 	#[model("models/mushroom.glb")]
 	#[spawn_hook(preload_model::<Self>)]
 	#[component(on_add = Self::on_add)]
@@ -127,9 +126,7 @@ fn preloading() {
 			ImagePlugin::default(),
 		))
 		.insert_resource(TrenchBroomServer::new(
-			TrenchBroomConfig::default()
-				.suppress_invalid_entity_definitions(true)
-				.register_class::<Mushroom>(),
+			TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
 		))
 		.register_type::<Mushroom>()
 		.register_type::<bevy::pbr::LightProbe>()

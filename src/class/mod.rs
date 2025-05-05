@@ -2,7 +2,7 @@ pub mod builtin;
 pub mod spawn_util;
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
-use bevy_reflect::{GetTypeRegistration, TypeRegistration, TypeRegistry};
+use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
 
@@ -13,8 +13,7 @@ impl Plugin for QuakeClassPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.register_type::<Target>()
-			.register_type::<Targetable>()
+			.add_plugins(builtin::BuiltinClassesPlugin)
 			.register_type::<PreloadedAssets>()
 		;
 	}
@@ -130,9 +129,20 @@ impl QuakeClassInfo {
 	}
 }
 
+/// Generates a map of classnames to classes from a type registry.
+pub fn generate_class_map(registry: &TypeRegistry) -> HashMap<&'static str, &'static ErasedQuakeClass> {
+	registry
+		.iter_with_data::<ReflectQuakeClass>()
+		.map(|(_, class)| (class.erased_class.info.name, class.erased_class))
+		.collect()
+}
+
 /// Inputs provided when spawning an entity into the scene world of a loading map.
 pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	pub config: &'l TrenchBroomConfig,
+	pub type_registry: &'l TypeRegistry,
+	/// A map of classnames to classes.
+	pub class_map: &'l HashMap<&'static str, &'static ErasedQuakeClass>,
 	pub src_entity: &'l QuakeMapEntity,
 	/// The class of the entity that is being spawned. Not the class of the [`QuakeClass`] in which this view is passed to (if it is a base class).
 	pub class: &'l ErasedQuakeClass,
@@ -206,17 +216,17 @@ impl ErasedQuakeClass {
 	}
 }
 
-#[cfg(feature = "auto_register")]
-inventory::collect!(&'static ErasedQuakeClass);
-
-#[cfg(feature = "auto_register")]
-pub static GLOBAL_CLASS_REGISTRY: Lazy<HashMap<&'static str, &'static ErasedQuakeClass>> = Lazy::new(|| {
-	inventory::iter::<&'static ErasedQuakeClass>
-		.into_iter()
-		.copied()
-		.map(|class| (class.info.name, class))
-		.collect()
-});
+#[derive(Clone)]
+pub struct ReflectQuakeClass {
+	pub erased_class: &'static ErasedQuakeClass,
+}
+impl<T: QuakeClass> FromType<T> for ReflectQuakeClass {
+	fn from_type() -> Self {
+		Self {
+			erased_class: T::ERASED_CLASS,
+		}
+	}
+}
 
 #[cfg(feature = "client")]
 #[test]
@@ -239,7 +249,6 @@ fn spawn_deduplication() {
 	static mut CLASS_CALLED: bool = false;
 
 	#[derive(BaseClass, Component, Reflect)]
-	#[no_register]
 	#[spawn_hook(|_| {
 		assert!(unsafe { !BASE_CALLED });
 		unsafe { BASE_CALLED = true; }
@@ -250,7 +259,6 @@ fn spawn_deduplication() {
 	#[allow(clippy::duplicated_attributes)]
 	#[derive(PointClass, Component, Reflect)]
 	#[base(Base, Base)]
-	#[no_register]
 	#[spawn_hook(|_| {
 		assert!(unsafe { !CLASS_CALLED });
 		unsafe { CLASS_CALLED = true; }
@@ -264,6 +272,8 @@ fn spawn_deduplication() {
 	Class::ERASED_CLASS
 		.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
 			config: &default(),
+			type_registry: &default(),
+			class_map: &default(),
 			src_entity: &default(),
 			class: Class::ERASED_CLASS,
 			entity: &mut World::new().spawn_empty(),

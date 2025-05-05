@@ -1,3 +1,7 @@
+use bevy_reflect::TypeRegistry;
+
+use crate::fgd::write_fgd;
+
 use super::*;
 
 /// Errors that can occur when getting the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
@@ -53,7 +57,7 @@ impl TrenchBroomConfig {
 	/// Writes the configuration into the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
 	///
 	/// If you want to customize the path, use [`write_game_config`](Self::write_game_config) instead.
-	pub fn write_game_config_to_default_directory(&self) -> Result<(), DefaultTrenchBroomGameConfigError> {
+	pub fn write_game_config_to_default_directory(&self, type_registry: &TypeRegistry) -> Result<(), DefaultTrenchBroomGameConfigError> {
 		let path = self.get_default_trenchbroom_game_config_path()?;
 		if !path.exists() {
 			let err = fs::create_dir_all(&path);
@@ -62,7 +66,7 @@ impl TrenchBroomConfig {
 			}
 		}
 
-		if let Err(err) = self.write_game_config(&path) {
+		if let Err(err) = self.write_game_config(&path, type_registry) {
 			return Err(DefaultTrenchBroomGameConfigError::WriteError { error: err, path });
 		}
 
@@ -177,7 +181,7 @@ impl TrenchBroomConfig {
 	/// Writes the game configuration into a directory, it is your choice when to do this in your application, and where you want to save the config to.
 	///
 	/// If you have a standard TrenchBroom installation, you can use [`write_game_config_to_default_directory`](Self::write_game_config_to_default_directory) instead to use the default location.
-	pub fn write_game_config(&self, directory: impl AsRef<Path>) -> io::Result<()> {
+	pub fn write_game_config(&self, directory: impl AsRef<Path>, type_registry: &TypeRegistry) -> io::Result<()> {
 		if self.name.is_empty() {
 			return Err(io::Error::other(
 				"Please set a name for your TrenchBroom config. \
@@ -255,7 +259,7 @@ impl TrenchBroomConfig {
 		//// FGD
 		//////////////////////////////////////////////////////////////////////////////////
 
-		fs::write(folder.join(format!("{}.fgd", self.name)), self.to_fgd())?;
+		fs::write(folder.join(format!("{}.fgd", self.name)), write_fgd(type_registry))?;
 
 		info!("Successfully wrote TrenchBroom game config to {}", folder.display());
 

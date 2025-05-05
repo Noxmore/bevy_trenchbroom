@@ -283,7 +283,7 @@ First, enable the `rapier` or `avian` feature on the crate, then either call `co
 
 For dedicated servers `bevy_trenchbroom` supports headless mode by turning off its `client` feature. e.g.
 ```toml
-bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
+bevy_trenchbroom = { version = "...", default-features = false }
 ```
 
 # Possible future plans

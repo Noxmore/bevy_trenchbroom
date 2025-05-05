@@ -28,6 +28,7 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub loader: &'a BspLoader,
 	pub load_context: &'a mut LoadContext<'lc>,
 	pub asset_server: &'a AssetServer,
+	pub type_registry: &'a AppTypeRegistry,
 	pub data: &'a BspData,
 	pub entities: &'a QuakeMapEntities,
 }
@@ -35,12 +36,14 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 pub struct BspLoader {
 	pub tb_server: TrenchBroomServer,
 	pub asset_server: AssetServer,
+	pub type_registry: AppTypeRegistry,
 }
 impl FromWorld for BspLoader {
 	fn from_world(world: &mut World) -> Self {
 		Self {
 			tb_server: world.resource::<TrenchBroomServer>().clone(),
 			asset_server: world.resource::<AssetServer>().clone(),
+			type_registry: world.resource::<AppTypeRegistry>().clone(),
 		}
 	}
 }
@@ -76,6 +79,7 @@ impl AssetLoader for BspLoader {
 				loader: self,
 				load_context,
 				asset_server: &self.asset_server,
+				type_registry: &self.type_registry,
 				data: &data,
 				entities: &entities,
 			};

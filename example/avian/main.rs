@@ -1,37 +1,19 @@
 use avian3d::prelude::*;
-use bevy::ecs::component::HookContext;
-use bevy::ecs::world::DeferredWorld;
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
-
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct FuncDoor;
-
-#[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
-#[component(on_add = Self::on_add)]
-pub struct Cube;
-impl Cube {
-	fn on_add(mut world: DeferredWorld, ctx: HookContext) {
-		let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
-		let cube = asset_server.add(Mesh::from(Cuboid::new(0.42, 0.42, 0.42)));
-		let material = asset_server.add(StandardMaterial::default());
-
-		world.commands().entity(ctx.entity).insert((Mesh3d(cube), MeshMaterial3d(material)));
-	}
-}
 
 fn main() {
 	App::new()
@@ -52,12 +34,10 @@ fn main() {
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
 		.add_systems(Update, make_unlit)
 		.add_plugins(TrenchBroomPlugin(
-			TrenchBroomConfig::new("bevy_trenchbroom_example")
-				.no_bsp_lighting(true)
-				.register_class::<Worldspawn>()
-				.register_class::<Cube>()
-				.register_class::<FuncDoor>(),
+			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
 		))
+		.register_type::<Worldspawn>()
+		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(FixedUpdate, spawn_cubes)
 		.run();

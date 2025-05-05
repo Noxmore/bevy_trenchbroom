@@ -12,7 +12,6 @@ use bevy::{
 	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
-use class::{ErasedQuakeClass, QuakeClass, builtin::default_quake_class_registry};
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::QuakeMapEntities;
@@ -223,15 +222,6 @@ pub struct TrenchBroomConfig {
 
 	/// `qbsp` settings when parsing BSP files.
 	pub bsp_parse_settings: BspParseSettings,
-
-	/// Whether to automatically register the types stored in [`Self::entity_classes`], reducing boilerplate. (Default: true)
-	#[default(true)]
-	pub register_entity_class_types: bool,
-
-	/// Registered entity classes to be outputted in the fgd file, and used when spawning into scenes. (Default: [`default_quake_class_registry`])
-	#[default(default_quake_class_registry())]
-	#[builder(skip)]
-	pub entity_classes: HashMap<&'static str, Cow<'static, ErasedQuakeClass>>,
 
 	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
 	#[builder(skip)]

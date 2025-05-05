@@ -173,12 +173,6 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		panic!("Solid classes must have a `#[geometry(...)]` attribute.");
 	}
 
-	let inventory_submit = (cfg!(feature = "auto_register") && !opts.no_register).then(|| {
-		quote! {
-			::bevy_trenchbroom::inventory::submit! { <#ident as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS }
-		}
-	});
-
 	let name = opts
 		.classname
 		.and_then(|tokens| tokens.into_iter().next())
@@ -240,7 +234,5 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				Ok(())
 			}
 		}
-
-		#inventory_submit
 	}
 }

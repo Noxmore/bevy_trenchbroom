@@ -1,4 +1,4 @@
-use bevy_reflect::{DynamicEnum, DynamicVariant, Enum, GetTypeRegistration};
+use bevy_reflect::{DynamicEnum, DynamicVariant, Enum, GetTypeRegistration, TypeRegistry};
 use class::{ChoicesKey, QuakeClassPropertyType};
 use enumflags2::{BitFlag, BitFlags};
 
@@ -15,111 +15,114 @@ impl Plugin for FgdPlugin {
 	}
 }
 
-impl TrenchBroomConfig {
-	/// Converts this config to a string for writing `fgd` (entity definition) files.
-	pub fn to_fgd(&self) -> String {
-		use fmt::Write;
-		let mut s = String::new();
-		macro_rules! write {($($arg:tt)*) => {
-			s.write_fmt(format_args!($($arg)*)).ok()
-		};}
+/// Writes classes in a type registry to a string for writing `fgd` (entity definition) files.
+pub fn write_fgd(type_registry: &TypeRegistry) -> String {
+	let classes = type_registry
+		.iter_with_data::<ReflectQuakeClass>()
+		.map(|(_, class)| class.erased_class)
+		.collect_vec();
 
-		'class_loop: for class in self.class_iter() {
-			// If this is a base class, and nothing depends on it, we shouldn't write it.
-			// This checks names instead of references because i'm still not 100% sure const static refs are stable.
-			if class.info.ty.is_base()
-				&& self
-					.class_iter()
-					.all(|checking_class| !checking_class.info.base.iter().any(|base| base.info.name == class.info.name))
-			{
+	use fmt::Write;
+	let mut s = String::new();
+	macro_rules! write {($($arg:tt)*) => {
+		s.write_fmt(format_args!($($arg)*)).ok()
+	};}
+
+	'class_loop: for class in &classes {
+		// If this is a base class, and nothing depends on it, we shouldn't write it.
+		// This checks names instead of references because i'm still not 100% sure const static refs are stable.
+		if class.info.ty.is_base()
+			&& classes
+				.iter()
+				.all(|checking_class| !checking_class.info.base.iter().any(|base| base.id() == class.id()))
+		{
+			continue;
+		}
+
+		// Validate that all inherited classes are registered BaseClasses.
+		for base in class.info.base {
+			if !type_registry.contains(base.id()) {
+				error!("`{}`'s base class `{}` isn't registered, skipping", class.info.name, base.info.name);
+				continue 'class_loop;
+			}
+
+			if !base.info.ty.is_base() {
+				error!(
+					"`{}`'s base class `{}` is a {}Class, expected a BaseClass, skipping",
+					class.info.name, base.info.name, base.info.ty
+				);
+				continue 'class_loop;
+			}
+		}
+
+		write!("@{}Class ", class.info.ty);
+
+		if !class.info.base.is_empty() {
+			write!("base({}) ", class.info.base.iter().map(|base| base.info.name).join(", "));
+		}
+
+		if let Some(value) = class.info.color {
+			write!("color({value}) ");
+		}
+		if let Some(value) = class.info.iconsprite {
+			write!("iconsprite({value}) ");
+		}
+		if let Some(value) = class.info.size {
+			write!("size({value}) ");
+		}
+		if let Some(value) = class.info.model {
+			write!("model({value}) ");
+		}
+
+		write!("= {}", class.info.name);
+		if let Some(description) = class.info.description {
+			write!(" : \"{description}\"");
+		}
+		write!("\n[\n");
+
+		for property in class.info.properties {
+			if let QuakeClassPropertyType::Flags(new_flags_iter) = property.ty {
+				let flags_iter = new_flags_iter();
+
+				write!("\t{}(flags) =\n\t[\n", property.name);
+				let default = property.default_value.and_then(|f| u32::fgd_parse(&f()).ok()).unwrap_or(0);
+
+				for (i, (value, title)) in flags_iter.enumerate() {
+					write!("\t\t{value} : \"{title}\" : {}\n", (default >> i) & 1);
+				}
+
+				write!("\t]\n");
 				continue;
 			}
 
-			// Validate that all inherited classes are registered BaseClasses.
-			for base in class.info.base {
-				if self.get_class(base.info.name).is_none() {
-					error!("`{}`'s base class `{}` isn't registered, skipping", class.info.name, base.info.name);
-					continue 'class_loop;
+			write!(
+				"\t{}({}) : \"{}\" : {} : \"{}\"",
+				property.name,
+				match property.ty {
+					QuakeClassPropertyType::Value(ty) => ty,
+					QuakeClassPropertyType::Choices(_) => "choices",
+					QuakeClassPropertyType::Flags(_) => unreachable!(),
+				},
+				property.title.unwrap_or(property.name),
+				property.default_value.unwrap_or(String::new)(),
+				property.description.unwrap_or_default(),
+			);
+
+			if let QuakeClassPropertyType::Choices(choices) = property.ty {
+				write!(" = \n\t[\n");
+				for (key, title) in choices {
+					write!("\t\t{key} : \"{title}\"\n");
 				}
-
-				if !base.info.ty.is_base() {
-					error!(
-						"`{}`'s base class `{}` is a {}Class, expected a BaseClass, skipping",
-						class.info.name, base.info.name, base.info.ty
-					);
-					continue 'class_loop;
-				}
+				write!("\t]");
 			}
 
-			write!("@{}Class ", class.info.ty);
-
-			if !class.info.base.is_empty() {
-				write!("base({}) ", class.info.base.iter().map(|base| base.info.name).join(", "));
-			}
-
-			if let Some(value) = class.info.color {
-				write!("color({value}) ");
-			}
-			if let Some(value) = class.info.iconsprite {
-				write!("iconsprite({value}) ");
-			}
-			if let Some(value) = class.info.size {
-				write!("size({value}) ");
-			}
-			if let Some(value) = class.info.model {
-				write!("model({value}) ");
-			}
-
-			write!("= {}", class.info.name);
-			if let Some(description) = class.info.description {
-				write!(" : \"{description}\"");
-			}
-			write!("\n[\n");
-
-			for property in class.info.properties {
-				if let QuakeClassPropertyType::Flags(new_flags_iter) = property.ty {
-					let flags_iter = new_flags_iter();
-
-					write!("\t{}(flags) =\n\t[\n", property.name);
-					let default = property.default_value.and_then(|f| u32::fgd_parse(&f()).ok()).unwrap_or(0);
-
-					for (i, (value, title)) in flags_iter.enumerate() {
-						write!("\t\t{value} : \"{title}\" : {}\n", (default >> i) & 1);
-					}
-
-					write!("\t]\n");
-					continue;
-				}
-
-				write!(
-					"\t{}({}) : \"{}\" : {} : \"{}\"",
-					property.name,
-					match property.ty {
-						QuakeClassPropertyType::Value(ty) => ty,
-						QuakeClassPropertyType::Choices(_) => "choices",
-						QuakeClassPropertyType::Flags(_) => unreachable!(),
-					},
-					property.title.unwrap_or(property.name),
-					property.default_value.unwrap_or(String::new)(),
-					property.description.unwrap_or_default(),
-				);
-
-				if let QuakeClassPropertyType::Choices(choices) = property.ty {
-					write!(" = \n\t[\n");
-					for (key, title) in choices {
-						write!("\t\t{key} : \"{title}\"\n");
-					}
-					write!("\t]");
-				}
-
-				write!("\n");
-			}
-
-			write!("]\n\n");
+			write!("\n");
 		}
 
-		s
+		write!("]\n\n");
 	}
+
+	s
 }
 
 /// Contains Quake/TrenchBroom-specific parsing and stringification functions.

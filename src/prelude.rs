@@ -27,7 +27,7 @@ pub use qbsp::{
 pub use crate::{
 	TrenchBroomPlugin, TrenchBroomServer,
 	class::{
-		QuakeClass,
+		QuakeClass, ReflectQuakeClass,
 		builtin::{Target, Targetable},
 		spawn_util::*,
 	},
