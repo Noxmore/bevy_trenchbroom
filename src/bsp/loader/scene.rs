@@ -1,17 +1,22 @@
 use super::*;
-use crate::{class::QuakeClassSpawnView, *};
+use crate::{
+	class::{QuakeClassSpawnView, generate_class_map},
+	*,
+};
 use bsp::*;
 use models::InternalModel;
 
 pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> anyhow::Result<World> {
 	let config = &ctx.loader.tb_server.config;
+	let type_registry = ctx.type_registry.read();
+	let class_map = generate_class_map(&type_registry);
 
 	let mut world = World::new();
 
 	// Spawn entities into scene
 	for (map_entity_idx, map_entity) in ctx.entities.iter().enumerate() {
 		let Some(classname) = map_entity.properties.get("classname") else { continue };
-		let Some(class) = config.get_class(classname) else {
+		let Some(class) = class_map.get(classname.as_str()).copied() else {
 			if !config.suppress_invalid_entity_definitions {
 				error!("No class found for classname `{classname}` on entity {map_entity_idx}");
 			}
@@ -26,6 +31,8 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
 				config,
 				src_entity: map_entity,
+				type_registry: &type_registry,
+				class_map: &class_map,
 				class,
 				entity: &mut entity,
 				load_context: ctx.load_context,
@@ -93,6 +100,8 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 		(config.global_spawner)(&mut QuakeClassSpawnView {
 			config,
 			src_entity: map_entity,
+			type_registry: &type_registry,
+			class_map: &class_map,
 			class,
 			entity: &mut entity,
 			load_context: ctx.load_context,

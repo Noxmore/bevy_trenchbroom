@@ -61,7 +61,7 @@ use bevy_trenchbroom::bsp::base_classes::*;
 // The required worldspawn class makes up the main structural
 // world geometry and settings. Exactly one exists in every map.
 #[derive(SolidClass, Component, Reflect, Default)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 // Quake classes use an inheritance system alike OOP
 // programming languages.
 // If you're using a BSP workflow, this base class includes a bunch
@@ -78,7 +78,7 @@ pub struct Worldspawn {
 // those which use it as a base class
 // by using the `base` attribute.
 #[derive(BaseClass, Component, Reflect, Default)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 pub struct MyBaseClass {
     /// Documentation comments will be visible in-editor!
     pub my_value: u32,
@@ -87,7 +87,7 @@ pub struct MyBaseClass {
 // SolidClass (also known as brush entities) makes the class
 // contain its own geometry, such as a door or breakable
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(Visibility, MyBaseClass)]
 #[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
 // By default, names are converted into snake_case.
@@ -99,7 +99,7 @@ pub struct MyBaseClass {
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 // If you're using a BSP workflow, this base class includes a bunch
 // of useful compiler properties.
 #[base(BspSolidEntity)]
@@ -124,7 +124,7 @@ pub struct FuncIllusionary;
 //
 // If your entity has a hardcoded model, you can use a function
 // like `spawn_class_gltf` to do the above automatically.
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(Visibility)]
 // Sets the in-editor model using TrenchBroom's expression language.
 #[model({ "path": model, "skin": skin })]
@@ -156,7 +156,7 @@ impl Default for StaticProp {
 #[derive(PointClass, Component, Reflect)]
 // Here you'd use #[spawn_hook(<function>)], a component hook, or a system to
 // add a RigidBody of your preferred physics engine.
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(StaticProp)]
 pub struct PhysicsProp;
 
@@ -173,12 +173,9 @@ pub enum CollisionType {
 }
 ```
 
-If the `auto_register` feature is enabled (default), just defining these classes will automatically register them with all `TrenchBroomConfig`s.
-Otherwise, you'll have to call `TrenchBroomConfig::register_class<Class>()` to register each one.
+Now, just register these like you would any other type via `App::register_type::<T>()`, and you are good to go!
 
-The types themselves will also need to be registered with Bevy, but if `TrenchBroomConfig::register_entity_class_types` is enabled (default), that will also happen automatically.
-
-Now to access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
+To access the config from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
 
 ```rust
 use bevy::prelude::*;
@@ -186,10 +183,13 @@ use bevy_trenchbroom::prelude::*;
 
 // app.add_systems(Startup, write_trenchbroom_config)
 
-fn write_trenchbroom_config(server: Res<TrenchBroomServer>) {
+fn write_trenchbroom_config(
+    server: Res<TrenchBroomServer>,
+    type_registry: Res<AppTypeRegistry>,
+) {
     // This will write <TB folder>/games/example_game/GameConfig.cfg,
     // and <TB folder>/games/example_game/example_game.fgd
-    if let Err(err) = server.config.write_game_config_to_default_directory() {
+    if let Err(err) = server.config.write_game_config_to_default_directory(&type_registry.read()) {
         error!("Could not write TrenchBroom game config: {err}");
     }
 
@@ -283,7 +283,7 @@ First, enable the `rapier` or `avian` feature on the crate, then either call `co
 
 For dedicated servers `bevy_trenchbroom` supports headless mode by turning off its `client` feature. e.g.
 ```toml
-bevy_trenchbroom = { version = "...", default-features = false, features = ["auto_register"] }
+bevy_trenchbroom = { version = "...", default-features = false }
 ```
 
 # Possible future plans

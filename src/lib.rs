@@ -29,8 +29,6 @@ pub(crate) use prelude::*;
 // Re-exports
 pub use anyhow;
 pub use bevy_materialize;
-#[cfg(feature = "auto_register")]
-pub use inventory;
 
 pub struct TrenchBroomPlugin(pub TrenchBroomConfig);
 
@@ -47,15 +45,6 @@ impl Plugin for TrenchBroomPlugin {
 
 		#[cfg(feature = "client")]
 		app.add_plugins(special_textures::SpecialTexturesPlugin);
-
-		if config.register_entity_class_types {
-			let type_registry = app.world().resource::<AppTypeRegistry>();
-			let mut type_registry = type_registry.write();
-			for class in config.class_iter() {
-				type_registry.add_registration((class.get_type_registration)());
-				(class.register_type_dependencies)(&mut type_registry);
-			}
-		}
 
 		#[cfg(feature = "client")]
 		if config.lightmap_exposure.is_some() {

@@ -20,7 +20,6 @@ struct Opts {
 	base: Vec<Type>,
 	spawn_hook: Option<Expr>,
 
-	no_register: bool,
 	doc: Option<String>,
 }
 
@@ -79,11 +78,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.spawn_hook = Some(Expr::parse.parse2(meta.tokens).expect("`spawn_hook` attribute not an expression"));
 				}
 			}
-			Meta::Path(path) => {
-				if compare_path(&path, "no_register") {
-					opts.no_register = true;
-				}
-			}
+			_ => {}
 		}
 	}
 
@@ -173,12 +168,6 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		panic!("Solid classes must have a `#[geometry(...)]` attribute.");
 	}
 
-	let inventory_submit = (cfg!(feature = "auto_register") && !opts.no_register).then(|| {
-		quote! {
-			::bevy_trenchbroom::inventory::submit! { <#ident as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS }
-		}
-	});
-
 	let name = opts
 		.classname
 		.and_then(|tokens| tokens.into_iter().next())
@@ -240,7 +229,5 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 				Ok(())
 			}
 		}
-
-		#inventory_submit
 	}
 }

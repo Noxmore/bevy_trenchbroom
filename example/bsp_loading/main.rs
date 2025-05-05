@@ -12,16 +12,14 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
-
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspWorldspawn)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncDoor {
@@ -39,25 +37,25 @@ pub enum FlagsTest {
 }
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -76,14 +74,14 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[spawn_hook(spawn_class_gltf::<Self>)]
 pub struct Mushroom;
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[base(BspLight, Transform)]
 // This is the default size, this is just to make sure it produces a valid fgd.
 #[size(-8 -8 -8, 8 8 8)]
@@ -121,14 +119,14 @@ fn main() {
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
 				.bicubic_lightmap_filtering(true)
-				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() })
-				.register_class::<Worldspawn>()
-				.register_class::<Cube>()
-				.register_class::<Mushroom>()
-				.register_class::<FuncWall>()
-				.register_class::<Light>()
-				.register_class::<FuncDoor>(),
+				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
+		.register_type::<Worldspawn>()
+		.register_type::<Cube>()
+		.register_type::<Mushroom>()
+		.register_type::<FuncWall>()
+		.register_type::<Light>()
+		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, (setup_scene, write_config))
 		.run();
 }
@@ -168,10 +166,10 @@ fn setup_scene(
 	}
 }
 
-fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>) {
+fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
 	#[cfg(not(target_family = "wasm"))]
 	{
-		server.config.write_game_config_to_default_directory().unwrap();
+		server.config.write_game_config_to_default_directory(&type_registry.read()).unwrap();
 		server.config.add_game_to_preferences_in_default_directory().unwrap();
 	}
 }

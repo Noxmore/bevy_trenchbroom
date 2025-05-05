@@ -1,6 +1,5 @@
 //! Builtin [`QuakeClass`] implementations.
 
-use bsp::base_classes::*;
 use fgd::FgdType;
 use qmap::{QuakeEntityError, QuakeEntityErrorResultExt};
 use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
@@ -8,33 +7,25 @@ use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 use super::*;
 use crate::*;
 
-/// Returns the default registry used in [`TrenchBroomConfig`], containing a bunch of useful foundational and utility classes to greatly reduce boilerplate.
-pub fn default_quake_class_registry() -> HashMap<&'static str, Cow<'static, ErasedQuakeClass>> {
-	macro_rules! registry {
-		{$($(#[$($attrs:meta)*])? $ty:ident),* $(,)?} => {
-			[
-				$(
-					$(#[$($attrs)*])?
-					($ty::CLASS_INFO.name, Cow::Borrowed($ty::ERASED_CLASS)
-				)),*
-			].into_iter().collect()
-		};
-	}
+pub struct BuiltinClassesPlugin;
+impl Plugin for BuiltinClassesPlugin {
+	fn build(&self, app: &mut App) {
+		#[rustfmt::skip]
+		app
+			.register_type_data::<Transform, ReflectQuakeClass>()
 
-	registry! {
-		Transform,
-		#[cfg(feature = "client")] Visibility,
-		#[cfg(feature = "client")] PointLight,
-		#[cfg(feature = "client")] SpotLight,
-		#[cfg(feature = "client")] DirectionalLight,
+			.register_type::<Target>()
+			.register_type::<Targetable>()
+		;
 
-		Target,
-		Targetable,
-
-		BspSolidEntity,
-		BspWorldspawn,
-		BspLight,
-		BspExternalMap,
+		#[cfg(feature = "client")]
+		#[rustfmt::skip]
+		app
+			.register_type_data::<Visibility, ReflectQuakeClass>()
+			.register_type_data::<PointLight, ReflectQuakeClass>()
+			.register_type_data::<SpotLight, ReflectQuakeClass>()
+			.register_type_data::<DirectionalLight, ReflectQuakeClass>()
+		;
 	}
 }
 
@@ -473,8 +464,7 @@ impl QuakeClass for DirectionalLight {
 ///
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 pub struct Target {
 	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
 	pub target: Option<String>,
@@ -486,8 +476,7 @@ pub struct Target {
 ///
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(Component, Default, Serialize, Deserialize)]
-#[no_register]
+#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 pub struct Targetable {
 	/// The name for entities with [`Target`] components to point to.
 	pub targetname: Option<String>,

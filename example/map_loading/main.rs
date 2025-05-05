@@ -9,20 +9,18 @@ use bevy_flycam::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-// TODO: We aren't using inventory to register here because it's broken on wasm. The `auto_register` feature is turned off.
-
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[geometry(GeometryProvider::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -37,7 +35,7 @@ impl Cube {
 }
 
 #[derive(PointClass, Component, Reflect)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
 #[spawn_hook(spawn_class_gltf::<Self>)]
@@ -45,7 +43,7 @@ pub struct Mushroom;
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
 #[derive(PointClass, Component, Reflect, Clone, Copy, SmartDefault)]
-#[reflect(Component)]
+#[reflect(QuakeClass, Component)]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Light {
 	#[default(Color::srgb(1., 1., 1.))]
@@ -98,14 +96,13 @@ fn main() {
 			ClientPlugin,
 		))
 		.add_plugins(TrenchBroomPlugin(
-			TrenchBroomConfig::new("bevy_trenchbroom_example")
-				.no_bsp_lighting(true)
-				.register_class::<Worldspawn>()
-				.register_class::<Cube>()
-				.register_class::<Mushroom>()
-				.register_class::<Light>()
-				.register_class::<FuncDoor>(),
+			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
 		))
+		.register_type::<Worldspawn>()
+		.register_type::<Cube>()
+		.register_type::<Mushroom>()
+		.register_type::<Light>()
+		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.run();
 }
