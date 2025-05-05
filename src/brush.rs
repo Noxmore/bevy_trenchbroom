@@ -363,6 +363,12 @@ pub fn generate_mesh_from_brush_polygons(polygons: &[BrushSurfacePolygon], confi
 	}
 	mesh.insert_indices(Indices::U32(indices));
 
+	if !polygons.is_empty() {
+		if let Err(err) = mesh.generate_tangents() {
+			error!("Failed to generate tangents for mesh with texture {}: {err}", polygons[0].surface.texture);
+		}
+	}
+
 	mesh
 }
 
