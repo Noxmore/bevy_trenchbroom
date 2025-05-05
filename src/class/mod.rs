@@ -114,7 +114,7 @@ impl QuakeClassInfo {
 	/// # use bevy::prelude::*;
 	/// # use bevy_trenchbroom::prelude::*;
 	/// #[derive(PointClass, Reflect, Component)]
-	/// #[reflect(Component)]
+	/// #[reflect(QuakeClass, Component)]
 	/// #[model("models/my_class.glb")]
 	/// struct MyClass;
 	///

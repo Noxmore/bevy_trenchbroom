@@ -37,7 +37,7 @@ pub fn spawn_class_model_internal<T: QuakeClass>(view: &mut QuakeClassSpawnView,
 /// # use bevy::prelude::*;
 /// # use bevy_trenchbroom::prelude::*;
 /// #[derive(PointClass, Component, Reflect)]
-/// #[reflect(Component)]
+/// #[reflect(QuakeClass, Component)]
 /// #[model("models/mushroom.glb")]
 /// #[size(-4 -4 0, 4 4 16)]
 /// #[spawn_hook(spawn_class_gltf::<Self>)]
@@ -58,7 +58,7 @@ pub fn spawn_class_gltf<T: QuakeClass>(view: &mut QuakeClassSpawnView) -> anyhow
 /// # use bevy::prelude::*;
 /// # use bevy_trenchbroom::prelude::*;
 /// #[derive(PointClass, Component, Reflect)]
-/// #[reflect(Component)]
+/// #[reflect(QuakeClass, Component)]
 /// #[model("models/torch.glb")]
 /// #[spawn_hook(preload_model::<Self>)]
 /// pub struct Torch;
