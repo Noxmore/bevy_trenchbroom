@@ -211,13 +211,11 @@ impl AssetLoader for QuakeMapLoader {
 
 					(self.tb_server.config.global_geometry_provider)(&mut view);
 
-					for (entity, mesh, _) in meshes {
+					for (mesh_entity, mesh, _) in meshes {
 						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
 
 						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
-						world.entity_mut(entity_id).add_child(entity);
-
-						world.entity_mut(entity).insert(Mesh3d(handle.clone()));
+						world.entity_mut(mesh_entity).insert((Mesh3d(handle.clone()), ChildOf(entity_id)));
 
 						mesh_handles.push(handle);
 					}

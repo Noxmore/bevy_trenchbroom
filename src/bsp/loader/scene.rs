@@ -90,7 +90,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 				// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 				for mesh_view in view.meshes {
-					world.entity_mut(entity_id).add_child(mesh_view.entity);
+					world.entity_mut(mesh_view.entity).insert(ChildOf(entity_id));
 				}
 			}
 		}
