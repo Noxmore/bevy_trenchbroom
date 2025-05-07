@@ -213,8 +213,6 @@ pub struct TrenchBroomConfig {
 	///
 	/// This allows, for example, your `func_rotate` entity to easily rotate around a specific point.
 	///
-	/// NOTE: Entities that support this need to have [`Transform`] as a base class, or they will appear at the world origin.
-	///
 	/// (Default: `["origin"]`)
 	#[default(["origin".s()].into())]
 	#[builder(into)]
