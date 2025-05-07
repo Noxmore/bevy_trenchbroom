@@ -145,7 +145,10 @@ impl AssetLoader for QuakeMapLoader {
 									}
 								}
 
-								// We don't send out an error here because whatever went wrong will print an error when loading the material just below.
+								error!(
+									"Failed to get size for texture {texture:?} looking for the following extensions: {:?}",
+									self.tb_server.config.texture_extensions
+								);
 								UVec2::splat(1)
 							}),
 						};
