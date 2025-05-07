@@ -17,6 +17,7 @@ impl Plugin for GeometryPlugin {
 		app
 			.init_asset::<BrushList>()
 			.register_type::<Brushes>()
+			.register_type::<MapGeometry>()
 		;
 	}
 }
@@ -57,6 +58,11 @@ pub struct MapGeometryTexture {
 	/// If the texture should be full-bright
 	pub flags: BspTexFlags,
 }
+
+/// Marker component that marks meshes as level geometry produced by brushes.
+#[derive(Component, Reflect, Clone)]
+#[reflect(Component)]
+pub struct MapGeometry;
 
 pub struct GeometryProviderMeshView<'l> {
 	pub entity: Entity,

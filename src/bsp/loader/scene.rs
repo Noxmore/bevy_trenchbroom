@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
 	class::{QuakeClassSpawnView, generate_class_map},
+	geometry::MapGeometry,
 	*,
 };
 use bsp::*;
@@ -90,7 +91,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 				// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 				for mesh_view in view.meshes {
-					world.entity_mut(mesh_view.entity).insert(ChildOf(entity_id));
+					world.entity_mut(mesh_view.entity).insert((ChildOf(entity_id), MapGeometry));
 				}
 			}
 		}

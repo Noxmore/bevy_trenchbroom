@@ -1,6 +1,8 @@
 flat! {
 	hooks;
 	main_impl;
+	#[cfg(feature = "client")]
+	set_sampler;
 	tb_types;
 	writing;
 }
@@ -8,7 +10,7 @@ flat! {
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
 	asset::{AssetPath, LoadContext, RenderAssetUsages},
-	image::{ImageLoaderSettings, ImageSampler},
+	image::ImageSampler,
 	tasks::BoxedFuture,
 };
 use bsp::GENERIC_MATERIAL_PREFIX;
@@ -18,6 +20,14 @@ use qmap::QuakeMapEntities;
 use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
 use crate::{class::QuakeClassSpawnView, *};
+
+pub struct ConfigPlugin;
+impl Plugin for ConfigPlugin {
+	fn build(&self, #[allow(unused)] app: &mut App) {
+		#[cfg(feature = "client")]
+		app.add_systems(Update, Self::set_image_samplers);
+	}
+}
 
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]

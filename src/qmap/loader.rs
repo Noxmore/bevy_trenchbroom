@@ -8,7 +8,10 @@ use class::QuakeClassType;
 use config::TextureLoadView;
 use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
 
-use crate::class::{QuakeClassSpawnView, generate_class_map};
+use crate::{
+	class::{QuakeClassSpawnView, generate_class_map},
+	geometry::MapGeometry,
+};
 
 use super::*;
 
@@ -215,7 +218,9 @@ impl AssetLoader for QuakeMapLoader {
 						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
 
 						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
-						world.entity_mut(mesh_entity).insert((Mesh3d(handle.clone()), ChildOf(entity_id)));
+						world
+							.entity_mut(mesh_entity)
+							.insert((Mesh3d(handle.clone()), ChildOf(entity_id), MapGeometry));
 
 						mesh_handles.push(handle);
 					}

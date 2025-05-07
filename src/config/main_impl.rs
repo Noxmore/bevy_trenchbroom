@@ -138,7 +138,6 @@ impl TrenchBroomConfig {
 	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extensions`](Self::generic_material_extensions), as a fallback tries [`texture_extensions`](Self::texture_extensions).
 	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
 		Box::pin(async move {
-			let texture_sampler = view.tb_config.texture_sampler.clone();
 			let source = view.load_context.asset_path().source().clone_owned();
 
 			// Search for material files
@@ -150,10 +149,7 @@ impl TrenchBroomConfig {
 
 				if view.asset_server.exists(&source, &path).await {
 					// We found one, let's load it!
-					return view.load_context
-						.loader()
-						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-						.load(AssetPath::from_path(&path).with_source(source));
+					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
 				}
 			}
 			
@@ -166,10 +162,7 @@ impl TrenchBroomConfig {
 					.join(format!("{}.{}", view.name, ext));
 
 				if view.asset_server.exists(&source, &path).await {
-					return view.load_context
-						.loader()
-						.with_settings(move |s: &mut ImageLoaderSettings| s.sampler = texture_sampler.clone())
-						.load(AssetPath::from_path(&path).with_source(source));
+					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
 				}
 			}
 
