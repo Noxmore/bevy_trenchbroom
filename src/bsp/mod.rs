@@ -19,10 +19,6 @@ impl Plugin for BspPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.add_plugins((
-				base_classes::BspBaseClassesPlugin,
-			))
-
 			.init_asset::<BspBrushesAsset>()
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()

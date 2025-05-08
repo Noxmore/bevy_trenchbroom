@@ -13,7 +13,6 @@ impl Plugin for QuakeClassPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.add_plugins(builtin::BuiltinClassesPlugin)
 			.register_type::<PreloadedAssets>()
 		;
 	}

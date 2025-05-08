@@ -26,7 +26,7 @@ use bevy_trenchbroom::prelude::*;
 fn main() {
     App::new()
         // ...
-        .add_plugins(TrenchBroomPlugin(
+        .add_plugins(TrenchBroomPlugins(
             // Here you can customize the resulting bevy_trenchbroom
             // and game configuration with a builder syntax
             TrenchBroomConfig::new("your_game_name")

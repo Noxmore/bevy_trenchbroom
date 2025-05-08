@@ -115,7 +115,7 @@ fn main() {
 			}),
 			ClientPlugin,
 		))
-		.add_plugins(TrenchBroomPlugin(
+		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
 				.bicubic_lightmap_filtering(true)
