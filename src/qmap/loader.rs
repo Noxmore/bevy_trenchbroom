@@ -185,8 +185,9 @@ impl AssetLoader for QuakeMapLoader {
 							MapGeometryTexture {
 								name: texture.s(),
 								material,
-								#[cfg(feature = "client")]
+								#[cfg(all(feature = "client", feature = "bsp"))]
 								lightmap: None,
+								#[cfg(feature = "bsp")]
 								flags: BspTexFlags::Normal,
 							},
 						));

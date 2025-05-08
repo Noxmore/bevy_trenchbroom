@@ -17,6 +17,7 @@ avian3d = { version = "0.2" }
 bevy_trenchbroom = { path = "../..", default-features = false, features = [
 	"avian",
 	"client",
+	"bsp"
 ] }
 bevy_flycam = { workspace = true }
 bevy-inspector-egui = { workspace = true }

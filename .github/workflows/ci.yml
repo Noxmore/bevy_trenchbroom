@@ -36,6 +36,8 @@ jobs:
         run: cargo clippy --all-targets
       - name: Run cargo clippy without default features
         run: cargo clippy --all-targets --no-default-features
+      - name: Run cargo clippy for bsps
+        run: cargo clippy --all-targets --features bsp
       - name: Run cargo clippy for avian
         run: cargo clippy --all-targets --features avian
       - name: Run cargo clippy for rapier
@@ -93,10 +95,10 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run tests with avian
         run: |
-          cargo test --locked --workspace --all-targets --features bevy/x11 --features avian,client
+          cargo test --locked --workspace --all-targets --features bevy/x11 --features avian,client,bsp
           # Running doc tests separately is a workaround for https://github.com/rust-lang/cargo/issues/6669
           # Setting LD_LIBRARY_PATH is a workaround for https://github.com/TheBevyFlock/bevy_new_2d/pull/318#issuecomment-2585935350
-          LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client
+          LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client,bsp
 
   # Check that the crate builds for web.
   build-web:

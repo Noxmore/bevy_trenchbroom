@@ -1,11 +1,18 @@
 use bevy::{
 	asset::embedded_asset,
-	image::TextureFormatPixelInfo,
 	pbr::{ExtendedMaterial, MaterialExtension},
-	render::render_resource::{AsBindGroup, Extent3d, TextureDimension},
+	render::render_resource::AsBindGroup,
 };
+#[cfg(feature = "bsp")]
+use bevy::{
+	image::TextureFormatPixelInfo,
+	render::render_resource::{Extent3d, TextureDimension},
+};
+#[cfg(feature = "bsp")]
 use bevy_materialize::animation::{GenericMaterialAnimationState, ImagesAnimation, MaterialAnimations};
+#[cfg(feature = "bsp")]
 use bsp::TEXTURE_PREFIX;
+#[cfg(feature = "bsp")]
 use config::EmbeddedTextureLoadView;
 
 use crate::*;
@@ -25,6 +32,7 @@ impl Plugin for SpecialTexturesPlugin {
 }
 
 /// If [`TrenchBroomConfig`] contains [Quake special textures](https://quakewiki.org/wiki/Textures), this attempts to load them using the material provided as a base.
+#[cfg(feature = "bsp")]
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
 	// We save a teeny tiny bit of time by only cloning if we need to :)
 	let mut material = material.clone();

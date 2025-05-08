@@ -1,7 +1,8 @@
 use bevy_mesh::VertexAttributeValues;
 use brush::Brush;
+#[cfg(feature = "bsp")]
 use bsp::BspBrushesAsset;
-#[cfg(feature = "client")]
+#[cfg(all(feature = "client", feature = "bsp"))]
 use bsp::lighting::{AnimatedLighting, AnimatedLightingHandle};
 use qmap::QuakeMapEntity;
 
@@ -23,8 +24,6 @@ impl Plugin for GeometryPlugin {
 }
 
 /// Contains the brushes that a solid entity is made of.
-///
-/// Unless [`Brushes::Bsp`], entities with this component have meshes generated for them at runtime.
 #[derive(Component, Reflect, Debug, Clone)]
 #[reflect(Component)]
 #[require(Transform)]
@@ -36,6 +35,7 @@ pub enum Brushes {
 	/// Reads an asset instead for completely static geometry.
 	Shared(Handle<BrushList>),
 	/// Used with the `BRUSHLIST` BSPX lump. Collision only.
+	#[cfg(feature = "bsp")]
 	Bsp(Handle<BspBrushesAsset>),
 }
 
@@ -53,9 +53,10 @@ impl std::ops::Deref for BrushList {
 pub struct MapGeometryTexture {
 	pub name: String,
 	pub material: Handle<GenericMaterial>,
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	/// If the texture should be full-bright
+	#[cfg(feature = "bsp")]
 	pub flags: BspTexFlags,
 }
 
@@ -206,7 +207,7 @@ impl GeometryProvider {
 	}
 
 	/// Inserts lightmaps if available.
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub fn with_lightmaps(self) -> Self {
 		self.push(|view| {
 			for mesh_view in &view.meshes {
@@ -218,7 +219,7 @@ impl GeometryProvider {
 			}
 		})
 	}
-	#[cfg(not(feature = "client"))]
+	#[cfg(all(not(feature = "client"), feature = "bsp"))]
 	pub fn with_lightmaps(self) -> Self {
 		self
 	}
