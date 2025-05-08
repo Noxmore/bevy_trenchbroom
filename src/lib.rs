@@ -43,8 +43,6 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(class::builtin::BuiltinClassesPlugin)
 			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)
-			.add(bsp::BspPlugin)
-			.add(bsp::base_classes::BspBaseClassesPlugin)
 			.add(geometry::GeometryPlugin)
 			.add(util::UtilPlugin);
 
@@ -54,6 +52,9 @@ impl PluginGroup for TrenchBroomPlugins {
 
 		#[cfg(feature = "client")]
 		let builder = builder.add(special_textures::SpecialTexturesPlugin);
+
+		#[cfg(feature = "bsp")]
+		let builder = builder.add(bsp::BspPlugin).add(bsp::base_classes::BspBaseClassesPlugin);
 
 		builder
 	}
