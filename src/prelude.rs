@@ -34,7 +34,7 @@ pub use crate::bsp::{
 #[cfg(feature = "client")]
 pub use crate::special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial};
 pub use crate::{
-	TrenchBroomPlugin, TrenchBroomServer,
+	TrenchBroomPlugins, TrenchBroomServer,
 	class::{
 		QuakeClass, ReflectQuakeClass,
 		builtin::{Target, Targetable},

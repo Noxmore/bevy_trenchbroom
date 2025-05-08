@@ -13,7 +13,7 @@ pub struct UtilPlugin;
 impl Plugin for UtilPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(not(feature = "client"))]
-		app.register_type::<Mesh3d>().register_type::<Aabb>();
+		app.init_asset::<Mesh>().register_type::<Mesh3d>().register_type::<Aabb>();
 
 		#[rustfmt::skip]
 		app

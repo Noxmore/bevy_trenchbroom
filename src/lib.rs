@@ -24,6 +24,7 @@ pub mod qmap;
 pub mod special_textures;
 pub mod util;
 
+use bevy::app::PluginGroupBuilder;
 use bevy_materialize::MaterializeMarkerPlugin;
 pub(crate) use prelude::*;
 
@@ -31,49 +32,53 @@ pub(crate) use prelude::*;
 pub use anyhow;
 pub use bevy_materialize;
 
-pub struct TrenchBroomPlugin(pub TrenchBroomConfig);
+pub struct TrenchBroomPlugins(pub TrenchBroomConfig);
 
-impl Plugin for TrenchBroomPlugin {
+impl PluginGroup for TrenchBroomPlugins {
+	fn build(self) -> PluginGroupBuilder {
+		let builder = PluginGroupBuilder::start::<Self>()
+			.add(CorePlugin(self.0))
+			.add(fgd::FgdPlugin)
+			.add(class::QuakeClassPlugin)
+			.add(class::builtin::BuiltinClassesPlugin)
+			.add(config::ConfigPlugin)
+			.add(qmap::QuakeMapPlugin)
+			.add(bsp::BspPlugin)
+			.add(bsp::base_classes::BspBaseClassesPlugin)
+			.add(geometry::GeometryPlugin)
+			.add(util::UtilPlugin);
+
+		// Have to use let here because "attributes on expressions are experimental"
+		#[cfg(any(feature = "rapier", feature = "avian"))]
+		let builder = builder.add(physics::PhysicsPlugin);
+
+		#[cfg(feature = "client")]
+		let builder = builder.add(special_textures::SpecialTexturesPlugin);
+
+		builder
+	}
+}
+
+pub struct CorePlugin(pub TrenchBroomConfig);
+
+impl Plugin for CorePlugin {
 	fn build(&self, app: &mut App) {
-		let TrenchBroomPlugin(config) = self;
+		let CorePlugin(config) = self;
 
 		if !app.is_plugin_added::<MaterializeMarkerPlugin>() {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}
-
-		#[cfg(any(feature = "rapier", feature = "avian"))]
-		app.add_plugins(physics::PhysicsPlugin);
-
-		#[cfg(feature = "client")]
-		app.add_plugins(special_textures::SpecialTexturesPlugin);
 
 		#[cfg(all(feature = "client", feature = "bsp"))]
 		if config.lightmap_exposure.is_some() {
 			app.add_systems(Update, Self::set_lightmap_exposure);
 		}
 
-		#[rustfmt::skip]
-		app
-			// I'd rather not clone here, but i only have a reference to self
-			.insert_resource(TrenchBroomServer::new(config.clone()))
-
-			.add_plugins((
-				fgd::FgdPlugin,
-				class::QuakeClassPlugin,
-				config::ConfigPlugin,
-				qmap::QuakeMapPlugin,
-				#[cfg(feature = "bsp")]
-				bsp::BspPlugin,
-				geometry::GeometryPlugin,
-				util::UtilPlugin,
-			))
-		;
-
-		#[cfg(not(feature = "client"))]
-		app.init_asset::<Mesh>().register_type::<Mesh3d>().register_type::<Aabb>();
+		// I'd rather not clone here, but i only have a reference to self
+		app.insert_resource(TrenchBroomServer::new(config.clone()));
 	}
 }
-impl TrenchBroomPlugin {
+impl CorePlugin {
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub fn set_lightmap_exposure(
 		mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
