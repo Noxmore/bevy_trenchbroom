@@ -62,7 +62,7 @@ serde = { version = "1", features = [
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
 # qbsp = { version = "0.4", features = ["bevy_reflect", "serde"] }
-qbsp = { git = "https://github.com/Noxmore/qbsp.git", rev = "cc0b9e3", features = ["bevy_reflect", "serde"] }
+qbsp = { git = "https://github.com/Noxmore/qbsp.git", rev = "cc0b9e3", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
@@ -82,6 +82,7 @@ default = ["client"]
 client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
+bsp = ["dep:qbsp"]
 
 [patch.crates-io]
 avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "main" }

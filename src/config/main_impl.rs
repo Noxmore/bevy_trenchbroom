@@ -1,4 +1,6 @@
 use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, util::AssetServerExistsExt};
+#[cfg(feature = "bsp")]
+use bsp::GENERIC_MATERIAL_PREFIX;
 
 use super::*;
 
@@ -34,6 +36,7 @@ impl TrenchBroomConfig {
 		self.texture_sampler(ImageSampler::linear().repeat())
 	}
 
+	#[cfg(feature = "bsp")]
 	pub fn default_compute_lightmap_settings() -> ComputeLightmapSettings {
 		ComputeLightmapSettings {
 			special_lighting_color: [75; 3],
@@ -93,10 +96,12 @@ impl TrenchBroomConfig {
 		}
 	}
 
+	#[cfg(feature = "bsp")]
 	pub fn load_embedded_texture_fn(mut self, provider: impl FnOnce(Arc<LoadEmbeddedTextureFn>) -> Arc<LoadEmbeddedTextureFn>) -> Self {
 		self.load_embedded_texture.set(provider);
 		self
 	}
+	#[cfg(feature = "bsp")]
 	pub fn default_load_embedded_texture<'a>(
 		#[allow(unused_mut)] mut view: EmbeddedTextureLoadView<'a, '_>,
 	) -> BoxedFuture<'a, Handle<GenericMaterial>> {

@@ -362,6 +362,7 @@ impl From<Srgb> for Color {
 	}
 }
 
+#[cfg(feature = "bsp")]
 impl FgdType for LightmapStyle {
 	const FGD_IS_QUOTED: bool = u8::FGD_IS_QUOTED;
 	const PROPERTY_TYPE: QuakeClassPropertyType = u8::PROPERTY_TYPE;

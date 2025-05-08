@@ -129,21 +129,17 @@ fn preloading() {
 			TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
 		))
 		.register_type::<Mushroom>()
-		.register_type::<bevy::pbr::LightProbe>()
 		.register_type::<Visibility>()
 		.register_type::<InheritedVisibility>()
 		.register_type::<ViewVisibility>()
-		.register_type::<crate::bsp::lighting::AnimatedLightingHandle>()
 		.register_type::<PreloadedAssets>()
 		.register_type::<MeshMaterial3d<StandardMaterial>>()
 		.register_type::<Aabb>()
 		.register_type::<VisibilityClass>()
 		.init_asset::<Image>()
 		.init_asset::<StandardMaterial>()
-		.init_asset::<crate::bsp::lighting::AnimatedLighting>()
-		.init_asset::<crate::bsp::BspBrushesAsset>()
-		.init_asset::<crate::bsp::Bsp>()
-		.init_asset_loader::<crate::bsp::loader::BspLoader>()
+		.init_asset::<crate::qmap::QuakeMap>()
+		.init_asset_loader::<crate::qmap::loader::QuakeMapLoader>()
 		.add_systems(Startup, setup)
 		.add_systems(Update, spawn_scene)
 		.add_systems(Last, exit)
@@ -156,7 +152,7 @@ fn preloading() {
 	struct MapScene(Handle<Scene>);
 
 	fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-		let handle = smol::block_on(async { asset_server.load_untyped_async("maps/example.bsp#Scene").await.expect("Asset error") });
+		let handle = smol::block_on(async { asset_server.load_untyped_async("maps/example.map#Scene").await.expect("Asset error") });
 
 		// This is set back so that the Scene can be put in Assets<Scene>, otherwise validate_scene will fail with it.
 		commands.insert_resource(MapScene(handle.try_typed::<Scene>().unwrap()));

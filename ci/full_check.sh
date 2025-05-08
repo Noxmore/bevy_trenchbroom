@@ -14,6 +14,9 @@ cargo clippy --all-targets
 { echo; echo; echo "Run cargo clippy without default features"; } 2> /dev/null
 cargo clippy --all-targets --no-default-features
 
+{ echo; echo; echo "Run cargo clippy for bsps"; } 2> /dev/null
+cargo clippy --all-targets --features bsp
+
 { echo; echo; echo "Run cargo clippy for avian"; } 2> /dev/null
 cargo clippy --all-targets --features avian
 
@@ -22,8 +25,8 @@ cargo clippy --all-targets --features rapier
 
 
 { echo; echo; echo "Run tests with avian"; } 2> /dev/null
-cargo test --locked --workspace --features bevy/x11 --features avian,client
-LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client
+cargo test --locked --workspace --features bevy/x11 --features avian,client,bsp
+LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features avian,client,bsp
 
 
 { echo; echo; echo "Run cargo doc with default features"; } 2> /dev/null
