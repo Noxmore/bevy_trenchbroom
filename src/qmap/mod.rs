@@ -27,7 +27,7 @@ pub struct QuakeMap {
 	pub entities: QuakeMapEntities,
 }
 
-/// All the entities stored in a quake map, whether [`QuakeMap`] or [`Bsp`](bsp::Bsp).
+/// All the entities stored in a quake map, whether `.map` or `.bsp`.
 #[derive(Reflect, Debug, Clone, Default, Deref, DerefMut)]
 pub struct QuakeMapEntities(pub Vec<QuakeMapEntity>);
 impl QuakeMapEntities {
@@ -67,6 +67,10 @@ pub struct QuakeMapEntity {
 	/// If the map entity is a [`Solid`](crate::class::QuakeClassType::Solid) entity, this will contain the brushes making it up.
 	///
 	/// NOTE: If loading from a BSP, this will always be empty. Instead, use the `BRUSHLIST` BSPX lump stored within [`BspModel`](crate::bsp::BspModel).
+	#[cfg(feature = "bsp")]
+	pub brushes: Vec<Brush>,
+	/// If the map entity is a [`Solid`](crate::class::QuakeClassType::Solid) entity, this will contain the brushes making it up.
+	#[cfg(not(feature = "bsp"))]
 	pub brushes: Vec<Brush>,
 }
 

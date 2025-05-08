@@ -13,7 +13,6 @@ use bevy::{
 	image::ImageSampler,
 	tasks::BoxedFuture,
 };
-use bsp::GENERIC_MATERIAL_PREFIX;
 use fgd::FgdType;
 use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::QuakeMapEntities;
@@ -83,9 +82,16 @@ pub struct TrenchBroomConfig {
 	/// If TrenchBroom can't find this palette file, all WAD textures will be black. If `bevy_trenchbroom` can't find the file, it will default to [`QUAKE_PALETTE`].
 	///
 	/// (Default: "palette.lmp")
+	#[cfg(feature = "bsp")]
 	#[builder(into)]
-	#[default("palette.lmp".into())] // TODO
+	#[default("palette.lmp".into())]
 	pub texture_pallette: PathBuf,
+	/// For BSPs.
+	#[cfg(not(feature = "bsp"))]
+	#[builder(into)]
+	#[default("palette.lmp".into())]
+	pub texture_pallette: PathBuf,
+
 	/// Patterns to match to exclude certain texture files from showing up in-editor. (Default: [`TrenchBroomConfig::default_texture_exclusions`]).
 	#[builder(into)]
 	#[default(Self::default_texture_exclusions())]
@@ -145,10 +151,10 @@ pub struct TrenchBroomConfig {
 	pub generic_material_extensions: Vec<String>,
 
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(Some(10_000.))]
 	pub lightmap_exposure: Option<f32>,
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(500.)]
 	pub default_irradiance_volume_intensity: f32,
 	/// Multipliers to the colors of BSP loaded irradiance volumes depending on direction.
@@ -157,7 +163,7 @@ pub struct TrenchBroomConfig {
 	/// This fakes it, making objects within look a little nicer.
 	///
 	/// (Default: [`IrradianceVolumeMultipliers::SLIGHT_SHADOW`])
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
 	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
@@ -165,8 +171,10 @@ pub struct TrenchBroomConfig {
 	pub suppress_invalid_entity_definitions: bool,
 
 	/// Whether to disable bsp lighting (lightmaps and irradiance volumes). This is for rendering backends where these aren't supported like OpenGL.
+	#[cfg(feature = "bsp")]
 	pub no_bsp_lighting: bool,
 
+	#[cfg(feature = "bsp")]
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_load_embedded_texture)))]
 	pub load_embedded_texture: Hook<LoadEmbeddedTextureFn>,
@@ -179,6 +187,7 @@ pub struct TrenchBroomConfig {
 	/// If [`Some`], embedded textures with names starting with `+<0..9>` will become animated, going to the next number in the range, and if it doesn't exist, looping back around to 0.
 	///
 	/// (Default: `Some(5)`)
+	#[cfg(feature = "bsp")]
 	#[default(Some(5.))]
 	pub embedded_texture_animation_fps: Option<f32>,
 
@@ -187,20 +196,21 @@ pub struct TrenchBroomConfig {
 	/// Using the material provided by the contained function, the left side being the foreground, and right side the background.
 	///
 	/// (Default: `Some(QuakeSkyMaterial::default)`)
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(Some(default))]
 	pub embedded_quake_sky_material: Option<fn() -> QuakeSkyMaterial>,
 
 	/// If [`Some`], embedded textures with names that start with `*` will use [`LiquidMaterial`], and will abide by the `water_alpha` worldspawn key.
 	///
 	/// (Default: `Some(QuakeSkyMaterial::default)`)
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(Some(default))]
 	pub embedded_liquid_material: Option<fn() -> LiquidMaterialExt>,
 
 	/// If `true`, embedded textures with names starting with `{` will be given the alpha mode [`Mask(0.5)`](AlphaMode::Mask), and pixels with the index value `255` will be turned transparent.
 	///
 	/// (Default: `true`)
+	#[cfg(feature = "bsp")]
 	#[default(true)]
 	pub embedded_texture_cutouts: bool,
 
@@ -225,10 +235,12 @@ pub struct TrenchBroomConfig {
 	/// NOTE: `special_lighting_color` is set to gray (`75`) by default instead of white (`255`), because otherwise all textures with it look way too bright and washed out, not sure why.
 	///
 	/// (Default: [`Self::default_compute_lightmap_settings`])
+	#[cfg(feature = "bsp")]
 	#[default(Self::default_compute_lightmap_settings())]
 	pub compute_lightmap_settings: ComputeLightmapSettings,
 
 	/// `qbsp` settings when parsing BSP files.
+	#[cfg(feature = "bsp")]
 	pub bsp_parse_settings: BspParseSettings,
 
 	/// Entity spawners that get run on every single entity (after the regular spawners), regardless of classname. (Default: [`TrenchBroomConfig::default_global_spawner`])
@@ -259,6 +271,7 @@ pub struct TrenchBroomConfig {
 	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
 	///
 	/// NOTE: It's recommended you add a pixel of padding in [`compute_lightmap_settings`](Self::compute_lightmap_settings), otherwise there will be obvious lightmap leaking.
+	#[cfg(feature = "bsp")]
 	pub bicubic_lightmap_filtering: bool,
 
 	/// Whether brush meshes are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::all`] (kept around)
@@ -266,6 +279,7 @@ pub struct TrenchBroomConfig {
 	pub brush_mesh_asset_usages: RenderAssetUsages,
 
 	/// Whether BSP loaded textures and lightmaps are kept around in memory after they're sent to the GPU. Default: [`RenderAssetUsages::RENDER_WORLD`] (not kept around)
+	#[cfg(feature = "bsp")]
 	#[default(RenderAssetUsages::RENDER_WORLD)]
 	pub bsp_textures_asset_usages: RenderAssetUsages,
 }

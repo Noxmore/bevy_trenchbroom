@@ -10,6 +10,7 @@ compile_error!("can only have one collider backend enabled");
 extern crate self as bevy_trenchbroom;
 
 pub mod brush;
+#[cfg(feature = "bsp")]
 pub mod bsp;
 pub mod class;
 pub mod config;
@@ -68,7 +69,7 @@ impl Plugin for CorePlugin {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}
 
-		#[cfg(feature = "client")]
+		#[cfg(all(feature = "client", feature = "bsp"))]
 		if config.lightmap_exposure.is_some() {
 			app.add_systems(Update, Self::set_lightmap_exposure);
 		}
@@ -78,7 +79,7 @@ impl Plugin for CorePlugin {
 	}
 }
 impl CorePlugin {
-	#[cfg(feature = "client")]
+	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub fn set_lightmap_exposure(
 		mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
 		mut standard_materials: ResMut<Assets<StandardMaterial>>,

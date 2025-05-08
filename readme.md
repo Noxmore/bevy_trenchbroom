@@ -249,7 +249,7 @@ fn spawn_test_map(
 
 ## BSP
 
-`bevy_trenchbroom` supports BSP loading via the [qbsp](https://github.com/Noxmore/qbsp) crate.
+`bevy_trenchbroom` supports BSP loading via the [qbsp](https://github.com/Noxmore/qbsp) crate when the `bsp` feature is activated.
 
 Specifically, it is oriented around using the latest [ericw-tools](https://ericwa.github.io/ericw-tools/) as the compiler, including some base classes such as `BspWorldspawn`, `BspSolidEntity`, and `BspLight` that contain various compiler-specific properties.
 

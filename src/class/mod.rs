@@ -223,7 +223,7 @@ impl<T: QuakeClass> FromType<T> for ReflectQuakeClass {
 	}
 }
 
-#[cfg(feature = "client")]
+#[cfg(all(feature = "client", feature = "bsp"))]
 #[test]
 fn derives_from() {
 	use crate::bsp::base_classes::*;

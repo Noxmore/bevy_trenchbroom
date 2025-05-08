@@ -1,5 +1,6 @@
 use crate::*;
 use brush::ConvexHull;
+#[cfg(feature = "bsp")]
 use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
 
@@ -29,7 +30,7 @@ pub type BrushVertices = Vec<Vec3>;
 pub fn calculate_brushes_vertices<'l, 'w: 'l>(
 	brushes: &Brushes,
 	brush_lists: &'w Assets<BrushList>,
-	bsp_brushes: &'w Assets<BspBrushesAsset>,
+	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BspBrushesAsset>,
 ) -> Option<Vec<BrushVertices>> {
 	fn extract_vertices<T: ConvexHull>(brush: &T) -> Vec<Vec3> {
 		brush.calculate_vertices().map(|(position, _)| position.as_vec3()).collect()
@@ -38,6 +39,7 @@ pub fn calculate_brushes_vertices<'l, 'w: 'l>(
 	match brushes {
 		Brushes::Owned(list) => Some(list.iter().map(extract_vertices).collect()),
 		Brushes::Shared(handle) => brush_lists.get(handle).map(|list| list.iter().map(extract_vertices).collect()),
+		#[cfg(feature = "bsp")]
 		Brushes::Bsp(handle) => bsp_brushes
 			.get(handle)
 			.map(|brushes_asset| brushes_asset.brushes.iter().map(extract_vertices).collect()),
@@ -67,12 +69,18 @@ impl PhysicsPlugin {
 		mut commands: Commands,
 		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
-		brush_assets: Res<Assets<BspBrushesAsset>>,
+		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BspBrushesAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
+		#[allow(unused)]
 		for (entity, brushes, transform) in &query {
 			let mut colliders = Vec::new();
-			let Some(brush_vertices) = calculate_brushes_vertices(brushes, &brush_lists, &brush_assets) else {
+			let Some(brush_vertices) = calculate_brushes_vertices(
+				brushes,
+				&brush_lists,
+				#[cfg(feature = "bsp")]
+				&brush_assets,
+			) else {
 				continue;
 			};
 
@@ -98,8 +106,11 @@ impl PhysicsPlugin {
 					fail!();
 				};
 
+				#[cfg(feature = "bsp")]
 				#[rustfmt::skip]
 				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
+				#[cfg(not(feature = "bsp"))]
+				let position = Vec3::ZERO;
 				colliders.push((position, Quat::IDENTITY, collider));
 			}
 
