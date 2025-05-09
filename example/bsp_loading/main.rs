@@ -6,7 +6,7 @@ use bevy::math::*;
 use bevy::prelude::*;
 #[cfg(feature = "example_client")]
 use bevy_flycam::prelude::*;
-use bevy_trenchbroom::bsp::base_classes::*;
+use bevy_trenchbroom::class::builtin::*;
 use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
 use enumflags2::*;

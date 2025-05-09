@@ -4,8 +4,8 @@ use fgd::{IntBool, IntBoolOverride, Srgb};
 
 use crate::*;
 
-pub struct BspBaseClassesPlugin;
-impl Plugin for BspBaseClassesPlugin {
+pub struct BspClassesPlugin;
+impl Plugin for BspClassesPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app

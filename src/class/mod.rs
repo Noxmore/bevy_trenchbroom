@@ -226,7 +226,7 @@ impl<T: QuakeClass> FromType<T> for ReflectQuakeClass {
 #[cfg(all(feature = "client", feature = "bsp"))]
 #[test]
 fn derives_from() {
-	use crate::bsp::base_classes::*;
+	use builtin::*;
 
 	assert!(PointLight::CLASS_INFO.derives_from::<Transform>());
 	assert!(PointLight::CLASS_INFO.derives_from::<Visibility>());

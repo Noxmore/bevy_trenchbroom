@@ -56,7 +56,7 @@ You can define your components like so to turn them into quake classes.
 ```rust
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
-use bevy_trenchbroom::bsp::base_classes::*;
+use bevy_trenchbroom::class::builtin::*;
 
 // The required worldspawn class makes up the main structural
 // world geometry and settings. Exactly one exists in every map.

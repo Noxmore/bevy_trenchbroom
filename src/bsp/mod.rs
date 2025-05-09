@@ -1,4 +1,3 @@
-pub mod base_classes;
 #[cfg(feature = "client")]
 pub mod lighting;
 pub mod loader;

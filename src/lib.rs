@@ -57,7 +57,7 @@ impl PluginGroup for TrenchBroomPlugins {
 		let builder = builder.add(special_textures::SpecialTexturesPlugin);
 
 		#[cfg(feature = "bsp")]
-		let builder = builder.add(bsp::BspPlugin).add(bsp::base_classes::BspBaseClassesPlugin);
+		let builder = builder.add(bsp::BspPlugin).add(class::builtin::BspClassesPlugin);
 
 		builder
 	}

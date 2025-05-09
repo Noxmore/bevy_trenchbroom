@@ -1,5 +1,10 @@
 //! Builtin [`QuakeClass`] implementations.
 
+flat! {
+	#[cfg(feature = "bsp")]
+	bsp;
+}
+
 use fgd::FgdType;
 use qmap::{QuakeEntityError, QuakeEntityErrorResultExt};
 use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
@@ -492,8 +497,6 @@ pub struct Targetable {
 #[cfg(feature = "bsp")]
 #[test]
 fn builtin_base_class_prefix() {
-	use crate::bsp::base_classes::BspBaseClassesPlugin;
-
 	let mut app = App::new();
 
 	app.insert_resource(AppTypeRegistry::default())
@@ -502,7 +505,7 @@ fn builtin_base_class_prefix() {
 		.register_type::<SpotLight>()
 		.register_type::<DirectionalLight>()
 		.register_type::<Visibility>()
-		.add_plugins((BuiltinClassesPlugin, BspBaseClassesPlugin));
+		.add_plugins((BuiltinClassesPlugin, BspClassesPlugin));
 
 	for (_, ReflectQuakeClass { erased_class: class }) in app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>() {
 		if class.info.ty.is_base() {
