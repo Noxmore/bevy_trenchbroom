@@ -211,6 +211,7 @@ impl ErasedQuakeClass {
 	}
 }
 
+/// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`].
 #[derive(Clone)]
 pub struct ReflectQuakeClass {
 	pub erased_class: &'static ErasedQuakeClass,
