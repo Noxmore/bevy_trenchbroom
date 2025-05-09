@@ -66,6 +66,7 @@ impl Plugin for CorePlugin {
 	fn build(&self, app: &mut App) {
 		let CorePlugin(config) = self;
 
+		// This isn't part of the plugin group because the generics would make it annoying to disable if you were to add your own `MaterializePlugin`.
 		if !app.is_plugin_added::<MaterializeMarkerPlugin>() {
 			app.add_plugins(MaterializePlugin::new(TomlMaterialDeserializer));
 		}
