@@ -239,7 +239,7 @@ impl ErasedQuakeClass {
 	}
 }
 
-/// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`], unless [`disabled`](Self::disabled).
+/// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`], unless not [`enabled`](Self::enabled).
 #[derive(Clone)]
 pub struct ReflectQuakeClass {
 	pub erased_class: &'static ErasedQuakeClass,
