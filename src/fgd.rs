@@ -19,6 +19,7 @@ impl Plugin for FgdPlugin {
 pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 	let classes = type_registry
 		.iter_with_data::<ReflectQuakeClass>()
+		.filter(|(_, class)| class.enabled)
 		.map(|(_, class)| class.erased_class)
 		.collect_vec();
 

@@ -36,7 +36,7 @@ pub use crate::special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMat
 pub use crate::{
 	TrenchBroomPlugins, TrenchBroomServer,
 	class::{
-		QuakeClass, ReflectQuakeClass,
+		QuakeClass, QuakeClassAppExt, ReflectQuakeClass,
 		builtin::{Target, Targetable},
 		spawn_util::*,
 	},

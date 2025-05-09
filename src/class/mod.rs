@@ -2,8 +2,9 @@ pub mod builtin;
 pub mod spawn_util;
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
-use bevy_reflect::{FromType, TypeRegistry};
+use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
+use qbsp::smallvec::SmallVec;
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -14,7 +15,34 @@ impl Plugin for QuakeClassPlugin {
 		#[rustfmt::skip]
 		app
 			.register_type::<PreloadedAssets>()
+
+			.add_systems(Startup, Self::verify_classes)
 		;
+	}
+}
+impl QuakeClassPlugin {
+	pub fn verify_classes(type_registry: Res<AppTypeRegistry>) {
+		let type_registry = type_registry.read();
+
+		let mut map: HashMap<&str, SmallVec<[&str; 1]>> = HashMap::new();
+
+		for (registration, reflected_class) in type_registry.iter_with_data::<ReflectQuakeClass>() {
+			if !reflected_class.enabled {
+				continue;
+			}
+			map.entry(reflected_class.erased_class.info.name)
+				.or_default()
+				.push(registration.type_info().type_path());
+		}
+
+		for (classname, registrations) in map {
+			if registrations.len() > 1 {
+				error!(
+					"Class {classname:?} has been registered by more than one type: [{}] Did you forget to do `override_class::<T>()` instead of `register_type::<T>()`?",
+					registrations.join(", ")
+				);
+			}
+		}
 	}
 }
 
@@ -132,6 +160,7 @@ impl QuakeClassInfo {
 pub fn generate_class_map(registry: &TypeRegistry) -> HashMap<&'static str, &'static ErasedQuakeClass> {
 	registry
 		.iter_with_data::<ReflectQuakeClass>()
+		.filter(|(_, class)| class.enabled)
 		.map(|(_, class)| (class.erased_class.info.name, class.erased_class))
 		.collect()
 }
@@ -156,7 +185,7 @@ impl QuakeClassSpawnView<'_, '_, '_> {
 	}
 }
 
-pub trait QuakeClass: Component + Reflect + Sized {
+pub trait QuakeClass: Component + Reflect + GetTypeRegistration + Sized {
 	/// A global [`ErasedQuakeClass`] of this type. Used for base classes and registration.
 	///
 	/// Everything i've read seems a little vague on this situation, but in testing it seems like this acts like a static.
@@ -211,16 +240,60 @@ impl ErasedQuakeClass {
 	}
 }
 
-/// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`].
+/// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`], unless [`disabled`](Self::disabled).
 #[derive(Clone)]
 pub struct ReflectQuakeClass {
 	pub erased_class: &'static ErasedQuakeClass,
+	pub enabled: bool,
 }
 impl<T: QuakeClass> FromType<T> for ReflectQuakeClass {
 	fn from_type() -> Self {
 		Self {
 			erased_class: T::ERASED_CLASS,
+			enabled: true,
 		}
+	}
+}
+
+pub trait QuakeClassAppExt {
+	/// Stops a specific [`QuakeClass`] from being considered when spawning or writing an fgd, effectively unregistering it.
+	///
+	/// We can't do this by just unregistering the type because at the time of writing, that isn't public API.
+	fn disable_class<T: QuakeClass>(&mut self) -> &mut Self;
+	/// Registers a class after disabling all other classes with the same classname.
+	fn override_class<T: QuakeClass>(&mut self) -> &mut Self;
+}
+impl QuakeClassAppExt for App {
+	#[track_caller]
+	fn disable_class<T: QuakeClass>(&mut self) -> &mut Self {
+		let mut type_registry = self.world().resource::<AppTypeRegistry>().write();
+
+		type_registry
+			.get_mut(TypeId::of::<T>())
+			.expect("Class not registered!")
+			.data_mut::<ReflectQuakeClass>()
+			.expect("Class not reflected, did you forget to add #[reflect(QuakeClass)]?")
+			.enabled = false;
+
+		drop(type_registry);
+		self
+	}
+	fn override_class<T: QuakeClass>(&mut self) -> &mut Self {
+		let mut type_registry = self.world().resource::<AppTypeRegistry>().write();
+
+		for registration in type_registry.iter_mut() {
+			let type_id = registration.type_info().type_id();
+			let Some(reflected_class) = registration.data_mut::<ReflectQuakeClass>() else { continue };
+
+			if type_id == TypeId::of::<T>() {
+				reflected_class.enabled = true;
+			} else if reflected_class.erased_class.info.name == T::CLASS_INFO.name {
+				reflected_class.enabled = false;
+			}
+		}
+
+		drop(type_registry);
+		self.register_type::<T>()
 	}
 }
 

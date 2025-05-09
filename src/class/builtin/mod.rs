@@ -499,7 +499,7 @@ pub struct Targetable {
 fn builtin_base_class_prefix() {
 	let mut app = App::new();
 
-	app.insert_resource(AppTypeRegistry::default())
+	app.init_resource::<AppTypeRegistry>()
 		.register_type::<Transform>()
 		.register_type::<PointLight>()
 		.register_type::<SpotLight>()
@@ -507,7 +507,7 @@ fn builtin_base_class_prefix() {
 		.register_type::<Visibility>()
 		.add_plugins((BuiltinClassesPlugin, BspClassesPlugin));
 
-	for (_, ReflectQuakeClass { erased_class: class }) in app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>() {
+	for (_, ReflectQuakeClass { erased_class: class, .. }) in app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>() {
 		if class.info.ty.is_base() {
 			assert!(
 				class.info.name.starts_with(BUILTIN_BASE_CLASS_PREFIX),
