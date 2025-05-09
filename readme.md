@@ -19,7 +19,7 @@ More specifically, integration and support for the following workflows:
 
 - Add the `TrenchBroomPlugin` with a supplied `TrenchBroomConfig` to your app like so:
 
-```rust ignore
+```rust no_run
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
