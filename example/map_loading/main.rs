@@ -95,7 +95,7 @@ fn main() {
 			}),
 			ClientPlugin,
 		))
-		.add_plugins(TrenchBroomPlugin(TrenchBroomConfig::new("bevy_trenchbroom_example")))
+		.add_plugins(TrenchBroomPlugins(TrenchBroomConfig::new("bevy_trenchbroom_example")))
 		.register_type::<Worldspawn>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()

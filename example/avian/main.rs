@@ -33,7 +33,7 @@ fn main() {
 		})
 		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
 		.add_systems(Update, make_unlit)
-		.add_plugins(TrenchBroomPlugin(
+		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
 		))
 		.register_type::<Worldspawn>()
