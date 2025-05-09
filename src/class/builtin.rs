@@ -7,6 +7,11 @@ use util::{angle_to_quat, angles_to_quat, mangle_to_quat};
 use super::*;
 use crate::*;
 
+/// The prefix used by base classes provided by bevy_trenchbroom.
+///
+/// You should not use this prefix in your base classes to avoid conflicts.
+pub const BUILTIN_BASE_CLASS_PREFIX: &str = "__";
+
 pub struct BuiltinClassesPlugin;
 impl Plugin for BuiltinClassesPlugin {
 	fn build(&self, app: &mut App) {
@@ -58,7 +63,7 @@ pub fn read_rotation_from_entity(src_entity: &QuakeMapEntity) -> Result<Quat, Qu
 impl QuakeClass for Transform {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
-		name: "transform",
+		name: "__transform",
 		description: None,
 		base: &[],
 
@@ -110,7 +115,7 @@ impl QuakeClass for Transform {
 impl QuakeClass for Visibility {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
-		name: "visibility",
+		name: "__visibility",
 		description: None,
 		base: &[],
 
@@ -156,7 +161,7 @@ impl QuakeClass for Visibility {
 impl QuakeClass for PointLight {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
-		name: "bevy_point_light",
+		name: "__point_light",
 		description: None,
 		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
@@ -257,7 +262,7 @@ impl QuakeClass for PointLight {
 impl QuakeClass for SpotLight {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
-		name: "bevy_spot_light",
+		name: "__spot_light",
 		description: None,
 		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
@@ -387,7 +392,7 @@ impl QuakeClass for SpotLight {
 impl QuakeClass for DirectionalLight {
 	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
 		ty: QuakeClassType::Base,
-		name: "bevy_directional_light",
+		name: "__directional_light",
 		description: None,
 		base: &[Transform::ERASED_CLASS, Visibility::ERASED_CLASS],
 
@@ -465,6 +470,7 @@ impl QuakeClass for DirectionalLight {
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
+#[classname("__target")]
 pub struct Target {
 	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
 	pub target: Option<String>,
@@ -477,7 +483,34 @@ pub struct Target {
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
+#[classname("__targetable")]
 pub struct Targetable {
 	/// The name for entities with [`Target`] components to point to.
 	pub targetname: Option<String>,
+}
+
+#[cfg(feature = "bsp")]
+#[test]
+fn builtin_base_class_prefix() {
+	use crate::bsp::base_classes::BspBaseClassesPlugin;
+
+	let mut app = App::new();
+
+	app.insert_resource(AppTypeRegistry::default())
+		.register_type::<Transform>()
+		.register_type::<PointLight>()
+		.register_type::<SpotLight>()
+		.register_type::<DirectionalLight>()
+		.register_type::<Visibility>()
+		.add_plugins((BuiltinClassesPlugin, BspBaseClassesPlugin));
+
+	for (_, ReflectQuakeClass { erased_class: class }) in app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>() {
+		if class.info.ty.is_base() {
+			assert!(
+				class.info.name.starts_with(BUILTIN_BASE_CLASS_PREFIX),
+				"class {:?} does not start with prefix {BUILTIN_BASE_CLASS_PREFIX:?}",
+				class.info.name
+			);
+		}
+	}
 }

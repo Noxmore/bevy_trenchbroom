@@ -19,6 +19,7 @@ impl Plugin for BspBaseClassesPlugin {
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
+#[classname("__bsp_solid_entity")]
 pub struct BspSolidEntity {
 	/// Generates an `LMSHIFT` BSPX lump for use by a light util. Note that both scaled and unscaled lighting will normally be used.
 	pub _lmscale: Option<u32>,
@@ -196,6 +197,7 @@ pub struct BspSolidEntity {
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 #[base(BspSolidEntity)]
+#[classname("__bsp_worldspawn")]
 pub struct BspWorldspawn {
 	/// (Not documented, but hopefully self-explanatory.)
 	pub _maxlight: Option<f32>,
@@ -358,6 +360,7 @@ pub enum DirtMode {
 /// Contains properties used by the `ericw-tools` compiler for any entity with a classname starting with the first five letters "light". E.g. "light", "light_globe", "light_flame_small_yellow", etc.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
+#[classname("__bsp_light")]
 pub struct BspLight {
 	/// Set the light intensity. Negative values are also allowed and will cause the entity to subtract light cast by other entities. Default 300.
 	#[default(300.)]
@@ -564,6 +567,7 @@ pub enum BspLightAttenuation {
 /// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
+#[classname("__bsp_external_map")]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.
 	#[no_default]
