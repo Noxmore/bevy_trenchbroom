@@ -4,7 +4,6 @@ pub mod spawn_util;
 use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
 use geometry::GeometryProvider;
-use qbsp::smallvec::SmallVec;
 use qmap::QuakeMapEntity;
 
 use crate::*;
@@ -24,7 +23,7 @@ impl QuakeClassPlugin {
 	pub fn verify_classes(type_registry: Res<AppTypeRegistry>) {
 		let type_registry = type_registry.read();
 
-		let mut map: HashMap<&str, SmallVec<[&str; 1]>> = HashMap::new();
+		let mut map: HashMap<&str, Vec<&str>> = HashMap::new();
 
 		for (registration, reflected_class) in type_registry.iter_with_data::<ReflectQuakeClass>() {
 			if !reflected_class.enabled {
