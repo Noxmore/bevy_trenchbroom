@@ -50,7 +50,10 @@ impl ConfigPlugin {
 	
 			commands.queue(move |world: &mut World| {
 				let id = handle.id();
-				handle.asset_scope(
+				// We use asset_scope_mut instead of asset_scope, not because we need mutable access to the material—we don't—but because
+				// mutably accessing the material causes the images to update their samplers, when sometimes they randomly didn't.
+				// TODO: This is a Bevy bug, and i have no idea why this fixes it.
+				handle.asset_scope_mut(
 					world,
 					Box::new(move |world, material| {
 						let Some(material) = material else {
