@@ -13,7 +13,7 @@ doc = false
 
 [dependencies]
 bevy = { workspace = true, features = ["default"] }
-avian3d = { version = "0.2" }
+avian3d = { workspace = true }
 bevy_trenchbroom = { path = "../..", default-features = false, features = [
 	"avian",
 	"client",
