@@ -13,12 +13,12 @@ doc = false
 
 [dependencies]
 bevy = { workspace = true, features = ["default"] }
-avian3d = { workspace = true }
+avian3d.workspace = true
 bevy_trenchbroom = { path = "../..", default-features = false, features = [
 	"avian",
 	"client",
 	"bsp"
 ] }
-bevy_flycam = { workspace = true }
-bevy-inspector-egui = { workspace = true }
+bevy_flycam.workspace = true
+bevy-inspector-egui.workspace = true
 nil.workspace = true
