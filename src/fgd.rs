@@ -21,6 +21,7 @@ pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 		.iter_with_data::<ReflectQuakeClass>()
 		.filter(|(_, class)| class.enabled)
 		.map(|(_, class)| class.erased_class)
+		.sorted_by(|a, b| a.info.name.cmp(b.info.name))
 		.collect_vec();
 
 	use fmt::Write;
