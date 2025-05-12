@@ -10,6 +10,7 @@
 	- Use `add_game_to_preferences_in_default_directory` to set the game directory in the user's TrenchBroom settings to the current working directory.
 - The default material extension has been changed to `toml` due to the fact that the default material deserializer is `TomlMaterialDeserializer`. This can be changed in `TrenchBroomConfig`.
 - `TrenchBroomConfig` now supports multiple texture and material extensions, and those fields have been pluralized to reflect that.
+- BSP loading has been locked behind the `bsp` feature flag.
 
 ### bevy_materialize
 - Non-color maps in `StandardMaterial` now use a linear color space out of the box, making PBR materials look correctly.
