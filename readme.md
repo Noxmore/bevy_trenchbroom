@@ -286,8 +286,8 @@ For dedicated servers `bevy_trenchbroom` supports headless mode by turning off i
 bevy_trenchbroom = { version = "...", default-features = false }
 ```
 
-# Possible future plans
-- Entity IO
+# Migration Guidde
+See the [Migration Guide](https://github.com/Noxmore/bevy_trenchbroom/blob/main/Migration%20Guide.md) when updating between versions!
 
 # Version support table
 | Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools |
