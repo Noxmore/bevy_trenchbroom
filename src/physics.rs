@@ -110,7 +110,7 @@ impl PhysicsPlugin {
 				#[rustfmt::skip]
 				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
 				#[cfg(not(feature = "bsp"))]
-				let position = Vec3::ZERO;
+				let position = -transform.translation;
 				colliders.push((position, Quat::IDENTITY, collider));
 			}
 
