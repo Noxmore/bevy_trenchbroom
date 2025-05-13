@@ -1,12 +1,15 @@
 //! A collection of useful base classes when working with a BSP workflow.
 
+#[cfg(feature = "bsp")]
 use fgd::{IntBool, IntBoolOverride, Srgb};
 
 use crate::*;
 
+
 pub struct BspClassesPlugin;
 impl Plugin for BspClassesPlugin {
-	fn build(&self, app: &mut App) {
+	fn build(&self, #[allow(unused)] app: &mut App) {
+		#[cfg(feature = "bsp")]
 		#[rustfmt::skip]
 		app
 			.register_type::<BspSolidEntity>()
@@ -17,6 +20,7 @@ impl Plugin for BspClassesPlugin {
 }
 
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
+#[cfg(feature = "bsp")]
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 #[classname("__bsp_solid_entity")]
@@ -194,6 +198,7 @@ pub struct BspSolidEntity {
 }
 
 /// Contains properties used by the `ericw-tools` compiler for the `worldspawn` entity.
+#[cfg(feature = "bsp")]
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 #[base(BspSolidEntity)]
@@ -349,6 +354,7 @@ pub struct BspWorldspawn {
 	pub _surflight_minlight_scale: f32,
 }
 
+#[cfg(feature = "bsp")]
 #[derive(FgdType, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 #[number_key]
 pub enum DirtMode {
@@ -357,197 +363,7 @@ pub enum DirtMode {
 	Randomized = 1,
 }
 
-/// Contains properties used by the `ericw-tools` compiler for any entity with a classname starting with the first five letters "light". E.g. "light", "light_globe", "light_flame_small_yellow", etc.
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__bsp_light")]
-pub struct BspLight {
-	/// Set the light intensity. Negative values are also allowed and will cause the entity to subtract light cast by other entities. Default 300.
-	#[default(300.)]
-	pub light: f32,
 
-	/// Scale the fade distance of the light by the value specified. Values of n > 1 make the light fade more quickly with distance, and values < 1 make the light fade more slowly (and thus reach further). Default 1.
-	#[default(1.)]
-	pub wait: f32,
-
-	/// The attenuation formula for the light.
-	pub delay: BspLightAttenuation,
-
-	/// Sets the distance at which the light drops to 0, in map units.
-	///
-	/// In this mode, "wait" is ignored and "light" only controls the brightness at the center of the light, and no longer affects the falloff distance.
-	///
-	/// Only supported on linear attenuation (delay 0) lights currently.
-	pub _falloff: Option<f32>,
-
-	/// Specify red(r), green(g) and blue(b) components for the colour of the light. RGB component values are between 0 and 255 (between 0 and 1 is also accepted). Default is white light ("255 255 255").
-	#[default(Srgb::WHITE_255)]
-	pub _color: Srgb,
-
-	/// Turns the light into a switchable light, toggled by another entity targeting it’s name.
-	pub targetname: Option<String>,
-
-	/// Set the animated light style. Default 0.
-	#[default(LightmapStyle::NORMAL)]
-	pub style: LightmapStyle,
-
-	/// Sets a scaling factor for how much influence the angle of incidence of light on a surface has on the brightness of the surface
-	/// Value must be between 0.0 and 1.0. Smaller values mean less attenuation, with zero meaning that angle of incidence has no effect at all on the brightness.
-	/// Default 0.5.
-	#[default(0.5)]
-	pub _anglescale: f32,
-
-	/// Override the global "_dirtscale" setting to change how this light is affected by dirtmapping (ambient occlusion). See descriptions of this key in the worldspawn section.
-	pub _dirtscale: Option<f32>,
-
-	/// Override the global "_dirtgain" setting to change how this light is affected by dirtmapping (ambient occlusion). See descriptions of this key in the worldspawn section.
-	pub _dirtgain: Option<f32>,
-
-	/// Overrides the worldspawn setting of "_dirt" for this particular light.
-	/// -1 to disable dirtmapping (ambient occlusion) for this light, making it illuminate the dirtmapping shadows.
-	/// 1 to enable ambient occlusion for this light. Default is to defer to the worldspawn setting.
-	pub _dirt: IntBoolOverride,
-
-	/// Split up the light into a sphere of randomly positioned lights within the radius denoted by this value (in world units).
-	/// Useful to give shadows a wider penumbra. "_samples" specifies the number of lights in the sphere.
-	/// The "light" value is automatically scaled down for most lighting formulas (except linear and non-additive minlight) to attempt to keep the brightness equal.
-	/// Default is 0, do not split up lights.
-	pub _deviance: f32,
-
-	/// Number of lights to use for "_deviance". Default 16 (only used if "_deviance" is set).
-	#[default(16)]
-	pub _samples: u32,
-
-	/// Scales the amount of light that is contributed by bounces. Default is 1.0, 0.0 disables bounce lighting for this light.
-	#[default(1.)]
-	pub _bouncescale: f32,
-
-	/// Set to 1 to make the light compiler ignore this entity (prevents it from casting any light). e.g. could be useful with rtlights.
-	pub _nostaticlight: IntBool,
-
-	/// Calculate lighting with and without brush models with a “targetname” equal to this value, and stores the resulting switchable shadow data in a light style which is stored in this light entity’s “style” key.
-	///
-	/// You should give this light a targetname and typically set “spawnflags” “1” (start off).
-	///
-	/// Implies `_nostaticlight` (this entity itself does not cast any light).
-	pub _switchableshadow_target: Option<String>,
-
-	/// Turns the light into a spotlight (or sun light if `_sun` if 1), with the direction of light being towards another entity with it’s "targetname" key set to this value.
-	///
-	/// NOTE: Docs may imply that sun lights have to target `info_null` entities? I haven't tested it though.
-	pub target: Option<String>,
-
-	/// Turns the light into a spotlight and specifies the direction of light using yaw, pitch and roll in degrees.
-	/// Yaw specifies the angle around the Z-axis from 0 to 359 degrees and pitch specifies the angle from 90 (straight up) to -90 (straight down).
-	/// Roll has no effect, so use any value (e.g. 0). Often easier than the "target" method.
-	pub mangle: Vec3,
-
-	/// Specifies the angle in degrees for a spotlight cone. Default 40.
-	#[default(40.)]
-	pub angle: f32,
-
-	/// Specifies the angle in degrees for an inner spotlight cone (must be less than the "angle" cone. Creates a softer transition between the full brightness of the inner cone to the edge of the outer cone. Default 0 (disabled).
-	pub _softangle: f32,
-
-	/// Makes surfaces with the given texture name emit light, by using this light as a template which is copied across those surfaces.
-	/// Lights are spaced about 128 units (though possibly closer due to bsp splitting) apart and positioned 2 units above the surfaces.
-	pub _surface: Option<String>,
-
-	/// Controls the offset lights are placed above surfaces for "_surface" (world units). Default 2.
-	#[default(2.)]
-	pub _surface_offset: f32,
-
-	/// For a surface light template (i.e. a light with "_surface" set), setting this to "1" makes each instance into a spotlight,
-	/// with the direction of light pointing along the surface normal. In other words, it automatically sets "mangle" on each of the generated lights.
-	pub _surface_spotlight: IntBool,
-
-	/// Whether to use Q1-style surface subdivision (0) or Q2-style surface radiosity (1) on this light specifically.
-	///
-	/// Use in conjunction with `_surface`.
-	///
-	/// The default can be changed for all surface lights in a map with worldspawn key `_surflight_radiosity`.
-	pub _surface_radiosity: Option<IntBool>,
-
-	/// Integer, default 0.
-	///
-	/// For use with `_surface` lights.
-	///
-	/// Can be set to a nonzero value to restrict this surface light template to only emit from brushes with a matching `_surflight_group` value.
-	pub _surflight_group: u32,
-
-	/// Specifies that a light should project this texture. The texture must be used in the map somewhere.
-	pub _project_texture: Option<String>,
-
-	/// Specifies the yaw/pitch/roll angles for a texture projection (overriding mangle).
-	pub _project_mangle: Option<Vec3>,
-
-	/// Specifies the fov angle for a texture projection. Default 90.
-	#[default(90.)]
-	pub _project_fov: f32,
-
-	/// Set to 1 to make this entity a sun, as an alternative to using the sunlight worldspawn keys.
-	/// If the light targets an info_null entity, the direction towards that entity sets sun direction.
-	/// The light itself is disabled, so it can be placed anywhere in the map.
-	///
-	///
-	/// The following light properties correspond to these sunlight settings:
-	/// - light => _sunlight
-	/// - mangle => _sunlight_mangle
-	/// - deviance => _sunlight_penumbra
-	/// - _color => _sunlight_color
-	/// - _dirt => _sunlight_dirt
-	/// - _anglescale => _anglescale
-	pub _sun: IntBool,
-
-	/// This sunlight is only emitted from faces with this texture name. Default is to be emitted from all sky textures.
-	pub _suntexture: Option<String>,
-
-	/// Set to 1 to make this entity control the upper dome lighting emitted from sky faces, as an alternative to the worldspawn key `_sunlight2`.
-	/// The light entity itself is disabled, so it can be placed anywhere in the map.
-	pub _sunlight2: IntBool,
-
-	/// Same as `_sunlight2`, but makes this sky light come from the lower hemisphere.
-	pub _sunlight3: IntBool,
-
-	/// Mask of lighting channels that the light casts on.
-	///
-	/// In order for this light to cast light on a bmodel, there needs to be a least 1 bit in common between `_light_channel_mask` and the receiving bmodel’s `_object_channel_mask` (i.e. the bitwise AND must be nonzero).
-	///
-	/// Default 1.
-	#[default(1)]
-	pub _light_channel_mask: u32,
-
-	/// This is the mask of lighting channels that will block this entity’s light rays. If the the bitwise AND of this and another bmodel’s `_object_channel_mask` is nonzero, the light ray is stopped.
-	///
-	/// This is an advanced option, for making bmodels only cast shadows for specific lights (but not others).
-	///
-	/// Defaults to `_light_channel_mask`
-	pub _shadow_channel_mask: Option<u32>,
-}
-
-/// How light fades over distance. Used in the `delay` property of light entities.
-#[derive(FgdType, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
-#[number_key]
-pub enum BspLightAttenuation {
-	/// Linear attenuation (default)
-	#[default]
-	Linear = 0,
-	/// 1/x attenuation
-	Reciprocal = 1,
-	/// 1/(x^2) attenuation
-	ReciprocalSquare = 2,
-	/// No attenuation (same brightness at any distance)
-	None = 3,
-	/// No attenuation, and like minlight
-	/// it won’t raise the lighting above it’s light value.
-	/// Unlike minlight, it will only affect surfaces within
-	/// line of sight of the entity.
-	LocalMinLight = 4,
-	/// 1/(x^2) attenuation, but slightly more attenuated and
-	/// without the extra bright effect that [`ReciprocalSquare`](BspLightAttenuation::ReciprocalSquare) has
-	/// near the source.
-	ReciprocalSquareTweaked = 5,
-}
 
 /// `ericw-tools` qbsp has a prefab system using a point entity named “misc_external_map”.
 /// The idea is, each “misc_external_map” imports brushes from an external .map file,
@@ -565,6 +381,7 @@ pub enum BspLightAttenuation {
 /// Note that you can set other entity keys on the “misc_external_map” to configure the final entity type.
 /// e.g. if you set “_external_map_classname” to “func_door”,
 /// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
+#[cfg(feature = "bsp")]
 #[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
 #[classname("__bsp_external_map")]
