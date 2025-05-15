@@ -56,6 +56,7 @@ impl Plugin for PhysicsPlugin {
 
 			.init_resource::<SceneCollidersReadyTests>()
 
+			// PostUpdate to order right after scenes have been spawned
 			.add_systems(PostUpdate, (
 				Self::add_convex_colliders,
 				Self::add_trimesh_colliders,
