@@ -28,11 +28,10 @@ bevy = { version = "0.16.0", default-features = false, features = [
 	"png",
 ] } # For examples
 nil = "0.15"
-bevy_flycam = "0.15"
-bevy-inspector-egui = "0.31"
 enumflags2 = "0.7"
 avian3d = "0.3"
 bevy_rapier3d = "0.30"
+example_commons = { path = "example/example_commons" }
 
 [dependencies]
 bevy_trenchbroom_macros = { version = "0.8.0-dev", path = "macros" }
@@ -85,6 +84,3 @@ client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
 bsp = ["dep:qbsp"]
-
-[patch.crates-io]
-bevy_flycam = { git = "https://github.com/kristoff3r/bevy_flycam.git" }

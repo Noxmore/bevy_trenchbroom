@@ -4,8 +4,6 @@
 use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
-#[cfg(feature = "example_client")]
-use bevy_flycam::prelude::*;
 use bevy_trenchbroom::class::builtin::*;
 use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
@@ -88,39 +86,19 @@ pub struct Mushroom;
 #[iconsprite({ path: "point_light.png", scale: 0.1 })]
 pub struct Light;
 
-struct ClientPlugin;
-impl Plugin for ClientPlugin {
-	fn build(&self, #[allow(unused)] app: &mut App) {
-		#[cfg(feature = "example_client")]
-		#[rustfmt::skip]
-		app
-			// bevy_flycam setup so we can get a closer look at the scene, mainly for debugging
-			.add_plugins(PlayerPlugin)
-			.insert_resource(MovementSettings {
-				sensitivity: 0.00005,
-				speed: 6.,
-			})
-			.add_plugins(bevy_inspector_egui::bevy_egui::EguiPlugin { enable_multipass_for_primary_context: true })
-			.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
-		;
-	}
-}
-
 fn main() {
 	App::new()
-		.add_plugins((
-			DefaultPlugins.set(AssetPlugin {
-				file_path: "../../assets".s(),
-				..default()
-			}),
-			ClientPlugin,
-		))
+		.add_plugins(DefaultPlugins.set(AssetPlugin {
+			file_path: "../../assets".s(),
+			..default()
+		}))
 		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
 				.bicubic_lightmap_filtering(true)
 				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
+		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.register_type::<Worldspawn>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()
@@ -134,7 +112,6 @@ fn main() {
 fn setup_scene(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
-	#[cfg(feature = "example_client")] mut projection_query: Query<&mut Projection>,
 	#[cfg(feature = "example_client")] mut lightmap_animators: ResMut<LightingAnimators>,
 ) {
 	#[cfg(feature = "example_client")]
@@ -156,14 +133,15 @@ fn setup_scene(
 	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
 	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
 
-	// Wide FOV
 	#[cfg(feature = "example_client")]
-	for mut projection in &mut projection_query {
-		*projection = Projection::Perspective(PerspectiveProjection {
+	commands.spawn((
+		example_commons::DebugCamera,
+		Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
 			..default()
-		});
-	}
+		}),
+		example_commons::default_debug_camera_transform(),
+	));
 }
 
 fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {

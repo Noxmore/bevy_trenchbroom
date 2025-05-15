@@ -854,14 +854,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_flycam"
-version = "0.15.0"
-source = "git+https://github.com/kristoff3r/bevy_flycam.git#7d738c77f2d4a00119199dd834e07e096b00e05e"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "bevy_gilrs"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1799,10 +1791,9 @@ name = "bsp_loading"
 version = "0.8.0-dev"
 dependencies = [
  "bevy",
- "bevy-inspector-egui",
- "bevy_flycam",
  "bevy_trenchbroom",
  "enumflags2",
+ "example_commons",
  "nil",
 ]
 
@@ -2585,6 +2576,14 @@ checksum = "8be9f3dfaaffdae2972880079a491a1a8bb7cbed0b8dd7a347f668b4150a3b93"
 dependencies = [
  "event-listener",
  "pin-project-lite",
+]
+
+[[package]]
+name = "example_commons"
+version = "0.8.0-dev"
+dependencies = [
+ "bevy",
+ "bevy-inspector-egui",
 ]
 
 [[package]]
@@ -3427,9 +3426,8 @@ name = "map_loading"
 version = "0.8.0-dev"
 dependencies = [
  "bevy",
- "bevy-inspector-egui",
- "bevy_flycam",
  "bevy_trenchbroom",
+ "example_commons",
  "nil",
 ]
 
@@ -4317,10 +4315,9 @@ version = "0.8.0-dev"
 dependencies = [
  "avian3d",
  "bevy",
- "bevy-inspector-egui",
- "bevy_flycam",
  "bevy_rapier3d",
  "bevy_trenchbroom",
+ "example_commons",
  "nil",
 ]
 

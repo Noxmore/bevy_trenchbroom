@@ -5,7 +5,6 @@ compile_error!("Please enable either the `rapier` or `avian` feature flags to te
 use avian3d::prelude::*;
 use bevy::math::*;
 use bevy::prelude::*;
-use bevy_flycam::prelude::*;
 #[cfg(feature = "rapier")]
 use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::prelude::*;
@@ -38,15 +37,7 @@ fn main() {
 			..default()
 		}),))
 		.add_plugins(physics_plugins)
-		.add_plugins(PlayerPlugin)
-		.insert_resource(MovementSettings {
-			sensitivity: 0.00005,
-			speed: 6.,
-		})
-		.add_plugins(bevy_inspector_egui::bevy_egui::EguiPlugin {
-			enable_multipass_for_primary_context: true,
-		})
-		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(Update, make_unlit)
 		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
@@ -76,18 +67,18 @@ fn spawn_cubes(mut commands: Commands, time: Res<Time>, mut local: Local<Option<
 	}
 }
 
-fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, mut projection_query: Query<&mut Projection>) {
+fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 	commands.spawn((SceneRoot(asset_server.load("maps/example.map#Scene")), Transform::from_xyz(-5., 0., 0.)));
 	commands.spawn((SceneRoot(asset_server.load("maps/example.bsp#Scene")), Transform::from_xyz(5., 0., 0.)));
 
-	// Wide FOV
-
-	for mut projection in &mut projection_query {
-		*projection = Projection::Perspective(PerspectiveProjection {
+	commands.spawn((
+		example_commons::DebugCamera,
+		Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
 			..default()
-		});
-	}
+		}),
+		example_commons::default_debug_camera_transform(),
+	));
 }
 
 // We don't care about lighting, just physics.

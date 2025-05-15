@@ -1,0 +1,19 @@
+[package]
+name = "example_commons"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+name = "example_commons"
+path = "lib.rs"
+test = false
+bench = false
+doc = false
+
+[dependencies]
+bevy.workspace = true
+bevy-inspector-egui = { version = "0.31", optional = true }
+
+[features]
+client = ["dep:bevy-inspector-egui"]

@@ -14,12 +14,11 @@ doc = false
 [dependencies]
 bevy.workspace = true
 bevy_trenchbroom = { path = "../..", default-features = false }
-bevy_flycam = { workspace = true, optional = true }
-bevy-inspector-egui = { workspace = true, optional = true }
+example_commons.workspace = true
 nil.workspace = true
 
 # Run with --no-default-features to run headless
 
 [features]
 default = ["example_client"]
-example_client = ["bevy_trenchbroom/client", "dep:bevy_flycam", "dep:bevy-inspector-egui", "bevy/default"]
+example_client = ["bevy_trenchbroom/client", "example_commons/client", "bevy/default"]

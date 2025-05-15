@@ -19,8 +19,7 @@ bevy_trenchbroom = { path = "../..", default-features = false, features = [
 	"client",
 	"bsp"
 ] }
-bevy_flycam.workspace = true
-bevy-inspector-egui.workspace = true
+example_commons = { workspace = true, features = ["client"] }
 nil.workspace = true
 
 [features]
