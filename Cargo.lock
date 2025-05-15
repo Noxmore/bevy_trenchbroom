@@ -447,18 +447,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "avian"
-version = "0.8.0-dev"
-dependencies = [
- "avian3d",
- "bevy",
- "bevy-inspector-egui",
- "bevy_flycam",
- "bevy_trenchbroom",
- "nil",
-]
-
-[[package]]
 name = "avian3d"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2555,9 +2543,9 @@ dependencies = [
 
 [[package]]
 name = "errno"
-version = "0.3.11"
+version = "0.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "976dd42dc7e85965fe702eb8164f21f450704bdde31faefd6471dba214cb594e"
+checksum = "cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18"
 dependencies = [
  "libc",
  "windows-sys 0.59.0",
@@ -4324,6 +4312,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "physics"
+version = "0.8.0-dev"
+dependencies = [
+ "avian3d",
+ "bevy",
+ "bevy-inspector-egui",
+ "bevy_flycam",
+ "bevy_rapier3d",
+ "bevy_trenchbroom",
+ "nil",
+]
+
+[[package]]
 name = "pin-project"
 version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5999,9 +6000,9 @@ dependencies = [
 
 [[package]]
 name = "weezl"
-version = "0.1.9"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78c888f2a25014723b17ac60a626d626549f773e0d702b1320956f8d769ae1f8"
+checksum = "53a85b86a771b1c87058196170769dd264f66c0782acf1ae6cc51bfd64b39082"
 
 [[package]]
 name = "wgpu"

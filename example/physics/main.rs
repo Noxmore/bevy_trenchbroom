@@ -1,7 +1,13 @@
+#[cfg(all(not(feature = "rapier"), not(feature = "avian")))]
+compile_error!("Please enable either the `rapier` or `avian` feature flags to test a specific physics engine!");
+
+#[cfg(feature = "avian")]
 use avian3d::prelude::*;
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_flycam::prelude::*;
+#[cfg(feature = "rapier")]
+use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
@@ -15,14 +21,23 @@ pub struct Worldspawn;
 #[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
 pub struct FuncDoor;
 
+#[cfg(feature = "avian")]
+fn physics_plugins(app: &mut App) {
+	app.add_plugins((PhysicsPlugins::default(), PhysicsDebugPlugin::default()));
+}
+
+#[cfg(feature = "rapier")]
+fn physics_plugins(app: &mut App) {
+	app.add_plugins((RapierPhysicsPlugin::<()>::default(), RapierDebugRenderPlugin::default()));
+}
+
 fn main() {
 	App::new()
 		.add_plugins((DefaultPlugins.set(AssetPlugin {
 			file_path: "../../assets".s(),
 			..default()
 		}),))
-		.add_plugins(avian3d::prelude::PhysicsPlugins::default())
-		.add_plugins(avian3d::prelude::PhysicsDebugPlugin::default())
+		.add_plugins(physics_plugins)
 		.add_plugins(PlayerPlugin)
 		.insert_resource(MovementSettings {
 			sensitivity: 0.00005,
