@@ -1,4 +1,5 @@
 # 0.7 to 0.8
+- `TrenchBroomPlugin` has been changed to the `TrenchBroomPlugins` plugin group. The syntax is the exact same by default, you're just able to disable specific plugins now.
 - QuakeClass registration has been moved from `TrenchBroomConfig` to Bevy's type registry.
 	- Add `#[reflect(QuakeClass, Component, ...)]` to your classes. (To be clear, you had to reflect `Component` before as well)
 	- Auto-registration has been removed, see below.
