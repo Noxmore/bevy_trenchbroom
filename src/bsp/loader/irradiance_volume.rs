@@ -107,7 +107,6 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 
 		let mut style_map_image = style_map_builder.build();
 		style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;
-		style_map_image.asset_usage = RenderAssetUsages::all(); // TODO: keep this in main world for image depth work-around
 
 		let styles = ctx.load_context.add_labeled_asset("IrradianceVolumeStyleMap".s(), style_map_image);
 
