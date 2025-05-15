@@ -122,40 +122,45 @@ impl AssetLoader for BspLoader {
 	}
 }
 
-#[cfg(feature = "client")]
-#[test]
-fn bsp_loading() {
-	let mut app = App::new();
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	// Can't find a better solution than this mess :(
-	#[rustfmt::skip]
-	app
-		.add_plugins((
-			AssetPlugin::default(),
-			TaskPoolPlugin::default(),
-			bevy::time::TimePlugin,
-			MaterializePlugin::new(TomlMaterialDeserializer),
-			ImagePlugin::default(),
-		))
-		.insert_resource(TrenchBroomServer::new(
-			TrenchBroomConfig::default()
-				.suppress_invalid_entity_definitions(true)
-		))
-		.init_asset::<Image>()
-		.init_asset::<StandardMaterial>()
-		.init_asset::<AnimatedLighting>()
-		.init_asset::<Mesh>()
-		.init_asset::<BspBrushesAsset>()
-		.init_asset::<Scene>()
-		.init_asset::<Bsp>()
-		.init_asset_loader::<BspLoader>()
-	;
+	#[cfg(feature = "client")]
+	#[test]
+	fn bsp_loading() {
+		let mut app = App::new();
 
-	smol::block_on(async {
-		app.world()
-			.resource::<AssetServer>()
-			.load_untyped_async("maps/example.bsp")
-			.await
-			.unwrap();
-	});
+		// Can't find a better solution than this mess :(
+		#[rustfmt::skip]
+		app
+			.add_plugins((
+				AssetPlugin::default(),
+				TaskPoolPlugin::default(),
+				bevy::time::TimePlugin,
+				MaterializePlugin::new(TomlMaterialDeserializer),
+				ImagePlugin::default(),
+			))
+			.insert_resource(TrenchBroomServer::new(
+				TrenchBroomConfig::default()
+					.suppress_invalid_entity_definitions(true)
+			))
+			.init_asset::<Image>()
+			.init_asset::<StandardMaterial>()
+			.init_asset::<AnimatedLighting>()
+			.init_asset::<Mesh>()
+			.init_asset::<BspBrushesAsset>()
+			.init_asset::<Scene>()
+			.init_asset::<Bsp>()
+			.init_asset_loader::<BspLoader>()
+		;
+
+		smol::block_on(async {
+			app.world()
+				.resource::<AssetServer>()
+				.load_untyped_async("maps/example.bsp")
+				.await
+				.unwrap();
+		});
+	}
 }

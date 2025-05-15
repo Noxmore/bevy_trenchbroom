@@ -58,10 +58,15 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 	pub image: &'a Image,
 }
 
-#[test]
-fn hook_stack() {
-	let mut hook: Hook<dyn Fn() -> i32 + Send + Sync> = Hook(Arc::new(|| 2));
-	assert_eq!(hook(), 2);
-	hook.set(|prev| Arc::new(move || prev() + 1));
-	assert_eq!(hook(), 3);
+#[cfg(test)]
+mod tests {
+	use super::*;
+	
+	#[test]
+	fn hook_stack() {
+		let mut hook: Hook<dyn Fn() -> i32 + Send + Sync> = Hook(Arc::new(|| 2));
+		assert_eq!(hook(), 2);
+		hook.set(|prev| Arc::new(move || prev() + 1));
+		assert_eq!(hook(), 3);
+	}
 }

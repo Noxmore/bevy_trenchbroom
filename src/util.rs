@@ -420,47 +420,52 @@ pub fn quake_light_to_lux(light: f32) -> f32 {
 	light / QUAKE_LIGHT_TO_LUX_DIVISOR
 }
 
-#[test]
-fn coordinate_conversions() {
-	assert_eq!(Vec3::X.trenchbroom_to_bevy(), Vec3::NEG_Z);
-	assert_eq!(Vec3::Y.trenchbroom_to_bevy(), Vec3::NEG_X);
-	assert_eq!(Vec3::Z.trenchbroom_to_bevy(), Vec3::Y);
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	assert_eq!(Vec3::X.bevy_to_trenchbroom(), Vec3::NEG_Y);
-	assert_eq!(Vec3::Y.bevy_to_trenchbroom(), Vec3::Z);
-	assert_eq!(Vec3::Z.bevy_to_trenchbroom(), Vec3::NEG_X);
+	#[test]
+	fn coordinate_conversions() {
+		assert_eq!(Vec3::X.trenchbroom_to_bevy(), Vec3::NEG_Z);
+		assert_eq!(Vec3::Y.trenchbroom_to_bevy(), Vec3::NEG_X);
+		assert_eq!(Vec3::Z.trenchbroom_to_bevy(), Vec3::Y);
 
-	assert_eq!(Vec3::X.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::X);
-	assert_eq!(Vec3::Y.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Y);
-	assert_eq!(Vec3::Z.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Z);
-}
+		assert_eq!(Vec3::X.bevy_to_trenchbroom(), Vec3::NEG_Y);
+		assert_eq!(Vec3::Y.bevy_to_trenchbroom(), Vec3::Z);
+		assert_eq!(Vec3::Z.bevy_to_trenchbroom(), Vec3::NEG_X);
 
-#[test]
-fn rotation_property_to_quat() {
-	const MARGIN: f32 = 0.0001;
+		assert_eq!(Vec3::X.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::X);
+		assert_eq!(Vec3::Y.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Y);
+		assert_eq!(Vec3::Z.trenchbroom_to_bevy().bevy_to_trenchbroom(), Vec3::Z);
+	}
 
-	// angle
-	assert_almost_eq!(angle_to_quat(0.) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(angle_to_quat(90.) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
-	assert_almost_eq!(angle_to_quat(0.) * Vec3::Y, Vec3::Y, MARGIN);
-	assert_almost_eq!(angle_to_quat(-1.) * Vec3::NEG_Z, Vec3::Y, MARGIN);
-	assert_almost_eq!(angle_to_quat(-2.) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
-	assert_almost_eq!(angle_to_quat(-2.) * Vec3::Y, Vec3::NEG_Z, MARGIN);
+	#[test]
+	fn rotation_property_to_quat() {
+		const MARGIN: f32 = 0.0001;
 
-	// mangle
-	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
+		// angle
+		assert_almost_eq!(angle_to_quat(0.) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
+		assert_almost_eq!(angle_to_quat(90.) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
+		assert_almost_eq!(angle_to_quat(0.) * Vec3::Y, Vec3::Y, MARGIN);
+		assert_almost_eq!(angle_to_quat(-1.) * Vec3::NEG_Z, Vec3::Y, MARGIN);
+		assert_almost_eq!(angle_to_quat(-2.) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+		assert_almost_eq!(angle_to_quat(-2.) * Vec3::Y, Vec3::NEG_Z, MARGIN);
 
-	assert_almost_eq!(mangle_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., -90., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::Y, MARGIN);
-	assert_almost_eq!(mangle_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::NEG_X, MARGIN);
+		// mangle
+		assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
+		assert_almost_eq!(mangle_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
 
-	// angles
-	assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
+		assert_almost_eq!(mangle_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
+		assert_almost_eq!(mangle_to_quat(vec3(0., -90., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+		assert_almost_eq!(mangle_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::Y, MARGIN);
+		assert_almost_eq!(mangle_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::NEG_X, MARGIN);
 
-	assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
-	assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::X, MARGIN);
+		// angles
+		assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Z, MARGIN);
+		assert_almost_eq!(angles_to_quat(vec3(0., 0., 0.)) * Vec3::Y, Vec3::Y, MARGIN);
+
+		assert_almost_eq!(angles_to_quat(vec3(90., 0., 0.)) * Vec3::NEG_Z, Vec3::NEG_Y, MARGIN);
+		assert_almost_eq!(angles_to_quat(vec3(0., 90., 0.)) * Vec3::NEG_Z, Vec3::NEG_X, MARGIN);
+		assert_almost_eq!(angles_to_quat(vec3(0., 0., 90.)) * Vec3::Y, Vec3::X, MARGIN);
+	}
 }

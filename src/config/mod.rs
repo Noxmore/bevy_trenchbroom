@@ -284,10 +284,15 @@ pub struct TrenchBroomConfig {
 	pub bsp_textures_asset_usages: RenderAssetUsages,
 }
 
-#[test]
-fn coordinate_conversions() {
-	let config = TrenchBroomConfig::default();
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	let input = vec3(20.6, 1.72, 9.0);
-	assert_eq!(config.from_bevy_space(config.to_bevy_space(input)), input);
+	#[test]
+	fn coordinate_conversions() {
+		let config = TrenchBroomConfig::default();
+
+		let input = vec3(20.6, 1.72, 9.0);
+		assert_eq!(config.from_bevy_space(config.to_bevy_space(input)), input);
+	}
 }

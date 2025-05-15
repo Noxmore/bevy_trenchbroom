@@ -372,38 +372,43 @@ pub fn generate_mesh_from_brush_polygons(polygons: &[BrushSurfacePolygon], confi
 	mesh
 }
 
-#[test]
-fn contains_point() {
-	let mut brush = Brush::default();
-	let normals = [DVec3::X, DVec3::NEG_X, DVec3::Y, DVec3::NEG_Y, DVec3::Z, DVec3::NEG_Z];
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	for normal in normals {
-		brush.surfaces.push(BrushSurface {
-			plane: BrushPlane { normal, distance: -16. },
-			texture: default(),
-			uv: default(),
-		});
+	#[test]
+	fn contains_point() {
+		let mut brush = Brush::default();
+		let normals = [DVec3::X, DVec3::NEG_X, DVec3::Y, DVec3::NEG_Y, DVec3::Z, DVec3::NEG_Z];
+
+		for normal in normals {
+			brush.surfaces.push(BrushSurface {
+				plane: BrushPlane { normal, distance: -16. },
+				texture: default(),
+				uv: default(),
+			});
+		}
+
+		assert!(brush.contains_point(DVec3::ZERO));
+		for normal in normals {
+			assert!(brush.contains_point(normal));
+		}
+		assert!(!brush.contains_point(dvec3(32., 0., 0.)));
+		assert!(!brush.contains_point(dvec3(0., 32., 0.)));
+		assert!(!brush.contains_point(dvec3(0., 0., 32.)));
 	}
 
-	assert!(brush.contains_point(DVec3::ZERO));
-	for normal in normals {
-		assert!(brush.contains_point(normal));
+	#[test]
+	fn triangle_conversion() {
+		let tri_1 = [dvec3(-16., 16., -32.), dvec3(-16., 16., 16.), dvec3(-16., -16., 16.)];
+		let tri_2 = [dvec3(16., 16., 16.), dvec3(16., 16., -32.), dvec3(16., -16., -16.)];
+
+		let plane_1 = BrushPlane::from_triangle(tri_1);
+		let plane_2 = BrushPlane::from_triangle(tri_2);
+
+		assert_eq!(plane_1.normal, dvec3(-1., 0., 0.));
+		assert_eq!(plane_2.normal, dvec3(1., 0., 0.));
+		assert_eq!(plane_1.distance, -16.);
+		assert_eq!(plane_2.distance, -16.);
 	}
-	assert!(!brush.contains_point(dvec3(32., 0., 0.)));
-	assert!(!brush.contains_point(dvec3(0., 32., 0.)));
-	assert!(!brush.contains_point(dvec3(0., 0., 32.)));
-}
-
-#[test]
-fn triangle_conversion() {
-	let tri_1 = [dvec3(-16., 16., -32.), dvec3(-16., 16., 16.), dvec3(-16., -16., 16.)];
-	let tri_2 = [dvec3(16., 16., 16.), dvec3(16., 16., -32.), dvec3(16., -16., -16.)];
-
-	let plane_1 = BrushPlane::from_triangle(tri_1);
-	let plane_2 = BrushPlane::from_triangle(tri_2);
-
-	assert_eq!(plane_1.normal, dvec3(-1., 0., 0.));
-	assert_eq!(plane_2.normal, dvec3(1., 0., 0.));
-	assert_eq!(plane_1.distance, -16.);
-	assert_eq!(plane_2.distance, -16.);
 }

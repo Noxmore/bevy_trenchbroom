@@ -263,32 +263,38 @@ impl AssetLoader for QuakeMapLoader {
 	}
 }
 
-#[cfg(feature = "client")]
-#[test]
-fn map_loading() {
-	let mut app = App::new();
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
 
-	// Can't find a better solution than this mess :(
-	#[rustfmt::skip]
-	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
-		.insert_resource(TrenchBroomServer::new(
-			TrenchBroomConfig::default()
-				.suppress_invalid_entity_definitions(true)
-		))
-		.init_asset::<Image>()
-		.init_asset::<StandardMaterial>()
-		.init_asset::<Mesh>()
-		.init_asset::<Scene>()
-		.init_asset::<QuakeMap>()
-		.init_asset_loader::<QuakeMapLoader>()
-	;
+	#[cfg(feature = "client")]
+	#[test]
+	fn map_loading() {
+		let mut app = App::new();
 
-	smol::block_on(async {
-		app.world()
-			.resource::<AssetServer>()
-			.load_untyped_async("maps/example.map")
-			.await
-			.unwrap();
-	});
+		// Can't find a better solution than this mess :(
+		#[rustfmt::skip]
+		app
+			.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
+			.insert_resource(TrenchBroomServer::new(
+				TrenchBroomConfig::default()
+					.suppress_invalid_entity_definitions(true)
+			))
+			.init_asset::<Image>()
+			.init_asset::<StandardMaterial>()
+			.init_asset::<Mesh>()
+			.init_asset::<Scene>()
+			.init_asset::<QuakeMap>()
+			.init_asset_loader::<QuakeMapLoader>()
+		;
+
+		smol::block_on(async {
+			app.world()
+				.resource::<AssetServer>()
+				.load_untyped_async("maps/example.map")
+				.await
+				.unwrap();
+		});
+	}
 }

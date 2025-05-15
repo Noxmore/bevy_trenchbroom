@@ -91,114 +91,120 @@ impl PreloadedAssets {
 	}
 }
 
-#[test]
-#[cfg(feature = "client")]
-fn preloading() {
-	use bevy::render::view::VisibilityClass;
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
 
-	#[derive(PointClass, Component, Reflect)]
-	#[reflect(QuakeClass, Component)]
-	#[model("models/mushroom.glb")]
-	#[spawn_hook(preload_model::<Self>)]
-	#[component(on_add = Self::on_add)]
-	pub struct Mushroom;
-	impl Mushroom {
-		pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
-			let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
-			// Loads the scene after adding to the main world.
-			let handle = asset_server.load(GltfAssetLabel::Scene(0).from_asset(Self::CLASS_INFO.model_path().unwrap()));
+	#[test]
+	#[cfg(feature = "client")]
+	fn preloading() {
+		use bevy::render::view::VisibilityClass;
 
-			world.commands().entity(ctx.entity).insert(SceneRoot(handle));
+		#[derive(PointClass, Component, Reflect)]
+		#[reflect(QuakeClass, Component)]
+		#[model("models/mushroom.glb")]
+		#[spawn_hook(preload_model::<Self>)]
+		#[component(on_add = Self::on_add)]
+		pub struct Mushroom;
+		impl Mushroom {
+			pub fn on_add(mut world: DeferredWorld, ctx: HookContext) {
+				let Some(asset_server) = world.get_resource::<AssetServer>() else { return };
+				// Loads the scene after adding to the main world.
+				let handle = asset_server.load(GltfAssetLabel::Scene(0).from_asset(Self::CLASS_INFO.model_path().unwrap()));
+
+				world.commands().entity(ctx.entity).insert(SceneRoot(handle));
+			}
 		}
-	}
 
-	// This monstrosity is so we only have the things we absolutely need for this test.
-	App::new()
-		.add_plugins((
-			MinimalPlugins,
-			AssetPlugin::default(),
-			bevy::log::LogPlugin::default(),
-			bevy::scene::ScenePlugin,
-			TransformPlugin,
-			bevy::render::mesh::MeshPlugin,
-			MaterializePlugin::new(TomlMaterialDeserializer),
-			bevy::gltf::GltfPlugin::default(),
-			ImagePlugin::default(),
-		))
-		.insert_resource(TrenchBroomServer::new(
-			TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
-		))
-		.register_type::<Mushroom>()
-		.register_type::<Visibility>()
-		.register_type::<InheritedVisibility>()
-		.register_type::<ViewVisibility>()
-		.register_type::<PreloadedAssets>()
-		.register_type::<MeshMaterial3d<StandardMaterial>>()
-		.register_type::<Aabb>()
-		.register_type::<VisibilityClass>()
-		.init_asset::<Image>()
-		.init_asset::<StandardMaterial>()
-		.init_asset::<crate::qmap::QuakeMap>()
-		.init_asset_loader::<crate::qmap::loader::QuakeMapLoader>()
-		.add_systems(Startup, setup)
-		.add_systems(Update, spawn_scene)
-		.add_systems(Last, exit)
-		.add_observer(validate_mesh)
-		.add_observer(validate_material)
-		.add_observer(validate_scene)
-		.run();
+		// This monstrosity is so we only have the things we absolutely need for this test.
+		App::new()
+			.add_plugins((
+				MinimalPlugins,
+				AssetPlugin::default(),
+				bevy::log::LogPlugin::default(),
+				bevy::scene::ScenePlugin,
+				TransformPlugin,
+				bevy::render::mesh::MeshPlugin,
+				MaterializePlugin::new(TomlMaterialDeserializer),
+				bevy::gltf::GltfPlugin::default(),
+				ImagePlugin::default(),
+			))
+			.insert_resource(TrenchBroomServer::new(
+				TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
+			))
+			.register_type::<Mushroom>()
+			.register_type::<Visibility>()
+			.register_type::<InheritedVisibility>()
+			.register_type::<ViewVisibility>()
+			.register_type::<PreloadedAssets>()
+			.register_type::<MeshMaterial3d<StandardMaterial>>()
+			.register_type::<Aabb>()
+			.register_type::<VisibilityClass>()
+			.init_asset::<Image>()
+			.init_asset::<StandardMaterial>()
+			.init_asset::<crate::qmap::QuakeMap>()
+			.init_asset_loader::<crate::qmap::loader::QuakeMapLoader>()
+			.add_systems(Startup, setup)
+			.add_systems(Update, spawn_scene)
+			.add_systems(Last, exit)
+			.add_observer(validate_mesh)
+			.add_observer(validate_material)
+			.add_observer(validate_scene)
+			.run();
 
-	#[derive(Resource)]
-	struct MapScene(Handle<Scene>);
+		#[derive(Resource)]
+		struct MapScene(Handle<Scene>);
 
-	fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-		let handle = smol::block_on(async { asset_server.load_untyped_async("maps/example.map#Scene").await.expect("Asset error") });
+		fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+			let handle = smol::block_on(async { asset_server.load_untyped_async("maps/example.map#Scene").await.expect("Asset error") });
 
-		// This is set back so that the Scene can be put in Assets<Scene>, otherwise validate_scene will fail with it.
-		commands.insert_resource(MapScene(handle.try_typed::<Scene>().unwrap()));
-	}
-
-	fn spawn_scene(mut commands: Commands, scene: Res<MapScene>, mut init: Local<bool>) {
-		if !*init {
-			commands.spawn(SceneRoot(scene.0.clone()));
-			*init = true;
+			// This is set back so that the Scene can be put in Assets<Scene>, otherwise validate_scene will fail with it.
+			commands.insert_resource(MapScene(handle.try_typed::<Scene>().unwrap()));
 		}
-	}
 
-	/// Live for a few ticks to let everything sort out
-	fn exit(mut exit: EventWriter<AppExit>, mut ticks: Local<u32>) {
-		*ticks += 1;
-
-		if *ticks > 3 {
-			exit.write_default();
+		fn spawn_scene(mut commands: Commands, scene: Res<MapScene>, mut init: Local<bool>) {
+			if !*init {
+				commands.spawn(SceneRoot(scene.0.clone()));
+				*init = true;
+			}
 		}
-	}
 
-	fn validate_mesh(trigger: Trigger<OnAdd, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
-		let handle = &mesh_query.get(trigger.target()).unwrap().0;
-		validate_asset(handle, &asset_server, "Mesh");
-	}
+		/// Live for a few ticks to let everything sort out
+		fn exit(mut exit: EventWriter<AppExit>, mut ticks: Local<u32>) {
+			*ticks += 1;
 
-	fn validate_material(
-		trigger: Trigger<OnAdd, MeshMaterial3d<StandardMaterial>>,
-		material_query: Query<&MeshMaterial3d<StandardMaterial>>,
-		asset_server: Res<AssetServer>,
-	) {
-		let handle = &material_query.get(trigger.target()).unwrap().0;
-		validate_asset(handle, &asset_server, "Material");
-	}
+			if *ticks > 3 {
+				exit.write_default();
+			}
+		}
 
-	fn validate_scene(trigger: Trigger<OnAdd, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
-		let handle = &scene_query.get(trigger.target()).unwrap().0;
-		validate_asset(handle, &asset_server, "Scene");
-	}
+		fn validate_mesh(trigger: Trigger<OnAdd, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
+			let handle = &mesh_query.get(trigger.target()).unwrap().0;
+			validate_asset(handle, &asset_server, "Mesh");
+		}
 
-	fn validate_asset<A: Asset>(handle: &Handle<A>, asset_server: &AssetServer, type_name: &str) {
-		let Some(path) = handle.path() else {
-			return;
-		};
-		if !asset_server.is_loaded_with_dependencies(handle) {
-			panic!("{type_name} at path \"{path}\" was not preloaded",);
+		fn validate_material(
+			trigger: Trigger<OnAdd, MeshMaterial3d<StandardMaterial>>,
+			material_query: Query<&MeshMaterial3d<StandardMaterial>>,
+			asset_server: Res<AssetServer>,
+		) {
+			let handle = &material_query.get(trigger.target()).unwrap().0;
+			validate_asset(handle, &asset_server, "Material");
+		}
+
+		fn validate_scene(trigger: Trigger<OnAdd, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
+			let handle = &scene_query.get(trigger.target()).unwrap().0;
+			validate_asset(handle, &asset_server, "Scene");
+		}
+
+		fn validate_asset<A: Asset>(handle: &Handle<A>, asset_server: &AssetServer, type_name: &str) {
+			let Some(path) = handle.path() else {
+				return;
+			};
+			if !asset_server.is_loaded_with_dependencies(handle) {
+				panic!("{type_name} at path \"{path}\" was not preloaded",);
+			}
 		}
 	}
 }

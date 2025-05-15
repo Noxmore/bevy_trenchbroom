@@ -296,60 +296,65 @@ impl QuakeClassAppExt for App {
 	}
 }
 
-#[cfg(all(feature = "client", feature = "bsp"))]
-#[test]
-fn derives_from() {
-	use builtin::*;
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	assert!(PointLight::CLASS_INFO.derives_from::<Transform>());
-	assert!(PointLight::CLASS_INFO.derives_from::<Visibility>());
-	assert!(!PointLight::CLASS_INFO.derives_from::<BspLight>());
-	assert!(!PointLight::CLASS_INFO.derives_from::<BspWorldspawn>());
+	#[cfg(all(feature = "client", feature = "bsp"))]
+	#[test]
+	fn derives_from() {
+		use builtin::*;
 
-	assert!(!Transform::CLASS_INFO.derives_from::<Transform>());
-}
+		assert!(PointLight::CLASS_INFO.derives_from::<Transform>());
+		assert!(PointLight::CLASS_INFO.derives_from::<Visibility>());
+		assert!(!PointLight::CLASS_INFO.derives_from::<BspLight>());
+		assert!(!PointLight::CLASS_INFO.derives_from::<BspWorldspawn>());
 
-#[test]
-fn spawn_deduplication() {
-	use crate::util::*;
+		assert!(!Transform::CLASS_INFO.derives_from::<Transform>());
+	}
 
-	static mut BASE_CALLED: bool = false;
-	static mut CLASS_CALLED: bool = false;
+	#[test]
+	fn spawn_deduplication() {
+		use crate::util::*;
 
-	#[derive(BaseClass, Component, Reflect)]
-	#[spawn_hook(|_| {
-		assert!(unsafe { !BASE_CALLED });
-		unsafe { BASE_CALLED = true; }
-		Ok(())
-	})]
-	struct Base;
+		static mut BASE_CALLED: bool = false;
+		static mut CLASS_CALLED: bool = false;
 
-	#[allow(clippy::duplicated_attributes)]
-	#[derive(PointClass, Component, Reflect)]
-	#[base(Base, Base)]
-	#[spawn_hook(|_| {
-		assert!(unsafe { !CLASS_CALLED });
-		unsafe { CLASS_CALLED = true; }
-		Ok(())
-	})]
-	struct Class;
+		#[derive(BaseClass, Component, Reflect)]
+		#[spawn_hook(|_| {
+			assert!(unsafe { !BASE_CALLED });
+			unsafe { BASE_CALLED = true; }
+			Ok(())
+		})]
+		struct Base;
 
-	let asset_server = create_test_asset_server();
-	let mut load_context = create_load_context(&asset_server, "".into(), false, false);
+		#[allow(clippy::duplicated_attributes)]
+		#[derive(PointClass, Component, Reflect)]
+		#[base(Base, Base)]
+		#[spawn_hook(|_| {
+			assert!(unsafe { !CLASS_CALLED });
+			unsafe { CLASS_CALLED = true; }
+			Ok(())
+		})]
+		struct Class;
 
-	Class::ERASED_CLASS
-		.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
-			config: &default(),
-			type_registry: &default(),
-			class_map: &default(),
-			src_entity: &default(),
-			class: Class::ERASED_CLASS,
-			entity: &mut World::new().spawn_empty(),
-			load_context: &mut load_context,
-		})
-		.unwrap();
+		let asset_server = create_test_asset_server();
+		let mut load_context = create_load_context(&asset_server, "".into(), false, false);
 
-	// They should've been called exactly once.
-	assert!(unsafe { BASE_CALLED });
-	assert!(unsafe { CLASS_CALLED });
+		Class::ERASED_CLASS
+			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+				config: &default(),
+				type_registry: &default(),
+				class_map: &default(),
+				src_entity: &default(),
+				class: Class::ERASED_CLASS,
+				entity: &mut World::new().spawn_empty(),
+				load_context: &mut load_context,
+			})
+			.unwrap();
+
+		// They should've been called exactly once.
+		assert!(unsafe { BASE_CALLED });
+		assert!(unsafe { CLASS_CALLED });
+	}
 }
