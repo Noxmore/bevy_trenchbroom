@@ -84,8 +84,8 @@ pub struct MyBaseClass {
     pub my_value: u32,
 }
 
-// SolidClass (also known as brush entities) makes the class
-// contain its own geometry, such as a door or breakable
+// SolidClass (also known as brush entities) makes the entity
+// contain one or more brushes as geometry.
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
 #[base(Visibility, MyBaseClass)]
@@ -120,7 +120,8 @@ pub struct FuncIllusionary;
 //
 // Alternatively, you could create a system with a query
 // `Query<&StaticProp, Without<SceneRoot>>`
-// and spawn it through that, but .
+// and spawn it through that, but the scene asset wouldn't
+// be a dependent of the map, and thus not preloaded.
 //
 // If your entity has a hardcoded model, you can use a function
 // like `spawn_class_gltf` to do the above automatically.
@@ -140,7 +141,8 @@ pub struct StaticProp {
     pub enable_shadows: bool,
 }
 // If your struct has fields, you need to implement Default.
-// I recommend using the `smart-default` crate for this.
+// I recommend using the `smart-default` crate for this
+// instead of implementing it manually here.
 impl Default for StaticProp {
     fn default() -> Self {
         Self {
@@ -161,6 +163,7 @@ impl Default for StaticProp {
 pub struct PhysicsProp;
 
 // For `choices` properties, you can derive FgdType on a unit enum.
+// These will get you a drop-down menu in-editor.
 #[derive(Reflect, FgdType)]
 pub enum CollisionType {
     /// Uses colliders defined in the model,
