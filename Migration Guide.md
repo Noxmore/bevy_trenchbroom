@@ -11,6 +11,7 @@
 - The default material extension has been changed to `toml` due to the fact that the default material deserializer is `TomlMaterialDeserializer`. This can be changed in `TrenchBroomConfig`.
 - `TrenchBroomConfig` now supports multiple texture and material extensions, and those fields have been pluralized to reflect that.
 - BSP loading has been locked behind the `bsp` feature flag.
+- We now ship with [`bevy_fix_gltf_coordinate_system`](https://github.com/janhohenheim/bevy_fix_gltf_coordinate_system) by default. You can disable it in your `TrenchBroomPlugins` if you don't want it or already add it, but be aware that without it glTFs in-editor won't align with those in-game.
 
 ### bevy_materialize
 - Non-color maps in `StandardMaterial` now use a linear color space out of the box, making PBR materials look correctly.

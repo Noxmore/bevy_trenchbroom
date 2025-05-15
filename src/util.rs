@@ -3,7 +3,6 @@ use atomicow::CowArc;
 use bevy::asset::io::AssetSourceId;
 use bevy::asset::meta::AssetHash;
 use bevy::asset::{AssetPath, ErasedLoadedAsset, UntypedAssetId};
-use bevy::scene::scene_spawner_system;
 use bevy::{
 	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
@@ -14,82 +13,8 @@ impl Plugin for UtilPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(not(feature = "client"))]
 		app.init_asset::<Mesh>().register_type::<Mesh3d>().register_type::<Aabb>();
-
-		#[rustfmt::skip]
-		app
-			.register_type::<DoNotFixGltfRotationsUnderMe>()
-			.add_event::<DeferredGltfRotationFix>()
-			.add_systems(SpawnScene, Self::fix_gltf_scenes.after(scene_spawner_system))
-			.add_observer(Self::send_fix_gltf_scene_events)
-		;
 	}
 }
-impl UtilPlugin {
-	// These aren't public because DeferredGltfRotationFix isn't.
-	fn send_fix_gltf_scene_events(trigger: Trigger<OnAdd, SceneRoot>, mut events: EventWriter<DeferredGltfRotationFix>) {
-		events.write(DeferredGltfRotationFix(trigger.target()));
-	}
-
-	fn fix_gltf_scenes(
-		mut events: EventReader<DeferredGltfRotationFix>,
-		mut commands: Commands,
-		mut scene_root_query: Query<(&mut Transform, &SceneRoot)>,
-		ancestor_query: Query<&ChildOf>,
-		rotation_fix_query: Query<(), With<FixGltfRotationsUnderMe>>,
-		do_not_fix_query: Query<(), With<DoNotFixGltfRotationsUnderMe>>,
-	) {
-		// If entities have FixGltfRotationsUnderMe added in the same tick as entities under them are fixed, rotation_fix_query will fail because Commands is differed
-		let mut going_to_add_marker = Vec::new();
-
-		for DeferredGltfRotationFix(entity) in events.read() {
-			let entity = *entity;
-			let Ok((mut transform, scene_root)) = scene_root_query.get_mut(entity) else { return };
-			let Some(path) = scene_root.0.path() else { return };
-			let Some(ext) = path.path().extension().and_then(std::ffi::OsStr::to_str) else { return };
-
-			match ext {
-				"map" | "bsp" => {
-					if !do_not_fix_query.contains(entity) {
-						commands.entity(entity).insert(FixGltfRotationsUnderMe);
-						going_to_add_marker.push(entity);
-					}
-				}
-				"glb" | "gltf" => {
-					for entity in ancestor_query.iter_ancestors(entity) {
-						if rotation_fix_query.contains(entity) || going_to_add_marker.contains(&entity) {
-							if transform.scale.x.is_sign_positive() {
-								transform.scale.x = -transform.scale.x;
-							}
-							if transform.scale.z.is_sign_positive() {
-								transform.scale.z = -transform.scale.z;
-							}
-
-							break;
-						}
-					}
-				}
-				_ => {}
-			}
-		}
-	}
-}
-
-/// Applied to a map to automatically make the X and Z scales negative of all descendant glTF scenes of this entity,
-/// fixing [this Bevy bug](https://github.com/bevyengine/bevy/issues/5670), making such models look like they to in TrenchBroom.
-///
-/// This is automatically applied to loaded `.map` and `.bsp` scenes without the [`DoNotFixGltfRotationsUnderMe`] component,
-/// so you shouldn't normally need to interact with this component directly.
-#[derive(Component)]
-pub struct FixGltfRotationsUnderMe;
-
-/// Disables this entity from automatically getting [`FixGltfRotationsUnderMe`].
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct DoNotFixGltfRotationsUnderMe;
-
-/// Due a limitation of the observer API, we have to defer this to an event to make sure the entity's parent is set.
-#[derive(Event)]
-struct DeferredGltfRotationFix(Entity);
 
 /// Container for meshes used for headless environments. This can't be the regular `Mesh3d` as it is provided by `bevy_render`
 #[cfg(not(feature = "client"))]
