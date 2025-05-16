@@ -16,15 +16,20 @@ pub struct ExampleCommonsPlugin;
 impl Plugin for ExampleCommonsPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
 		#[cfg(feature = "client")]
-		app.add_systems(Update, (Self::toggle_focus, Self::move_debug_camera));
-
-		#[cfg(feature = "client")]
-		app.add_plugins((
-			bevy_inspector_egui::bevy_egui::EguiPlugin {
-				enable_multipass_for_primary_context: true,
-			},
-			bevy_inspector_egui::quick::WorldInspectorPlugin::default(),
-		));
+		#[rustfmt::skip]
+		app
+			.add_plugins((
+				bevy_inspector_egui::bevy_egui::EguiPlugin {
+					enable_multipass_for_primary_context: true,
+				},
+				bevy_inspector_egui::quick::WorldInspectorPlugin::default(),
+			))
+			.add_systems(Update, (
+				Self::toggle_focus,
+				Self::move_debug_camera,
+				Self::draw_debug_transforms,
+			))
+		;
 	}
 }
 impl ExampleCommonsPlugin {
@@ -109,6 +114,28 @@ impl ExampleCommonsPlugin {
 				window.cursor_options.grab_mode = CursorGrabMode::None;
 				window.cursor_options.visible = true;
 			}
+		}
+	}
+
+	pub fn draw_debug_transforms(
+		mut gizmos: Gizmos,
+		keyboard: Res<ButtonInput<KeyCode>>,
+		query: Query<&GlobalTransform, Without<Camera>>,
+		mut enabled: Local<bool>,
+	) {
+		if keyboard.just_pressed(KeyCode::KeyG) {
+			*enabled = !*enabled;
+		}
+
+		if !*enabled {
+			return;
+		}
+
+		for global_transform in &query {
+			let translation = global_transform.translation();
+			gizmos.line(translation, global_transform.transform_point(Vec3::X), Color::srgb(1., 0., 0.));
+			gizmos.line(translation, global_transform.transform_point(Vec3::Y), Color::srgb(0., 1., 0.));
+			gizmos.line(translation, global_transform.transform_point(Vec3::Z), Color::srgb(0., 0., 1.));
 		}
 	}
 }
