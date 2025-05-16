@@ -6,9 +6,6 @@ use bsp::lighting::AnimatedLighting;
 
 use crate::*;
 
-/// A good starting threshold in radians for interpolating similar normals, creating smoother curved surfaces.
-pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
-
 pub struct GeometryPlugin;
 impl Plugin for GeometryPlugin {
 	fn build(&self, app: &mut App) {
