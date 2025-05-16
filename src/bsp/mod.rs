@@ -3,9 +3,9 @@ pub mod lighting;
 pub mod loader;
 
 use brush::{BrushPlane, ConvexHull};
-use class::{ErasedQuakeClass, QuakeClassType};
+use class::ErasedQuakeClass;
 use config::{EmbeddedTextureLoadView, TextureLoadView};
-use geometry::{Brushes, GeometryProviderMeshView, MapGeometryTexture};
+use geometry::{Brushes, MapGeometryTexture};
 #[cfg(feature = "client")]
 use lighting::AnimatedLighting;
 use loader::BspLoader;

@@ -17,11 +17,11 @@ use syn::*;
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `#[base(<type ...>)]` Adds base classes to inherit.
-/// - `#[spawn_hook(<QuakeClassSpawnFn expression>)]` A custom function to run inside the spawn function of this class. Use for things like spawning models.
+/// - `#[spawn_hooks(<SpawnHooks expression>)]` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, spawn_hook, no_default))]
+#[proc_macro_derive(PointClass, attributes(model, color, iconsprite, size, classname, base, spawn_hooks, no_default))]
 pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Point).into()
 }
@@ -29,14 +29,14 @@ pub fn point_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// Solid classes contain brush geometry.
 ///
 /// # Type attributes
-/// - `#[geometry(<rust expression>)]` Required. An expression that produces a `GeometryProvider` to control how the geometry appears in the world.
 /// - `#[classname(<case type>)]` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `#[classname(<string>)]` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `#[base(<type ...>)]` Adds base classes to inherit.
+/// - `#[spawn_hooks(<SpawnHooks expression>)]` Functions to run inside the spawn function of this class. Use for things like adding colliders.
 ///
 /// # Field attributes
 /// - `#[no_default]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
-#[proc_macro_derive(SolidClass, attributes(geometry, classname, base, no_default))]
+#[proc_macro_derive(SolidClass, attributes(classname, base, spawn_hooks, no_default))]
 pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Solid).into()
 }
@@ -44,7 +44,7 @@ pub fn solid_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 /// Base classes don't appear in-editor, rather they give properties and attributes to their sub-classes (components that require them).
 ///
 /// It has the same attributes as [`PointClass`].
-#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, spawn_hook, no_default))]
+#[proc_macro_derive(BaseClass, attributes(model, color, iconsprite, size, classname, base, spawn_hooks, no_default))]
 pub fn base_class_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_derive(parse_macro_input!(input as DeriveInput), quake_class::QuakeClassType::Base).into()
 }
