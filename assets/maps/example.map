@@ -819,7 +819,7 @@
 // entity 2
 {
 "classname" "func_door"
-"angles" "0 0 0"
+"angles" "50 20 45"
 "_shadow" "1"
 // brush 0
 {

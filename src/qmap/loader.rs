@@ -163,7 +163,7 @@ impl AssetLoader for QuakeMapLoader {
 							mesh = mesh.translated_by(self.tb_server.config.to_bevy_space(-origin_point));
 						}
 
-						let mesh_entity = world.spawn(Name::new(texture.s())).id();
+						let mesh_entity = world.spawn((Name::new(texture.s()), Transform::default())).id();
 
 						meshes.push((
 							mesh_entity,

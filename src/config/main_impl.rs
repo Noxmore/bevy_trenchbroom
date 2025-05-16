@@ -60,9 +60,14 @@ impl TrenchBroomConfig {
 		}
 		
 		// For things like doors where the `angles` property means open direction.
-		if let Some(mut transform) = view.world.entity_mut(view.entity).get_mut::<Transform>() {
+		if let Some(transform) = view.world.entity(view.entity).get::<Transform>().copied() {
 			if view.class_map.get(classname.as_str()).map(|class| class.info.ty.is_solid()) == Some(true) {
-				transform.rotation = Quat::IDENTITY;
+				for mesh_view in view.meshes.iter() {
+					let mut mesh_entity = view.world.entity_mut(mesh_view.entity);
+					let Some(mut mesh_transform) = mesh_entity.get_mut::<Transform>() else { continue };
+
+					mesh_transform.rotation = transform.rotation.inverse();
+				}
 			}
 		}
 
