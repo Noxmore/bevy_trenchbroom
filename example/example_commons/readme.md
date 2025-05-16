@@ -1,3 +1,4 @@
-Tiny library providing the following to all examples:
+Tiny debugging library providing the following to all examples:
 - `bevy-inspector-egui`.
-- Debug camera to fly around the scene.
+- Camera to fly around the scene.
+- G to toggle transform gizmos
