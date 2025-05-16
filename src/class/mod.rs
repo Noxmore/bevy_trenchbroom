@@ -196,7 +196,7 @@ impl QuakeClassSpawnView<'_, '_, '_> {
 	}
 }
 
-// TODO: document
+/// Represents a mesh, its texture, and its associated entity under [`QuakeClassSpawnView`].
 pub struct QuakeClassMeshView<'l> {
 	pub entity: Entity,
 	pub mesh: &'l mut Mesh,
