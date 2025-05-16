@@ -1,12 +1,11 @@
 pub mod builtin;
-pub mod spawn_util;
+pub mod spawn_hooks;
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
-use geometry::GeometryProvider;
 use qmap::QuakeMapEntity;
 
-use crate::*;
+use crate::{geometry::MapGeometryTexture, *};
 
 pub struct QuakeClassPlugin;
 impl Plugin for QuakeClassPlugin {
@@ -53,14 +52,14 @@ pub enum QuakeClassType {
 	/// An entity that revolves around a single point.
 	Point,
 	/// An entity that contains brushes.
-	Solid(fn() -> GeometryProvider),
+	Solid,
 }
 impl fmt::Display for QuakeClassType {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.write_str(match self {
 			Self::Base => "Base",
 			Self::Point => "Point",
-			Self::Solid(_) => "Solid",
+			Self::Solid => "Solid",
 		})
 	}
 }
@@ -166,22 +165,42 @@ pub fn generate_class_map(registry: &TypeRegistry) -> HashMap<&'static str, &'st
 
 /// Inputs provided when spawning an entity into the scene world of a loading map.
 pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
+	// 'l: local, 'w: world, 'sw: scene world
 	pub config: &'l TrenchBroomConfig,
 	pub type_registry: &'l TypeRegistry,
 	/// A map of classnames to classes.
 	pub class_map: &'l HashMap<&'static str, &'static ErasedQuakeClass>,
 	pub src_entity: &'l QuakeMapEntity,
+	pub src_entity_idx: usize,
 	/// The class of the entity that is being spawned. Not the class of the [`QuakeClass`] in which this view is passed to (if it is a base class).
 	pub class: &'l ErasedQuakeClass,
+	/// The scene world being written to.
+	pub world: &'sw mut World,
 	/// Entity in the scene world.
-	pub entity: &'l mut EntityWorldMut<'sw>,
+	pub entity: Entity,
 	pub load_context: &'l mut LoadContext<'w>,
+
+	/// Information about the mesh entities this entity contains.
+	pub meshes: &'l mut Vec<QuakeClassMeshView<'l>>,
 }
 impl QuakeClassSpawnView<'_, '_, '_> {
 	/// Store an asset that you wish to load, but not use for anything yet.
 	pub fn preload_asset(&mut self, handle: UntypedHandle) {
-		self.entity.entry::<PreloadedAssets>().or_default().get_mut().0.push(handle);
+		self.world
+			.entity_mut(self.entity)
+			.entry::<PreloadedAssets>()
+			.or_default()
+			.get_mut()
+			.0
+			.push(handle);
 	}
+}
+
+// TODO: document
+pub struct QuakeClassMeshView<'l> {
+	pub entity: Entity,
+	pub mesh: &'l mut Mesh,
+	pub texture: &'l mut MapGeometryTexture,
 }
 
 pub trait QuakeClass: Component + Reflect + GetTypeRegistration + Sized {
@@ -321,25 +340,27 @@ mod tests {
 		static mut CLASS_CALLED: bool = false;
 
 		#[derive(BaseClass, Component, Reflect)]
-		#[spawn_hook(|_| {
+		#[spawn_hooks(SpawnHooks::new().push(|_| {
 			assert!(unsafe { !BASE_CALLED });
 			unsafe { BASE_CALLED = true; }
 			Ok(())
-		})]
+		}))]
 		struct Base;
 
 		#[allow(clippy::duplicated_attributes)]
 		#[derive(PointClass, Component, Reflect)]
 		#[base(Base, Base)]
-		#[spawn_hook(|_| {
+		#[spawn_hooks(SpawnHooks::new().push(|_| {
 			assert!(unsafe { !CLASS_CALLED });
 			unsafe { CLASS_CALLED = true; }
 			Ok(())
-		})]
+		}))]
 		struct Class;
 
 		let asset_server = create_test_asset_server();
 		let mut load_context = create_load_context(&asset_server, "".into(), false, false);
+		let mut world = World::new();
+		let entity = world.spawn_empty().id();
 
 		Class::ERASED_CLASS
 			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
@@ -347,9 +368,12 @@ mod tests {
 				type_registry: &default(),
 				class_map: &default(),
 				src_entity: &default(),
+				src_entity_idx: 0,
 				class: Class::ERASED_CLASS,
-				entity: &mut World::new().spawn_empty(),
+				world: &mut world,
+				entity,
 				load_context: &mut load_context,
+				meshes: &mut Vec::new(),
 			})
 			.unwrap();
 

@@ -103,7 +103,7 @@ impl QuakeClass for Transform {
 	};
 
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		view.entity.insert(Transform {
+		view.world.entity_mut(view.entity).insert(Transform {
 			translation: read_translation_from_entity(view.src_entity, view.config)?,
 			rotation: read_rotation_from_entity(view.src_entity)?,
 			scale: match view.src_entity.get::<f32>("scale") {
@@ -156,7 +156,7 @@ impl QuakeClass for Visibility {
 			})?,
 		};
 
-		view.entity.insert(visibility);
+		view.world.entity_mut(view.entity).insert(visibility);
 
 		Ok(())
 	}
@@ -246,7 +246,7 @@ impl QuakeClass for PointLight {
 		let default = PointLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(PointLight {
+		view.world.entity_mut(view.entity).insert(PointLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
@@ -366,7 +366,7 @@ impl QuakeClass for SpotLight {
 		let default = SpotLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(SpotLight {
+		view.world.entity_mut(view.entity).insert(SpotLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
@@ -456,7 +456,7 @@ impl QuakeClass for DirectionalLight {
 		let default = DirectionalLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(DirectionalLight {
+		view.world.entity_mut(view.entity).insert(DirectionalLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
 			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,

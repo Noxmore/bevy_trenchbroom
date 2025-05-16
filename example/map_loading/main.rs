@@ -9,12 +9,17 @@ use nil::prelude::*;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[spawn_hooks(SpawnHooks::new().smooth_by_default_angle())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle())]
+#[spawn_hooks(SpawnHooks::new().smooth_by_default_angle())]
+pub struct FuncDetail;
+
+#[derive(SolidClass, Component, Reflect)]
+#[reflect(QuakeClass, Component)]
+#[spawn_hooks(SpawnHooks::new().smooth_by_default_angle())]
 pub struct FuncDoor;
 
 #[derive(PointClass, Component, Reflect)]
@@ -36,7 +41,7 @@ impl Cube {
 #[reflect(QuakeClass, Component)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
-#[spawn_hook(spawn_class_gltf::<Self>)]
+#[spawn_hooks(SpawnHooks::new().spawn_class_gltf::<Self>())]
 pub struct Mushroom;
 
 // This is a custom light class for parity with bsp_loading, if you don't support bsps, you should use `PointLight` as base class instead.
@@ -75,6 +80,7 @@ fn main() {
 		.add_plugins(TrenchBroomPlugins(TrenchBroomConfig::new("bevy_trenchbroom_example")))
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.register_type::<Worldspawn>()
+		.register_type::<FuncDetail>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()
 		.register_type::<Light>()

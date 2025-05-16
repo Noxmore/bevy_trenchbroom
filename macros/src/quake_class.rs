@@ -15,10 +15,9 @@ struct Opts {
 	color: Option<TokenStream>,
 	iconsprite: Option<TokenStream>,
 	size: Option<TokenStream>,
-	geometry: Option<Expr>,
 	classname: Option<TokenStream>,
 	base: Vec<Type>,
-	spawn_hook: Option<Expr>,
+	spawn_hooks: Option<Expr>,
 
 	doc: Option<String>,
 }
@@ -68,14 +67,12 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 					opts.iconsprite = Some(meta.tokens);
 				} else if compare_path(&meta.path, "size") {
 					opts.size = Some(meta.tokens);
-				} else if compare_path(&meta.path, "geometry") {
-					opts.geometry = Some(Expr::parse.parse2(meta.tokens).expect("`geometry` attribute not an expression"));
 				} else if compare_path(&meta.path, "classname") {
 					opts.classname = Some(meta.tokens);
 				} else if compare_path(&meta.path, "base") {
 					opts.base.extend(extract_type_list(meta.tokens));
-				} else if compare_path(&meta.path, "spawn_hook") {
-					opts.spawn_hook = Some(Expr::parse.parse2(meta.tokens).expect("`spawn_hook` attribute not an expression"));
+				} else if compare_path(&meta.path, "spawn_hooks") {
+					opts.spawn_hooks = Some(Expr::parse.parse2(meta.tokens).expect("`spawn_hook` attribute not an expression"));
 				}
 			}
 			_ => {}
@@ -164,10 +161,6 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 		_ => panic!("Only structs supported"),
 	}
 
-	if opts.geometry.is_none() && ty == QuakeClassType::Solid {
-		panic!("Solid classes must have a `#[geometry(...)]` attribute.");
-	}
-
 	let name = opts
 		.classname
 		.and_then(|tokens| tokens.into_iter().next())
@@ -194,21 +187,17 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 	let iconsprite = option(opts.iconsprite.map(|iconsprite| quote! { stringify!(#iconsprite) }));
 	let size = option(opts.size.map(|size| quote! { stringify!(#size) }));
 
-	let geometry_provider = opts.geometry.map(|tokens| {
-		quote! { (|| #tokens) }
-	});
-
-	let spawn_hook = opts.spawn_hook.map(|hook| {
+	let spawn_hooks = opts.spawn_hooks.map(|hooks| {
 		quote! {
-			let hook: ::bevy_trenchbroom::class::QuakeClassSpawnFn = #hook; // For invalid type errors
-			(hook)(view)?;
+			let hooks = #hooks;
+			hooks.apply(view)?;
 		}
 	});
 
 	quote! {
 		impl ::bevy_trenchbroom::class::QuakeClass for #ident {
 			const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
-				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident #geometry_provider,
+				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident,
 				name: #name,
 				description: #description,
 				base: &[#(<#bases as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS),*],
@@ -224,8 +213,8 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 			fn class_spawn(view: &mut ::bevy_trenchbroom::class::QuakeClassSpawnView) -> ::bevy_trenchbroom::anyhow::Result<()> {
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
-				view.entity.insert(#spawn_constructor);
-				#spawn_hook
+				view.world.entity_mut(view.entity).insert(#spawn_constructor);
+				#spawn_hooks
 				Ok(())
 			}
 		}

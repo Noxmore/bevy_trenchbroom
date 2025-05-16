@@ -3,6 +3,7 @@ use super::*;
 pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type SpawnFn = dyn Fn(&mut QuakeClassSpawnView) -> anyhow::Result<()> + Send + Sync;
+pub type SpawnFnOnce = dyn FnOnce(&mut QuakeClassSpawnView) -> anyhow::Result<()> + Send + Sync;
 
 /// Wrapper for storing a stack of dynamic functions. Use [`Hook::set`] to push a new function onto the stack.
 #[derive(Deref)]

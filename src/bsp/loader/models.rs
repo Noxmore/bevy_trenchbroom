@@ -10,7 +10,7 @@ pub struct InternalModel {
 	pub entity: Option<Entity>,
 }
 
-// We need to run geometry providers before adding model assets because geometry providers have mutable access to meshes
+// We need to run spawners before adding model assets because they have mutable access to meshes
 pub struct InternalModelMesh {
 	pub texture: MapGeometryTexture,
 	pub mesh: Mesh,

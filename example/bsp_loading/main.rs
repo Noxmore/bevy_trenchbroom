@@ -13,13 +13,10 @@ use nil::prelude::*;
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
 #[base(BspWorldspawn)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect, Default)]
 #[reflect(QuakeClass, Component)]
-#[base(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
 }
@@ -37,19 +34,16 @@ pub enum FlagsTest {
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncWall;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
-#[geometry(GeometryProvider::new())] // Compiler-handled
 pub struct FuncDetail;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
 #[base(BspSolidEntity)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
 pub struct FuncIllusionary;
 
 #[derive(PointClass, Component, Reflect)]
@@ -75,7 +69,7 @@ impl Cube {
 #[reflect(QuakeClass, Component)]
 #[model("models/mushroom.glb")]
 #[size(-4 -4 0, 4 4 16)]
-#[spawn_hook(spawn_class_gltf::<Self>)]
+#[spawn_hooks(SpawnHooks::new().spawn_class_gltf::<Self>())]
 pub struct Mushroom;
 
 #[derive(PointClass, Component, Reflect, SmartDefault)]

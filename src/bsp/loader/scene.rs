@@ -1,6 +1,8 @@
 use super::*;
+#[cfg(feature = "client")]
+use crate::bsp::lighting::AnimatedLightingHandle;
 use crate::{
-	class::{QuakeClassSpawnView, generate_class_map},
+	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
 	geometry::MapGeometry,
 	*,
 };
@@ -25,24 +27,11 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			continue;
 		};
 
-		let mut entity = world.spawn_empty();
-		let entity_id = entity.id();
+		let entity = world.spawn_empty().id();
 
-		class
-			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
-				config,
-				src_entity: map_entity,
-				type_registry: &type_registry,
-				class_map: &class_map,
-				class,
-				entity: &mut entity,
-				load_context: ctx.load_context,
-			})
-			.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
+		let mut meshes = Vec::new();
 
-		if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
-			let geometry_provider = geometry_provider();
-
+		if class.info.ty.is_solid() {
 			if let Some(model_idx) = get_model_idx(map_entity, class) {
 				let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
 
@@ -53,9 +42,9 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 						class.info.name
 					);
 				}
-				model.entity = Some(entity_id);
+				model.entity = Some(entity);
 
-				let mut meshes = Vec::with_capacity(model.meshes.len());
+				meshes.reserve(model.meshes.len());
 
 				for model_mesh in &mut model.meshes {
 					if config.auto_remove_textures.contains(&model_mesh.texture.name) {
@@ -64,7 +53,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 					let mesh_entity = world.spawn(Name::new(model_mesh.texture.name.clone())).id();
 
-					meshes.push(GeometryProviderMeshView {
+					meshes.push(QuakeClassMeshView {
 						entity: mesh_entity,
 						mesh: &mut model_mesh.mesh,
 						texture: &mut model_mesh.texture,
@@ -72,42 +61,42 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 					model_mesh.entity = Some(mesh_entity);
 				}
-
-				let mut view = GeometryProviderView {
-					world: &mut world,
-					entity: entity_id,
-					tb_server: &ctx.loader.tb_server,
-					map_entity,
-					map_entity_idx,
-					class,
-					meshes,
-				};
-
-				for provider in geometry_provider.providers {
-					provider(&mut view);
-				}
-
-				(config.global_geometry_provider)(&mut view);
-
-				// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
-				for mesh_view in view.meshes {
-					world.entity_mut(mesh_view.entity).insert((ChildOf(entity_id), MapGeometry));
-				}
 			}
 		}
 
-		let mut entity = world.entity_mut(entity_id);
-
-		(config.global_spawner)(&mut QuakeClassSpawnView {
+		let mut view = QuakeClassSpawnView {
 			config,
 			src_entity: map_entity,
+			src_entity_idx: map_entity_idx,
 			type_registry: &type_registry,
 			class_map: &class_map,
 			class,
-			entity: &mut entity,
+			world: &mut world,
+			entity,
 			load_context: ctx.load_context,
-		})
-		.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+			meshes: &mut meshes,
+		};
+
+		// TODO: We probably don't want to hardcode this
+		#[cfg(feature = "client")]
+		for mesh_view in view.meshes.iter() {
+			let Some(animated_lighting_handle) = &mesh_view.texture.lightmap else { continue };
+
+			view.world
+				.entity_mut(mesh_view.entity)
+				.insert(AnimatedLightingHandle(animated_lighting_handle.clone()));
+		}
+
+		class
+			.apply_spawn_fn_recursive(&mut view)
+			.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
+
+		(config.global_spawner)(&mut view).map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+
+		// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
+		for mesh_view in view.meshes.iter() {
+			view.world.entity_mut(mesh_view.entity).insert((ChildOf(entity), MapGeometry));
+		}
 	}
 
 	Ok(world)

@@ -14,7 +14,6 @@ use bevy::{
 	tasks::BoxedFuture,
 };
 use fgd::FgdType;
-use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::QuakeMapEntities;
 use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
@@ -247,11 +246,6 @@ pub struct TrenchBroomConfig {
 	#[builder(skip)]
 	#[default(Hook(Arc::new(Self::default_global_spawner)))]
 	pub global_spawner: Hook<SpawnFn>,
-
-	/// Geometry provider run after all others for all entities regardless of classname. (Default: [`TrenchBroomConfig::default_global_geometry_provider`])
-	#[builder(skip)]
-	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
-	pub global_geometry_provider: Hook<GeometryProviderFn>,
 
 	/// Whether to apply the translation and rotation fields regardless of having [`Transform`] as a base class.
 	/// Adds convenance and removes a foot-gun, but is less flexible, hence why it is disableable.

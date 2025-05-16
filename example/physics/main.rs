@@ -12,12 +12,12 @@ use nil::prelude::*;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
+#[spawn_hooks(SpawnHooks::new().convex_collider())]
 pub struct Worldspawn;
 
 #[derive(SolidClass, Component, Reflect)]
 #[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
+#[spawn_hooks(SpawnHooks::new().convex_collider())]
 pub struct FuncDoor;
 
 #[cfg(feature = "avian")]
