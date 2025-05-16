@@ -33,15 +33,15 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run cargo clippy for default features
-        run: cargo clippy --all-targets
+        run: cargo clippy --workspace --all-targets --exclude physics
       - name: Run cargo clippy without default features
-        run: cargo clippy --all-targets --no-default-features
+        run: cargo clippy --workspace --all-targets --no-default-features --exclude physics
       - name: Run cargo clippy for bsps
-        run: cargo clippy --all-targets --features bsp
+        run: cargo clippy --workspace --all-targets --features bsp --exclude physics
       - name: Run cargo clippy for avian
-        run: cargo clippy --all-targets --features avian
+        run: cargo clippy --workspace --all-targets --features avian
       - name: Run cargo clippy for rapier
-        run: cargo clippy --all-targets --features rapier
+        run: cargo clippy --workspace --all-targets --features rapier
 
   format:
     runs-on: ubuntu-latest

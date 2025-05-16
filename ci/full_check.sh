@@ -9,19 +9,19 @@ cargo fmt --check --all
 
 
 { echo; echo; echo "Run cargo clippy for default features"; } 2> /dev/null
-cargo clippy --all-targets
+cargo clippy --workspace --all-targets --exclude physics
 
 { echo; echo; echo "Run cargo clippy without default features"; } 2> /dev/null
-cargo clippy --all-targets --no-default-features
+cargo clippy --workspace --all-targets --no-default-features --exclude physics
 
 { echo; echo; echo "Run cargo clippy for bsps"; } 2> /dev/null
-cargo clippy --all-targets --features bsp
+cargo clippy --workspace --all-targets --features bsp --exclude physics
 
 { echo; echo; echo "Run cargo clippy for avian"; } 2> /dev/null
-cargo clippy --all-targets --features avian
+cargo clippy --workspace --all-targets --features avian
 
 { echo; echo; echo "Run cargo clippy for rapier"; } 2> /dev/null
-cargo clippy --all-targets --features rapier
+cargo clippy --workspace --all-targets --features rapier
 
 
 { echo; echo; echo "Run tests with avian"; } 2> /dev/null

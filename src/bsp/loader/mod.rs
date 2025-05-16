@@ -124,6 +124,7 @@ impl AssetLoader for BspLoader {
 
 #[cfg(test)]
 mod tests {
+	#[allow(unused)]
 	use super::*;
 
 	#[cfg(feature = "client")]

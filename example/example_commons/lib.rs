@@ -117,6 +117,7 @@ impl ExampleCommonsPlugin {
 		}
 	}
 
+	#[cfg(feature = "client")]
 	pub fn draw_debug_transforms(
 		mut gizmos: Gizmos,
 		keyboard: Res<ButtonInput<KeyCode>>,
