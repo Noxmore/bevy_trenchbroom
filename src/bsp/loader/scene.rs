@@ -51,7 +51,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 						continue;
 					}
 
-					let mesh_entity = world.spawn(Name::new(model_mesh.texture.name.clone())).id();
+					let mesh_entity = world.spawn((Name::new(model_mesh.texture.name.clone()), Transform::default())).id();
 
 					meshes.push(QuakeClassMeshView {
 						entity: mesh_entity,
