@@ -85,9 +85,21 @@ impl PhysicsPlugin {
 				continue;
 			};
 
-			for (brush_idx, vertices) in brush_vertices.into_iter().enumerate() {
+			for (brush_idx, mut vertices) in brush_vertices.into_iter().enumerate() {
 				if vertices.is_empty() {
 					continue;
+				}
+
+				// Bring the vertices to the origin if they're generated in world-space (non-bsp)
+				#[cfg(feature = "bsp")]
+				let is_bsp = matches!(brushes, Brushes::Bsp(_));
+				#[cfg(not(feature = "bsp"))]
+				let is_bsp = false;
+				if !is_bsp {
+					for vertex in &mut vertices {
+						// *vertex = transform.rotation.inverse() * (*vertex - transform.translation) + transform.translation;
+						*vertex -= transform.translation;
+					}
 				}
 
 				macro_rules! fail {
@@ -107,12 +119,7 @@ impl PhysicsPlugin {
 					fail!();
 				};
 
-				#[cfg(feature = "bsp")]
-				#[rustfmt::skip]
-				let position = if matches!(brushes, Brushes::Bsp(_)) { Vec3::ZERO } else { -transform.translation };
-				#[cfg(not(feature = "bsp"))]
-				let position = -transform.translation;
-				colliders.push((position, transform.rotation.inverse(), collider));
+				colliders.push((Vec3::ZERO, transform.rotation.inverse(), collider));
 			}
 
 			if colliders.is_empty() {
