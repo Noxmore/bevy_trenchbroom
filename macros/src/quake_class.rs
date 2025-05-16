@@ -206,6 +206,7 @@ pub(super) fn class_derive(input: DeriveInput, ty: QuakeClassType) -> TokenStrea
 	});
 
 	quote! {
+		#[automatically_derived]
 		impl ::bevy_trenchbroom::class::QuakeClass for #ident {
 			const CLASS_INFO: ::bevy_trenchbroom::class::QuakeClassInfo = ::bevy_trenchbroom::class::QuakeClassInfo {
 				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident #geometry_provider,
