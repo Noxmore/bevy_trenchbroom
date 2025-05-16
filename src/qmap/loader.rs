@@ -1,5 +1,5 @@
 use bevy::{
-	asset::{AssetLoader, AsyncReadExt},
+	asset::{AssetLoadError, AssetLoader, AsyncReadExt, LoadDirectError},
 	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
@@ -116,7 +116,7 @@ impl AssetLoader for QuakeMapLoader {
 							Entry::Occupied(x) => x.into_mut(),
 							Entry::Vacant(x) => x.insert('size_searcher: {
 								for ext in &self.tb_server.config.texture_extensions {
-									if let Ok(image) = load_context
+									match load_context
 										.loader()
 										.immediate()
 										.load::<Image>(
@@ -127,7 +127,15 @@ impl AssetLoader for QuakeMapLoader {
 										)
 										.await
 									{
-										break 'size_searcher image.take().size();
+										Ok(image) => break 'size_searcher image.take().size(),
+										Err(LoadDirectError::LoadError {
+											dependency: _,
+											error: AssetLoadError::AssetReaderError(_),
+										}) => {}
+										Err(err) => {
+											error!("Failed to get size for texture \"{texture}.{ext}\": {err}");
+											break 'size_searcher UVec2::splat(1);
+										}
 									}
 								}
 
