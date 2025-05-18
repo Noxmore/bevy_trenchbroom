@@ -12,6 +12,7 @@ license.workspace = true
 proc-macro = true
 
 [dependencies]
+deluxe = "0.5"
 heck = "0.5"
 proc-macro2 = "1"
 quote = "1"

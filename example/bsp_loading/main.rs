@@ -10,13 +10,11 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[base(BspWorldspawn)]
+#[solid_class(base(BspWorldspawn))]
 pub struct Worldspawn;
 
-#[derive(SolidClass, Component, Reflect, Default)]
-#[reflect(QuakeClass, Component)]
+#[solid_class]
+#[derive(Default)]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
 }
@@ -31,23 +29,16 @@ pub enum FlagsTest {
 	Bap = 1 << 2,
 }
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[base(BspSolidEntity)]
+#[solid_class(base(BspSolidEntity))]
 pub struct FuncWall;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[base(BspSolidEntity)]
+#[solid_class(base(BspSolidEntity))]
 pub struct FuncDetail;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[base(BspSolidEntity)]
+#[solid_class(base(BspSolidEntity))]
 pub struct FuncIllusionary;
 
-#[derive(PointClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
+#[point_class]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;
 #[cfg(feature = "example_client")]
@@ -65,19 +56,19 @@ impl Cube {
 	}
 }
 
-#[derive(PointClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[model("models/mushroom.glb")]
-#[size(-4 -4 0, 4 4 16)]
-#[spawn_hooks(SpawnHooks::new().spawn_class_gltf::<Self>())]
+#[point_class(
+	model("models/mushroom.glb"),
+	size(-4 -4 0, 4 4 16),
+	hooks(SpawnHooks::new().spawn_class_gltf::<Self>()),
+)]
 pub struct Mushroom;
 
-#[derive(PointClass, Component, Reflect, SmartDefault)]
-#[reflect(QuakeClass, Component)]
-#[base(BspLight, Transform)]
-// This is the default size, this is just to make sure it produces a valid fgd.
-#[size(-8 -8 -8, 8 8 8)]
-#[iconsprite({ path: "point_light.png", scale: 0.1 })]
+#[point_class(
+	base(BspLight),
+	// This is the default size, this is just to make sure it produces a valid fgd.
+	size(-8 -8 -8, 8 8 8),
+	iconsprite({ path: "point_light.png", scale: 0.1 }),
+)]
 pub struct Light;
 
 fn main() {

@@ -10,14 +10,14 @@ use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[spawn_hooks(SpawnHooks::new().convex_collider())]
+#[solid_class(
+	hooks(SpawnHooks::new().convex_collider()),
+)]
 pub struct Worldspawn;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[spawn_hooks(SpawnHooks::new().convex_collider())]
+#[solid_class(
+	hooks(SpawnHooks::new().convex_collider()),
+)]
 pub struct FuncDoor;
 
 #[cfg(feature = "avian")]

@@ -223,11 +223,11 @@ impl SpawnHooks {
 	/// ```
 	/// # use bevy::prelude::*;
 	/// # use bevy_trenchbroom::prelude::*;
-	/// #[derive(PointClass, Component, Reflect)]
-	/// #[reflect(QuakeClass, Component)]
-	/// #[model("models/mushroom.glb")]
-	/// #[size(-4 -4 0, 4 4 16)]
-	/// #[spawn_hooks(SpawnHooks::new().spawn_class_gltf::<Self>())]
+	/// #[point_class(
+	///     model("models/mushroom.glb"),
+	///     size(-4 -4 0, 4 4 16),
+	///     hooks(SpawnHooks::new().spawn_class_gltf::<Self>()),
+	/// )]
 	/// pub struct Mushroom;
 	/// ```
 	pub fn spawn_class_gltf<T: QuakeClass>(self) -> Self {
@@ -242,10 +242,10 @@ impl SpawnHooks {
 	/// ```
 	/// # use bevy::prelude::*;
 	/// # use bevy_trenchbroom::prelude::*;
-	/// #[derive(PointClass, Component, Reflect)]
-	/// #[reflect(QuakeClass, Component)]
-	/// #[model("models/torch.glb")]
-	/// #[spawn_hooks(SpawnHooks::new().preload_model::<Self>())]
+	/// #[point_class(
+	///     model("models/torch.glb"),
+	///     hooks(SpawnHooks::new().preload_model::<Self>()),
+	/// )]
 	/// pub struct Torch;
 	/// ```
 	pub fn preload_model<T: QuakeClass>(self) -> Self {
@@ -297,10 +297,10 @@ mod tests {
 			scene::ScenePlugin,
 		};
 
-		#[derive(PointClass, Component, Reflect)]
-		#[reflect(QuakeClass, Component)]
-		#[model("models/mushroom.glb")]
-		#[spawn_hooks(SpawnHooks::new().preload_model::<Self>())]
+		#[point_class(
+			model("models/mushroom.glb"),
+			hooks(SpawnHooks::new().preload_model::<Self>()),
+		)]
 		#[component(on_add = Self::on_add)]
 		pub struct Mushroom;
 		impl Mushroom {
