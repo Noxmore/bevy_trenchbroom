@@ -37,14 +37,10 @@ impl ExampleCommonsPlugin {
 	pub fn move_debug_camera(
 		mouse_motion: Res<AccumulatedMouseMotion>,
 		keyboard: Res<ButtonInput<KeyCode>>,
-		window_query: Query<&Window, With<PrimaryWindow>>,
+		window: Single<&Window, With<PrimaryWindow>>,
 		mut camera_query: Query<&mut Transform, With<DebugCamera>>,
 		time: Res<Time>,
 	) {
-		let Ok(window) = window_query.single() else {
-			error_once!("Primary window not found! (move_debug_camera)");
-			return;
-		};
 		if window.cursor_options.grab_mode == CursorGrabMode::None {
 			return;
 		}
@@ -95,12 +91,7 @@ impl ExampleCommonsPlugin {
 	}
 
 	#[cfg(feature = "client")]
-	pub fn toggle_focus(mut window_query: Query<&mut Window, With<PrimaryWindow>>, keyboard: Res<ButtonInput<KeyCode>>) {
-		let Ok(mut window) = window_query.single_mut() else {
-			error_once!("Primary window not found! (toggle_focus)");
-			return;
-		};
-
+	pub fn toggle_focus(mut window: Single<&mut Window, With<PrimaryWindow>>, keyboard: Res<ButtonInput<KeyCode>>) {
 		if !keyboard.just_pressed(KeyCode::Escape) {
 			return;
 		}
