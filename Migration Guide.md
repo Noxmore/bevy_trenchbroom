@@ -5,6 +5,7 @@
 	- `#[reflect(QuakeClass, Component)]` is now implied if not specified.
 	- Attributes have been put into the macro body, though they are not needed.
 	- `spawn_hooks` attribute has been renamed to just `hooks`.
+	- The `no_default` field attribute has been renamed to `must_set`.
 	- Here's an example:
 		```rust
 		#[solid_class(
@@ -16,6 +17,7 @@
 		#[solid_class]
 		#[derive(Default)]
 		struct FuncDoor {
+			#[must_set]
 			pub my_field: f32,
 		}
 		```
