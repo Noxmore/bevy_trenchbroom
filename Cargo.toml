@@ -29,7 +29,7 @@ bevy = { version = "0.16.0", default-features = false, features = [
 ] } # For examples
 nil = "0.15"
 enumflags2 = "0.7"
-avian3d = "0.3"
+avian3d = { version = "0.3", default-features = false, features = ["3d", "collider-from-mesh", "debug-plugin", "parallel"]}
 bevy_rapier3d = "0.30"
 example_commons = { path = "example/example_commons" }
 
@@ -83,4 +83,6 @@ default = ["client"]
 client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 rapier = ["dep:bevy_rapier3d"]
 avian = ["dep:avian3d"]
+avian32 = ["avian", "avian3d/parry-f32", "avian3d/f32"]
+avian64 = ["avian", "avian3d/parry-f64", "avian3d/f64"]
 bsp = ["dep:qbsp"]

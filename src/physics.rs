@@ -7,6 +7,8 @@ use geometry::{BrushList, Brushes};
 #[cfg(feature = "rapier")]
 use bevy_rapier3d::prelude::*;
 
+#[cfg(feature = "avian64")]
+use avian3d::math::AdjustPrecision;
 #[cfg(feature = "avian")]
 use avian3d::prelude::*;
 
@@ -109,8 +111,12 @@ impl PhysicsPlugin {
 					};
 				}
 
-				#[cfg(feature = "avian")]
+				#[cfg(feature = "avian32")]
 				let Some(collider) = Collider::convex_hull(vertices) else {
+					fail!();
+				};
+				#[cfg(feature = "avian64")]
+				let Some(collider) = Collider::convex_hull(vertices.iter().map(|v| v.adjust_precision()).collect::<Vec<_>>()) else {
 					fail!();
 				};
 
@@ -130,10 +136,21 @@ impl PhysicsPlugin {
 				continue;
 			}
 
-			#[cfg(feature = "avian")]
+			#[cfg(feature = "avian32")]
 			commands
 				.entity(entity)
 				.insert(Collider::compound(colliders))
+				.insert_if_new(RigidBody::Static);
+
+			#[cfg(feature = "avian64")]
+			commands
+				.entity(entity)
+				.insert(Collider::compound(
+					colliders
+						.into_iter()
+						.map(|(pos, rot, collider)| (pos.adjust_precision(), rot.adjust_precision(), collider))
+						.collect::<Vec<_>>(),
+				))
 				.insert_if_new(RigidBody::Static);
 
 			#[cfg(feature = "rapier")]
