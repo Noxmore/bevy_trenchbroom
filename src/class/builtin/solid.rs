@@ -14,14 +14,16 @@ impl Plugin for SolidClassesPlugin {
 }
 
 #[cfg(feature = "bsp")]
-#[derive(SolidClass, Component, Reflect, Debug, Clone)]
-#[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new())]
+#[solid_class]
+#[derive(Debug, Clone)]
 pub struct FuncDetail;
 
-#[derive(SolidClass, Component, Reflect, Debug, Clone)]
-#[reflect(QuakeClass, Component)]
-#[cfg_attr(feature = "bsp", base())]
-#[cfg_attr(feature = "bsp", geometry(GeometryProvider::new()))]
-#[cfg_attr(not(feature = "bsp"), geometry(GeometryProvider::new().smooth_by_default_angle()))] // TODO: Default colliders???
+#[cfg(feature = "bsp")]
+#[solid_class(base(BspSolidEntity))]
+#[derive(Debug, Clone)]
+pub struct FuncGroup;
+
+#[cfg(not(feature = "bsp"))]
+#[solid_class]
+#[derive(Debug, Clone)]
 pub struct FuncGroup;

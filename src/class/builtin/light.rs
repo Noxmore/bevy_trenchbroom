@@ -1,3 +1,5 @@
+use crate::fgd::{IntBool, IntBoolOverride, Srgb};
+
 use super::*;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -124,7 +126,7 @@ impl QuakeClass for PointLight {
 		let default = PointLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(PointLight {
+		view.world.entity_mut(view.entity).insert(PointLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
@@ -244,7 +246,7 @@ impl QuakeClass for SpotLight {
 		let default = SpotLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(SpotLight {
+		view.world.entity_mut(view.entity).insert(SpotLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
@@ -334,7 +336,7 @@ impl QuakeClass for DirectionalLight {
 		let default = DirectionalLight::default();
 
 		#[allow(clippy::needless_update)]
-		view.entity.insert(DirectionalLight {
+		view.world.entity_mut(view.entity).insert(DirectionalLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
 			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
@@ -350,12 +352,14 @@ impl QuakeClass for DirectionalLight {
 
 /// Contains properties used by the `ericw-tools` compiler for any entity with a classname starting with the first five letters "light". E.g. "light", "light_spot", "light_flame_small_yellow", etc.
 /// 
-/// This is a combined class instead of split into point, spot, and directional lights because 
+/// This is a combined class instead of split into point, spot, and directional lights because `ericw-tools` makes no distinction based on entity type. You have to specify per-entity what kind of light it is.
 #[cfg(feature = "bsp")]
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__bsp_combined_light")]
-pub struct BspCombinedLight {
+#[base_class(
+	classname("__bsp_combined_light"),
+)]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
+pub struct BspLight {
 	/// Set the light intensity. Negative values are also allowed and will cause the entity to subtract light cast by other entities. Default 300.
 	#[default(300.)]
 	pub light: f32,

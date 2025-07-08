@@ -201,7 +201,7 @@ mod tests {
 			.register_type::<SpotLight>()
 			.register_type::<DirectionalLight>()
 			.register_type::<Visibility>()
-			.add_plugins((BuiltinClassesPlugin, BspClassesPlugin));
+			.add_plugins((BasicClassesPlugin, BspClassesPlugin));
 
 		for (_, ReflectQuakeClass { erased_class: class, .. }) in
 			app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>()

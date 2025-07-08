@@ -14,7 +14,6 @@ impl Plugin for BspClassesPlugin {
 		app
 			.register_type::<BspSolidEntity>()
 			.register_type::<BspWorldspawn>()
-			.register_type::<BspLight>()
 		;
 	}
 }
