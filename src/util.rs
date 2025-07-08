@@ -303,6 +303,13 @@ impl IsSceneWorld for DeferredWorld<'_> {
 	}
 }
 
+/// Represents a type of Quake map file, whether a `.map` source file, or a compiled `.bsp`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MapFileType {
+	Map,
+	Bsp,
+}
+
 /// `angles` is negative pitch, yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {

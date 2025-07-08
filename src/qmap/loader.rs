@@ -10,6 +10,7 @@ use geometry::{BrushList, Brushes, MapGeometryTexture};
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
 	geometry::MapGeometry,
+	util::MapFileType,
 };
 
 use super::*;
@@ -198,6 +199,7 @@ impl AssetLoader for QuakeMapLoader {
 					.collect_vec();
 
 				let mut view = QuakeClassSpawnView {
+					file_type: MapFileType::Map,
 					config: &self.tb_server.config,
 					src_entity: map_entity,
 					src_entity_idx: map_entity_idx,

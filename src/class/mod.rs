@@ -5,7 +5,7 @@ use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
 use qmap::QuakeMapEntity;
 
-use crate::{geometry::MapGeometryTexture, *};
+use crate::{geometry::MapGeometryTexture, util::MapFileType, *};
 
 pub struct QuakeClassPlugin;
 impl Plugin for QuakeClassPlugin {
@@ -166,6 +166,8 @@ pub fn generate_class_map(registry: &TypeRegistry) -> HashMap<&'static str, &'st
 /// Inputs provided when spawning an entity into the scene world of a loading map.
 pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	// 'l: local, 'w: world, 'sw: scene world
+	/// The file type of the map being loaded.
+	pub file_type: MapFileType,
 	pub config: &'l TrenchBroomConfig,
 	pub type_registry: &'l TypeRegistry,
 	/// A map of classnames to classes.
@@ -365,6 +367,7 @@ mod tests {
 
 		Class::ERASED_CLASS
 			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
+				file_type: MapFileType::Map,
 				config: &default(),
 				type_registry: &default(),
 				class_map: &default(),
