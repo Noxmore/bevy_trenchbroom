@@ -94,6 +94,7 @@ impl QuakeMapEntity {
 
 		T::fgd_parse(s).map_err(|err| QuakeEntityError::PropertyParseError {
 			property: key.s(),
+			value: s.s(),
 			required_type: type_name::<T>(),
 			error: format!("{err}"),
 		})
@@ -104,9 +105,10 @@ impl QuakeMapEntity {
 pub enum QuakeEntityError {
 	#[error("required property `{property}` not found")]
 	RequiredPropertyNotFound { property: String },
-	#[error("requires property `{property}` to be a valid `{required_type}`. Error: {error}")]
+	#[error("requires property `{property}` to be a valid `{required_type}` (got `{value}`). Error: {error}")]
 	PropertyParseError {
 		property: String,
+		value: String,
 		required_type: &'static str,
 		error: String,
 	},
