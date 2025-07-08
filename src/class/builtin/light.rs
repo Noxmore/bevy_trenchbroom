@@ -80,18 +80,21 @@ impl Plugin for LightingClassesPlugin {
 //// LightingWorkflow::DynamicOnly
 //////////////////////////////////////////////////////////////////////////////////
 
+/// [`LightingWorkflow::DynamicOnly`] implementation.
 #[point_class(
 	base(PointLight),
 	classname("light_point"),
 )]
 pub struct DynamicOnlyPointLight;
 
+/// [`LightingWorkflow::DynamicOnly`] implementation.
 #[point_class(
 	base(SpotLight),
 	classname("light_spot"),
 )]
 pub struct DynamicOnlySpotLight;
 
+/// [`LightingWorkflow::DynamicOnly`] implementation.
 #[point_class(
 	base(DirectionalLight),
 	classname("light_directional"),
@@ -102,6 +105,7 @@ pub struct DynamicOnlyDirectionalLight;
 //// LightingWorkflow::BakedOnly
 //////////////////////////////////////////////////////////////////////////////////
 
+/// [`LightingWorkflow::BakedOnly`] and [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
 #[point_class(
 	base(BspLight),
 	classname("light"),
@@ -112,6 +116,7 @@ pub struct BakedOnlyLight;
 //// LightingWorkflow::MapDynamicBspBaked
 //////////////////////////////////////////////////////////////////////////////////
 
+/// [`LightingWorkflow::MapDynamicBspBaked`] implementation.
 #[point_class(
 	base(MixedLight),
 	classname("light"),
@@ -132,6 +137,7 @@ impl MapDynamicBspBakedLight {
 //// LightingWorkflow::DynamicAndBakedCombined
 //////////////////////////////////////////////////////////////////////////////////
 
+/// [`LightingWorkflow::DynamicAndBakedCombined`] implementation.
 #[point_class(
 	base(MixedLight),
 	classname("light"),
@@ -156,18 +162,21 @@ impl CombinedLight {
 //// LightingWorkflow::DynamicAndBakedSeparate
 //////////////////////////////////////////////////////////////////////////////////
 
+/// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
 #[point_class(
 	base(PointLight),
 	classname("dynamiclight_point"),
 )]
 pub struct DynamicPointLight;
 
+/// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
 #[point_class(
 	base(SpotLight),
 	classname("dynamiclight_spot"),
 )]
 pub struct DynamicSpotLight;
 
+/// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
 #[point_class(
 	base(DirectionalLight),
 	classname("dynamiclight_directional"),
