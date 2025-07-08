@@ -17,7 +17,7 @@ use config::EmbeddedTextureLoadView;
 
 use crate::*;
 
-pub(crate) struct SpecialTexturesPlugin;
+pub struct SpecialTexturesPlugin;
 impl Plugin for SpecialTexturesPlugin {
 	fn build(&self, app: &mut App) {
 		embedded_asset!(app, "liquid.wgsl");
