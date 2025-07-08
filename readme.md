@@ -60,51 +60,58 @@ use bevy_trenchbroom::class::builtin::*;
 
 // The required worldspawn class makes up the main structural
 // world geometry and settings. Exactly one exists in every map.
-#[derive(SolidClass, Component, Reflect, Default)]
-#[reflect(QuakeClass, Component)]
-// Quake classes use an inheritance system alike OOP
-// programming languages.
-// If you're using a BSP workflow, this base class includes a bunch
-// of useful compiler properties.
-#[base(BspWorldspawn)]
-#[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
+#[solid_class(
+    // Quake classes use an inheritance system alike OOP
+    // programming languages.
+    // If you're using a BSP workflow, this base class includes
+    // a bunch of useful compiler properties.
+    base(BspWorldspawn),
+    // Spawn hooks are functions that run when the entity spawns
+    // into the scene world. There are a bunch of builtin ones
+    // such as `trimesh_collider`.
+    hooks(SpawnHooks::new().trimesh_collider()),
+)]
+#[derive(Default)]
 pub struct Worldspawn {
     /// A useful example property.
     pub fog_color: Color,
     pub fog_density: f32,
 }
 
+// #[<type>_class] also implies:
+// - #[derive(Component, Reflect)]
+// - #[reflect(QuakeClass, Component)]
+
 // BaseClass doesn't appear in editor, only giving properties to
 // those which use it as a base class
 // by using the `base` attribute.
-#[derive(BaseClass, Component, Reflect, Default)]
-#[reflect(QuakeClass, Component)]
+#[base_class]
+#[derive(Default)]
 pub struct MyBaseClass {
     /// Documentation comments will be visible in-editor!
     pub my_value: u32,
 }
 
-// SolidClass (also known as brush entities) makes the class
-// contain its own geometry, such as a door or breakable
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[base(Visibility, MyBaseClass)]
-#[geometry(GeometryProvider::new().trimesh_collider().smooth_by_default_angle().with_lightmaps())]
-// By default, names are converted into snake_case.
-// Using the classname attribute, you can define the case you want
-// it to be converted to instead.
-#[classname(PascalCase)] // Would be FuncWall instead of func_wall
-// Or you can just set the classname directly.
-#[classname("func_wall")]
+// SolidClass (also known as brush entities) makes the entity
+// contain one or more brushes as geometry.
+#[solid_class(
+    base(Visibility, MyBaseClass),
+    hooks(SpawnHooks::new().trimesh_collider()),
+    // By default, names are converted into snake_case.
+    // Using the classname attribute, you can define the case you want
+    // it to be converted to instead.
+    classname(PascalCase), // Would be FuncWall instead of func_wall
+    // Or you can just set the classname directly.
+    // classname("func_wall"), -- (has to be commented because duplicate)
+)]
 pub struct FuncWall;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-// If you're using a BSP workflow, this base class includes a bunch
-// of useful compiler properties.
-#[base(BspSolidEntity)]
-// Don't include a collider for func_illusionary.
-#[geometry(GeometryProvider::new().smooth_by_default_angle().with_lightmaps())]
+#[solid_class(
+    // If you're using a BSP workflow, this base class includes a bunch
+    // of useful compiler properties.
+    base(BspSolidEntity),
+    // Don't include spawn hooks adding a collider for func_illusionary.
+)]
 pub struct FuncIllusionary;
 
 // A more advanced example
@@ -113,25 +120,27 @@ pub struct FuncIllusionary;
 // simply just a point in space.
 
 /// A GLTF model with no physics.
-#[derive(PointClass, Component, Reflect)]
-// Here you would do a
-// #[spawn_hook(<function>)] to spawn the GLTF scene when
-// this entity is spawned in the scene world.
-//
-// Alternatively, you could create a system with a query
-// `Query<&StaticProp, Without<SceneRoot>>`
-// and spawn it through that, but .
-//
-// If your entity has a hardcoded model, you can use a function
-// like `spawn_class_gltf` to do the above automatically.
-#[reflect(QuakeClass, Component)]
-#[base(Visibility)]
-// Sets the in-editor model using TrenchBroom's expression language.
-#[model({ "path": model, "skin": skin })]
+#[point_class(
+    base(Visibility),
+    // Sets the in-editor model using TrenchBroom's expression language.
+    model({ "path": model, "skin": skin }),
+    // Here you would do a
+    // hooks(SpawnHooks::new().push(<function>))
+    // to spawn the GLTF scene when
+    // this entity is spawned in the scene world.
+    //
+    // Alternatively, you could create a system with a query
+    // `Query<&StaticProp, Without<SceneRoot>>`
+    // and spawn it through that, but the scene asset wouldn't
+    // be a dependent of the map, and thus not preloaded.
+    //
+    // If your entity has a hardcoded model, you can use a function
+    // like `spawn_class_gltf` to do the above automatically.
+)]
 pub struct StaticProp {
-    // no_default makes the field have an empty default value
+    // must_set makes the field have an empty default value
     // in-editor, and will cause an error if not defined.
-    #[no_default]
+    #[must_set]
     pub model: String,
     /// Documentation comments on structs and their fields
     /// will show up in-editor.
@@ -140,7 +149,8 @@ pub struct StaticProp {
     pub enable_shadows: bool,
 }
 // If your struct has fields, you need to implement Default.
-// I recommend using the `smart-default` crate for this.
+// I recommend using the `smart-default` crate for this
+// instead of implementing it manually here.
 impl Default for StaticProp {
     fn default() -> Self {
         Self {
@@ -153,14 +163,16 @@ impl Default for StaticProp {
 }
 
 /// A GLTF model with physics.
-#[derive(PointClass, Component, Reflect)]
-// Here you'd use #[spawn_hook(<function>)], a component hook, or a system to
-// add a RigidBody of your preferred physics engine.
-#[reflect(QuakeClass, Component)]
-#[base(StaticProp)]
+#[point_class(
+    base(StaticProp),
+    // Here you'd use hooks(SpawnHooks::new().push(<function>)),
+    // a component hook, or a system to add a RigidBody of your
+    // preferred physics engine.
+)]
 pub struct PhysicsProp;
 
 // For `choices` properties, you can derive FgdType on a unit enum.
+// These will get you a drop-down menu in-editor.
 #[derive(Reflect, FgdType)]
 pub enum CollisionType {
     /// Uses colliders defined in the model,
@@ -277,7 +289,7 @@ Currently, PVS data generated by `vis` isn't used.
 
 `bevy_trenchbroom` supports [bevy_rapier3d](https://crates.io/crates/bevy_rapier3d) and [avian3d](https://crates.io/crates/avian3d) to easily add colliders when spawning geometry.
 
-First, enable the `rapier` or `avian` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your class's `GeometryProvider` to create the respective type of collider(s) with said geometry.
+First, enable the `rapier` or `avian` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your class's `SpawnHooks` to create the respective type of collider(s) with said geometry.
 
 ## Multiplayer
 

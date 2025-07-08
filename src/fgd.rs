@@ -41,18 +41,10 @@ pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 			continue;
 		}
 
-		// Validate that all inherited classes are registered BaseClasses.
+		// Validate that all inherited classes are registered.
 		for base in class.info.base {
 			if !type_registry.contains(base.id()) {
 				error!("`{}`'s base class `{}` isn't registered, skipping", class.info.name, base.info.name);
-				continue 'class_loop;
-			}
-
-			if !base.info.ty.is_base() {
-				error!(
-					"`{}`'s base class `{}` is a {}Class, expected a BaseClass, skipping",
-					class.info.name, base.info.name, base.info.ty
-				);
 				continue 'class_loop;
 			}
 		}

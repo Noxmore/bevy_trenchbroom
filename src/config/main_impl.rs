@@ -44,14 +44,15 @@ impl TrenchBroomConfig {
 		}
 	}
 
-	/// Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
-	///
-	/// If the entity is a brush entity, rotation is reset.
+	/// - Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
+	/// - If the entity is a brush entity, rotation is reset.
+	/// - Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
+	/// - Adds [`GenericMaterial3d`]s.
 	pub fn default_global_spawner(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
 		if view.config.global_transform_application && !view.class.info.derives_from::<Transform>() {
-			view.entity.insert(Transform {
+			view.world.entity_mut(view.entity).insert(Transform {
 				translation: read_translation_from_entity(view.src_entity, view.config)?,
 				rotation: read_rotation_from_entity(view.src_entity)?,
 				scale: Vec3::ONE,
@@ -59,26 +60,24 @@ impl TrenchBroomConfig {
 		}
 		
 		// For things like doors where the `angles` property means open direction.
-		if let Some(mut transform) = view.entity.get_mut::<Transform>() {
+		if let Some(transform) = view.world.entity(view.entity).get::<Transform>().copied() {
 			if view.class_map.get(classname.as_str()).map(|class| class.info.ty.is_solid()) == Some(true) {
-				transform.rotation = Quat::IDENTITY;
+				for mesh_view in view.meshes.iter() {
+					let mut mesh_entity = view.world.entity_mut(mesh_view.entity);
+					let Some(mut mesh_transform) = mesh_entity.get_mut::<Transform>() else { continue };
+
+					mesh_transform.rotation = transform.rotation.inverse();
+				}
 			}
 		}
 
-		view.entity.insert(Name::new(
+		view.world.entity_mut(view.entity).insert(Name::new(
 			view.src_entity
 				.get::<String>("targetname")
 				.map(|name| format!("{classname} ({name})"))
 				.unwrap_or(classname),
 		));
 
-		Ok(())
-	}
-
-	/// Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
-	///
-	/// Also adds [`GenericMaterial3d`]s.
-	pub fn default_global_geometry_provider(view: &mut GeometryProviderView) {
 		let mut ent = view.world.entity_mut(view.entity);
 
 		#[cfg(feature = "client")]
@@ -89,11 +88,13 @@ impl TrenchBroomConfig {
 			ent.insert(Transform::default());
 		}
 
-		for mesh_view in &view.meshes {
+		for mesh_view in view.meshes.iter() {
 			view.world
 				.entity_mut(mesh_view.entity)
 				.insert(GenericMaterial3d(mesh_view.texture.material.clone()));
 		}
+
+		Ok(())
 	}
 
 	#[cfg(feature = "bsp")]

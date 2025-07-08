@@ -102,7 +102,7 @@ impl QuakeClass for Transform {
 	};
 
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		view.entity.insert(Transform {
+		view.world.entity_mut(view.entity).insert(Transform {
 			translation: read_translation_from_entity(view.src_entity, view.config)?,
 			rotation: read_rotation_from_entity(view.src_entity)?,
 			scale: match view.src_entity.get::<f32>("scale") {
@@ -155,7 +155,7 @@ impl QuakeClass for Visibility {
 			})?,
 		};
 
-		view.entity.insert(visibility);
+		view.world.entity_mut(view.entity).insert(visibility);
 
 		Ok(())
 	}
@@ -164,9 +164,9 @@ impl QuakeClass for Visibility {
 /// Quake entity IO - Able to target entities with the [`Targetable`] component.
 ///
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__target")]
+#[base_class(classname("__target"))]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
 pub struct Target {
 	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
 	pub target: Option<String>,
@@ -177,34 +177,42 @@ pub struct Target {
 /// Quake entity IO - Able to be targeted from a [`Target`] component.
 ///
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__targetable")]
+#[base_class(classname("__targetable"))]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
 pub struct Targetable {
 	/// The name for entities with [`Target`] components to point to.
 	pub targetname: Option<String>,
 }
 
-#[cfg(feature = "bsp")]
-#[test]
-fn builtin_base_class_prefix() {
-	let mut app = App::new();
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
 
-	app.init_resource::<AppTypeRegistry>()
-		.register_type::<Transform>()
-		.register_type::<PointLight>()
-		.register_type::<SpotLight>()
-		.register_type::<DirectionalLight>()
-		.register_type::<Visibility>()
-		.add_plugins((BasicClassesPlugin, BspClassesPlugin, LightingClassesPlugin(default()), SolidClassesPlugin));
+	#[cfg(feature = "bsp")]
+	#[test]
+	fn builtin_base_class_prefix() {
+		let mut app = App::new();
 
-	for (_, ReflectQuakeClass { erased_class: class, .. }) in app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>() {
-		if class.info.ty.is_base() {
-			assert!(
-				class.info.name.starts_with(BUILTIN_BASE_CLASS_PREFIX),
-				"class {:?} does not start with prefix {BUILTIN_BASE_CLASS_PREFIX:?}",
-				class.info.name
-			);
+		app.init_resource::<AppTypeRegistry>()
+			.register_type::<Transform>()
+			.register_type::<PointLight>()
+			.register_type::<SpotLight>()
+			.register_type::<DirectionalLight>()
+			.register_type::<Visibility>()
+			.add_plugins((BuiltinClassesPlugin, BspClassesPlugin));
+
+		for (_, ReflectQuakeClass { erased_class: class, .. }) in
+			app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>()
+		{
+			if class.info.ty.is_base() {
+				assert!(
+					class.info.name.starts_with(BUILTIN_BASE_CLASS_PREFIX),
+					"class {:?} does not start with prefix {BUILTIN_BASE_CLASS_PREFIX:?}",
+					class.info.name
+				);
+			}
 		}
 	}
 }

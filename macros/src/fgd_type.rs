@@ -86,6 +86,7 @@ pub(super) fn fgd_type_derive(input: DeriveInput) -> TokenStream {
 	let valid_variants = variant_strings.join(", ");
 
 	quote! {
+		#[automatically_derived]
 		impl ::bevy_trenchbroom::fgd::FgdType for #ident {
 			const PROPERTY_TYPE: ::bevy_trenchbroom::class::QuakeClassPropertyType = ::bevy_trenchbroom::class::QuakeClassPropertyType::Choices(&[
 				#(#property_type_choices)*

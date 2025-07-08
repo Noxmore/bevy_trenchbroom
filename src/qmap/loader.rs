@@ -1,15 +1,14 @@
 use bevy::{
-	asset::{AssetLoader, AsyncReadExt},
+	asset::{AssetLoadError, AssetLoader, AsyncReadExt, LoadDirectError},
 	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
 use brush::{BrushSurfacePolygon, ConvexHull, generate_mesh_from_brush_polygons};
-use class::QuakeClassType;
 use config::TextureLoadView;
-use geometry::{BrushList, Brushes, GeometryProviderMeshView, MapGeometryTexture};
+use geometry::{BrushList, Brushes, MapGeometryTexture};
 
 use crate::{
-	class::{QuakeClassSpawnView, generate_class_map},
+	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
 	geometry::MapGeometry,
 };
 
@@ -91,24 +90,11 @@ impl AssetLoader for QuakeMapLoader {
 					continue;
 				};
 
-				let mut entity = world.spawn_empty();
-				let entity_id = entity.id();
+				let entity = world.spawn_empty().id();
 
-				class
-					.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
-						config: &self.tb_server.config,
-						src_entity: map_entity,
-						type_registry: &self.type_registry.read(),
-						class_map: &class_map,
-						class,
-						entity: &mut entity,
-						load_context,
-					})
-					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
+				let mut meshes = Vec::new();
 
-				if let QuakeClassType::Solid(geometry_provider) = class.info.ty {
-					let geometry_provider = geometry_provider();
-
+				if class.info.ty.is_solid() {
 					let mut grouped_polygons: HashMap<&str, Vec<BrushSurfacePolygon>> = default();
 					let mut texture_size_cache: HashMap<&str, UVec2> = default();
 					let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();
@@ -119,7 +105,7 @@ impl AssetLoader for QuakeMapLoader {
 						}
 					}
 
-					let mut meshes = Vec::with_capacity(grouped_polygons.len());
+					meshes.reserve(grouped_polygons.len());
 
 					for (texture, polygons) in grouped_polygons {
 						if self.tb_server.config.auto_remove_textures.contains(texture) {
@@ -130,7 +116,7 @@ impl AssetLoader for QuakeMapLoader {
 							Entry::Occupied(x) => x.into_mut(),
 							Entry::Vacant(x) => x.insert('size_searcher: {
 								for ext in &self.tb_server.config.texture_extensions {
-									if let Ok(image) = load_context
+									match load_context
 										.loader()
 										.immediate()
 										.load::<Image>(
@@ -141,7 +127,15 @@ impl AssetLoader for QuakeMapLoader {
 										)
 										.await
 									{
-										break 'size_searcher image.take().size();
+										Ok(image) => break 'size_searcher image.take().size(),
+										Err(LoadDirectError::LoadError {
+											dependency: _,
+											error: AssetLoadError::AssetReaderError(_),
+										}) => {}
+										Err(err) => {
+											error!("Failed to get size for texture \"{texture}.{ext}\": {err}");
+											break 'size_searcher UVec2::splat(1);
+										}
 									}
 								}
 
@@ -177,7 +171,7 @@ impl AssetLoader for QuakeMapLoader {
 							mesh = mesh.translated_by(self.tb_server.config.to_bevy_space(-origin_point));
 						}
 
-						let mesh_entity = world.spawn(Name::new(texture.s())).id();
+						let mesh_entity = world.spawn((Name::new(texture.s()), Transform::default())).id();
 
 						meshes.push((
 							mesh_entity,
@@ -192,61 +186,52 @@ impl AssetLoader for QuakeMapLoader {
 							},
 						));
 					}
-
-					let mesh_views = meshes
-						.iter_mut()
-						.map(|(entity, mesh, texture)| GeometryProviderMeshView {
-							entity: *entity,
-							mesh,
-							texture,
-						})
-						.collect_vec();
-
-					let mut view = GeometryProviderView {
-						world: &mut world,
-						entity: entity_id,
-						tb_server: &self.tb_server,
-						map_entity,
-						map_entity_idx,
-						class,
-						meshes: mesh_views,
-					};
-
-					for provider in geometry_provider.providers {
-						provider(&mut view);
-					}
-
-					(self.tb_server.config.global_geometry_provider)(&mut view);
-
-					for (mesh_entity, mesh, _) in meshes {
-						let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
-
-						// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
-						world
-							.entity_mut(mesh_entity)
-							.insert((Mesh3d(handle.clone()), ChildOf(entity_id), MapGeometry));
-
-						mesh_handles.push(handle);
-					}
-
-					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
-					brush_lists.insert(map_entity_idx, brush_list_handle.clone());
-
-					world.entity_mut(entity_id).insert(Brushes::Shared(brush_list_handle));
 				}
 
-				let mut entity = world.entity_mut(entity_id);
+				let mut mesh_views = meshes
+					.iter_mut()
+					.map(|(entity, mesh, texture)| QuakeClassMeshView {
+						entity: *entity,
+						mesh,
+						texture,
+					})
+					.collect_vec();
 
-				(self.tb_server.config.global_spawner)(&mut QuakeClassSpawnView {
+				let mut view = QuakeClassSpawnView {
 					config: &self.tb_server.config,
 					src_entity: map_entity,
+					src_entity_idx: map_entity_idx,
 					type_registry: &self.type_registry.read(),
 					class_map: &class_map,
 					class,
-					entity: &mut entity,
+					world: &mut world,
+					entity,
 					load_context,
-				})
-				.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+					meshes: &mut mesh_views,
+				};
+
+				class
+					.apply_spawn_fn_recursive(&mut view)
+					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
+
+				(self.tb_server.config.global_spawner)(&mut view)
+					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+
+				for (mesh_entity, mesh, _) in meshes {
+					let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
+
+					// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
+					world
+						.entity_mut(mesh_entity)
+						.insert((Mesh3d(handle.clone()), ChildOf(entity), MapGeometry));
+
+					mesh_handles.push(handle);
+				}
+
+				let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
+				brush_lists.insert(map_entity_idx, brush_list_handle.clone());
+
+				world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
 			}
 
 			Ok(QuakeMap {
@@ -263,32 +248,38 @@ impl AssetLoader for QuakeMapLoader {
 	}
 }
 
-#[cfg(feature = "client")]
-#[test]
-fn map_loading() {
-	let mut app = App::new();
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
 
-	// Can't find a better solution than this mess :(
-	#[rustfmt::skip]
-	app
-		.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
-		.insert_resource(TrenchBroomServer::new(
-			TrenchBroomConfig::default()
-				.suppress_invalid_entity_definitions(true)
-		))
-		.init_asset::<Image>()
-		.init_asset::<StandardMaterial>()
-		.init_asset::<Mesh>()
-		.init_asset::<Scene>()
-		.init_asset::<QuakeMap>()
-		.init_asset_loader::<QuakeMapLoader>()
-	;
+	#[cfg(feature = "client")]
+	#[test]
+	fn map_loading() {
+		let mut app = App::new();
 
-	smol::block_on(async {
-		app.world()
-			.resource::<AssetServer>()
-			.load_untyped_async("maps/example.map")
-			.await
-			.unwrap();
-	});
+		// Can't find a better solution than this mess :(
+		#[rustfmt::skip]
+		app
+			.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
+			.insert_resource(TrenchBroomServer::new(
+				TrenchBroomConfig::default()
+					.suppress_invalid_entity_definitions(true)
+			))
+			.init_asset::<Image>()
+			.init_asset::<StandardMaterial>()
+			.init_asset::<Mesh>()
+			.init_asset::<Scene>()
+			.init_asset::<QuakeMap>()
+			.init_asset_loader::<QuakeMapLoader>()
+		;
+
+		smol::block_on(async {
+			app.world()
+				.resource::<AssetServer>()
+				.load_untyped_async("maps/example.map")
+				.await
+				.unwrap();
+		});
+	}
 }

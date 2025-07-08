@@ -1,19 +1,34 @@
+#[cfg(all(not(feature = "rapier"), not(feature = "avian")))]
+compile_error!("Please enable either the `rapier` or `avian` feature flags to test a specific physics engine!");
+
+#[cfg(feature = "avian")]
 use avian3d::prelude::*;
 use bevy::math::*;
 use bevy::prelude::*;
-use bevy_flycam::prelude::*;
+#[cfg(feature = "rapier")]
+use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
+#[solid_class(
+	hooks(SpawnHooks::new().convex_collider()),
+)]
 pub struct Worldspawn;
 
-#[derive(SolidClass, Component, Reflect)]
-#[reflect(QuakeClass, Component)]
-#[geometry(GeometryProvider::new().smooth_by_default_angle().convex_collider())]
+#[solid_class(
+	hooks(SpawnHooks::new().convex_collider()),
+)]
 pub struct FuncDoor;
+
+#[cfg(feature = "avian")]
+fn physics_plugins(app: &mut App) {
+	app.add_plugins((PhysicsPlugins::default(), PhysicsDebugPlugin::default()));
+}
+
+#[cfg(feature = "rapier")]
+fn physics_plugins(app: &mut App) {
+	app.add_plugins((RapierPhysicsPlugin::<()>::default(), RapierDebugRenderPlugin::default()));
+}
 
 fn main() {
 	App::new()
@@ -21,17 +36,8 @@ fn main() {
 			file_path: "../../assets".s(),
 			..default()
 		}),))
-		.add_plugins(avian3d::prelude::PhysicsPlugins::default())
-		.add_plugins(avian3d::prelude::PhysicsDebugPlugin::default())
-		.add_plugins(PlayerPlugin)
-		.insert_resource(MovementSettings {
-			sensitivity: 0.00005,
-			speed: 6.,
-		})
-		.add_plugins(bevy_inspector_egui::bevy_egui::EguiPlugin {
-			enable_multipass_for_primary_context: true,
-		})
-		.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::default())
+		.add_plugins(physics_plugins)
+		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(Update, make_unlit)
 		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
@@ -61,18 +67,18 @@ fn spawn_cubes(mut commands: Commands, time: Res<Time>, mut local: Local<Option<
 	}
 }
 
-fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, mut projection_query: Query<&mut Projection>) {
+fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 	commands.spawn((SceneRoot(asset_server.load("maps/example.map#Scene")), Transform::from_xyz(-5., 0., 0.)));
 	commands.spawn((SceneRoot(asset_server.load("maps/example.bsp#Scene")), Transform::from_xyz(5., 0., 0.)));
 
-	// Wide FOV
-
-	for mut projection in &mut projection_query {
-		*projection = Projection::Perspective(PerspectiveProjection {
+	commands.spawn((
+		example_commons::DebugCamera,
+		Projection::Perspective(PerspectiveProjection {
 			fov: 90_f32.to_radians(),
 			..default()
-		});
-	}
+		}),
+		example_commons::default_debug_camera_transform(),
+	));
 }
 
 // We don't care about lighting, just physics.

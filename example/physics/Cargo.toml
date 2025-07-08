@@ -1,0 +1,27 @@
+[package]
+name = "physics"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "physics"
+path = "main.rs"
+test = false
+bench = false
+doc = false
+
+[dependencies]
+bevy = { workspace = true, features = ["default"] }
+bevy_rapier3d = { workspace = true, optional = true }
+avian3d = { workspace = true, optional = true, features = ["parry-f64", "f64"] }
+bevy_trenchbroom = { path = "../..", default-features = false, features = [
+	"client",
+	"bsp"
+] }
+example_commons = { workspace = true, features = ["client"] }
+nil.workspace = true
+
+[features]
+rapier = ["dep:bevy_rapier3d", "bevy_trenchbroom/rapier"]
+avian = ["dep:avian3d", "bevy_trenchbroom/avian"]

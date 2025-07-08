@@ -14,7 +14,6 @@ use bevy::{
 	tasks::BoxedFuture,
 };
 use fgd::FgdType;
-use geometry::{GeometryProviderFn, GeometryProviderView};
 use qmap::QuakeMapEntities;
 use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
@@ -248,11 +247,6 @@ pub struct TrenchBroomConfig {
 	#[default(Hook(Arc::new(Self::default_global_spawner)))]
 	pub global_spawner: Hook<SpawnFn>,
 
-	/// Geometry provider run after all others for all entities regardless of classname. (Default: [`TrenchBroomConfig::default_global_geometry_provider`])
-	#[builder(skip)]
-	#[default(Hook(Arc::new(Self::default_global_geometry_provider)))]
-	pub global_geometry_provider: Hook<GeometryProviderFn>,
-
 	/// Whether to apply the translation and rotation fields regardless of having [`Transform`] as a base class.
 	/// Adds convenance and removes a foot-gun, but is less flexible, hence why it is disableable.
 	///
@@ -284,10 +278,15 @@ pub struct TrenchBroomConfig {
 	pub bsp_textures_asset_usages: RenderAssetUsages,
 }
 
-#[test]
-fn coordinate_conversions() {
-	let config = TrenchBroomConfig::default();
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	let input = vec3(20.6, 1.72, 9.0);
-	assert_eq!(config.from_bevy_space(config.to_bevy_space(input)), input);
+	#[test]
+	fn coordinate_conversions() {
+		let config = TrenchBroomConfig::default();
+
+		let input = vec3(20.6, 1.72, 9.0);
+		assert_eq!(config.from_bevy_space(config.to_bevy_space(input)), input);
+	}
 }

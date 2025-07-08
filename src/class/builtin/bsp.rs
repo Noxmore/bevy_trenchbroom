@@ -20,10 +20,11 @@ impl Plugin for BspClassesPlugin {
 }
 
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
-#[cfg(feature = "bsp")]
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__bsp_solid_entity")]
+#[base_class(
+	classname("__bsp_solid_entity"),
+)]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
 pub struct BspSolidEntity {
 	/// Generates an `LMSHIFT` BSPX lump for use by a light util. Note that both scaled and unscaled lighting will normally be used.
 	pub _lmscale: Option<u32>,
@@ -198,11 +199,12 @@ pub struct BspSolidEntity {
 }
 
 /// Contains properties used by the `ericw-tools` compiler for the `worldspawn` entity.
-#[cfg(feature = "bsp")]
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[base(BspSolidEntity)]
-#[classname("__bsp_worldspawn")]
+#[base_class(
+	base(BspSolidEntity),
+	classname("__bsp_worldspawn"),
+)]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
 pub struct BspWorldspawn {
 	/// (Not documented, but hopefully self-explanatory.)
 	pub _maxlight: Option<f32>,
@@ -381,13 +383,14 @@ pub enum DirtMode {
 /// Note that you can set other entity keys on the “misc_external_map” to configure the final entity type.
 /// e.g. if you set “_external_map_classname” to “func_door”,
 /// you can also set a “targetname” key on the “misc_external_map”, or any other keys for “func_door”.
-#[cfg(feature = "bsp")]
-#[derive(BaseClass, Component, Reflect, Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(QuakeClass, Component, Default, Serialize, Deserialize)]
-#[classname("__bsp_external_map")]
+#[base_class(
+	classname("__bsp_external_map"),
+)]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.
-	#[no_default]
+	#[must_set]
 	pub _external_map: String,
 
 	/// What entity you want the external map to turn in to.
