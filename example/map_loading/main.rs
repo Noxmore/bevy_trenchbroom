@@ -4,6 +4,8 @@
 use bevy::ecs::{component::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
+use bevy_trenchbroom::class::builtin::LightingClassesPlugin;
+use bevy_trenchbroom::class::builtin::LightingWorkflow;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
@@ -76,7 +78,12 @@ fn main() {
 			file_path: "../../assets".s(),
 			..default()
 		}))
-		.add_plugins(TrenchBroomPlugins(TrenchBroomConfig::new("bevy_trenchbroom_example")))
+		.add_plugins(
+			TrenchBroomPlugins(TrenchBroomConfig::new("bevy_trenchbroom_example"))
+				.build()
+				// This is because we use a custom light class for parity with bsp_loading.
+				.set(LightingClassesPlugin(LightingWorkflow::Custom)),
+		)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.register_type::<Worldspawn>()
 		.register_type::<FuncDetail>()
