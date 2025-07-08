@@ -33,9 +33,6 @@ pub enum FlagsTest {
 pub struct FuncWall;
 
 #[solid_class(base(BspSolidEntity))]
-pub struct FuncDetail;
-
-#[solid_class(base(BspSolidEntity))]
 pub struct FuncIllusionary;
 
 #[point_class]
