@@ -5,10 +5,37 @@ use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
 
 #[cfg(feature = "rapier")]
+use bevy_rapier3d::math::Vect as Vector;
+#[cfg(feature = "rapier")]
 use bevy_rapier3d::prelude::*;
+/// Simplified version of Avian's trait by the same name because as far as i can tell, bevy_rapier3d doesn't support f64.
+#[cfg(feature = "rapier")]
+trait AdjustPrecision: Sized {
+	type Output;
+	fn adjust_precision(self) -> Self::Output;
+}
+#[cfg(feature = "rapier")]
+impl AdjustPrecision for DVec3 {
+	type Output = Vec3;
+	#[inline]
+	fn adjust_precision(self) -> Self::Output {
+		self.as_vec3()
+	}
+}
+#[cfg(feature = "rapier")]
+impl AdjustPrecision for Vec3 {
+	type Output = Self;
+	#[inline]
+	fn adjust_precision(self) -> Self::Output {
+		self
+	}
+}
 
 #[cfg(feature = "avian")]
-use avian3d::prelude::*;
+use avian3d::{
+	math::{AdjustPrecision, Vector},
+	prelude::*,
+};
 
 // We use component hooks rather than systems to ensure that colliders are available for things like observers.
 
@@ -22,7 +49,7 @@ pub struct ConvexCollision;
 #[reflect(Component)]
 pub struct TrimeshCollision;
 
-pub type BrushVertices = Vec<Vec3>;
+pub type BrushVertices = Vec<Vector>;
 
 /// Attempts to calculate vertices on the brushes contained within for use in physics, if it can find said brushes.
 ///
@@ -32,8 +59,8 @@ pub fn calculate_brushes_vertices<'l, 'w: 'l>(
 	brush_lists: &'w Assets<BrushList>,
 	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BspBrushesAsset>,
 ) -> Option<Vec<BrushVertices>> {
-	fn extract_vertices<T: ConvexHull>(brush: &T) -> Vec<Vec3> {
-		brush.calculate_vertices().map(|(position, _)| position.as_vec3()).collect()
+	fn extract_vertices<T: ConvexHull>(brush: &T) -> Vec<Vector> {
+		brush.calculate_vertices().map(|(position, _)| position.adjust_precision()).collect()
 	}
 
 	match brushes {
@@ -98,7 +125,7 @@ impl PhysicsPlugin {
 				if !is_bsp {
 					for vertex in &mut vertices {
 						// *vertex = transform.rotation.inverse() * (*vertex - transform.translation) + transform.translation;
-						*vertex -= transform.translation;
+						*vertex -= transform.translation.adjust_precision();
 					}
 				}
 
@@ -119,7 +146,7 @@ impl PhysicsPlugin {
 					fail!();
 				};
 
-				colliders.push((Vec3::ZERO, transform.rotation.inverse(), collider));
+				colliders.push((Vector::ZERO, transform.rotation.inverse(), collider));
 			}
 
 			if colliders.is_empty() {
