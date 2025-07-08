@@ -7,11 +7,12 @@ use super::*;
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::DynamicOnly`] implementation.
-#[cfg_attr(feature = "client", point_class(
+#[cfg(feature = "client")]
+#[point_class(
 	base(PointLight),
 	classname("light_point"),
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
-))]
+)]
 pub struct DynamicOnlyPointLight;
 
 #[cfg(not(feature = "client"))]
