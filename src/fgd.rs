@@ -192,8 +192,35 @@ simple_fgd_type_impl!(isize, false, Value "integer");
 #[rustfmt::skip]
 simple_fgd_type_impl!(bool, true, Choices & [(ChoicesKey::String("true"), "true"), (ChoicesKey::String("false"), "false")]);
 
-simple_fgd_type_impl!(f32, true, Value "float");
-simple_fgd_type_impl!(f64, true, Value "float");
+macro_rules! simple_float_fgd_type_impl {
+	($ty:ty, $quoted:expr, $fgd_type:ident $fgd_type_value:expr) => {
+		impl FgdType for $ty {
+			const FGD_IS_QUOTED: bool = $quoted;
+			const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::$fgd_type($fgd_type_value);
+
+			fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+				// Some BSP properties include European localized strings (e.g. "1,50").
+				// Rather than bring in a crate for the special case, convert here.
+				if input.contains(',') {
+					Ok(input
+						.chars()
+						.filter(|&c| c != '.' && c != ' ')
+						.map(|c| if c == ',' { '.' } else { c })
+						.collect::<String>()
+						.parse()?)
+				} else {
+					Ok(input.trim().parse()?)
+				}
+			}
+			fn fgd_to_string_unquoted(&self) -> String {
+				self.to_string()
+			}
+		}
+	};
+}
+
+simple_float_fgd_type_impl!(f32, true, Value "float");
+simple_float_fgd_type_impl!(f64, true, Value "float");
 
 /// [`FgdType`] Wrapper for a `bool` that expects integers rather than boolean strings. Non-zero is `true`, zero is `false`.
 #[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Eq, Deref, DerefMut, Serialize, Deserialize)]
