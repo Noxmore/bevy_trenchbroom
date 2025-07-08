@@ -50,7 +50,6 @@ impl Plugin for LightingClassesPlugin {
 		#[cfg(feature = "bsp")]
 		app.register_type::<BspLight>();
 		
-		#[cfg(feature = "client")]
 		match self.0 {
 			LightingWorkflow::DynamicOnly => {
 				app.register_type::<DynamicOnlyPointLight>().register_type::<DynamicOnlySpotLight>().register_type::<DynamicOnlyDirectionalLight>();
@@ -81,24 +80,39 @@ impl Plugin for LightingClassesPlugin {
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::DynamicOnly`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(PointLight),
 	classname("light_point"),
 )]
 pub struct DynamicOnlyPointLight;
 
+#[cfg(not(feature = "client"))]
+#[point_class(classname("light_point"))]
+pub struct DynamicOnlyPointLight;
+
 /// [`LightingWorkflow::DynamicOnly`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(SpotLight),
 	classname("light_spot"),
 )]
 pub struct DynamicOnlySpotLight;
 
+#[cfg(not(feature = "client"))]
+#[point_class(classname("light_spot"))]
+pub struct DynamicOnlySpotLight;
+
 /// [`LightingWorkflow::DynamicOnly`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(DirectionalLight),
 	classname("light_directional"),
 )]
+pub struct DynamicOnlyDirectionalLight;
+
+#[cfg(not(feature = "client"))]
+#[point_class(classname("light_directional"))]
 pub struct DynamicOnlyDirectionalLight;
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +120,7 @@ pub struct DynamicOnlyDirectionalLight;
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::BakedOnly`] and [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
+#[cfg(feature = "bsp")]
 #[point_class(
 	base(BspLight),
 	classname("light"),
@@ -117,12 +132,14 @@ pub struct BakedOnlyLight;
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::MapDynamicBspBaked`] implementation.
+#[cfg(all(feature = "bsp", feature = "client"))]
 #[point_class(
 	base(MixedLight),
 	classname("light"),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
 pub struct MapDynamicBspBakedLight;
+#[cfg(all(feature = "bsp", feature = "client"))]
 impl MapDynamicBspBakedLight {
 	pub fn spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		if view.file_type == MapFileType::Bsp {
@@ -133,17 +150,23 @@ impl MapDynamicBspBakedLight {
 	}
 }
 
+#[cfg(all(feature = "bsp", not(feature = "client")))]
+#[point_class(classname("light"))]
+pub struct MapDynamicBspBakedLight;
+
 //////////////////////////////////////////////////////////////////////////////////
 //// LightingWorkflow::DynamicAndBakedCombined
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::DynamicAndBakedCombined`] implementation.
+#[cfg(all(feature = "bsp", feature = "client"))]
 #[point_class(
 	base(MixedLight),
 	classname("light"),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
 pub struct CombinedLight;
+#[cfg(all(feature = "bsp", feature = "client"))]
 impl CombinedLight {
 	pub fn spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let entity_ref = view.world.entity(view.entity);
@@ -158,36 +181,55 @@ impl CombinedLight {
 	}
 }
 
+#[cfg(all(feature = "bsp", not(feature = "client")))]
+#[point_class(classname("light"))]
+pub struct CombinedLight;
+
 //////////////////////////////////////////////////////////////////////////////////
 //// LightingWorkflow::DynamicAndBakedSeparate
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(PointLight),
 	classname("dynamiclight_point"),
 )]
 pub struct DynamicPointLight;
 
+#[cfg(not(feature = "client"))]
+#[point_class(classname("dynamiclight_point"))]
+pub struct DynamicPointLight;
+
 /// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(SpotLight),
 	classname("dynamiclight_spot"),
 )]
 pub struct DynamicSpotLight;
 
+#[cfg(not(feature = "client"))]
+#[point_class(classname("dynamiclight_spot"))]
+pub struct DynamicSpotLight;
+
 /// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
+#[cfg(feature = "client")]
 #[point_class(
 	base(DirectionalLight),
 	classname("dynamiclight_directional"),
 )]
 pub struct DynamicDirectionalLight;
 
+#[cfg(not(feature = "client"))]
+#[point_class(classname("dynamiclight_directional"))]
+pub struct DynamicDirectionalLight;
+
 
 
 /// Combined bsp and dynamic lighting.
 /// Because [`BspLight`] isn't split up (see docs on it), inheritors should produce [`PointLight`], [`SpotLight`], or [`DirectionalLight`] based on its properties.
-#[cfg(feature = "bsp")]
+#[cfg(all(feature = "bsp", feature = "client"))]
 #[base_class(
 	base(BspLight),
 	classname("__mixed_light"),
@@ -231,6 +273,7 @@ pub struct MixedLight {
 	/// If not specified, uses the `_softangle` property.
 	pub dynamic_inner_angle: Option<f32>,
 }
+#[cfg(all(feature = "bsp", feature = "client"))]
 impl MixedLight {
 	pub fn create_dynamic_light(&self, bsp_light: &BspLight, tb_config: &TrenchBroomConfig) -> Option<DynamicLight> {
 		if !self.dynamic_enabled {
@@ -246,6 +289,7 @@ impl MixedLight {
 		if inner_angle == 0. { inner_angle = outer_angle }
 		
 		Some(if bsp_light.is_sun() {
+			#[allow(clippy::needless_update)]
 			DynamicLight::Directional(DirectionalLight {
 				color: color.into(),
 				illuminance: quake_light_to_lux(light),
@@ -256,6 +300,7 @@ impl MixedLight {
 				..default()
 			})
 		} else if bsp_light.is_spot() {
+			#[allow(clippy::needless_update)]
 			DynamicLight::Spot(SpotLight {
 				color: color.into(),
 				intensity: quake_light_to_lum(light),
@@ -271,6 +316,7 @@ impl MixedLight {
 				..default()
 			})
 		} else {
+			#[allow(clippy::needless_update)]
 			DynamicLight::Point(PointLight {
 				color: color.into(),
 				intensity: quake_light_to_lum(light),
@@ -288,12 +334,14 @@ impl MixedLight {
 }
 
 /// Holds a point, spot, or directional Bevy light.
+#[cfg(feature = "client")]
 #[derive(Debug, Clone)]
 pub enum DynamicLight {
 	Point(PointLight),
 	Spot(SpotLight),
 	Directional(DirectionalLight),
 }
+#[cfg(feature = "client")]
 impl DynamicLight {
 	/// Inserts whichever light component this is into an entity.
 	pub fn insert(self, entity: &mut EntityWorldMut) {
