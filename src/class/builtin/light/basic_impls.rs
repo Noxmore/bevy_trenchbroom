@@ -1,15 +1,17 @@
 use super::*;
 
+// Iconsprites are quite user-specific. I've opted to just put a pretty generic generic path of `sprites/light_*.png`. Should work for most users.
+
 //////////////////////////////////////////////////////////////////////////////////
 //// LightingWorkflow::DynamicOnly
 //////////////////////////////////////////////////////////////////////////////////
 
 /// [`LightingWorkflow::DynamicOnly`] implementation.
-#[cfg(feature = "client")]
-#[point_class(
+#[cfg_attr(feature = "client", point_class(
 	base(PointLight),
 	classname("light_point"),
-)]
+	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
+))]
 pub struct DynamicOnlyPointLight;
 
 #[cfg(not(feature = "client"))]
@@ -21,6 +23,7 @@ pub struct DynamicOnlyPointLight;
 #[point_class(
 	base(SpotLight),
 	classname("light_spot"),
+	iconsprite({ path: "sprites/light_spot.png", scale: 0.1 }),
 )]
 pub struct DynamicOnlySpotLight;
 
@@ -33,6 +36,7 @@ pub struct DynamicOnlySpotLight;
 #[point_class(
 	base(DirectionalLight),
 	classname("light_directional"),
+	iconsprite({ path: "sprites/light_directional.png", scale: 0.1 }),
 )]
 pub struct DynamicOnlyDirectionalLight;
 
@@ -49,6 +53,8 @@ pub struct DynamicOnlyDirectionalLight;
 #[point_class(
 	base(BspLight),
 	classname("light"),
+	// TODO: switch to different models/sprites when spot or sun light
+	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 )]
 pub struct BakedOnlyLight;
 
@@ -61,6 +67,7 @@ pub struct BakedOnlyLight;
 #[point_class(
 	base(MixedLight),
 	classname("light"),
+	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
 pub struct MapDynamicBspBakedLight;
@@ -88,6 +95,7 @@ pub struct MapDynamicBspBakedLight;
 #[point_class(
 	base(MixedLight),
 	classname("light"),
+	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
 pub struct CombinedLight;
@@ -119,6 +127,7 @@ pub struct CombinedLight;
 #[point_class(
 	base(PointLight),
 	classname("dynamiclight_point"),
+	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 )]
 pub struct DynamicPointLight;
 
@@ -131,6 +140,7 @@ pub struct DynamicPointLight;
 #[point_class(
 	base(SpotLight),
 	classname("dynamiclight_spot"),
+	iconsprite({ path: "sprites/light_spot.png", scale: 0.1 }),
 )]
 pub struct DynamicSpotLight;
 
@@ -143,6 +153,7 @@ pub struct DynamicSpotLight;
 #[point_class(
 	base(DirectionalLight),
 	classname("dynamiclight_directional"),
+	iconsprite({ path: "sprites/light_directional.png", scale: 0.1 }),
 )]
 pub struct DynamicDirectionalLight;
 
