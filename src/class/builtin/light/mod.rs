@@ -52,7 +52,10 @@ impl Plugin for LightingClassesPlugin {
 		;
 
 		#[cfg(feature = "bsp")]
-		app.register_type::<BspLight>().register_type::<MixedLight>();
+		app.register_type::<BspLight>();
+
+		#[cfg(all(feature = "bsp", feature = "client"))]
+		app.register_type::<MixedLight>();
 		
 		match self.0 {
 			LightingWorkflow::DynamicOnly => {
