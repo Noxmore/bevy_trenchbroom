@@ -14,7 +14,7 @@ impl Plugin for SolidClassesPlugin {
 }
 
 #[cfg(feature = "bsp")]
-#[solid_class]
+#[solid_class(base(BspSolidEntity))]
 #[derive(Debug, Clone)]
 pub struct FuncDetail;
 
