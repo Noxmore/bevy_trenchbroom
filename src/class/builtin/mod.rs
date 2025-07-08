@@ -3,8 +3,6 @@
 // These modules aren't feature locked so that the plugins within can still be referenced,
 // removing the need for the user to feature lock disabling them.
 flat! {
-	#[cfg(feature = "bsp")]
-	bsp;
 	light;
 	solid;
 }
@@ -202,7 +200,7 @@ mod tests {
 			.register_type::<SpotLight>()
 			.register_type::<DirectionalLight>()
 			.register_type::<Visibility>()
-			.add_plugins((BasicClassesPlugin, BspClassesPlugin));
+			.add_plugins((BasicClassesPlugin, LightingClassesPlugin(default()), SolidClassesPlugin));
 
 		for (_, ReflectQuakeClass { erased_class: class, .. }) in
 			app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>()

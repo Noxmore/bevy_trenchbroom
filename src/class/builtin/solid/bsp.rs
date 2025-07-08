@@ -4,18 +4,6 @@ use fgd::{IntBool, IntBoolOverride, Srgb};
 
 use crate::*;
 
-
-pub struct BspClassesPlugin;
-impl Plugin for BspClassesPlugin {
-	fn build(&self, #[allow(unused)] app: &mut App) {
-		#[rustfmt::skip]
-		app
-			.register_type::<BspSolidEntity>()
-			.register_type::<BspWorldspawn>()
-		;
-	}
-}
-
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
 #[base_class(
 	classname("__bsp_solid_entity"),

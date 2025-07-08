@@ -310,6 +310,26 @@ pub enum MapFileType {
 	Bsp,
 }
 
+/// Holds a point, spot, or directional Bevy light.
+#[cfg(feature = "client")]
+#[derive(Debug, Clone)]
+pub enum DynamicLight {
+	Point(PointLight),
+	Spot(SpotLight),
+	Directional(DirectionalLight),
+}
+#[cfg(feature = "client")]
+impl DynamicLight {
+	/// Inserts whichever light component this is into an entity.
+	pub fn insert(self, entity: &mut EntityWorldMut) {
+		match self {
+			Self::Point(light) => entity.insert(light),
+			Self::Spot(light) => entity.insert(light),
+			Self::Directional(light) => entity.insert(light),
+		};
+	}
+}
+
 /// `angles` is negative pitch, yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {

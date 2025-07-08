@@ -1,5 +1,9 @@
-use super::*;
+flat! {
+	#[cfg(feature = "bsp")]
+	bsp;
+}
 
+use super::*;
 pub struct SolidClassesPlugin;
 impl Plugin for SolidClassesPlugin {
 	fn build(&self, app: &mut App) {
@@ -10,7 +14,7 @@ impl Plugin for SolidClassesPlugin {
 		;
 
 		#[cfg(feature = "bsp")]
-		app.register_type::<FuncDetail>();
+		app.register_type::<BspSolidEntity>().register_type::<BspWorldspawn>().register_type::<FuncDetail>();
 	}
 }
 
