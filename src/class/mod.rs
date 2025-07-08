@@ -138,9 +138,9 @@ impl QuakeClassInfo {
 	/// ```
 	/// # use bevy::prelude::*;
 	/// # use bevy_trenchbroom::prelude::*;
-	/// #[derive(PointClass, Reflect, Component)]
-	/// #[reflect(QuakeClass, Component)]
-	/// #[model("models/my_class.glb")]
+	/// #[point_class(
+	///     model("models/my_class.glb"),
+	/// )]
 	/// struct MyClass;
 	///
 	/// assert_eq!(MyClass::CLASS_INFO.model_path(), Some("models/my_class.glb"));
@@ -339,22 +339,23 @@ mod tests {
 		static mut BASE_CALLED: bool = false;
 		static mut CLASS_CALLED: bool = false;
 
-		#[derive(BaseClass, Component, Reflect)]
-		#[spawn_hooks(SpawnHooks::new().push(|_| {
-			assert!(unsafe { !BASE_CALLED });
-			unsafe { BASE_CALLED = true; }
-			Ok(())
-		}))]
+		#[base_class(
+			hooks(SpawnHooks::new().push(|_| {
+				assert!(unsafe { !BASE_CALLED });
+				unsafe { BASE_CALLED = true; }
+				Ok(())
+			}))
+		)]
 		struct Base;
 
-		#[allow(clippy::duplicated_attributes)]
-		#[derive(PointClass, Component, Reflect)]
-		#[base(Base, Base)]
-		#[spawn_hooks(SpawnHooks::new().push(|_| {
-			assert!(unsafe { !CLASS_CALLED });
-			unsafe { CLASS_CALLED = true; }
-			Ok(())
-		}))]
+		#[point_class(
+			base(Base, Base),
+			hooks(SpawnHooks::new().push(|_| {
+				assert!(unsafe { !CLASS_CALLED });
+				unsafe { CLASS_CALLED = true; }
+				Ok(())
+			}))
+		)]
 		struct Class;
 
 		let asset_server = create_test_asset_server();

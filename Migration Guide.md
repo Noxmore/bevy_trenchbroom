@@ -1,3 +1,27 @@
+# 0.8 to 0.9
+- Derive macros have been converted to attribute macros to greatly reduce boilerplate
+	- Replace your `#[derive(<type>Class)]` with `#[<type>_class]`
+	- `#[derive(<type>Class, Component, Reflect)]` is now implied if not specified.
+	- `#[reflect(QuakeClass, Component)]` is now implied if not specified.
+	- Attributes have been put into the macro body, though they are not needed.
+	- `spawn_hooks` attribute has been renamed to just `hooks`.
+	- The `no_default` field attribute has been renamed to `must_set`.
+	- Here's an example:
+		```rust
+		#[solid_class(
+			base(BspWorldspawn),
+			hooks(SpawnHooks::new().smooth_by_default_angle()),
+		)]
+		struct Worldspawn;
+
+		#[solid_class]
+		#[derive(Default)]
+		struct FuncDoor {
+			#[must_set]
+			pub my_field: f32,
+		}
+		```
+
 # 0.7 to 0.8
 - `TrenchBroomPlugin` has been changed to the `TrenchBroomPlugins` plugin group. The syntax is the exact same by default, you're just able to disable specific plugins now.
 - QuakeClass registration has been moved from `TrenchBroomConfig` to Bevy's type registry.
