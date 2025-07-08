@@ -60,14 +60,6 @@ impl Cube {
 )]
 pub struct Mushroom;
 
-#[point_class(
-	base(BspLight),
-	// This is the default size, this is just to make sure it produces a valid fgd.
-	size(-8 -8 -8, 8 8 8),
-	iconsprite({ path: "point_light.png", scale: 0.1 }),
-)]
-pub struct Light;
-
 fn main() {
 	App::new()
 		.add_plugins(DefaultPlugins.set(AssetPlugin {
@@ -85,7 +77,6 @@ fn main() {
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()
 		.register_type::<FuncWall>()
-		.register_type::<Light>()
 		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, (setup_scene, write_config))
 		.run();
