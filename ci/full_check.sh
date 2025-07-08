@@ -30,4 +30,4 @@ LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace
 
 
 { echo; echo; echo "Run cargo doc with default features"; } 2> /dev/null
-cargo doc --no-deps
+cargo doc --no-deps --workspace
