@@ -44,7 +44,6 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(class::QuakeClassPlugin)
 			.add(class::builtin::BasicClassesPlugin)
 			.add(class::builtin::LightingClassesPlugin(default()))
-			.add(class::builtin::BspClassesPlugin)
 			.add(class::builtin::SolidClassesPlugin)
 			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)

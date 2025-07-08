@@ -1,6 +1,5 @@
 //! A collection of useful base classes when working with a BSP workflow.
 
-#[cfg(feature = "bsp")]
 use fgd::{IntBool, IntBoolOverride, Srgb};
 
 use crate::*;
@@ -9,7 +8,6 @@ use crate::*;
 pub struct BspClassesPlugin;
 impl Plugin for BspClassesPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
-		#[cfg(feature = "bsp")]
 		#[rustfmt::skip]
 		app
 			.register_type::<BspSolidEntity>()
@@ -355,7 +353,6 @@ pub struct BspWorldspawn {
 	pub _surflight_minlight_scale: f32,
 }
 
-#[cfg(feature = "bsp")]
 #[derive(FgdType, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 #[number_key]
 pub enum DirtMode {

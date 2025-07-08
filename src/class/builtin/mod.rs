@@ -3,6 +3,7 @@
 // These modules aren't feature locked so that the plugins within can still be referenced,
 // removing the need for the user to feature lock disabling them.
 flat! {
+	#[cfg(feature = "bsp")]
 	bsp;
 	light;
 	solid;
