@@ -1,5 +1,6 @@
 #[cfg(feature = "client")]
 use crate::util::DynamicLight;
+use crate::fgd::{IntBool, IntBoolOverride, Srgb};
 
 use super::*;
 
