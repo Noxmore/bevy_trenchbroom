@@ -21,6 +21,9 @@
 			pub my_field: f32,
 		}
 		```
+- Many generic/widely useful classes have been created and automatically registered for convenience.
+	- You can remove all of them by disabling the various `*ClassesPlugin`s in the `TrenchBroomPlugins` plugin group.
+	- Disable specific classes with `.disable_class::<T>()` in app initialization.
 
 # 0.7 to 0.8
 - `TrenchBroomPlugin` has been changed to the `TrenchBroomPlugins` plugin group. The syntax is the exact same by default, you're just able to disable specific plugins now.
