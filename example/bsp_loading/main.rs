@@ -103,8 +103,8 @@ fn setup_scene(
 			.insert(LightmapStyle(5), LightingAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
 	}
 
-	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
-	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
+	let map = std::env::args().nth(1).unwrap_or("example.bsp".s());
+	commands.spawn(SceneRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]
 	commands.spawn((
