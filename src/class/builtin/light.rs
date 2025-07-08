@@ -2,6 +2,24 @@ use crate::fgd::{IntBool, IntBoolOverride, Srgb};
 
 use super::*;
 
+pub const QUAKE_LIGHT_TO_LUM_MULTIPLIER: f32 = 1000.;
+/// Quake light (such as the `light` property used in light entities) conversion to lumens.
+///
+/// NOTE: This is only a rough estimation, based on what i've personally found looks right.
+#[inline]
+pub fn quake_light_to_lum(light: f32) -> f32 {
+	light * QUAKE_LIGHT_TO_LUM_MULTIPLIER
+}
+
+pub const QUAKE_LIGHT_TO_LUX_DIVISOR: f32 = 50_000.;
+/// Quake light (such as the `light` property used in light entities) conversion to lux (lumens per square meter).
+///
+/// NOTE: This is only a rough estimation, based on what i've personally found looks right.
+#[inline]
+pub fn quake_light_to_lux(light: f32) -> f32 {
+	light / QUAKE_LIGHT_TO_LUX_DIVISOR
+}
+
 #[derive(Debug, Clone, Copy, Default)]
 pub enum LightingWorkflow {
 	#[cfg_attr(not(feature = "bsp"), default)]
@@ -29,16 +47,252 @@ impl Plugin for LightingClassesPlugin {
 			.register_type_data::<DirectionalLight, ReflectQuakeClass>()
 		;
 
+		#[cfg(feature = "bsp")]
+		app.register_type::<BspLight>();
+		
 		#[cfg(feature = "client")]
 		match self.0 {
-			// TODO:
-			LightingWorkflow::DynamicOnly => {},
-			LightingWorkflow::BakedOnly => {},
-			LightingWorkflow::MapDynamicBspBaked => {},
-			LightingWorkflow::DynamicAndBakedCombined => {},
-			LightingWorkflow::DynamicAndBakedSeparate => {},
+			LightingWorkflow::DynamicOnly => {
+				app.register_type::<DynamicOnlyPointLight>().register_type::<DynamicOnlySpotLight>().register_type::<DynamicOnlyDirectionalLight>();
+			},
+			#[cfg(feature = "bsp")]
+			LightingWorkflow::BakedOnly => {
+				app.register_type::<BakedOnlyLight>();
+			},
+			#[cfg(feature = "bsp")]
+			LightingWorkflow::MapDynamicBspBaked => {
+				app.register_type::<MapDynamicBspBakedLight>();
+			},
+			#[cfg(feature = "bsp")]
+			LightingWorkflow::DynamicAndBakedCombined => {
+				app.register_type::<CombinedLight>();
+			},
+			#[cfg(feature = "bsp")]
+			LightingWorkflow::DynamicAndBakedSeparate => {
+				app.register_type::<BakedOnlyLight>().register_type::<DynamicPointLight>().register_type::<DynamicSpotLight>().register_type::<DynamicDirectionalLight>();
+			},
 			LightingWorkflow::Custom => {},
 		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//// LightingWorkflow::DynamicOnly
+//////////////////////////////////////////////////////////////////////////////////
+
+#[point_class(
+	base(PointLight),
+	classname("light_point"),
+)]
+pub struct DynamicOnlyPointLight;
+
+#[point_class(
+	base(SpotLight),
+	classname("light_spot"),
+)]
+pub struct DynamicOnlySpotLight;
+
+#[point_class(
+	base(DirectionalLight),
+	classname("light_directional"),
+)]
+pub struct DynamicOnlyDirectionalLight;
+
+//////////////////////////////////////////////////////////////////////////////////
+//// LightingWorkflow::BakedOnly
+//////////////////////////////////////////////////////////////////////////////////
+
+#[point_class(
+	base(BspLight),
+	classname("light"),
+)]
+pub struct BakedOnlyLight;
+
+//////////////////////////////////////////////////////////////////////////////////
+//// LightingWorkflow::MapDynamicBspBaked
+//////////////////////////////////////////////////////////////////////////////////
+
+#[point_class(
+	base(MixedLight),
+	classname("light"),
+	hooks(SpawnHooks::new().push(Self::spawn_hook)),
+)]
+pub struct MapDynamicBspBakedLight;
+impl MapDynamicBspBakedLight {
+	pub fn spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		if view.file_type == MapFileType::Bsp {
+			return Ok(());
+		}
+
+		CombinedLight::spawn_hook(view)
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//// LightingWorkflow::DynamicAndBakedCombined
+//////////////////////////////////////////////////////////////////////////////////
+
+#[point_class(
+	base(MixedLight),
+	classname("light"),
+	hooks(SpawnHooks::new().push(Self::spawn_hook)),
+)]
+pub struct CombinedLight;
+impl CombinedLight {
+	pub fn spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		let entity_ref = view.world.entity(view.entity);
+		let bsp_light = entity_ref.get::<BspLight>().ok_or_else(|| anyhow!("No BspLight found for mixed light implementation during spawn hook!"))?;
+		let mixed_light = entity_ref.get::<MixedLight>().ok_or_else(|| anyhow!("No MixedLight found for mixed light implementation during spawn hook!"))?;
+		
+		if let Some(light) = mixed_light.create_dynamic_light(bsp_light, view.config) {
+			light.insert(&mut view.world.entity_mut(view.entity));
+		}
+
+		Ok(())
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//// LightingWorkflow::DynamicAndBakedSeparate
+//////////////////////////////////////////////////////////////////////////////////
+
+#[point_class(
+	base(PointLight),
+	classname("dynamiclight_point"),
+)]
+pub struct DynamicPointLight;
+
+#[point_class(
+	base(SpotLight),
+	classname("dynamiclight_spot"),
+)]
+pub struct DynamicSpotLight;
+
+#[point_class(
+	base(DirectionalLight),
+	classname("dynamiclight_directional"),
+)]
+pub struct DynamicDirectionalLight;
+
+
+
+/// Combined bsp and dynamic lighting.
+/// Because [`BspLight`] isn't split up (see docs on it), inheritors should produce [`PointLight`], [`SpotLight`], or [`DirectionalLight`] based on its properties.
+#[cfg(feature = "bsp")]
+#[base_class(
+	base(BspLight),
+	classname("__mixed_light"),
+)]
+#[derive(Debug, Clone, Copy, SmartDefault, Serialize, Deserialize)]
+#[reflect(Debug, Default, Serialize, Deserialize)]
+pub struct MixedLight {
+	/// Whether a dynamic light should be created in this light's place. If `false` this light will by baked-only.
+	#[default(true)]
+	pub dynamic_enabled: bool,
+	/// The light's intensity when it is spawned as a dynamic light (Quake light scale). If not specified uses the `light` property.
+	pub dynamic_light: Option<f32>,
+	/// The light's color when it is spawned as a dynamic light. If not specified uses the `_color` property.
+	pub dynamic_color: Option<Srgb>,
+	/// (Dynamic lighting) Cut-off for the light's area-of-effect. Fragments outside this range will not be affected by this light at all, so it's important to tune this together with `intensity` to prevent hard lighting cut-offs.
+	#[default(PointLight::default().range)] // At the time of writing, point and spot lights have the same default range.
+	pub dynamic_range: f32,
+	/// Sets the dynamic light's `radius` field. This affects the size of specular highlights created by this light. If not specified uses the `_deviance` property.
+	pub dynamic_radius: Option<f32>,
+	/// Whether this light casts dynamic shadows.
+	pub dynamic_shadows_enabled: bool,
+	/// Whether this light contributes diffuse lighting to meshes with lightmaps.
+	/// Note that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light.
+	#[default(true)]
+	pub dynamic_affects_lightmapped_mesh_diffuse: bool,
+	/// (Dynamic lighting) A bias used when sampling shadow maps to avoid 'shadow-acne', or false shadow occlusions that happen as a result of shadow-map fragments not mapping 1:1 to screen-space fragments.
+	/// If not specified, uses the default value for the specific type of light.
+	pub dynamic_shadow_depth_bias: Option<f32>,
+	/// (Dynamic lighting) A bias applied along the direction of the fragment's surface normal. It is scaled to the shadow map's texel size so that it can be small close to the camera and gets larger further away.
+	/// If not specified, uses the default value for the specific type of light.
+	pub dynamic_shadow_normal_bias: Option<f32>,
+	/// (Dynamic lighting) The distance from the light to near Z plane in the shadow map.
+	/// If not specified, uses the default value for the specific type of light.
+	pub dynamic_shadow_map_near_z: Option<f32>,
+	
+	/// (Dynamic lighting, spot light) Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees.
+	/// If not specified, uses the `angle` property.
+	pub dynamic_outer_angle: Option<f32>,
+	/// (Dynamic lighting, spot light) Angle defining the distance from the spot light direction to the inner limit of the light's cone of effect in degrees.
+	/// Light is attenuated from inner_angle to outer_angle to give a smooth falloff. inner_angle should be <= outer_angle.
+	/// If not specified, uses the `_softangle` property.
+	pub dynamic_inner_angle: Option<f32>,
+}
+impl MixedLight {
+	pub fn create_dynamic_light(&self, bsp_light: &BspLight, tb_config: &TrenchBroomConfig) -> Option<DynamicLight> {
+		if !self.dynamic_enabled {
+			return None;
+		}
+
+		let color = self.dynamic_color.unwrap_or(bsp_light._color);
+		let light = self.dynamic_light.unwrap_or(bsp_light.light);
+		let radius = self.dynamic_radius.unwrap_or(bsp_light._deviance / tb_config.scale);
+		let outer_angle = self.dynamic_outer_angle.unwrap_or(bsp_light.angle).to_radians();
+		let mut inner_angle = self.dynamic_inner_angle.unwrap_or(bsp_light._softangle).to_radians();
+		// According to the docs on _softangle, 0 is a special case that disables it.
+		if inner_angle == 0. { inner_angle = outer_angle }
+		
+		Some(if bsp_light.is_sun() {
+			DynamicLight::Directional(DirectionalLight {
+				color: color.into(),
+				illuminance: quake_light_to_lux(light),
+				shadows_enabled: self.dynamic_shadows_enabled,
+				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
+				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(DirectionalLight::DEFAULT_SHADOW_DEPTH_BIAS),
+				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(DirectionalLight::DEFAULT_SHADOW_NORMAL_BIAS),
+				..default()
+			})
+		} else if bsp_light.is_spot() {
+			DynamicLight::Spot(SpotLight {
+				color: color.into(),
+				intensity: quake_light_to_lum(light),
+				range: self.dynamic_range,
+				radius,
+				shadows_enabled: self.dynamic_shadows_enabled,
+				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
+				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(SpotLight::DEFAULT_SHADOW_DEPTH_BIAS),
+				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(SpotLight::DEFAULT_SHADOW_NORMAL_BIAS),
+				shadow_map_near_z: self.dynamic_shadow_normal_bias.unwrap_or(SpotLight::DEFAULT_SHADOW_MAP_NEAR_Z),
+				outer_angle,
+				inner_angle,
+				..default()
+			})
+		} else {
+			DynamicLight::Point(PointLight {
+				color: color.into(),
+				intensity: quake_light_to_lum(light),
+				range: self.dynamic_range,
+				radius,
+				shadows_enabled: self.dynamic_shadows_enabled,
+				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
+				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(PointLight::DEFAULT_SHADOW_DEPTH_BIAS),
+				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(PointLight::DEFAULT_SHADOW_NORMAL_BIAS),
+				shadow_map_near_z: self.dynamic_shadow_normal_bias.unwrap_or(PointLight::DEFAULT_SHADOW_MAP_NEAR_Z),
+				..default()
+			})
+		})
+	}
+}
+
+/// Holds a point, spot, or directional Bevy light.
+#[derive(Debug, Clone)]
+pub enum DynamicLight {
+	Point(PointLight),
+	Spot(SpotLight),
+	Directional(DirectionalLight),
+}
+impl DynamicLight {
+	/// Inserts whichever light component this is into an entity.
+	pub fn insert(self, entity: &mut EntityWorldMut) {
+		match self {
+			Self::Point(light) => entity.insert(light),
+			Self::Spot(light) => entity.insert(light),
+			Self::Directional(light) => entity.insert(light),
+		};
 	}
 }
 
@@ -83,7 +337,7 @@ impl QuakeClass for PointLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "radius",
 				title: Some("Light Radius"),
-				description: Some("Simulates a light source coming from a spherical volume with the given radius."),
+				description: Some("Simulates a light source coming from a spherical volume with the given radius. This affects the size of specular highlights created by this light."),
 				default_value: Some(|| PointLight::default().radius.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -92,6 +346,13 @@ impl QuakeClass for PointLight {
 				title: Some("Enable Shadows"),
 				description: None,
 				default_value: Some(|| PointLight::default().shadows_enabled.fgd_to_string()),
+			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "affects_lightmapped_mesh_diffuse",
+				title: Some("Affects Lightmapped Mesh Diffuse"),
+				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				default_value: Some(|| PointLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
 			},
 			// Soft shadows can't be included because it's locked behind a feature
 			QuakeClassProperty {
@@ -132,6 +393,7 @@ impl QuakeClass for PointLight {
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
 			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
@@ -194,6 +456,13 @@ impl QuakeClass for SpotLight {
 				description: None,
 				default_value: Some(|| SpotLight::default().shadows_enabled.fgd_to_string()),
 			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "affects_lightmapped_mesh_diffuse",
+				title: Some("Affects Lightmapped Mesh Diffuse"),
+				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				default_value: Some(|| SpotLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
+			},
 			// Soft shadows can't be included because it's locked behind a feature
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -252,6 +521,7 @@ impl QuakeClass for SpotLight {
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
 			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
@@ -310,6 +580,13 @@ impl QuakeClass for DirectionalLight {
 				description: None,
 				default_value: Some(|| DirectionalLight::default().shadows_enabled.fgd_to_string()),
 			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "affects_lightmapped_mesh_diffuse",
+				title: Some("Affects Lightmapped Mesh Diffuse"),
+				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				default_value: Some(|| DirectionalLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
+			},
 			// Soft shadows can't be included because it's locked behind a feature
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -340,6 +617,7 @@ impl QuakeClass for DirectionalLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
 			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			// For soft shadows
@@ -358,7 +636,7 @@ impl QuakeClass for DirectionalLight {
 	classname("__bsp_combined_light"),
 )]
 #[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
-#[reflect(Default, Serialize, Deserialize)]
+#[reflect(Debug, Default, Serialize, Deserialize)]
 pub struct BspLight {
 	/// Set the light intensity. Negative values are also allowed and will cause the entity to subtract light cast by other entities. Default 300.
 	#[default(300.)]
@@ -438,7 +716,7 @@ pub struct BspLight {
 	/// Turns the light into a spotlight and specifies the direction of light using yaw, pitch and roll in degrees.
 	/// Yaw specifies the angle around the Z-axis from 0 to 359 degrees and pitch specifies the angle from 90 (straight up) to -90 (straight down).
 	/// Roll has no effect, so use any value (e.g. 0). Often easier than the "target" method.
-	pub mangle: Vec3,
+	pub mangle: Option<Vec3>,
 
 	/// Specifies the angle in degrees for a spotlight cone. Default 40.
 	#[default(40.)]
@@ -521,6 +799,24 @@ pub struct BspLight {
 	///
 	/// Defaults to `_light_channel_mask`
 	pub _shadow_channel_mask: Option<u32>,
+}
+impl BspLight {
+	/// Returns whether this light represents a directional/sun light.
+	/// This also returns `true` if this entity represents the upper/lower hemisphere lighting (`_sunlight2`, and `_sunlight3`)
+	pub fn is_sun(&self) -> bool {
+		self._sun.0 || self._sunlight2.0 || self._sunlight3.0
+	}
+
+	/// Returns whether this light represents a spot light.
+	pub fn is_spot(&self) -> bool {
+		(self.target.is_some() && !self._sun.0) || self.mangle.is_some()
+	}
+
+	/// Returns whether this light represents a point light.
+	/// Since this is the default, this just returns whether [`is_sun`](Self::is_sun) and [`is_spot`](Self::is_spot) return `false`.
+	pub fn is_point(&self) -> bool {
+		!self.is_sun() && !self.is_point()
+	}
 }
 
 /// How light fades over distance. Used in the `delay` property of light entities.

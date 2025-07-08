@@ -343,15 +343,6 @@ pub fn angle_to_quat(angle: f32) -> Quat {
 	}
 }
 
-pub const QUAKE_LIGHT_TO_LUX_DIVISOR: f32 = 50_000.;
-/// Quake light (such as the `light` property used in light entities) conversion to lux (lumens per square meter).
-///
-/// NOTE: This is only a rough estimation, based on what i've personally found looks right.
-#[inline]
-pub fn quake_light_to_lux(light: f32) -> f32 {
-	light / QUAKE_LIGHT_TO_LUX_DIVISOR
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
