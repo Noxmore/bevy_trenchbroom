@@ -73,7 +73,7 @@ pub fn calculate_brushes_vertices<'l, 'w: 'l>(
 	}
 }
 
-pub(crate) struct PhysicsPlugin;
+pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
