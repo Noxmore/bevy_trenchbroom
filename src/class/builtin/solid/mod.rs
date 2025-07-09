@@ -37,12 +37,12 @@ pub struct FuncGroup;
 
 /// Groups a set of brushes together in-editor.
 #[cfg(not(feature = "bsp"))]
-#[solid_class]
+#[solid_class(base(Visibility))]
 #[derive(Debug, Clone)]
 pub struct FuncGroup;
 
 /// Generic brush entity to separate from world geometry. bevy_trenchbroom's version of Quake's `func_wall`.
-#[cfg_attr(feature = "bsp", solid_class(base(BspSolidEntity)))]
-#[cfg_attr(not(feature = "bsp"), solid_class)]
+#[cfg_attr(feature = "bsp", solid_class(base(Visibility, BspSolidEntity)))]
+#[cfg_attr(not(feature = "bsp"), solid_class(base(Visibility)))]
 #[derive(Debug, Clone)]
 pub struct FuncGeneric;
