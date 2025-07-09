@@ -24,19 +24,33 @@ pub fn quake_light_to_lux(light: f32) -> f32 {
 	light / QUAKE_LIGHT_TO_LUX_DIVISOR
 }
 
+/// Commonly used workflows with Quake maps and BSPs. Used with [`LightingClassesPlugin`] to set up a lighting workflow with minimal boilerplate.
+///
+/// If the `bsp` feature is enabled, the default value is [`MapDynamicBspBaked`](LightingWorkflow::MapDynamicBspBaked), otherwise [`DynamicOnly`](LightingWorkflow::DynamicOnly) if only `.map`s are supported.
 #[derive(Debug, Clone, Copy, Default)]
 pub enum LightingWorkflow {
+	/// Only use dynamic lighting, no BSP baked lighting.
+	/// Adds point, spot, and directional lights as separate entities, with Bevy-only properties.
 	#[cfg_attr(not(feature = "bsp"), default)]
 	DynamicOnly,
+	/// Only use BSP baked lighting, no Bevy dynamic lighting.
+	/// Adds a single `light` entity, which by default represents a point light, and by setting properties can become a spot, or directional light. No Bevy light settings are included.
 	#[cfg(feature = "bsp")]
 	BakedOnly,
+	/// Use BSP baked lighting only if loading a BSP, else use dynamic lighting.
+	/// Adds a single `light` entity, containing all the same settings as [`BakedOnly`](LightingWorkflow::BakedOnly), along with Bevy-specific overrides under the `dynamic_` prefix.
+	/// For non-set overrides, the Quake-specific properties will be converted into Bevy lights when spawning dynamic lighting.
 	#[cfg_attr(feature = "bsp", default)]
 	#[cfg(feature = "bsp")]
 	MapDynamicBspBaked,
+	/// Uses the same entity setup as [`MapDynamicBspBaked`](LightingWorkflow::MapDynamicBspBaked), but doesn't make a distinction based on what type of map is being loaded.
+	/// Lights will always spawn real-time dynamic lights over the baked ones unless their `dynamic_enabled` property is set to `false`.
 	#[cfg(feature = "bsp")]
 	DynamicAndBakedCombined,
+	/// Use both baked and dynamic lighting, with baked lights being a separate `light` entity from real-time dynamic lights which are under the `dynamiclight_` prefix.
 	#[cfg(feature = "bsp")]
 	DynamicAndBakedSeparate,
+	/// Don't register any ready-to-go light types, you're on your own.
 	Custom,
 }
 
