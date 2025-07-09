@@ -1,9 +1,11 @@
+use super::*;
+
 flat! {
 	#[cfg(feature = "bsp")]
 	bsp;
 }
 
-use super::*;
+#[derive(Default)]
 pub struct SolidClassesPlugin;
 impl Plugin for SolidClassesPlugin {
 	fn build(&self, app: &mut App) {

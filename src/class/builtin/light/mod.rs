@@ -40,6 +40,7 @@ pub enum LightingWorkflow {
 	Custom,
 }
 
+#[derive(Default)]
 pub struct LightingClassesPlugin(pub LightingWorkflow);
 impl Plugin for LightingClassesPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
