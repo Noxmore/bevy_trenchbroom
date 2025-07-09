@@ -20,22 +20,20 @@ impl Plugin for SolidClassesPlugin {
 	}
 }
 
+/// Groups a set of brushes together in-editor. Merged into `worldspawn` on compile.
 #[cfg(feature = "bsp")]
 #[solid_class(base(BspSolidEntity))]
 #[derive(Debug, Clone)]
 pub struct FuncGroup;
 
+/// Groups a set of brushes together in-editor.
 #[cfg(not(feature = "bsp"))]
 #[solid_class]
 #[derive(Debug, Clone)]
 pub struct FuncGroup;
 
-#[cfg(feature = "bsp")]
-#[solid_class(base(BspSolidEntity))]
-#[derive(Debug, Clone)]
-pub struct FuncGeneric;
-
-#[cfg(not(feature = "bsp"))]
-#[solid_class]
+/// Generic brush entity to separate from world geometry. bevy_trenchbroom's version of Quake's `func_wall`.
+#[cfg_attr(feature = "bsp", solid_class(base(BspSolidEntity)))]
+#[cfg_attr(not(feature = "bsp"), solid_class)]
 #[derive(Debug, Clone)]
 pub struct FuncGeneric;
