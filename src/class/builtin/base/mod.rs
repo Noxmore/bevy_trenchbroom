@@ -109,8 +109,9 @@ impl QuakeClass for Visibility {
 			Some("Hidden") => Visibility::Hidden,
 			Some("Visible") => Visibility::Visible,
 			None => Visibility::default(),
-			Some(_) => Err(qmap::QuakeEntityError::PropertyParseError {
+			Some(value) => Err(qmap::QuakeEntityError::PropertyParseError {
 				property: "visibility".s(),
+				value: value.s(),
 				required_type: "Visibility",
 				error: "Must be either `Inherited`, `Hidden`, or `Visible`".s(),
 			})?,
