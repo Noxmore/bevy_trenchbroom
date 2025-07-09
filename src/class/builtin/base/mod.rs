@@ -1,5 +1,10 @@
 use super::*;
 
+flat! {
+	#[cfg(feature = "bsp")]
+	bsp;
+}
+
 /// The prefix used by base classes provided by bevy_trenchbroom.
 ///
 /// You should not use this prefix in your base classes to avoid conflicts.
