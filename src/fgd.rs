@@ -499,3 +499,27 @@ impl<T: FgdType> FgdType for Option<T> {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
+
+	/// Some BSPs in the wild have spaces in their property values.
+	#[test]
+	fn properties_with_spaces() {
+		assert_eq!(f32::fgd_parse(" 3.5 ").unwrap(), 3.5);
+		assert_eq!(i32::fgd_parse("456 ").unwrap(), 456);
+		assert_eq!(u8::fgd_parse("156 ").unwrap(), 156);
+	}
+
+	/// Some BSPs in the wild have floats formatted with the European convention
+	/// of commas for decimal and periods for thousands separators.
+	/// Rust's f32::parse only handles the C (US) locale.
+	#[test]
+	fn european_localization() {
+		assert_eq!(f32::fgd_parse("3.125").unwrap(), 3.125);
+		assert_eq!(f32::fgd_parse("3,120").unwrap(), 3.120);
+		assert_eq!(f64::fgd_parse("300.100,25").unwrap(), 300100.25);
+	}
+}
