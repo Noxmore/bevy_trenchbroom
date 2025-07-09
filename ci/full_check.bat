@@ -26,4 +26,4 @@ cargo test --locked --workspace --doc --features avian,client,bsp || exit /b 1
 
 
 echo Run cargo doc with default features
-cargo doc --no-deps || exit /b 1
+cargo doc --no-deps --workspace || exit /b 1

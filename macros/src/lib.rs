@@ -43,7 +43,7 @@ pub fn solid_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 
 /// Base classes don't appear in-editor, rather they give properties and attributes to their sub-classes (components that require them).
 ///
-/// It has the same attributes as [`point_class`].
+/// It has the same attributes as [`macro@point_class`].
 #[proc_macro_attribute]
 pub fn base_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_attribute(attr.into(), input.into(), quake_class::QuakeClassType::Base).into()
