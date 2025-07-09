@@ -232,12 +232,14 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 	let iconsprite = option(opts.iconsprite.map(|Tokens(iconsprite)| quote! { stringify!(#iconsprite) }));
 	let size = option(opts.size.map(|size| size.to_string()));
 
-	let spawn_hooks = opts.hooks.map(|hooks| {
-		quote! {
-			let hooks: ::bevy_trenchbroom::class::spawn_hooks::SpawnHooks = #hooks;
-			hooks.apply(view)?;
-		}
-	});
+	let spawn_hooks = match opts.hooks {
+		None => match ty {
+			QuakeClassType::Base => quote! { (view.config.default_base_spawn_hooks)() },
+			QuakeClassType::Point => quote! { (view.config.default_point_spawn_hooks)() },
+			QuakeClassType::Solid => quote! { (view.config.default_solid_spawn_hooks)() },
+		},
+		Some(hooks) => hooks.to_token_stream(),
+	};
 
 	quote! {
 		#item
@@ -262,7 +264,8 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
 				view.world.entity_mut(view.entity).insert(#spawn_constructor);
-				#spawn_hooks
+				let hooks: ::bevy_trenchbroom::class::spawn_hooks::SpawnHooks = #spawn_hooks;
+				hooks.apply(view)?;
 				Ok(())
 			}
 		}

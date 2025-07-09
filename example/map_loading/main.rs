@@ -9,19 +9,10 @@ use bevy_trenchbroom::class::builtin::LightingWorkflow;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-#[solid_class(
-	hooks(SpawnHooks::new().smooth_by_default_angle()),
-)]
-pub struct Worldspawn;
-
-#[solid_class(
-	hooks(SpawnHooks::new().smooth_by_default_angle()),
-)]
+#[solid_class]
 pub struct FuncDetail;
 
-#[solid_class(
-	hooks(SpawnHooks::new().smooth_by_default_angle()),
-)]
+#[solid_class]
 pub struct FuncDoor;
 
 #[point_class]
@@ -79,13 +70,14 @@ fn main() {
 			..default()
 		}))
 		.add_plugins(
-			TrenchBroomPlugins(TrenchBroomConfig::new("bevy_trenchbroom_example"))
-				.build()
-				// This is because we use a custom light class for parity with bsp_loading.
-				.set(LightingClassesPlugin(LightingWorkflow::Custom)),
+			TrenchBroomPlugins(
+				TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle()),
+			)
+			.build()
+			// This is because we use a custom light class for parity with bsp_loading.
+			.set(LightingClassesPlugin(LightingWorkflow::Custom)),
 		)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
-		.register_type::<Worldspawn>()
 		.register_type::<FuncDetail>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()

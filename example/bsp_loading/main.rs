@@ -10,9 +10,6 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-#[solid_class(base(BspWorldspawn))]
-pub struct Worldspawn;
-
 #[solid_class]
 #[derive(Default)]
 pub struct FuncDoor {
@@ -73,7 +70,6 @@ fn main() {
 				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
 		.add_plugins(example_commons::ExampleCommonsPlugin)
-		.register_type::<Worldspawn>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()
 		.register_type::<FuncWall>()
