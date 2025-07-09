@@ -32,7 +32,6 @@ pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 
 	'class_loop: for class in &classes {
 		// If this is a base class, and nothing depends on it, we shouldn't write it.
-		// This checks names instead of references because i'm still not 100% sure const static refs are stable.
 		if class.info.ty.is_base()
 			&& classes
 				.iter()

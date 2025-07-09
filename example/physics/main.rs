@@ -10,14 +10,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
-#[solid_class(
-	hooks(SpawnHooks::new().convex_collider()),
-)]
-pub struct Worldspawn;
-
-#[solid_class(
-	hooks(SpawnHooks::new().convex_collider()),
-)]
+#[solid_class]
 pub struct FuncDoor;
 
 #[cfg(feature = "avian")]
@@ -40,9 +33,10 @@ fn main() {
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(Update, make_unlit)
 		.add_plugins(TrenchBroomPlugins(
-			TrenchBroomConfig::new("bevy_trenchbroom_example").no_bsp_lighting(true),
+			TrenchBroomConfig::new("bevy_trenchbroom_example")
+				.default_solid_spawn_hooks(|| SpawnHooks::new().convex_collider())
+				.no_bsp_lighting(true),
 		))
-		.register_type::<Worldspawn>()
 		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(FixedUpdate, spawn_cubes)

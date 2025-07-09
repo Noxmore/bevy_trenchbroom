@@ -32,9 +32,8 @@ pub(crate) use prelude::*;
 pub use anyhow;
 pub use bevy_materialize;
 
-/// Contains all the plugins that makes up bevy_trenchbroom. Most of these you don't want to get rid of, but there are a few exceptions.
-///
-/// TODO: There are currently no exceptions
+/// Contains all the plugins that makes up bevy_trenchbroom. Most of these you don't want to get rid of or change, but there are a few exceptions.
+/// - If you want to change the [`LightingWorkflow`](class::builtin::LightingWorkflow) you're using, set [`LightingClassesPlugin`](class::builtin::LightingClassesPlugin).
 pub struct TrenchBroomPlugins(pub TrenchBroomConfig);
 
 impl PluginGroup for TrenchBroomPlugins {
@@ -43,7 +42,7 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(CorePlugin(self.0))
 			.add(fgd::FgdPlugin)
 			.add(class::QuakeClassPlugin)
-			.add(class::builtin::BuiltinClassesPlugin)
+			.add_group(class::builtin::BasicClassesPlugins)
 			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)
 			.add(geometry::GeometryPlugin)
@@ -58,7 +57,7 @@ impl PluginGroup for TrenchBroomPlugins {
 		let builder = builder.add(special_textures::SpecialTexturesPlugin);
 
 		#[cfg(feature = "bsp")]
-		let builder = builder.add(bsp::BspPlugin).add(class::builtin::BspClassesPlugin);
+		let builder = builder.add(bsp::BspPlugin);
 
 		builder
 	}

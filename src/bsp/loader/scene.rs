@@ -4,6 +4,7 @@ use crate::bsp::lighting::AnimatedLightingHandle;
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
 	geometry::MapGeometry,
+	util::MapFileType,
 	*,
 };
 use bsp::*;
@@ -65,6 +66,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 		}
 
 		let mut view = QuakeClassSpawnView {
+			file_type: MapFileType::Bsp,
 			config,
 			src_entity: map_entity,
 			src_entity_idx: map_entity_idx,

@@ -10,9 +10,6 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-#[solid_class(base(BspWorldspawn))]
-pub struct Worldspawn;
-
 #[solid_class]
 #[derive(Default)]
 pub struct FuncDoor {
@@ -31,9 +28,6 @@ pub enum FlagsTest {
 
 #[solid_class(base(BspSolidEntity))]
 pub struct FuncWall;
-
-#[solid_class(base(BspSolidEntity))]
-pub struct FuncDetail;
 
 #[solid_class(base(BspSolidEntity))]
 pub struct FuncIllusionary;
@@ -63,14 +57,6 @@ impl Cube {
 )]
 pub struct Mushroom;
 
-#[point_class(
-	base(BspLight),
-	// This is the default size, this is just to make sure it produces a valid fgd.
-	size(-8 -8 -8, 8 8 8),
-	iconsprite({ path: "point_light.png", scale: 0.1 }),
-)]
-pub struct Light;
-
 fn main() {
 	App::new()
 		.add_plugins(DefaultPlugins.set(AssetPlugin {
@@ -84,11 +70,9 @@ fn main() {
 				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
 		.add_plugins(example_commons::ExampleCommonsPlugin)
-		.register_type::<Worldspawn>()
 		.register_type::<Cube>()
 		.register_type::<Mushroom>()
 		.register_type::<FuncWall>()
-		.register_type::<Light>()
 		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, (setup_scene, write_config))
 		.run();
@@ -115,8 +99,8 @@ fn setup_scene(
 			.insert(LightmapStyle(5), LightingAnimator::new(0.5, 1., [0.2, 1.].map(Vec3::splat)));
 	}
 
-	commands.spawn(SceneRoot(asset_server.load("maps/example.bsp#Scene")));
-	// commands.spawn(SceneRoot(asset_server.load("maps/arcane/ad_tfuma.bsp#Scene")));
+	let map = std::env::args().nth(1).unwrap_or("example.bsp".s());
+	commands.spawn(SceneRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]
 	commands.spawn((

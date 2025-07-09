@@ -303,6 +303,33 @@ impl IsSceneWorld for DeferredWorld<'_> {
 	}
 }
 
+/// Represents a type of Quake map file, whether a `.map` source file, or a compiled `.bsp`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MapFileType {
+	Map,
+	Bsp,
+}
+
+/// Holds a point, spot, or directional Bevy light.
+#[cfg(feature = "client")]
+#[derive(Debug, Clone)]
+pub enum DynamicLight {
+	Point(PointLight),
+	Spot(SpotLight),
+	Directional(DirectionalLight),
+}
+#[cfg(feature = "client")]
+impl DynamicLight {
+	/// Inserts whichever light component this is into an entity.
+	pub fn insert(self, entity: &mut EntityWorldMut) {
+		match self {
+			Self::Point(light) => entity.insert(light),
+			Self::Spot(light) => entity.insert(light),
+			Self::Directional(light) => entity.insert(light),
+		};
+	}
+}
+
 /// `angles` is negative pitch, yaw, negative roll. Converts from degrees to radians. Assumes a Bevy coordinate space.
 #[inline]
 pub fn angles_to_quat(angles: Vec3) -> Quat {
@@ -334,15 +361,6 @@ pub fn angle_to_quat(angle: f32) -> Quat {
 		-2. => Quat::from_rotation_x(-FRAC_PI_2),
 		angle => Quat::from_rotation_y(angle.to_radians()),
 	}
-}
-
-pub const QUAKE_LIGHT_TO_LUX_DIVISOR: f32 = 50_000.;
-/// Quake light (such as the `light` property used in light entities) conversion to lux (lumens per square meter).
-///
-/// NOTE: This is only a rough estimation, based on what i've personally found looks right.
-#[inline]
-pub fn quake_light_to_lux(light: f32) -> f32 {
-	light / QUAKE_LIGHT_TO_LUX_DIVISOR
 }
 
 #[cfg(test)]
