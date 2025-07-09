@@ -4,6 +4,10 @@ use fgd::{IntBool, IntBoolOverride, Srgb};
 
 use crate::*;
 
+#[solid_class(base(BspSolidEntity))]
+#[derive(Debug, Clone)]
+pub struct FuncDetail;
+
 /// Contains properties used by the `ericw-tools` compiler for any entity with a brush model.
 #[base_class(
 	classname("__bsp_solid_entity"),
