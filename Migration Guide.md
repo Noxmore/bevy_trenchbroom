@@ -22,7 +22,7 @@
 		}
 		```
 - Many generic/widely useful classes have been created and automatically registered for convenience.
-	- You can remove all of them by disabling the various `*ClassesPlugin`s in the `TrenchBroomPlugins` plugin group.
+	- You can remove all of them by disabling the various `*ClassesPlugin`s in the `TrenchBroomPlugins` plugin group, originating from the `BasicClassesPlugins` plugin group.
 	- Disable specific classes with `.disable_class::<T>()` in app initialization.
 
 # 0.7 to 0.8
