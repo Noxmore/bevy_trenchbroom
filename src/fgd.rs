@@ -168,7 +168,7 @@ macro_rules! simple_fgd_type_impl {
 			const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::$fgd_type($fgd_type_value);
 
 			fn fgd_parse(input: &str) -> anyhow::Result<Self> {
-				Ok(input.parse()?)
+				Ok(input.trim().parse()?)
 			}
 			fn fgd_to_string_unquoted(&self) -> String {
 				self.to_string()
