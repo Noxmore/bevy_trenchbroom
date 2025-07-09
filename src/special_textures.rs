@@ -14,6 +14,7 @@ use bevy_materialize::animation::{GenericMaterialAnimationState, ImagesAnimation
 use bsp::TEXTURE_PREFIX;
 #[cfg(feature = "bsp")]
 use config::EmbeddedTextureLoadView;
+use wgpu_types::Face;
 
 use crate::*;
 
@@ -185,6 +186,7 @@ impl MaterialExtension for LiquidMaterialExt {
 
 /// Material that emulates the Quake sky.
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone, SmartDefault)]
+#[bind_group_data(QuakeSkyKey)]
 pub struct QuakeSkyMaterial {
 	/// The speed the foreground layer moves.
 	#[uniform(0)]
@@ -210,6 +212,23 @@ pub struct QuakeSkyMaterial {
 	#[texture(3)]
 	#[sampler(4)]
 	pub bg: Handle<Image>,
+
+	/// Whether to cull the "front", "back" or neither side of a mesh.
+	/// If set to `None`, the two sides of the mesh are visible.
+	///
+	/// Defaults to `Some(Face::Back)`.
+	#[reflect(ignore, clone)]
+	#[default(Some(Face::Back))]
+	pub cull_mode: Option<Face>,
+}
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct QuakeSkyKey {
+	pub cull_mode: Option<Face>,
+}
+impl From<&QuakeSkyMaterial> for QuakeSkyKey {
+	fn from(value: &QuakeSkyMaterial) -> Self {
+		Self { cull_mode: value.cull_mode }
+	}
 }
 impl Material for QuakeSkyMaterial {
 	fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
@@ -218,5 +237,19 @@ impl Material for QuakeSkyMaterial {
 
 	fn alpha_mode(&self) -> AlphaMode {
 		AlphaMode::Opaque
+	}
+
+	fn specialize(
+		_pipeline: &bevy::pbr::MaterialPipeline<Self>,
+		descriptor: &mut bevy::render::render_resource::RenderPipelineDescriptor,
+		_layout: &bevy_mesh::MeshVertexBufferLayoutRef,
+		key: bevy::pbr::MaterialPipelineKey<Self>,
+	) -> Result<(), bevy::render::render_resource::SpecializedMeshPipelineError> {
+		// Noxmore: If we don't do this, cameras with a depth prepass will completely mess up
+		// rendering culled faces, showing the app clear color instead of anything behind them.
+		// This causes some nasty visual errors in some maps.
+		// Why does this fix that? I have no idea !!!!
+		descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;
+		Ok(())
 	}
 }

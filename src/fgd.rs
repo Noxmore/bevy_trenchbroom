@@ -191,8 +191,35 @@ simple_fgd_type_impl!(isize, false, Value "integer");
 #[rustfmt::skip]
 simple_fgd_type_impl!(bool, true, Choices & [(ChoicesKey::String("true"), "true"), (ChoicesKey::String("false"), "false")]);
 
-simple_fgd_type_impl!(f32, true, Value "float");
-simple_fgd_type_impl!(f64, true, Value "float");
+macro_rules! simple_float_fgd_type_impl {
+	($ty:ty, $quoted:expr, $fgd_type:ident $fgd_type_value:expr) => {
+		impl FgdType for $ty {
+			const FGD_IS_QUOTED: bool = $quoted;
+			const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::$fgd_type($fgd_type_value);
+
+			fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+				// Some BSP properties include European localized strings (e.g. "1,50").
+				// Rather than bring in a crate for the special case, convert here.
+				if input.contains(',') {
+					Ok(input
+						.chars()
+						.filter(|&c| c != '.' && c != ' ')
+						.map(|c| if c == ',' { '.' } else { c })
+						.collect::<String>()
+						.parse()?)
+				} else {
+					Ok(input.trim().parse()?)
+				}
+			}
+			fn fgd_to_string_unquoted(&self) -> String {
+				self.to_string()
+			}
+		}
+	};
+}
+
+simple_float_fgd_type_impl!(f32, true, Value "float");
+simple_float_fgd_type_impl!(f64, true, Value "float");
 
 /// [`FgdType`] Wrapper for a `bool` that expects integers rather than boolean strings. Non-zero is `true`, zero is `false`.
 #[derive(Reflect, Debug, Clone, Copy, Default, PartialEq, Eq, Deref, DerefMut, Serialize, Deserialize)]
@@ -469,5 +496,29 @@ impl<T: FgdType> FgdType for Option<T> {
 			Some(v) => v.fgd_to_string_unquoted(),
 			None => String::new(),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	#[allow(unused)]
+	use super::*;
+
+	/// Some BSPs in the wild have spaces in their property values.
+	#[test]
+	fn properties_with_spaces() {
+		assert_eq!(f32::fgd_parse(" 3.5 ").unwrap(), 3.5);
+		assert_eq!(i32::fgd_parse("456 ").unwrap(), 456);
+		assert_eq!(u8::fgd_parse("156 ").unwrap(), 156);
+	}
+
+	/// Some BSPs in the wild have floats formatted with the European convention
+	/// of commas for decimal and periods for thousands separators.
+	/// Rust's f32::parse only handles the C (US) locale.
+	#[test]
+	fn european_localization() {
+		assert_eq!(f32::fgd_parse("3.125").unwrap(), 3.125);
+		assert_eq!(f32::fgd_parse("3,120").unwrap(), 3.120);
+		assert_eq!(f64::fgd_parse("300.100,25").unwrap(), 300100.25);
 	}
 }
