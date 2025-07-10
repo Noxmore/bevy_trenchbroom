@@ -17,7 +17,7 @@ use syn::*;
 /// - `classname(<case type>)` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `base(<type ...>)` Adds base classes to inherit.
-/// - `spawn_hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
+/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
 /// # Field attributes
 /// - `#[must_set]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
@@ -32,7 +32,7 @@ pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// - `classname(<case type>)` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `base(<type ...>)` Adds base classes to inherit.
-/// - `spawn_hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
+/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
 ///
 /// # Field attributes
 /// - `#[must_set]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
