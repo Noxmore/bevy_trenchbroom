@@ -497,6 +497,14 @@ impl<T: FgdType> FgdType for Option<T> {
 			None => String::new(),
 		}
 	}
+
+	// Without overriding this, optional floats will have None be an empty string, which makes them default to 0 in-editor for some reason.
+	fn fgd_to_string(&self) -> String {
+		match self {
+			Some(v) => v.fgd_to_string(),
+			None => String::new(),
+		}
+	}
 }
 
 #[cfg(test)]
