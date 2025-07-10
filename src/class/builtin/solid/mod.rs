@@ -24,8 +24,9 @@ impl Plugin for SolidClassesPlugin {
 /// The worldspawn entity contains the main structural geometry in the world, and its properties represent map-wide settings. Exactly one must be in every map.
 ///
 /// This is an empty worldspawn implementation to get you up and running with as few lines of code as possible. You will almost certainly override this class with your own at some point.
-#[cfg_attr(feature = "bsp", solid_class(base(BspSolidEntity)))]
-#[cfg_attr(not(feature = "bsp"), solid_class)]
+#[solid_class(base(
+	#[cfg(feature = "bsp")] BspSolidEntity,
+))]
 #[derive(Debug, Clone)]
 pub struct Worldspawn;
 
@@ -37,12 +38,18 @@ pub struct FuncGroup;
 
 /// Groups a set of brushes together in-editor.
 #[cfg(not(feature = "bsp"))]
-#[solid_class(base(Visibility))]
+#[solid_class(base(
+	#[cfg(feature = "client")] Visibility,
+))]
 #[derive(Debug, Clone)]
 pub struct FuncGroup;
 
 /// Generic brush entity to separate from world geometry. bevy_trenchbroom's version of Quake's `func_wall`.
-#[cfg_attr(feature = "bsp", solid_class(base(Visibility, BspSolidEntity)))]
-#[cfg_attr(not(feature = "bsp"), solid_class(base(Visibility)))]
+#[solid_class(
+	base(
+		#[cfg(feature = "bsp")] BspSolidEntity,
+		#[cfg(feature = "client")] Visibility,
+	)
+)]
 #[derive(Debug, Clone)]
 pub struct FuncGeneric;

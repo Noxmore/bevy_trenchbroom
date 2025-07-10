@@ -67,6 +67,19 @@ impl std::fmt::Display for Size {
 	}
 }
 
+struct BaseType {
+	pub attrs: Vec<Attribute>,
+	pub ty: Type,
+}
+impl ParseMetaItem for BaseType {
+	fn parse_meta_item(input: parse::ParseStream, _mode: ParseMode) -> deluxe::Result<Self> {
+		Ok(Self {
+			attrs: Attribute::parse_outer(input)?,
+			ty: input.parse()?,
+		})
+	}
+}
+
 #[derive(Default, ParseMetaItem)]
 #[deluxe(default)]
 struct Opts {
@@ -76,7 +89,7 @@ struct Opts {
 	size: Option<Size>,
 	hooks: Option<Expr>,
 	classname: Option<Tokens>,
-	base: Vec<Type>,
+	base: Vec<BaseType>,
 	doc: Option<String>,
 }
 
@@ -110,7 +123,7 @@ fn simple_type_path(s: &str) -> TypePath {
 pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeClassType) -> TokenStream {
 	let mut opts = match deluxe::parse2::<Opts>(attr) {
 		Ok(x) => x,
-		Err(err) => panic!("Parsing attributes: {err}"),
+		Err(err) => panic!("Parsing attributes: {err}   | source code: {:?}", err.span().source_text()),
 	};
 
 	let mut item = syn::parse2::<ItemStruct>(input).expect("Must be a struct as input!");
@@ -225,7 +238,11 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		.unwrap_or_else(|| Literal::string(&ident.to_string().to_snake_case()));
 	let description = option(opts.doc);
 
-	let bases = opts.base;
+	// Attribute::to
+	let bases = opts
+		.base
+		.into_iter()
+		.map(|BaseType { attrs, ty }| quote! { #(#attrs)* <#ty as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS });
 
 	let model = option(opts.model.map(|Tokens(model)| quote! { stringify!(#model) }));
 	let color = option(opts.color.map(|Tokens(color)| quote! { stringify!(#color) }));
@@ -250,7 +267,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 				ty: ::bevy_trenchbroom::class::QuakeClassType::#ty_ident,
 				name: #name,
 				description: #description,
-				base: &[#(<#bases as ::bevy_trenchbroom::class::QuakeClass>::ERASED_CLASS),*],
+				base: &[#(#bases),*],
 
 				model: #model,
 				color: #color,
