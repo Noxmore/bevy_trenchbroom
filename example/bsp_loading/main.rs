@@ -10,7 +10,7 @@ use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
 use nil::prelude::*;
 
-#[solid_class]
+#[solid_class(base(BspSolidEntity))]
 #[derive(Default)]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
