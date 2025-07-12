@@ -224,7 +224,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		.and_then(|Tokens(tokens)| tokens.into_iter().next())
 		.map(|tree| match tree {
 			TokenTree::Literal(lit) => lit,
-			TokenTree::Ident(ident) => match ident.to_string().as_str() {
+			TokenTree::Ident(casing) => match casing.to_string().as_str() {
 				"snake_case" => Literal::string(&ident.to_string().to_snake_case()),
 				"UPPER_SNAKE_CASE" => Literal::string(&ident.to_string().to_shouty_snake_case()),
 				"lowercase" => Literal::string(&ident.to_string().to_lowercase()),
