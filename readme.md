@@ -36,6 +36,7 @@ You can configure `TrenchBroomConfig` through a builder syntax.
 
 Quake's entity classes are treated as an analog to Bevy's components. Here is an example of a simple point class:
 ```rust
+use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
 #[point_class]
