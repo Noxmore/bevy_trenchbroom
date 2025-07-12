@@ -17,6 +17,8 @@ use fgd::FgdType;
 use qmap::QuakeMapEntities;
 use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
+#[cfg(all(feature = "client", feature = "bsp"))]
+use crate::special_textures::{LiquidMaterialExt, QuakeSkyMaterial};
 use crate::{class::QuakeClassSpawnView, *};
 
 pub struct ConfigPlugin;
@@ -199,7 +201,7 @@ pub struct TrenchBroomConfig {
 	#[default(Some(default))]
 	pub embedded_quake_sky_material: Option<fn() -> QuakeSkyMaterial>,
 
-	/// If [`Some`], embedded textures with names that start with `*` will use [`LiquidMaterial`], and will abide by the `water_alpha` worldspawn key.
+	/// If [`Some`], embedded textures with names that start with `*` will use [`LiquidMaterial`](crate::special_textures::LiquidMaterial), and will abide by the `water_alpha` worldspawn key.
 	///
 	/// (Default: `Some(QuakeSkyMaterial::default)`)
 	#[cfg(all(feature = "client", feature = "bsp"))]

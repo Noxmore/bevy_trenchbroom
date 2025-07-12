@@ -31,8 +31,6 @@ pub use crate::bsp::{
 	lighting::{LightingAnimator, LightingAnimators},
 	loader::IrradianceVolumeMultipliers,
 };
-#[cfg(feature = "client")]
-pub use crate::special_textures::{LiquidMaterial, LiquidMaterialExt, QuakeSkyMaterial};
 pub use crate::{
 	TrenchBroomPlugins, TrenchBroomServer,
 	class::{
