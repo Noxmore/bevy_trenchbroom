@@ -168,7 +168,7 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	// 'l: local, 'w: world, 'sw: scene world
 	/// The file type of the map being loaded.
 	pub file_type: MapFileType,
-	pub config: &'l TrenchBroomConfig,
+	pub tb_config: &'l TrenchBroomConfig,
 	pub type_registry: &'l TypeRegistry,
 	/// A map of classnames to classes.
 	pub class_map: &'l HashMap<&'static str, &'static ErasedQuakeClass>,
@@ -368,7 +368,7 @@ mod tests {
 		Class::ERASED_CLASS
 			.apply_spawn_fn_recursive(&mut QuakeClassSpawnView {
 				file_type: MapFileType::Map,
-				config: &default(),
+				tb_config: &default(),
 				type_registry: &default(),
 				class_map: &default(),
 				src_entity: &default(),

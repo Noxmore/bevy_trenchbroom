@@ -69,7 +69,7 @@ impl QuakeClass for Transform {
 
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		view.world.entity_mut(view.entity).insert(Transform {
-			translation: read_translation_from_entity(view.src_entity, view.config)?,
+			translation: read_translation_from_entity(view.src_entity, view.tb_config)?,
 			rotation: read_rotation_from_entity(view.src_entity)?,
 			scale: match view.src_entity.get::<f32>("scale") {
 				Ok(scale) => Vec3::splat(scale),

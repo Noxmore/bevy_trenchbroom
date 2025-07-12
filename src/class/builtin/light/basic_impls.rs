@@ -107,7 +107,7 @@ impl CombinedLight {
 		let bsp_light = entity_ref.get::<BspLight>().ok_or_else(|| anyhow!("No BspLight found for mixed light implementation during spawn hook!"))?;
 		let mixed_light = entity_ref.get::<MixedLight>().ok_or_else(|| anyhow!("No MixedLight found for mixed light implementation during spawn hook!"))?;
 		
-		if let Some(light) = mixed_light.create_dynamic_light(bsp_light, view.config) {
+		if let Some(light) = mixed_light.create_dynamic_light(bsp_light, view.tb_config) {
 			light.insert(&mut view.world.entity_mut(view.entity));
 		}
 

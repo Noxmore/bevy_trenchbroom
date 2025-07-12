@@ -200,7 +200,7 @@ impl AssetLoader for QuakeMapLoader {
 
 				let mut view = QuakeClassSpawnView {
 					file_type: MapFileType::Map,
-					config: &self.tb_server.config,
+					tb_config: &self.tb_server.config,
 					src_entity: map_entity,
 					src_entity_idx: map_entity_idx,
 					type_registry: &self.type_registry.read(),

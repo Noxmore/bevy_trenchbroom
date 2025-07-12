@@ -251,9 +251,9 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 
 	let spawn_hooks = match opts.hooks {
 		None => match ty {
-			QuakeClassType::Base => quote! { (view.config.default_base_spawn_hooks)() },
-			QuakeClassType::Point => quote! { (view.config.default_point_spawn_hooks)() },
-			QuakeClassType::Solid => quote! { (view.config.default_solid_spawn_hooks)() },
+			QuakeClassType::Base => quote! { (view.tb_config.default_base_spawn_hooks)() },
+			QuakeClassType::Point => quote! { (view.tb_config.default_point_spawn_hooks)() },
+			QuakeClassType::Solid => quote! { (view.tb_config.default_solid_spawn_hooks)() },
 		},
 		Some(hooks) => hooks.to_token_stream(),
 	};

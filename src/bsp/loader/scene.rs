@@ -67,7 +67,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 		let mut view = QuakeClassSpawnView {
 			file_type: MapFileType::Bsp,
-			config,
+			tb_config: config,
 			src_entity: map_entity,
 			src_entity_idx: map_entity_idx,
 			type_registry: &type_registry,

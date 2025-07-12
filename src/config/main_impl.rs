@@ -51,9 +51,9 @@ impl TrenchBroomConfig {
 	pub fn default_global_spawner(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
-		if view.config.global_transform_application && !view.class.info.derives_from::<Transform>() {
+		if view.tb_config.global_transform_application && !view.class.info.derives_from::<Transform>() {
 			view.world.entity_mut(view.entity).insert(Transform {
-				translation: read_translation_from_entity(view.src_entity, view.config)?,
+				translation: read_translation_from_entity(view.src_entity, view.tb_config)?,
 				rotation: read_rotation_from_entity(view.src_entity)?,
 				scale: Vec3::ONE,
 			});
