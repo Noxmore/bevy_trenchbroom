@@ -40,6 +40,8 @@ This can be changed to a solid or base class by changing the class type in `#[<t
 Any fields of the struct will appear as properties in TrenchBroom, and when a map is loaded, those fields will be automatically set with the values the properties were set to.<br>
 The types of all fields must implement [`FgdType`](bevy_trenchbroom::fgd::FgdType) so bevy_trenchbroom knows how to parse and stringify them in adherence with TrenchBroom's formats.
 
+If your class isn't a unit struct, it must implement [`Default`].
+
 Documentation comments on classes and fields contained within them will appear in TrenchBroom when selected.
 
 If not already derived, this attribute automatically derives required traits like `Reflect` and `Component`. Classes tie into Bevy's type registry, so to register the class to appear in TrenchBroom, simply call `.register_type::<MyClass>()` on app initialization. <br>
