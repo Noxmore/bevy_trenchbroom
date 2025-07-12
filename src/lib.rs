@@ -9,6 +9,11 @@ compile_error!("can only have one collider backend enabled");
 // For proc macros to be able to use the `bevy_trenchbroom` path.
 extern crate self as bevy_trenchbroom;
 
+pub mod manual {
+	// This module is dedicated to storing the Manual for use with doc tests and to be viewable on docs.rs.
+	#![doc = include_str!("../Manual.md")]
+}
+
 pub mod brush;
 #[cfg(feature = "bsp")]
 pub mod bsp;
