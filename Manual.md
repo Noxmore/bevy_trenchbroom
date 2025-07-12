@@ -241,7 +241,7 @@ You can also create a `spawnflags` property by using the `enumflags2` crate (for
 # use bevy_trenchbroom::fgd::FgdFlags;
 # use enumflags2::*;
 #[bitflags(default = Beep | Bap)]
-#[derive(Reflect)]
+#[derive(Reflect, Debug, Clone, Copy)]
 #[repr(u16)]
 enum FlagsTest {
 	/// Boop flag title
@@ -355,7 +355,7 @@ Here's an example of how to define some animators:
 # use bevy_trenchbroom::prelude::*;
 // System you might run on Startup.
 fn setup_lighting_animators(
-	animators: Res<LightingAnimators>,
+	mut animators: ResMut<LightingAnimators>,
 ) {
 	// A soft flickering, could be used for a candle.
 	animators.values.insert(
