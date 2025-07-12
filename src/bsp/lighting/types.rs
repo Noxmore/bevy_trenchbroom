@@ -229,6 +229,23 @@ impl<'de> Deserialize<'de> for LightingAnimator {
 pub struct LightingAnimators {
 	pub values: HashMap<LightmapStyle, LightingAnimator>,
 }
+impl LightingAnimators {
+	/// Convenience function for setting up lighting animators with a single function.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// # use bevy::prelude::*;
+	/// # use bevy_trenchbroom::prelude::*;
+	/// LightingAnimators::new([
+	///     (LightmapStyle(1), LightingAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat))),
+	///     (LightmapStyle(2), LightingAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
+	/// ]);
+	/// ```
+	pub fn new(animators: impl Into<HashMap<LightmapStyle, LightingAnimator>>) -> Self {
+		Self { values: animators.into() }
+	}
+}
 
 /// Contains multiple images that are composited together in `output` using the current [`TrenchBroomConfig`]'s lightmap animators. Used for both lightmaps an irradiance volumes.
 #[derive(Asset, TypePath, Clone)]
