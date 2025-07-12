@@ -78,14 +78,12 @@ fn main() {
 		.run();
 }
 
-fn setup_scene(
-	mut commands: Commands,
-	asset_server: Res<AssetServer>,
-) {
+fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 	#[cfg(feature = "example_client")]
 	{
 		commands.insert_resource(AmbientLight::NONE);
 
+		#[rustfmt::skip]
 		commands.insert_resource(LightingAnimators::new([
 			(LightmapStyle(1), LightingAnimator::new(6., 0.7, [0.8, 0.75, 1., 0.7, 0.8, 0.7, 0.9, 0.7, 0.6, 0.7, 0.9, 1., 0.7].map(Vec3::splat))),
 			(LightmapStyle(2), LightingAnimator::new(0.5, 1., [0., 1.].map(Vec3::splat))),
