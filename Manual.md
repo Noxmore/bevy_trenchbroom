@@ -177,6 +177,23 @@ impl SolidClassB {
 
 Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the spawn hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
 
+### ***Field Attribute: `must_set`***
+Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+
+Examples:
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+#[point_class(
+	model({ "path": model }),
+)]
+#[derive(Default)]
+struct Prop {
+	#[must_set] // A prop wouldn't make much sense without a model!
+	model: String,
+}
+```
+
 ## Special Properties
 Some properties have special UI in TrenchBroom, this includes
 - colors, which have a color picker widget
