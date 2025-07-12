@@ -25,7 +25,7 @@ impl Plugin for SolidClassesPlugin {
 ///
 /// This is an empty worldspawn implementation to get you up and running with as few lines of code as possible. You will almost certainly override this class with your own at some point.
 #[solid_class(base(
-	#[cfg(feature = "bsp")] BspSolidEntity,
+	#[cfg(feature = "bsp")] BspWorldspawn,
 ))]
 #[derive(Debug, Clone)]
 pub struct Worldspawn;
