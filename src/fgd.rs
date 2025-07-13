@@ -66,6 +66,9 @@ pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 		if let Some(value) = class.info.model {
 			write!("model({value}) ");
 		}
+		if class.info.decal {
+			write!("decal() ");
+		}
 
 		write!("= {}", class.info.name);
 		if let Some(description) = class.info.description {

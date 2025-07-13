@@ -41,6 +41,7 @@ impl QuakeClass for Transform {
 		color: None,
 		iconsprite: None,
 		size: None,
+		decal: false,
 
 		properties: &[
 			QuakeClassProperty {
@@ -93,6 +94,7 @@ impl QuakeClass for Visibility {
 		color: None,
 		iconsprite: None,
 		size: None,
+		decal: false,
 
 		properties: &[QuakeClassProperty {
 			#[rustfmt::skip]
