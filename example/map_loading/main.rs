@@ -6,6 +6,7 @@ use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::LightingClassesPlugin;
 use bevy_trenchbroom::class::builtin::LightingWorkflow;
+use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
 
@@ -74,6 +75,8 @@ fn main() {
 				TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle()),
 			)
 			.build()
+			// I use bsp_loading to write the config.
+			.disable::<WriteTrenchBroomConfigOnStartPlugin>()
 			// This is because we use a custom light class for parity with bsp_loading.
 			.set(LightingClassesPlugin(LightingWorkflow::Custom)),
 		)

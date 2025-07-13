@@ -64,6 +64,9 @@ impl PluginGroup for TrenchBroomPlugins {
 		#[cfg(feature = "bsp")]
 		let builder = builder.add(bsp::BspPlugin);
 
+		#[cfg(not(target_family = "wasm"))]
+		let builder = builder.add(config::WriteTrenchBroomConfigOnStartPlugin);
+
 		builder
 	}
 }

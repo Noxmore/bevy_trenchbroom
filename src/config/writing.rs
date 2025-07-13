@@ -4,6 +4,20 @@ use crate::fgd::write_fgd;
 
 use super::*;
 
+/// Plugin that writes out the app's [`TrenchBroomConfig`] on [`Startup`], allowing to load and create maps of the game in-editor.
+pub struct WriteTrenchBroomConfigOnStartPlugin;
+impl Plugin for WriteTrenchBroomConfigOnStartPlugin {
+	fn build(&self, app: &mut App) {
+		app.add_systems(Startup, Self::write);
+	}
+}
+impl WriteTrenchBroomConfigOnStartPlugin {
+	pub fn write(server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
+		server.config.write_game_config_to_default_directory(&type_registry.read()).unwrap();
+		server.config.add_game_to_preferences_in_default_directory().unwrap();
+	}
+}
+
 /// Errors that can occur when getting the [default TrenchBroom game config path](https://trenchbroom.github.io/manual/latest/#game_configuration_files).
 /// Such errors typically occur when TrenchBroom is not installed or installed in a non-standard location.
 #[derive(thiserror::Error, Debug)]

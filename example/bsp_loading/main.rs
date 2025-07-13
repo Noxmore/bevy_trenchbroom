@@ -74,7 +74,7 @@ fn main() {
 		.register_type::<Mushroom>()
 		.register_type::<FuncWall>()
 		.register_type::<FuncDoor>()
-		.add_systems(PostStartup, (setup_scene, write_config))
+		.add_systems(PostStartup, setup_scene)
 		.run();
 }
 
@@ -103,12 +103,4 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 		}),
 		example_commons::default_debug_camera_transform(),
 	));
-}
-
-fn write_config(#[allow(unused)] server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
-	#[cfg(not(target_family = "wasm"))]
-	{
-		server.config.write_game_config_to_default_directory(&type_registry.read()).unwrap();
-		server.config.add_game_to_preferences_in_default_directory().unwrap();
-	}
 }
