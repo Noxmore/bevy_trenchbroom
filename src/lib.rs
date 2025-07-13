@@ -39,6 +39,7 @@ pub use bevy_materialize;
 
 /// Contains all the plugins that makes up bevy_trenchbroom. Most of these you don't want to get rid of or change, but there are a few exceptions.
 /// - If you want to change the [`LightingWorkflow`](class::builtin::LightingWorkflow) you're using, set [`LightingClassesPlugin`](class::builtin::LightingClassesPlugin).
+/// - [`WriteTrenchBroomConfigOnStartPlugin`](config::WriteTrenchBroomConfigOnStartPlugin) writes the [`TrenchBroomConfig`] on startup, disable if you want to write it out a different time.
 pub struct TrenchBroomPlugins(pub TrenchBroomConfig);
 
 impl PluginGroup for TrenchBroomPlugins {
