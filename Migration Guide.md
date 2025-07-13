@@ -27,6 +27,7 @@
 - Default spawn hooks have been added to `TrenchBroomConfig` per type of class. You can probably remove a lot of copy-pasted hooks!
 - A manual has been added for more accessible comprehensive documentation, [check it out!](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html)
 - `QuakeClassSpawnView::config` have been renamed to `tb_config`.
+- `TrenchBroomConfig` writing now happens automatically with `WriteTrenchBroomConfigOnStartPlugin`. If you're writing out your config on startup, you can remove that system. If not, disable `WriteTrenchBroomConfigOnStartPlugin` through `TrenchBroomPlugins`.
 
 # 0.7 to 0.8
 - `TrenchBroomPlugin` has been changed to the `TrenchBroomPlugins` plugin group. The syntax is the exact same by default, you're just able to disable specific plugins now.
