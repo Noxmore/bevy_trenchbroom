@@ -49,36 +49,28 @@ struct MyClass {
 
 Then register the type with `.register_type::<MyClass>()` on app initialization.
 
-To access your game from TrenchBroom, at some point in your application, you need to call `TrenchBroomConfig::write_game_config` and `TrenchBroomConfig::add_game_to_preferences`. For example:
+Now just run your game once, and it should automatically be available in TrenchBroom!
 
+For more comprehensive documentation on this topic, see [the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html).
+
+## Loading maps
+
+Now that you have your environment setup, and have assumedly created your map, loading it is pretty easy.
 ```rust
 use bevy::prelude::*;
 use bevy_trenchbroom::prelude::*;
 
-// app.add_systems(Startup, write_trenchbroom_config)
+// app.add_systems(Startup, spawn_test_map)
 
-fn write_trenchbroom_config(
-    server: Res<TrenchBroomServer>,
-    type_registry: Res<AppTypeRegistry>,
+fn spawn_test_map(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) {
-    // This will write <TB folder>/games/example_game/GameConfig.cfg,
-    // and <TB folder>/games/example_game/example_game.fgd
-    if let Err(err) = server.config.write_game_config_to_default_directory(&type_registry.read()) {
-        error!("Could not write TrenchBroom game config: {err}");
-    }
-
-    // And this will add our game to <TB folder>/Preferences.json
-    if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
-        error!("Could not write TrenchBroom preferences: {err}");
-    }
+    commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
+    // Or, if you're using BSPs.
+    commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
 }
 ```
-
-This writes it out every time your app starts, but depending on what you want to do, you might want to write it out some other time.
-
-After you write it out, you have to select the created game config in TrenchBroom's preferences when creating a new map.
-
-For more comprehensive documentation on this topic, see [the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html).
 
 ## Materials and `bevy_materialize`
 
@@ -103,25 +95,6 @@ base_color_texture = "example.png"
 it can get a bit repetitive.
 
 You can also configure the rest of the properties of the default material in `MaterializePlugin`.
-
-## Loading maps
-
-Now that you have your environment setup, and have assumedly created your map, loading it is pretty easy.
-```rust
-use bevy::prelude::*;
-use bevy_trenchbroom::prelude::*;
-
-// app.add_systems(Startup, spawn_test_map)
-
-fn spawn_test_map(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-    commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
-    // Or, if you're using BSPs.
-    commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
-}
-```
 
 ## BSP
 
