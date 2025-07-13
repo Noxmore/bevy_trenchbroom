@@ -99,18 +99,33 @@ Examples:
 # use bevy::prelude::*;
 # use bevy_trenchbroom::prelude::*;
 #[base_class(
-	classname(camelCase)
+	classname(camelCase),
 )]
 struct MyBaseClass;
 
 assert_eq!(MyBaseClass::CLASS_INFO.name, "myBaseClass");
 
 #[solid_class(
-	classname("new_classname")
+	classname("new_classname"),
 )]
 struct MySolidClass;
 
 assert_eq!(MySolidClass::CLASS_INFO.name, "new_classname");
+```
+
+### ***Attribute: `group`***
+Prefixes the classname with `<group>_` to add it into the entity group `<group>` in TrenchBroom. This is mainly useful to avoid stuttering namespaces, e.g. EnemyZombie in `enemy.rs`.
+
+Examples:
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+#[point_class(
+	group("enemy"),
+)]
+struct Zombie;
+
+assert_eq!(Zombie::CLASS_INFO.name, "enemy_zombie");
 ```
 
 ### ***Attribute: `base`***
@@ -125,7 +140,7 @@ Examples:
 		#[cfg(feature = "client")] Visibility,
 		Target,
 		Targetable,
-	)
+	),
 )]
 struct MyPointClass;
 ```
@@ -159,7 +174,7 @@ struct SolidClassA;
 
 #[solid_class(
 	// This overrides the above hooks. This geometry will not be smoothed.
-	hooks(SpawnHooks::new().push(Self::example_spawn_hook))
+	hooks(SpawnHooks::new().push(Self::example_spawn_hook)),
 )]
 struct SolidClassB;
 impl SolidClassB {
