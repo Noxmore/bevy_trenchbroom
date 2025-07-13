@@ -271,16 +271,7 @@ For TrenchBroom to know everything it needs to about your game, bevy_trenchbroom
 This is half of what [`TrenchBroomConfig`](bevy_trenchbroom::config::TrenchBroomConfig) provides control of. For specifics, you should check out [`TrenchBroomConfig`](bevy_trenchbroom::config::TrenchBroomConfig)'s documentation, as this section won't cover every single setting, only a few ones of note.
 
 Once configured, you can write out a game configuration with [`write_game_config_to_default_directory(...)`](bevy_trenchbroom::config::TrenchBroomConfig::write_game_config_to_default_directory), and automatically set the game's directory to use for assets with [`add_game_to_preferences_in_default_directory()`](bevy_trenchbroom::config::TrenchBroomConfig::add_game_to_preferences_in_default_directory).
-
-You probably want to make a system that looks a little like this:
-```rust
-# use bevy::prelude::*;
-# use bevy_trenchbroom::prelude::*;
-fn write_config(server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
-	server.config.write_game_config_to_default_directory(&type_registry.read()).unwrap();
-	server.config.add_game_to_preferences_in_default_directory().unwrap();
-}
-```
+By default, this is automatically done by [`WriteTrenchBroomConfigOnStartPlugin`](bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin). If you want to write the config some other time, you can disable it in [`TrenchBroomPlugins`](bevy_trenchbroom::TrenchBroomPlugins).
 
 ## Special Textures
 Recreations of Quake's liquid and sky materials are included as [`LiquidMaterial`](bevy_trenchbroom::special_textures::LiquidMaterial) and [`QuakeSkyMaterial`](bevy_trenchbroom::special_textures::QuakeSkyMaterial) respectively.
