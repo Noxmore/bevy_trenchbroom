@@ -204,10 +204,75 @@ Examples:
 )]
 #[derive(Default)]
 struct Prop {
-	#[must_set] // A prop wouldn't make much sense without a model!
+	#[class(must_set)] // A prop wouldn't make much sense without a model!
 	model: String,
 }
 ```
+
+### ***Field Attribute: `ignore`***
+Doesn't show the field in-editor as a property.
+
+Examples:
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+#[point_class]
+#[derive(Default)]
+struct CoolClass {
+	foo: i32,
+	
+	#[class(ignore)] /// This doesn't implement FgdType!
+	bar: Vec<f32>,
+}
+
+assert_eq!(CoolClass::CLASS_INFO.properties.len(), 1);
+```
+
+### ***Field Attribute: `rename`***
+Renames the in-editor property. Doesn't rename the Rust field.
+
+Examples:
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+#[point_class]
+#[derive(Default)]
+struct CoolerClass {
+	#[class(rename = "SoCool")]
+	so_cool: u32,
+}
+
+# assert_eq!(CoolerClass::CLASS_INFO.properties[0].name, "SoCool");
+```
+
+### ***Field Attribute: `default`***
+Overrides the default value of the property in TrenchBroom that appears as a hint in the property's UI.
+Note that this does not change the default value of the field, only how it appears in TrenchBroom.
+Without this, the default value of the field is used.
+
+Note: Only integers can be without quotes.
+
+Examples:
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+#[point_class]
+#[derive(Default)]
+struct CoolestClass {
+	#[class(default = 9999)]
+	foo: u32,
+
+	#[class(default = "Default Value!!!")]
+	bar: i32,
+}
+
+# assert_eq!((CoolestClass::CLASS_INFO.properties[0].default_value.unwrap())(), "9999");
+# assert_eq!((CoolestClass::CLASS_INFO.properties[1].default_value.unwrap())(), "\"Default Value!!!\"");
+```
+
+### ***Field Attribute: `title`***
+Sets the TrenchBroom property title of the field. It's a very small change, when a property is selected, the help/info window below it starts with `Property "property_name" (property_name)`. With this set, it becomes `Property "property_name" (Property Title)`.
+
 
 ## Special Properties
 Some properties have special UI in TrenchBroom, this includes

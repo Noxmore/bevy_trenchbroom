@@ -95,6 +95,16 @@ struct Opts {
 	decal: bool,
 }
 
+#[derive(Default, ParseMetaItem, ParseAttributes)]
+#[deluxe(default, attributes(class))]
+struct FieldOpts {
+	must_set: bool,
+	ignore: bool,
+	rename: Option<String>,
+	default: Option<Literal>,
+	title: Option<String>,
+}
+
 fn extract_doc(meta: &MetaNameValue, doc: &mut Option<String>) {
 	let Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) = &meta.value else { return };
 	let value = lit.value().trim().replace('"', "''");
@@ -132,13 +142,23 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 
 	insert_required_attributes(&mut item);
 
-	// Collect "must set" fields before hand
-	let mut must_set = vec![false; item.fields.len()];
+	// Collect field attributes beforehand
+	let mut field_attributes = Vec::with_capacity(item.fields.len());
 	for (field_idx, field) in item.fields.iter_mut().enumerate() {
-		// This both removes the attributes, as well as gets if any were there at all
-		if field.attrs.extract_if(.., |attr| compare_path(attr.meta.path(), "must_set")).count() > 0 {
-			must_set[field_idx] = true;
-		}
+		let field_name = field.ident.as_ref().map(Ident::to_string).unwrap_or_else(|| field_idx.to_string());
+		let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
+
+		let field_opts: FieldOpts = match deluxe::parse_attributes(field) {
+			Ok(x) => x,
+			Err(err) => panic!(
+				"Parsing attributes for {field_ident_or_number}: {err}   | source code: {:?}",
+				err.span().source_text()
+			),
+		};
+
+		field_attributes.push(field_opts);
+
+		field.attrs.retain(|attr| !compare_path(attr.meta.path(), "class"));
 	}
 
 	let ItemStruct { ident, attrs, fields, .. } = &item;
@@ -172,9 +192,18 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		let field_ident = field.ident.clone();
 		let field_name = field.ident.as_ref().map(Ident::to_string).unwrap_or_else(|| field_idx.to_string());
 		let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
+		let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
 
 		let mut doc = None;
-		let defaulted = !must_set[field_idx];
+
+		let field_opts = &field_attributes[field_idx];
+		if field_opts.ignore {
+			field_constructors.push(quote! {
+				#setter default.#field_ident_or_number,
+			});
+			continue;
+		}
+		let property_name = field_opts.rename.as_ref().unwrap_or(&field_name);
 
 		for attr in &field.attrs {
 			if let Meta::NameValue(meta) = &attr.meta {
@@ -184,34 +213,35 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 			}
 		}
 
+		let title = option(field_opts.title.clone());
 		let description = option(doc);
 
-		let default_value_fn = if defaulted {
-			quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number)) }
-		} else {
+		let default_value_fn = if let Some(default) = &field_opts.default {
+			quote! { Some(|| stringify!(#default).to_owned()) }
+		} else if field_opts.must_set {
 			quote! { None }
+		} else {
+			quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number)) }
 		};
 
 		properties.push(quote! {
 			::bevy_trenchbroom::class::QuakeClassProperty {
 				ty: <#ty as ::bevy_trenchbroom::fgd::FgdType>::PROPERTY_TYPE,
-				name: #field_name,
-				title: None,
+				name: #property_name,
+				title: #title,
 				description: #description,
 				default_value: #default_value_fn,
 			},
 		});
 
-		let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
-
-		let not_found_handler = if defaulted {
-			quote! { .with_default(default.#field_ident_or_number)? }
-		} else {
+		let not_found_handler = if field_opts.must_set {
 			quote! { ? }
+		} else {
+			quote! { .with_default(default.#field_ident_or_number)? }
 		};
 
 		field_constructors.push(quote! {
-			#setter view.src_entity.get(#field_name)#not_found_handler,
+			#setter view.src_entity.get(#property_name)#not_found_handler,
 		});
 	}
 

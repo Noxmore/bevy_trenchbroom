@@ -6,6 +6,8 @@ use proc_macro2::*;
 use quote::*;
 use syn::*;
 
+// We repeat attributes for the convenience of the user so they don't have to go and look at the manual.
+
 /// Point classes don't have any geometry built in -- simply a point in space.
 ///
 /// # Type attributes
@@ -20,8 +22,12 @@ use syn::*;
 /// - `base(<type ...>)` Adds base classes to inherit.
 /// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
-/// # Field attributes
-/// - `#[must_set]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+/// # Field attributes (`#[class(...)]`)
+/// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+/// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `rename = "<name>"` Renames this field in-editor.
+/// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
+/// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
 #[proc_macro_attribute]
 pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_attribute(attr.into(), input.into(), quake_class::QuakeClassType::Point).into()
@@ -36,8 +42,12 @@ pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// - `base(<type ...>)` Adds base classes to inherit.
 /// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
 ///
-/// # Field attributes
-/// - `#[must_set]` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+/// # Field attributes (`#[class(...)]`)
+/// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+/// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `rename = "<name>"` Renames this field in-editor.
+/// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
+/// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
 #[proc_macro_attribute]
 pub fn solid_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_attribute(attr.into(), input.into(), quake_class::QuakeClassType::Solid).into()
@@ -45,7 +55,24 @@ pub fn solid_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 
 /// Base classes don't appear in-editor, rather they give properties and attributes to their sub-classes (components that require them).
 ///
-/// It has the same attributes as [`macro@point_class`].
+/// # Type attributes
+/// - `model(<path expression>)` Displays the entity as the specified model in-editor.
+/// - `model({ "path": <path expr>, "skin": <skin expr>, "frame": <frame expr>, "scale": <scale expr> })` Same as above attribute, but with greater control over how the model is shown. Note that any of these properties can be left out.
+/// - `color(<red> <green> <blue>)` Changes the wireframe color of the entity. Each number has a range from 0 to 255.
+/// - `iconsprite(...)]` Alias for `model`. When this or `model` is set to an image, it displays the entity as said image, presented as a billboard (always facing the camera).
+/// - `size(<-x> <-y> <-z>, <+x> <+y> <+z>)` The bounding box of the entity in-editor.
+/// - `classname(<case type>)` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
+/// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
+/// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
+/// - `base(<type ...>)` Adds base classes to inherit.
+/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
+///
+/// # Field attributes (`#[class(...)]`)
+/// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
+/// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `rename = "<name>"` Renames this field in-editor.
+/// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
+/// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
 #[proc_macro_attribute]
 pub fn base_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	quake_class::class_attribute(attr.into(), input.into(), quake_class::QuakeClassType::Base).into()
