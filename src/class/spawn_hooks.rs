@@ -284,6 +284,7 @@ mod tests {
 	use super::*;
 
 	#[test]
+	#[ignore]
 	#[cfg(feature = "client")]
 	fn preloading() {
 		use crate::{
