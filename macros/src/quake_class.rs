@@ -92,6 +92,7 @@ struct Opts {
 	group: Option<String>,
 	base: Vec<BaseType>,
 	doc: Option<String>,
+	decal: bool,
 }
 
 fn extract_doc(meta: &MetaNameValue, doc: &mut Option<String>) {
@@ -252,6 +253,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 	let color = option(opts.color.map(|Tokens(color)| quote! { stringify!(#color) }));
 	let iconsprite = option(opts.iconsprite.map(|Tokens(iconsprite)| quote! { stringify!(#iconsprite) }));
 	let size = option(opts.size.map(|size| size.to_string()));
+	let decal = opts.decal;
 
 	let spawn_hooks = match opts.hooks {
 		None => match ty {
@@ -277,6 +279,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 				color: #color,
 				iconsprite: #iconsprite,
 				size: #size,
+				decal: #decal,
 
 				properties: &[#(#properties)*],
 			};

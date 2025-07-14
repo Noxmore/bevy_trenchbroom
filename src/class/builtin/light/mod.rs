@@ -109,6 +109,7 @@ impl QuakeClass for PointLight {
 		color: None,
 		iconsprite: None,
 		size: None,
+		decal: false,
 
 		properties: &[
 			QuakeClassProperty {
@@ -218,6 +219,7 @@ impl QuakeClass for SpotLight {
 		color: None,
 		iconsprite: None,
 		size: None,
+		decal: false,
 
 		properties: &[
 			QuakeClassProperty {
@@ -356,6 +358,7 @@ impl QuakeClass for DirectionalLight {
 		color: None,
 		iconsprite: None,
 		size: None,
+		decal: false,
 
 		properties: &[
 			QuakeClassProperty {

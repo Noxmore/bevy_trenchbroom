@@ -119,6 +119,7 @@ pub struct QuakeClassInfo {
 	pub iconsprite: Option<&'static str>,
 	/// The size of the bounding box of the entity in the editor.
 	pub size: Option<&'static str>,
+	pub decal: bool,
 
 	pub properties: &'static [QuakeClassProperty],
 }
