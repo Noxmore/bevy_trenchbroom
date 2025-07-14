@@ -100,7 +100,7 @@ You can also configure the rest of the properties of the default material in `Ma
 
 `bevy_trenchbroom` supports BSP loading via the [qbsp](https://github.com/Noxmore/qbsp) crate when the `bsp` feature is activated.
 
-For more information, please see [the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html#BSP).
+For more information, please see [the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html#bsp).
 
 ## Physics/Collisions
 
