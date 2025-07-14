@@ -89,6 +89,7 @@ struct Opts {
 	size: Option<Size>,
 	hooks: Option<Expr>,
 	classname: Option<Tokens>,
+	group: Option<String>,
 	base: Vec<BaseType>,
 	doc: Option<String>,
 	decal: bool,
@@ -220,23 +221,26 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		FieldsType::Unit => quote! { Self },
 	};
 
-	let name = opts
+	let mut name = opts
 		.classname
 		.and_then(|Tokens(tokens)| tokens.into_iter().next())
 		.map(|tree| match tree {
-			TokenTree::Literal(lit) => lit,
+			TokenTree::Literal(lit) => lit.to_string().trim_matches('"').to_owned(),
 			TokenTree::Ident(casing) => match casing.to_string().as_str() {
-				"snake_case" => Literal::string(&ident.to_string().to_snake_case()),
-				"UPPER_SNAKE_CASE" => Literal::string(&ident.to_string().to_shouty_snake_case()),
-				"lowercase" => Literal::string(&ident.to_string().to_lowercase()),
-				"UPPERCASE" => Literal::string(&ident.to_string().to_uppercase()),
-				"camelCase" => Literal::string(&ident.to_string().to_lower_camel_case()),
-				"PascalCase" => Literal::string(&ident.to_string().to_pascal_case()),
+				"snake_case" => ident.to_string().to_snake_case(),
+				"UPPER_SNAKE_CASE" => ident.to_string().to_shouty_snake_case(),
+				"lowercase" => ident.to_string().to_lowercase(),
+				"UPPERCASE" => ident.to_string().to_uppercase(),
+				"camelCase" => ident.to_string().to_lower_camel_case(),
+				"PascalCase" => ident.to_string().to_pascal_case(),
 				_ => panic!("Invalid casing! Valid casings are snake_case, UPPER_SNAKE_CASE, lowercase, UPPERCASE, camelCase, and PascalCase."),
 			},
 			_ => panic!("Invalid arguments! Must either be a casing like snake_case, or a name like \"worldspawn\"!"),
 		})
-		.unwrap_or_else(|| Literal::string(&ident.to_string().to_snake_case()));
+		.unwrap_or_else(|| ident.to_string().to_snake_case());
+	if let Some(group) = &opts.group {
+		name = format!("{group}_{name}");
+	}
 	let description = option(opts.doc);
 
 	// Attribute::to

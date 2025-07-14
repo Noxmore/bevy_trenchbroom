@@ -16,6 +16,7 @@ use syn::*;
 /// - `size(<-x> <-y> <-z>, <+x> <+y> <+z>)` The bounding box of the entity in-editor.
 /// - `classname(<case type>)` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
+/// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
 /// - `base(<type ...>)` Adds base classes to inherit.
 /// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
@@ -31,6 +32,7 @@ pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// # Type attributes
 /// - `classname(<case type>)` Case type can be something like `PascalCase` or `snake_case`. Default if not specified is `snake_case`.
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
+/// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
 /// - `base(<type ...>)` Adds base classes to inherit.
 /// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
 ///
