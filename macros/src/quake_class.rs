@@ -144,14 +144,13 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 
 	// Collect field attributes beforehand
 	let mut field_attributes = Vec::with_capacity(item.fields.len());
-	for (field_idx, field) in item.fields.iter_mut().enumerate() {
-		let field_name = field.ident.as_ref().map(Ident::to_string).unwrap_or_else(|| field_idx.to_string());
-		let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
+	for field in item.fields.iter_mut() {
+		let field_ident = field.ident.as_ref().expect("Field doesn't have identifier, tuple structs not allowed");
 
 		let field_opts: FieldOpts = match deluxe::parse_attributes(field) {
 			Ok(x) => x,
 			Err(err) => panic!(
-				"Parsing attributes for {field_ident_or_number}: {err}   | source code: {:?}",
+				"Parsing attributes for {field_ident}: {err}   | source code: {:?}",
 				err.span().source_text()
 			),
 		};
@@ -189,21 +188,19 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 
 	for (field_idx, field) in fields.into_iter().enumerate() {
 		let ty = &field.ty;
-		let field_ident = field.ident.clone();
-		let field_name = field.ident.as_ref().map(Ident::to_string).unwrap_or_else(|| field_idx.to_string());
-		let field_ident_or_number = Ident::new(&field_name, Span::mixed_site());
-		let setter = field_ident.as_ref().map(|ident| quote! { #ident: });
+		let field_ident = field.ident.as_ref().unwrap();
+		let field_ident_string = field_ident.to_string();
 
 		let mut doc = None;
 
 		let field_opts = &field_attributes[field_idx];
 		if field_opts.ignore {
 			field_constructors.push(quote! {
-				#setter default.#field_ident_or_number,
+				#field_ident: default.#field_ident,
 			});
 			continue;
 		}
-		let property_name = field_opts.rename.as_ref().unwrap_or(&field_name);
+		let property_name = field_opts.rename.as_ref().unwrap_or(&field_ident_string);
 
 		for attr in &field.attrs {
 			if let Meta::NameValue(meta) = &attr.meta {
@@ -221,7 +218,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		} else if field_opts.must_set {
 			quote! { None }
 		} else {
-			quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident_or_number)) }
+			quote! { Some(|| ::bevy_trenchbroom::fgd::FgdType::fgd_to_string(&<Self as Default>::default().#field_ident)) }
 		};
 
 		properties.push(quote! {
@@ -237,11 +234,11 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		let not_found_handler = if field_opts.must_set {
 			quote! { ? }
 		} else {
-			quote! { .with_default(default.#field_ident_or_number)? }
+			quote! { .with_default(default.#field_ident)? }
 		};
 
 		field_constructors.push(quote! {
-			#setter view.src_entity.get(#property_name)#not_found_handler,
+			#field_ident: view.src_entity.get(#property_name)#not_found_handler,
 		});
 	}
 
