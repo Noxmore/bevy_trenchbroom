@@ -371,7 +371,7 @@ pub enum DirtMode {
 #[reflect(Default, Serialize, Deserialize)]
 pub struct BspExternalMap {
 	/// Specifies the filename of the .map to import.
-	#[must_set]
+	#[class(must_set)]
 	pub _external_map: String,
 
 	/// What entity you want the external map to turn in to.
