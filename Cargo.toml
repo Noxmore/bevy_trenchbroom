@@ -56,7 +56,7 @@ float-ord = "0.3"
 image = { version = "0.25", default-features = false }
 itertools = "0.14"
 json = "0.12"
-quake-util = { version = "0.3.2", features = ["std", "hashbrown"] }
+quake-util = { version = "0.4.0", features = ["std"] }
 serde = { version = "1", features = [
 	"derive",
 ] } # serde isn't optional because bevy_materialize requires it anyway
