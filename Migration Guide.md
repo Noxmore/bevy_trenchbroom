@@ -5,7 +5,7 @@
 	- `#[reflect(QuakeClass, Component)]` is now implied if not specified.
 	- Attributes have been put into the macro body, though they are not needed.
 	- `spawn_hooks` attribute has been renamed to just `hooks`.
-	- The `no_default` field attribute has been renamed to `must_set`.
+	- The `no_default` field attribute has been renamed to `#[class(must_set)`, along with 4 new field attributes.
 	- Here's an example:
 		```rust
 		#[solid_class(
