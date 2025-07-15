@@ -336,7 +336,7 @@ dependencies = [
  "futures-lite",
  "parking",
  "polling",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "slab",
  "tracing",
  "windows-sys 0.59.0",
@@ -379,7 +379,7 @@ dependencies = [
  "cfg-if",
  "event-listener",
  "futures-lite",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "tracing",
 ]
 
@@ -395,7 +395,7 @@ dependencies = [
  "cfg-if",
  "futures-core",
  "futures-io",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "signal-hook-registry",
  "slab",
  "windows-sys 0.59.0",
@@ -1549,7 +1549,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "anyhow",
  "atomicow",
@@ -1582,7 +1582,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom_macros"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "deluxe",
  "heck 0.5.0",
@@ -1829,7 +1829,7 @@ dependencies = [
 
 [[package]]
 name = "bsp_loading"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -2682,7 +2682,7 @@ dependencies = [
 
 [[package]]
 name = "example_commons"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
@@ -3534,7 +3534,7 @@ dependencies = [
 
 [[package]]
 name = "map_loading"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -4423,7 +4423,7 @@ dependencies = [
 
 [[package]]
 name = "physics"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "avian3d",
  "bevy",
@@ -4499,7 +4499,7 @@ dependencies = [
  "concurrent-queue",
  "hermit-abi",
  "pin-project-lite",
- "rustix 1.0.7",
+ "rustix 1.0.8",
  "tracing",
  "windows-sys 0.59.0",
 ]
@@ -5022,15 +5022,15 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.0.7"
+version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c71e83d6afe7ff64890ec6b71d6a69bb8a610ab78ce364b3352876bb4c801266"
+checksum = "11181fbabf243db407ef8df94a6ce0b2f9a733bd8be4ad02b4eda9602296cac8"
 dependencies = [
  "bitflags 2.9.1",
  "errno",
  "libc",
  "linux-raw-sys 0.9.4",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
