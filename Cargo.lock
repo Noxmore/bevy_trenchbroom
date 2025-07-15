@@ -1387,6 +1387,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_scene_hot_reloading"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e0c83038cd0dc090ca014872e6a3c3ae69bf9468b48f74a2e8da3ad56c0e7f1"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_sprite"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2677,6 +2686,7 @@ version = "0.9.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_scene_hot_reloading",
 ]
 
 [[package]]

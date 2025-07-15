@@ -4,6 +4,8 @@ use bevy::{
 	input::mouse::AccumulatedMouseMotion,
 	window::{CursorGrabMode, PrimaryWindow},
 };
+#[cfg(feature = "client")]
+use bevy_scene_hot_reloading::SceneHotReloadingPlugin;
 
 // These are hardcoded because this is only for examples.
 
@@ -19,6 +21,7 @@ impl Plugin for ExampleCommonsPlugin {
 		#[rustfmt::skip]
 		app
 			.add_plugins((
+				SceneHotReloadingPlugin,
 				bevy_inspector_egui::bevy_egui::EguiPlugin {
 					enable_multipass_for_primary_context: true,
 				},
