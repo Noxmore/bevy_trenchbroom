@@ -24,8 +24,9 @@ use crate::{class::QuakeClassSpawnView, *};
 pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
 	fn build(&self, #[allow(unused)] app: &mut App) {
+		// This is in PostUpdate to happen after SpawnScene. If set before, hot-reloading fails.
 		#[cfg(feature = "client")]
-		app.add_systems(Update, Self::set_image_samplers);
+		app.add_systems(PostUpdate, Self::set_image_samplers);
 	}
 }
 
