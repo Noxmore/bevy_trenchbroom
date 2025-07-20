@@ -14,6 +14,10 @@ More specifically, integration and support for the following workflows:
 
 <br>
 
+## TEMP NOTICE:
+Map hot-reloading currently doesn't work out of the box. This is a Bevy issue and will be fixed when https://github.com/bevyengine/bevy/pull/18358 lands.
+Until then, use [bevy_scene_hot_reloading](https://crates.io/crates/bevy_scene_hot_reloading) if you want to hot-reload maps!
+
 # Quickstart
 - Add the `bevy_trenchbroom` to your project: `cargo add bevy_trenchbroom`.
 
