@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(feature = "example_client")]
-use bevy::ecs::{component::HookContext, world::DeferredWorld};
+use bevy::ecs::{lifecycle::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::*;
@@ -78,7 +78,7 @@ fn main() {
 		.run();
 }
 
-fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>, raycast: MeshRayCast) {
 	#[cfg(feature = "example_client")]
 	{
 		commands.insert_resource(AmbientLight::NONE);

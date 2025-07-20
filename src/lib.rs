@@ -52,7 +52,6 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)
 			.add(geometry::GeometryPlugin)
-			.add(bevy_fix_gltf_coordinate_system::FixGltfCoordinateSystemPlugin)
 			.add(util::UtilPlugin);
 
 		// Have to use let here because "attributes on expressions are experimental"

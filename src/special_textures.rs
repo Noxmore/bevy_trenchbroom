@@ -221,13 +221,32 @@ pub struct QuakeSkyMaterial {
 	#[default(Some(Face::Back))]
 	pub cull_mode: Option<Face>,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
 pub struct QuakeSkyKey {
-	pub cull_mode: Option<Face>,
+	/// 0 = `None`, 1 = `Some(Front)`, 2 = `Some(Back)`.
+	///
+	/// Yes, this is dumb.
+	pub cull_mode: u8,
 }
 impl From<&QuakeSkyMaterial> for QuakeSkyKey {
 	fn from(value: &QuakeSkyMaterial) -> Self {
-		Self { cull_mode: value.cull_mode }
+		Self {
+			cull_mode: match value.cull_mode {
+				None => 0,
+				Some(Face::Front) => 1,
+				Some(Face::Back) => 2,
+			},
+		}
+	}
+}
+impl From<QuakeSkyKey> for Option<Face> {
+	fn from(value: QuakeSkyKey) -> Self {
+		match value.cull_mode {
+			1 => Some(Face::Front),
+			2 => Some(Face::Back),
+			_ => None,
+		}
 	}
 }
 impl Material for QuakeSkyMaterial {
@@ -240,7 +259,7 @@ impl Material for QuakeSkyMaterial {
 	}
 
 	fn specialize(
-		_pipeline: &bevy::pbr::MaterialPipeline<Self>,
+		_pipeline: &bevy::pbr::MaterialPipeline,
 		descriptor: &mut bevy::render::render_resource::RenderPipelineDescriptor,
 		_layout: &bevy_mesh::MeshVertexBufferLayoutRef,
 		key: bevy::pbr::MaterialPipelineKey<Self>,
@@ -249,7 +268,7 @@ impl Material for QuakeSkyMaterial {
 		// rendering culled faces, showing the app clear color instead of anything behind them.
 		// This causes some nasty visual errors in some maps.
 		// Why does this fix that? I have no idea !!!!
-		descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;
+		descriptor.primitive.cull_mode = key.bind_group_data.into();
 		Ok(())
 	}
 }

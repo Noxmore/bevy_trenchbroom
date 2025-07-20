@@ -24,7 +24,7 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { path = "/d/_dev/bevy", default-features = false, features = [
 	"png",
 ] } # For examples
 nil = "0.15"
@@ -37,15 +37,15 @@ example_commons = { path = "example/example_commons" }
 bevy_trenchbroom_macros = { version = "0.9.1", path = "macros" }
 
 anyhow = "1.0"
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { path = "/d/_dev/bevy", default-features = false, features = [
 	"bevy_asset",
 	"bevy_scene",
 	"bevy_color",
 ] }
-bevy_reflect = { version = "0.16", features = ["documentation"] }
-bevy_mesh = "0.16"
-wgpu-types = "24.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { version = "0.7", default-features = false, features = [
+bevy_reflect = { path = "/d/_dev/bevy/crates/bevy_reflect", features = ["documentation"] }
+bevy_mesh = { path = "/d/_dev/bevy/crates/bevy_mesh" }
+wgpu-types = "25.0.0" # Must be the same version as Bevy uses
+bevy_materialize = { path = "/d/_dev/_lib/rust/bevy_materialize", default-features = false, features = [
 	"toml",
 	"bevy_image",
 ] }
@@ -62,14 +62,14 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.5", features = ["bevy_reflect", "serde"], optional = true }
+qbsp = { path = "/d/_dev/_lib/rust/qbsp", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
 enumflags2.workspace = true
 serde_json = "1.0.140"
 atomicow = "1.1.0" # For dummy LoadContext hack, must stay the same version as Bevy's
-bevy_fix_gltf_coordinate_system = "0.1"
+bytemuck = "1.23.1" # For special materials, must stay the same version as Bevy's
 
 [dev-dependencies]
 bevy = { workspace = true, features = [

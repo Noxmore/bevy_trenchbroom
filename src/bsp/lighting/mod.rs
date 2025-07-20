@@ -6,7 +6,7 @@ use bevy::{
 	image::ImageSampler,
 	pbr::Lightmap,
 	render::{
-		Render, RenderApp, RenderSet,
+		Render, RenderApp, RenderSystems,
 		extract_resource::{ExtractResource, ExtractResourcePlugin},
 		globals::{GlobalsBuffer, GlobalsUniform},
 		render_asset::{RenderAssetPlugin, RenderAssetUsages, RenderAssets},
@@ -68,7 +68,10 @@ impl Plugin for BspLightingPlugin {
 
 		render_app.init_resource::<AnimatedLightingBindGroups>();
 
-		render_app.add_systems(Render, Self::prepare_animated_lighting_bind_groups.in_set(RenderSet::PrepareBindGroups));
+		render_app.add_systems(
+			Render,
+			Self::prepare_animated_lighting_bind_groups.in_set(RenderSystems::PrepareBindGroups),
+		);
 
 		let mut render_graph = render_app.world_mut().resource_mut::<RenderGraph>();
 		render_graph.add_node(AnimatedLightingLabel, AnimatedLightingNode);
@@ -255,7 +258,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			push_constant_ranges: vec![],
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_lightmaps.wgsl"),
 			shader_defs: vec![],
-			entry_point: "main".into(),
+			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
 		});
 
@@ -265,7 +268,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			push_constant_ranges: vec![],
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_irradiance_volumes.wgsl"),
 			shader_defs: vec![],
-			entry_point: "main".into(),
+			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
 		});
 

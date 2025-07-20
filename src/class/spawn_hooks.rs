@@ -1,7 +1,7 @@
 use super::*;
 use crate::config::SpawnFnOnce;
 use crate::*;
-use bevy::ecs::component::HookContext;
+use bevy::ecs::lifecycle::HookContext;
 use bevy::{asset::AssetPath, ecs::world::DeferredWorld};
 use bevy_mesh::VertexAttributeValues;
 
@@ -378,13 +378,13 @@ mod tests {
 			}
 		}
 
-		fn validate_mesh(trigger: Trigger<OnAdd, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
+		fn validate_mesh(trigger: On<Add, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
 			let handle = &mesh_query.get(trigger.target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Mesh");
 		}
 
 		fn validate_material(
-			trigger: Trigger<OnAdd, MeshMaterial3d<StandardMaterial>>,
+			trigger: On<Add, MeshMaterial3d<StandardMaterial>>,
 			material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 			asset_server: Res<AssetServer>,
 		) {
@@ -392,7 +392,7 @@ mod tests {
 			validate_asset(handle, &asset_server, "Material");
 		}
 
-		fn validate_scene(trigger: Trigger<OnAdd, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
+		fn validate_scene(trigger: On<Add, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
 			let handle = &scene_query.get(trigger.target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Scene");
 		}
