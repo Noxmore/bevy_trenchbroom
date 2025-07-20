@@ -195,7 +195,7 @@ pub trait ConvexHull {
 
 		const MARGIN: f64 = 1e-8;
 		for plane in self.planes() {
-			// Surfaces face inwards, so for example +Y will represent the bottom of the cuboid.
+			// I have no idea why these are in the order they are, but it makes colliders work! :)
 			if plane.normal.almost_eq(DVec3::Y, MARGIN) {
 				to.y = -plane.distance;
 			} else if plane.normal.almost_eq(DVec3::NEG_Y, MARGIN) {
