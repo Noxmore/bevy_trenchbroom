@@ -75,6 +75,11 @@ pub struct BspBrush {
 
 impl ConvexHull for BspBrush {
 	#[inline]
+	fn plane_count(&self) -> usize {
+		self.planes.len()
+	}
+
+	#[inline]
 	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone {
 		self.planes.iter()
 	}
