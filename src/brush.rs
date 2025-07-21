@@ -181,7 +181,40 @@ impl Brush {
 
 /// A 3D convex hull made of [`BrushPlane`]s (half-spaces).
 pub trait ConvexHull {
+	fn plane_count(&self) -> usize;
 	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone;
+
+	/// If this brush represents a cuboid, not a more complex shape, this will return [`Some`] with a `from` and `to` vector respectively.
+	fn as_cuboid(&self) -> Option<(DVec3, DVec3)> {
+		if self.plane_count() != 6 {
+			return None;
+		}
+
+		let mut from = DVec3::INFINITY;
+		let mut to = DVec3::NEG_INFINITY;
+
+		const MARGIN: f64 = 1e-8;
+		for plane in self.planes() {
+			// I have no idea why these are in the order they are, but it makes colliders work! :)
+			if plane.normal.almost_eq(DVec3::Y, MARGIN) {
+				to.y = -plane.distance;
+			} else if plane.normal.almost_eq(DVec3::NEG_Y, MARGIN) {
+				from.y = plane.distance;
+			} else if plane.normal.almost_eq(DVec3::X, MARGIN) {
+				to.x = -plane.distance;
+			} else if plane.normal.almost_eq(DVec3::NEG_X, MARGIN) {
+				from.x = plane.distance;
+			} else if plane.normal.almost_eq(DVec3::Z, MARGIN) {
+				to.z = -plane.distance;
+			} else if plane.normal.almost_eq(DVec3::NEG_Z, MARGIN) {
+				from.z = plane.distance;
+			} else {
+				return None;
+			}
+		}
+
+		if from.is_finite() && to.is_finite() { Some((from, to)) } else { None }
+	}
 
 	/// Returns `true` if `point` is not on the outside of the brush, else `false`.
 	fn contains_point(&self, point: DVec3) -> bool {
@@ -233,6 +266,11 @@ pub trait ConvexHull {
 }
 
 impl ConvexHull for Brush {
+	#[inline]
+	fn plane_count(&self) -> usize {
+		self.surfaces.len()
+	}
+
 	#[inline]
 	fn planes(&self) -> impl Iterator<Item = &BrushPlane> + Clone {
 		self.surfaces.iter().map(|surface| &surface.plane)
