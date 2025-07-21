@@ -1,5 +1,9 @@
 use super::*;
 
-/// As far as i know, this entity is used by the compiler as a hint of the inside vs outside of the map. It also complains if you don't add it.
+/// Defines the single-player start point and direction.
+///
+/// (If this is not inside level geometry, `qbsp` reports warnings like
+/// `WARNING: Reached occupant "info_player_start" at (1000 -296 -40), no filling performed.`
+/// which fails the build just as if level geometry is not enclosed.)
 #[point_class]
 pub struct InfoPlayerStart;
