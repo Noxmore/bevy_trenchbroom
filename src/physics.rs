@@ -105,13 +105,20 @@ impl Plugin for PhysicsPlugin {
 impl PhysicsPlugin {
 	pub fn add_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
+		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
 		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BspBrushesAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
 		#[allow(unused)]
 		for (entity, brushes, transform) in &query {
+			let Some(brushes) = brushes else {
+				error!(
+					"Entity {entity} has `ConvexCollision`, but no `Brushes`! If you're using BSPs, you may have forgotten to add the `-wrbrushesonly` flag to qbsp. Removing ConvexCollision component..."
+				);
+				commands.entity(entity).remove::<ConvexCollision>();
+				continue;
+			};
 			let mut colliders = Vec::new();
 			let Some(brush_geometries) = calculate_convex_physics_geometry(
 				brushes,
