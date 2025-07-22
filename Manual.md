@@ -347,6 +347,28 @@ Quake originally only supported baked lightmaps provided by a compiled [BSP](#bs
 bevy_trenchbroom supports either, or a mix of both with 5 different supported lighting workflows out of the box (see [`LightingWorkflow`](bevy_trenchbroom::class::builtin::LightingWorkflow) docs for more information).<br>
 4 of these include baked [BSP](#bsp) lights, so if you're not planning to [BSPs](#bsp), you'll almost certainly have all you need with the default builtin lighting classes.
 
+# Loading Maps
+To load a map into Bevy, load it as a regular Bevy scene like so
+```rust
+# use bevy::prelude::*;
+# use bevy_trenchbroom::prelude::*;
+// app.add_systems(Startup, spawn_test_map)
+
+fn spawn_test_map(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
+    // Or, if you're using BSPs.
+    commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
+}
+```
+
+`test.map` and `test.bsp` load `QuakeMap` and `Bsp` assets respectively. Both of these construct a ready-to-spawn scene when loaded, calling classes' spawn hooks in the loading process.
+This scene is labeled "Scene" and can be retrieved with Bevy's `<path>#<label>` asset path syntax as the code above shows.
+
+TIP: For processes in the main world that depend on colliders (e.g. AI navigation mesh construction), observe the `SceneCollidersReady` rather than the `SceneInstanceReady` trigger.
+
 # Configuration
 For TrenchBroom to know everything it needs to about your game, bevy_trenchbroom generates a TrenchBroom game configuration.
 
