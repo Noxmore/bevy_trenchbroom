@@ -190,6 +190,8 @@ impl SolidClassB {
 }
 ```
 
+TIP: Use `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
+
 Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the spawn hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
 
 ### ***Field Attribute: `must_set`***
