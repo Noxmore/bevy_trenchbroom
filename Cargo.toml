@@ -2,7 +2,7 @@
 members = ["example/*", "macros"]
 
 [workspace.package]
-version = "0.9.1"
+version = "0.9.2"
 description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2024"
 authors = ["Noxmore"]
@@ -34,7 +34,7 @@ bevy_rapier3d = "0.30"
 example_commons = { path = "example/example_commons" }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.9.1", path = "macros" }
+bevy_trenchbroom_macros = { version = "0.9.2", path = "macros" }
 
 anyhow = "1.0"
 bevy = { workspace = true, features = [

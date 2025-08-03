@@ -167,6 +167,8 @@ impl SpawnHooks {
 	}
 
 	/// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
+	///
+	/// NOTE: If you're using BSPs, use the `-wrbrushesonly` command-line argument for `qbsp`, otherwise no brushes will be inserted into the BSP, and no collision will be built!
 	#[cfg(any(feature = "rapier", feature = "avian"))]
 	pub fn convex_collider(self) -> Self {
 		self.with(crate::physics::ConvexCollision)

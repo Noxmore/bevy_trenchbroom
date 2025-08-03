@@ -7,7 +7,7 @@ use geometry::{BrushList, Brushes};
 #[cfg(feature = "rapier")]
 use bevy_rapier3d::math::Vect as Vector;
 #[cfg(feature = "rapier")]
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::{parry::shape::SharedShape, prelude::*};
 /// Simplified version of Avian's trait by the same name because as far as i can tell, bevy_rapier3d doesn't support f64.
 #[cfg(feature = "rapier")]
 trait AdjustPrecision: Sized {
@@ -34,6 +34,7 @@ impl AdjustPrecision for Vec3 {
 #[cfg(feature = "avian")]
 use avian3d::{
 	math::{AdjustPrecision, Vector},
+	parry::shape::SharedShape,
 	prelude::*,
 };
 
@@ -49,18 +50,27 @@ pub struct ConvexCollision;
 #[reflect(Component)]
 pub struct TrimeshCollision;
 
-pub type BrushVertices = Vec<Vector>;
+enum ConvexPhysicsGeometry {
+	ConvexHull(Vec<Vector>),
+	Cuboid { center: Vector, half_extents: Vector },
+}
 
 /// Attempts to calculate vertices on the brushes contained within for use in physics, if it can find said brushes.
 ///
 /// If it can't find them (like if the asset isn't loaded), returns [`None`].
-pub fn calculate_brushes_vertices<'l, 'w: 'l>(
+fn calculate_convex_physics_geometry<'l, 'w: 'l>(
 	brushes: &Brushes,
 	brush_lists: &'w Assets<BrushList>,
 	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BspBrushesAsset>,
-) -> Option<Vec<BrushVertices>> {
-	fn extract_vertices<T: ConvexHull>(brush: &T) -> Vec<Vector> {
-		brush.calculate_vertices().map(|(position, _)| position.adjust_precision()).collect()
+) -> Option<Vec<ConvexPhysicsGeometry>> {
+	fn extract_vertices<T: ConvexHull>(brush: &T) -> ConvexPhysicsGeometry {
+		match brush.as_cuboid() {
+			Some((from, to)) => ConvexPhysicsGeometry::Cuboid {
+				center: (0.5 * (from + to)).adjust_precision(),
+				half_extents: (0.5 * (to - from)).adjust_precision(),
+			},
+			None => ConvexPhysicsGeometry::ConvexHull(brush.calculate_vertices().map(|(position, _)| position.adjust_precision()).collect()),
+		}
 	}
 
 	match brushes {
@@ -95,15 +105,22 @@ impl Plugin for PhysicsPlugin {
 impl PhysicsPlugin {
 	pub fn add_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, &Brushes, &Transform), (With<ConvexCollision>, Without<Collider>)>,
+		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
 		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BspBrushesAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
 		#[allow(unused)]
 		for (entity, brushes, transform) in &query {
+			let Some(brushes) = brushes else {
+				error!(
+					"Entity {entity} has `ConvexCollision`, but no `Brushes`! If you're using BSPs, you may have forgotten to add the `-wrbrushesonly` flag to qbsp. Removing ConvexCollision component..."
+				);
+				commands.entity(entity).remove::<ConvexCollision>();
+				continue;
+			};
 			let mut colliders = Vec::new();
-			let Some(brush_vertices) = calculate_brushes_vertices(
+			let Some(brush_geometries) = calculate_convex_physics_geometry(
 				brushes,
 				&brush_lists,
 				#[cfg(feature = "bsp")]
@@ -112,41 +129,52 @@ impl PhysicsPlugin {
 				continue;
 			};
 
-			for (brush_idx, mut vertices) in brush_vertices.into_iter().enumerate() {
-				if vertices.is_empty() {
-					continue;
-				}
+			for (brush_idx, physics_geometry) in brush_geometries.into_iter().enumerate() {
+				match physics_geometry {
+					ConvexPhysicsGeometry::Cuboid { center, half_extents } => {
+						colliders.push((
+							center,
+							transform.rotation.inverse(),
+							SharedShape::cuboid(half_extents.x, half_extents.y, half_extents.z).into(),
+						));
+					}
 
-				// Bring the vertices to the origin if they're generated in world-space (non-bsp)
-				#[cfg(feature = "bsp")]
-				let is_bsp = matches!(brushes, Brushes::Bsp(_));
-				#[cfg(not(feature = "bsp"))]
-				let is_bsp = false;
-				if !is_bsp {
-					for vertex in &mut vertices {
-						// *vertex = transform.rotation.inverse() * (*vertex - transform.translation) + transform.translation;
-						*vertex -= transform.translation.adjust_precision();
+					ConvexPhysicsGeometry::ConvexHull(mut vertices) => {
+						if vertices.is_empty() {
+							continue;
+						}
+
+						// Bring the vertices to the origin if they're generated in world-space (non-bsp)
+						#[cfg(feature = "bsp")]
+						if !matches!(brushes, Brushes::Bsp(_)) {
+							for vertex in &mut vertices {
+								*vertex -= transform.translation.adjust_precision();
+							}
+						}
+
+						macro_rules! fail {
+							() => {
+								error!(
+									"Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!"
+								);
+								continue;
+							};
+						}
+
+						#[cfg(feature = "avian")]
+						let Some(collider) = Collider::convex_hull(vertices) else {
+							fail!();
+						};
+
+						// bevy_rapier3d::geometry::Collider::cub
+						#[cfg(feature = "rapier")]
+						let Some(collider) = Collider::convex_hull(&vertices) else {
+							fail!();
+						};
+
+						colliders.push((Vector::ZERO, transform.rotation.inverse(), collider));
 					}
 				}
-
-				macro_rules! fail {
-					() => {
-						error!("Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!");
-						continue;
-					};
-				}
-
-				#[cfg(feature = "avian")]
-				let Some(collider) = Collider::convex_hull(vertices) else {
-					fail!();
-				};
-
-				#[cfg(feature = "rapier")]
-				let Some(collider) = Collider::convex_hull(&vertices) else {
-					fail!();
-				};
-
-				colliders.push((Vector::ZERO, transform.rotation.inverse(), collider));
 			}
 
 			if colliders.is_empty() {
