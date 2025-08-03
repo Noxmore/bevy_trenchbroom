@@ -227,7 +227,7 @@ pub struct QuakeSkyKey {
 	/// 0 = `None`, 1 = `Some(Front)`, 2 = `Some(Back)`.
 	///
 	/// Yes, this is dumb.
-	pub cull_mode: u8,
+	cull_mode: u8,
 }
 impl From<&QuakeSkyMaterial> for QuakeSkyKey {
 	fn from(value: &QuakeSkyMaterial) -> Self {
@@ -240,9 +240,9 @@ impl From<&QuakeSkyMaterial> for QuakeSkyKey {
 		}
 	}
 }
-impl From<QuakeSkyKey> for Option<Face> {
-	fn from(value: QuakeSkyKey) -> Self {
-		match value.cull_mode {
+impl QuakeSkyKey {
+	pub fn cull_mode(&self) -> Option<Face> {
+		match self.cull_mode {
 			1 => Some(Face::Front),
 			2 => Some(Face::Back),
 			_ => None,
@@ -268,7 +268,7 @@ impl Material for QuakeSkyMaterial {
 		// rendering culled faces, showing the app clear color instead of anything behind them.
 		// This causes some nasty visual errors in some maps.
 		// Why does this fix that? I have no idea !!!!
-		descriptor.primitive.cull_mode = key.bind_group_data.into();
+		descriptor.primitive.cull_mode = key.bind_group_data.cull_mode();
 		Ok(())
 	}
 }
