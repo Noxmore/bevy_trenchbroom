@@ -1,0 +1,5 @@
+# TODO: Remove when updated to 0.17
+
+[toolchain]
+# lock prior to https://github.com/rust-lang/rust/pull/142208
+channel = "nightly-2025-06-07"
