@@ -532,4 +532,27 @@ mod tests {
 		assert_eq!(f32::fgd_parse("3,120").unwrap(), 3.120);
 		assert_eq!(f64::fgd_parse("300.100,25").unwrap(), 300100.25);
 	}
+
+	#[test]
+	fn unary_prefixed_enum_values() {
+		/// Handle simple integer expressions in [number_key].
+		///
+		#[derive(FgdType, Debug, Clone, PartialEq)]
+		#[number_key]
+		enum TestEnum {
+			/// First value.
+			A = 0,
+			/// Second value.
+			B = 0x123,
+			/// Third value.
+			C = -1000,
+			/// Fourth value.
+			D = !0x1,
+		}
+
+		assert_eq!(0, TestEnum::A as i32);
+		assert_eq!(0x123, TestEnum::B as i32);
+		assert_eq!(-1000, TestEnum::C as i32);
+		assert_eq!(-2, TestEnum::D as i32);
+	}
 }
