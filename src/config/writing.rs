@@ -13,10 +13,19 @@ impl Plugin for WriteTrenchBroomConfigOnStartPlugin {
 }
 impl WriteTrenchBroomConfigOnStartPlugin {
 	pub fn write(server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
-		if let Err(err) = server.config.write_game_config_to_default_directory(&type_registry.read()) {
-			error!("Failed to write TrenchBroom game configuration to default directory: {err}");
-		} else if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
-			error!("Failed to add game to TrenchBroom preferences in default directory: {err}");
+		match server.config.write_game_config_to_default_directory(&type_registry.read()) {
+			Err(DefaultTrenchBroomGameConfigError::UserdataDirError(DefaultTrenchBroomUserdataDirError::UserDataNotFound(path))) => {
+				// If TrenchBroom isn't installed, we don't want to treat that as an error! Just let the user know that we didn't write anything.
+				info!("No TrenchBroom user data found at {}, assuming it is not installed and not writing config.", path.display());
+			}
+			Err(err) => {
+				error!("Failed to write TrenchBroom game configuration to default directory: {err}");
+			}
+			Ok(()) => {
+				if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
+					error!("Failed to add game to TrenchBroom preferences in default directory: {err}");
+				}
+			}
 		}
 	}
 }
