@@ -12,8 +12,6 @@ impl Plugin for QuakeClassPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.register_type::<PreloadedAssets>()
-
 			.add_systems(Startup, Self::verify_classes)
 		;
 	}

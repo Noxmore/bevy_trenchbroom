@@ -81,11 +81,6 @@ fn main() {
 			.set(LightingClassesPlugin(LightingWorkflow::Custom)),
 		)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
-		.register_type::<FuncDetail>()
-		.register_type::<Cube>()
-		.register_type::<Mushroom>()
-		.register_type::<Light>()
-		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.run();
 }

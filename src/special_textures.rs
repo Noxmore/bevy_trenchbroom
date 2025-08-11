@@ -179,7 +179,7 @@ pub struct LiquidMaterialExt {
 	pub cycles: f32,
 }
 impl MaterialExtension for LiquidMaterialExt {
-	fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+	fn fragment_shader() -> bevy::shader::ShaderRef {
 		"embedded://bevy_trenchbroom/liquid.wgsl".into()
 	}
 }
@@ -250,7 +250,7 @@ impl QuakeSkyKey {
 	}
 }
 impl Material for QuakeSkyMaterial {
-	fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+	fn fragment_shader() -> bevy::shader::ShaderRef {
 		"embedded://bevy_trenchbroom/quake_sky.wgsl".into()
 	}
 

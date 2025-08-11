@@ -88,9 +88,6 @@ impl Plugin for PhysicsPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.register_type::<ConvexCollision>()
-			.register_type::<TrimeshCollision>()
-
 			.init_resource::<SceneCollidersReadyTests>()
 
 			// PostUpdate to order right after scenes have been spawned

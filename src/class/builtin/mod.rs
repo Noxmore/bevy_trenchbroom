@@ -62,13 +62,7 @@ mod tests {
 	fn builtin_base_class_prefix() {
 		let mut app = App::new();
 
-		app.init_resource::<AppTypeRegistry>()
-			.register_type::<Transform>()
-			.register_type::<PointLight>()
-			.register_type::<SpotLight>()
-			.register_type::<DirectionalLight>()
-			.register_type::<Visibility>()
-			.add_plugins(BasicClassesPlugins);
+		app.init_resource::<AppTypeRegistry>().add_plugins(BasicClassesPlugins);
 
 		for (_, ReflectQuakeClass { erased_class: class, .. }) in
 			app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>()

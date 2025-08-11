@@ -46,7 +46,6 @@ impl PluginGroup for TrenchBroomPlugins {
 	fn build(self) -> PluginGroupBuilder {
 		let builder = PluginGroupBuilder::start::<Self>()
 			.add(CorePlugin(self.0))
-			.add(fgd::FgdPlugin)
 			.add(class::QuakeClassPlugin)
 			.add_group(class::builtin::BasicClassesPlugins)
 			.add(config::ConfigPlugin)

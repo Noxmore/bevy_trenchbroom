@@ -51,8 +51,6 @@ struct MyClass {
 }
 ```
 
-Then register the type with `.register_type::<MyClass>()` on app initialization.
-
 Now just run your game once, and it should automatically be available in TrenchBroom!
 
 For more comprehensive documentation on this topic, see [the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html).

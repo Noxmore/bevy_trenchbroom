@@ -290,15 +290,10 @@ mod tests {
 	#[cfg(feature = "client")]
 	fn preloading() {
 		use crate::{
-			geometry::{BrushList, Brushes},
+			geometry::BrushList,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
-		use bevy::{
-			gltf::GltfPlugin,
-			log::LogPlugin,
-			render::{mesh::MeshPlugin, view::VisibilityClass},
-			scene::ScenePlugin,
-		};
+		use bevy::{gltf::GltfPlugin, log::LogPlugin, render::mesh::MeshPlugin, scene::ScenePlugin};
 
 		#[point_class(
 			model("models/mushroom.glb"),
@@ -332,15 +327,6 @@ mod tests {
 			.insert_resource(TrenchBroomServer::new(
 				TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
 			))
-			.register_type::<Mushroom>()
-			.register_type::<Visibility>()
-			.register_type::<InheritedVisibility>()
-			.register_type::<ViewVisibility>()
-			.register_type::<PreloadedAssets>()
-			.register_type::<MeshMaterial3d<StandardMaterial>>()
-			.register_type::<Aabb>()
-			.register_type::<VisibilityClass>()
-			.register_type::<Brushes>()
 			.init_asset::<Image>()
 			.init_asset::<BrushList>()
 			.init_asset::<StandardMaterial>()

@@ -2,14 +2,14 @@ mod types;
 pub use types::*;
 
 use bevy::{
-	asset::embedded_asset,
+	asset::{RenderAssetUsages, embedded_asset},
 	image::ImageSampler,
 	pbr::Lightmap,
 	render::{
 		Render, RenderApp, RenderSystems,
 		extract_resource::{ExtractResource, ExtractResourcePlugin},
 		globals::{GlobalsBuffer, GlobalsUniform},
-		render_asset::{RenderAssetPlugin, RenderAssetUsages, RenderAssets},
+		render_asset::{RenderAssetPlugin, RenderAssets},
 		render_graph::{RenderGraph, RenderLabel},
 		render_resource::{binding_types::*, *},
 		renderer::{RenderDevice, RenderQueue},
@@ -53,10 +53,7 @@ impl Plugin for BspLightingPlugin {
 		app
 			.add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
 
-			.register_type::<AnimatedLightingHandle>()
-
 			.add_plugins(ExtractResourcePlugin::<LightingAnimators>::default())
-			.register_type::<LightingAnimators>()
 			.init_resource::<LightingAnimators>()
 
 			.init_asset::<AnimatedLighting>()

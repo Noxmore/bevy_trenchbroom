@@ -65,12 +65,6 @@ impl Plugin for LightingClassesPlugin {
 			.register_type_data::<SpotLight, ReflectQuakeClass>()
 			.register_type_data::<DirectionalLight, ReflectQuakeClass>()
 		;
-
-		#[cfg(feature = "bsp")]
-		app.register_type::<BspLight>();
-
-		#[cfg(all(feature = "bsp", feature = "client"))]
-		app.register_type::<MixedLight>();
 		
 		match self.0 {
 			LightingWorkflow::DynamicOnly => {
