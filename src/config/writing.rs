@@ -13,8 +13,11 @@ impl Plugin for WriteTrenchBroomConfigOnStartPlugin {
 }
 impl WriteTrenchBroomConfigOnStartPlugin {
 	pub fn write(server: Res<TrenchBroomServer>, type_registry: Res<AppTypeRegistry>) {
-		server.config.write_game_config_to_default_directory(&type_registry.read()).unwrap();
-		server.config.add_game_to_preferences_in_default_directory().unwrap();
+		if let Err(err) = server.config.write_game_config_to_default_directory(&type_registry.read()) {
+			error!("Failed to write TrenchBroom game configuration to default directory: {err}");
+		} else if let Err(err) = server.config.add_game_to_preferences_in_default_directory() {
+			error!("Failed to add game to TrenchBroom preferences in default directory: {err}");
+		}
 	}
 }
 
