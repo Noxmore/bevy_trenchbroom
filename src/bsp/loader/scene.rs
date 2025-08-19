@@ -32,36 +32,36 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 		let mut meshes = Vec::new();
 
-		if class.info.ty.is_solid() {
-			if let Some(model_idx) = get_model_idx(map_entity, class) {
-				let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
+		if class.info.ty.is_solid()
+			&& let Some(model_idx) = get_model_idx(map_entity, class)
+		{
+			let model = models.get_mut(model_idx).ok_or_else(|| anyhow!("invalid model index {model_idx}"))?;
 
-				// Assign model entity
-				if model.entity.is_some() {
-					error!(
-						"Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!",
-						class.info.name
-					);
+			// Assign model entity
+			if model.entity.is_some() {
+				error!(
+					"Map entity {map_entity_idx} ({}) points to model {model_idx}, but it has already been used by a different entity. Make an issue because i thought this wasn't possible!",
+					class.info.name
+				);
+			}
+			model.entity = Some(entity);
+
+			meshes.reserve(model.meshes.len());
+
+			for model_mesh in &mut model.meshes {
+				if config.auto_remove_textures.contains(&model_mesh.texture.name) {
+					continue;
 				}
-				model.entity = Some(entity);
 
-				meshes.reserve(model.meshes.len());
+				let mesh_entity = world.spawn((Name::new(model_mesh.texture.name.clone()), Transform::default())).id();
 
-				for model_mesh in &mut model.meshes {
-					if config.auto_remove_textures.contains(&model_mesh.texture.name) {
-						continue;
-					}
+				meshes.push(QuakeClassMeshView {
+					entity: mesh_entity,
+					mesh: &mut model_mesh.mesh,
+					texture: &mut model_mesh.texture,
+				});
 
-					let mesh_entity = world.spawn((Name::new(model_mesh.texture.name.clone()), Transform::default())).id();
-
-					meshes.push(QuakeClassMeshView {
-						entity: mesh_entity,
-						mesh: &mut model_mesh.mesh,
-						texture: &mut model_mesh.texture,
-					});
-
-					model_mesh.entity = Some(mesh_entity);
-				}
+				model_mesh.entity = Some(mesh_entity);
 			}
 		}
 
