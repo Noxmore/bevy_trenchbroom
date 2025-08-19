@@ -1,6 +1,7 @@
 # TODO: Remove when updated to 0.17
 
 [toolchain]
+# last version not affected by https://github.com/bevyengine/bevy/issues/20558
 channel = "nightly-2025-08-07"
 components = ["clippy", "rustfmt"]
 targets = ["wasm32-unknown-unknown"]

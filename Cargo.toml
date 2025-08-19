@@ -80,7 +80,8 @@ atomicow = "1.1.0" # For dummy LoadContext hack, must stay the same version as B
 bevy_fix_gltf_coordinate_system = "0.1"
 
 [dev-dependencies]
-bevy = { workspace = true, features = ["png", "bevy_gltf"] }    # For tests
+# For tests
+bevy = { workspace = true, features = ["png", "bevy_gltf"] }
 smol = "2"
 avian3d = { workspace = true, features = ["parry-f64", "f64"] }
 
