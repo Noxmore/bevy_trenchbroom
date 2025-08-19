@@ -65,7 +65,7 @@ impl fmt::Display for QuakeClassType {
 }
 
 /// A property for an entity definition. the property type (`ty`) doesn't have a set of different options, it more just tells users what kind of data you are expecting.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct QuakeClassProperty {
 	pub ty: QuakeClassPropertyType,
 	pub name: &'static str,
@@ -74,7 +74,7 @@ pub struct QuakeClassProperty {
 	pub default_value: Option<fn() -> String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub enum QuakeClassPropertyType {
 	Value(&'static str),
 	Choices(&'static [(ChoicesKey, &'static str)]),
