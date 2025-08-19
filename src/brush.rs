@@ -156,7 +156,7 @@ impl Brush {
 	/// If you want a map of intersections to the surfaces causing them, see [`Self::calculate_vertices`]
 	///
 	/// NOTE: Duplicate intersections can occur on more complex shapes, (shapes where 4+ faces intersect at once) this is not a bug.
-	pub fn polygonize(&self) -> impl Iterator<Item = BrushSurfacePolygon> {
+	pub fn polygonize(&self) -> impl Iterator<Item = BrushSurfacePolygon<'_>> {
 		let mut vertex_map: HashMap<usize, Vec<DVec3>> = default();
 
 		for ((s1_i, s1), (s2_i, s2), (s3_i, s3)) in self.surfaces.iter().enumerate().tuple_combinations() {
@@ -401,10 +401,10 @@ pub fn generate_mesh_from_brush_polygons(polygons: &[BrushSurfacePolygon], confi
 	}
 	mesh.insert_indices(Indices::U32(indices));
 
-	if !polygons.is_empty() {
-		if let Err(err) = mesh.generate_tangents() {
-			error!("Failed to generate tangents for mesh with texture {}: {err}", polygons[0].surface.texture);
-		}
+	if !polygons.is_empty()
+		&& let Err(err) = mesh.generate_tangents()
+	{
+		error!("Failed to generate tangents for mesh with texture {}: {err}", polygons[0].surface.texture);
 	}
 
 	mesh

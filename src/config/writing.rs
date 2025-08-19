@@ -16,7 +16,10 @@ impl WriteTrenchBroomConfigOnStartPlugin {
 		match server.config.write_game_config_to_default_directory(&type_registry.read()) {
 			Err(DefaultTrenchBroomGameConfigError::UserdataDirError(DefaultTrenchBroomUserdataDirError::UserDataNotFound(path))) => {
 				// If TrenchBroom isn't installed, we don't want to treat that as an error! Just let the user know that we didn't write anything.
-				info!("No TrenchBroom user data found at {}, assuming it is not installed and not writing config.", path.display());
+				info!(
+					"No TrenchBroom user data found at {}, assuming it is not installed and not writing config.",
+					path.display()
+				);
 			}
 			Err(err) => {
 				error!("Failed to write TrenchBroom game configuration to default directory: {err}");
@@ -113,7 +116,6 @@ impl TrenchBroomConfig {
 
 	fn get_default_trenchbroom_userdata_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
 		let trenchbroom_userdata = if cfg!(target_os = "linux") {
-			#[allow(deprecated)] // No longer deprecated starting from 1.86
 			env::home_dir().map(|path| path.join(".TrenchBroom"))
 		} else if cfg!(target_os = "windows") {
 			env::var("APPDATA").ok().map(|path| PathBuf::from(path).join("TrenchBroom"))
