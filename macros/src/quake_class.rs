@@ -164,10 +164,12 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 	let ty_ident = format_ident!("{ty:?}");
 
 	for attr in attrs {
-		if let Meta::NameValue(meta) = &attr.meta {
-			if opts.doc.is_none() && ty != QuakeClassType::Base && compare_path(&meta.path, "doc") {
-				extract_doc(meta, &mut opts.doc);
-			}
+		if let Meta::NameValue(meta) = &attr.meta
+			&& opts.doc.is_none()
+			&& ty != QuakeClassType::Base
+			&& compare_path(&meta.path, "doc")
+		{
+			extract_doc(meta, &mut opts.doc);
 		}
 	}
 
@@ -203,10 +205,10 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 		let property_name = field_opts.rename.as_ref().unwrap_or(&field_ident_string);
 
 		for attr in &field.attrs {
-			if let Meta::NameValue(meta) = &attr.meta {
-				if compare_path(&meta.path, "doc") {
-					extract_doc(meta, &mut doc);
-				}
+			if let Meta::NameValue(meta) = &attr.meta
+				&& compare_path(&meta.path, "doc")
+			{
+				extract_doc(meta, &mut doc);
 			}
 		}
 
