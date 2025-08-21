@@ -1547,7 +1547,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "atomicow",
@@ -1580,7 +1580,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom_macros"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "deluxe",
  "heck 0.5.0",
@@ -1827,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "bsp_loading"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -2680,7 +2680,7 @@ dependencies = [
 
 [[package]]
 name = "example_commons"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
@@ -3532,7 +3532,7 @@ dependencies = [
 
 [[package]]
 name = "map_loading"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -4421,7 +4421,7 @@ dependencies = [
 
 [[package]]
 name = "physics"
-version = "0.9.2"
+version = "0.9.3"
 dependencies = [
  "avian3d",
  "bevy",
