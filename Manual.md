@@ -179,7 +179,7 @@ struct SolidClassA;
 struct SolidClassB;
 impl SolidClassB {
 	/// An example spawn hook to give you a sense of the function signature.
-	/// If you are to make your own, you should wrap it in an extension trait,
+	/// If you are to make a reusable hook, you should wrap it in an extension trait,
 	/// so that users of it can use the simple builder syntax seen above.
 	pub fn example_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		// The view gives you access to everything you could want
@@ -190,7 +190,10 @@ impl SolidClassB {
 }
 ```
 
-TIP: Use `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
+Some hooks are included by default, some you might be interested in are
+- `.smooth_by_default_angle()` which smooths out the normals of curved surfaces.
+- `.convex_collider()` and `.trimesh_collider()` which add colliders if you have a physics engine integration enabled.
+- `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
 
 Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the spawn hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
 
