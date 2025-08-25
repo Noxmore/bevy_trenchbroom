@@ -37,15 +37,18 @@ struct MyClass;
 
 This can be changed to a solid or base class by changing the class type in `#[<type>_class]`.
 
-Any fields of the struct will appear as properties in TrenchBroom, and when a map is loaded, those fields will be automatically set with the values the properties were set to.<br>
-The types of all fields must implement [`FgdType`](bevy_trenchbroom::fgd::FgdType) so bevy_trenchbroom knows how to parse and stringify them in adherence with TrenchBroom's formats.
+Some general class definition notes:
+- By default, the name appearing in the FGD and thus TrenchBroom will be a `snake_case` version of the rust name (e.g. `my_class`).
 
-If your class isn't a unit struct, it must implement [`Default`].
+- Any fields of the struct will appear as properties in TrenchBroom, and when a map is loaded, those fields will be automatically set with the values the properties were set to.<br>
+	- The types of all fields must implement [`FgdType`](bevy_trenchbroom::fgd::FgdType) so bevy_trenchbroom knows how to parse and stringify them in adherence with TrenchBroom's formats.
 
-Documentation comments on classes and fields contained within them will appear in TrenchBroom when selected.
+- If your class isn't a unit struct, it must implement [`Default`].
 
-If not already derived, the attribute macro automatically derives required traits like `Reflect` and `Component`. Classes tie into Bevy's type registry, so to register the class to appear in TrenchBroom, simply call `.register_type::<MyClass>()` on app initialization. <br>
-You can also disable a specific class from appearing in the [game configuration](#configuration) by calling `.disable_class::<T>()` from `App` during initialization. The `.override_class::<T>()` function effectively calls `disable_class::<T>()` then `register_type::<T>()` in a single function call.
+- Documentation comments on classes and fields contained within them will appear in TrenchBroom when selected.
+
+- If not already derived, the attribute macro automatically derives required traits like `Reflect` and `Component`. Classes tie into Bevy's type registry, so to register the class to appear in TrenchBroom, simply call `.register_type::<MyClass>()` on app initialization. <br>
+	- You can also disable a specific class from appearing in the [game configuration](#configuration) by calling `.disable_class::<T>()` from `App` during initialization. The `.override_class::<T>()` function effectively calls `disable_class::<T>()` then `register_type::<T>()` in a single function call.
 
 A handful of widely useful classes are registered by default such as light, basic brush entities, and base classes. The plugins that add these classes are formatted as `*ClassesPlugin`, and can be disabled from `TrenchBroomPlugins`. Example:
 ```rust
