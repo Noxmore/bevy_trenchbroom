@@ -35,7 +35,7 @@ avian3d = { version = "0.3", default-features = false, features = [
     "debug-plugin",
     "parallel",
 ] }
-bevy_rapier3d = "0.30"
+bevy_rapier3d = "0.31"
 example_commons = { path = "example/example_commons" }
 
 [dependencies]
