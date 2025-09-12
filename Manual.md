@@ -37,15 +37,18 @@ struct MyClass;
 
 This can be changed to a solid or base class by changing the class type in `#[<type>_class]`.
 
-Any fields of the struct will appear as properties in TrenchBroom, and when a map is loaded, those fields will be automatically set with the values the properties were set to.<br>
-The types of all fields must implement [`FgdType`](bevy_trenchbroom::fgd::FgdType) so bevy_trenchbroom knows how to parse and stringify them in adherence with TrenchBroom's formats.
+Some general class definition notes:
+- By default, the name appearing in the FGD and thus TrenchBroom will be a `snake_case` version of the rust name (e.g. `my_class`).
 
-If your class isn't a unit struct, it must implement [`Default`].
+- Any fields of the struct will appear as properties in TrenchBroom, and when a map is loaded, those fields will be automatically set with the values the properties were set to.<br>
+	- The types of all fields must implement [`FgdType`](bevy_trenchbroom::fgd::FgdType) so bevy_trenchbroom knows how to parse and stringify them in adherence with TrenchBroom's formats.
 
-Documentation comments on classes and fields contained within them will appear in TrenchBroom when selected.
+- If your class isn't a unit struct, it must implement [`Default`].
 
-If not already derived, the attribute macro automatically derives required traits like `Reflect` and `Component`. Classes tie into Bevy's type registry, so they're automatically registered! <br>
-You can also disable a specific class from appearing in the [game configuration](#configuration) by calling `.disable_class::<T>()` from `App` during initialization. The `.override_class::<T>()` disables every other class with the same classname.
+- Documentation comments on classes and fields contained within them will appear in TrenchBroom when selected.
+
+- If not already derived, the attribute macro automatically derives required traits like `Reflect` and `Component`. Classes tie into Bevy's type registry, so to register the class to appear in TrenchBroom, simply call `.register_type::<MyClass>()` on app initialization. <br>
+	- You can also disable a specific class from appearing in the [game configuration](#configuration) by calling `.disable_class::<T>()` from `App` during initialization. The `.override_class::<T>()` function effectively calls `disable_class::<T>()` then `register_type::<T>()` in a single function call.
 
 A handful of widely useful classes are registered by default such as light, basic brush entities, and base classes. The plugins that add these classes are formatted as `*ClassesPlugin`, and can be disabled from `TrenchBroomPlugins`. Example:
 ```rust
@@ -179,7 +182,7 @@ struct SolidClassA;
 struct SolidClassB;
 impl SolidClassB {
 	/// An example spawn hook to give you a sense of the function signature.
-	/// If you are to make your own, you should wrap it in an extension trait,
+	/// If you are to make a reusable hook, you should wrap it in an extension trait,
 	/// so that users of it can use the simple builder syntax seen above.
 	pub fn example_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		// The view gives you access to everything you could want
@@ -190,7 +193,10 @@ impl SolidClassB {
 }
 ```
 
-TIP: Use `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
+Some hooks are included by default, some you might be interested in are
+- `.smooth_by_default_angle()` which smooths out the normals of curved surfaces.
+- `.convex_collider()` and `.trimesh_collider()` which add colliders if you have a physics engine integration enabled.
+- `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
 
 Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the spawn hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
 

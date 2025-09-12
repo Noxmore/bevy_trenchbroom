@@ -1,5 +1,8 @@
 //! Data types split off from the main lighting module for organization.
-
+#![expect(
+	dead_code,
+	reason = "Bevy needs to update to encase 0.11, see https://github.com/bevyengine/bevy/issues/20400"
+)]
 use bevy::render::{extract_resource::ExtractResource, render_asset::RenderAsset, render_resource::*};
 use ser::SerializeStruct;
 

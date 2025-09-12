@@ -2,7 +2,7 @@
 members = ["example/*", "macros"]
 
 [workspace.package]
-version = "0.9.2"
+version = "0.9.3"
 description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2024"
 authors = ["Noxmore"]
@@ -29,12 +29,17 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = fals
 ] } # For examples
 nil = "0.15"
 enumflags2 = "0.7"
-avian3d = { version = "0.3", default-features = false, features = ["3d", "collider-from-mesh", "debug-plugin", "parallel"]}
-bevy_rapier3d = "0.30"
+avian3d = { version = "0.3", default-features = false, features = [
+    "3d",
+    "collider-from-mesh",
+    "debug-plugin",
+    "parallel",
+] }
+bevy_rapier3d = "0.31"
 example_commons = { path = "example/example_commons" }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.9.2", path = "macros" }
+bevy_trenchbroom_macros = { version = "0.9.3", path = "macros" }
 
 anyhow = "1.0"
 bevy = { workspace = true, features = [
@@ -58,7 +63,7 @@ itertools = "0.14"
 json = "0.12"
 quake-util = { version = "0.4.0", features = ["std"] }
 serde = { version = "1", features = [
-	"derive",
+    "derive",
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
@@ -72,12 +77,10 @@ atomicow = "1.1.0" # For dummy LoadContext hack, must stay the same version as B
 bytemuck = "1.23.1" # For special materials, must stay the same version as Bevy's
 
 [dev-dependencies]
-bevy = { workspace = true, features = [
-	"png",
-	"bevy_gltf",
-] } # For tests
+# For tests
+bevy = { workspace = true, features = ["png", "bevy_gltf"] }
 smol = "2"
-avian3d = { workspace = true, features = ["parry-f64", "f64"]}
+avian3d = { workspace = true, features = ["parry-f64", "f64"] }
 
 [features]
 default = ["client"]
