@@ -94,7 +94,7 @@ impl Plugin for CorePlugin {
 impl CorePlugin {
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub fn set_lightmap_exposure(
-		mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
+		mut asset_events: MessageReader<AssetEvent<StandardMaterial>>,
 		mut standard_materials: ResMut<Assets<StandardMaterial>>,
 		tb_server: Res<TrenchBroomServer>,
 	) {

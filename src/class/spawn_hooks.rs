@@ -358,7 +358,7 @@ mod tests {
 		}
 
 		/// Live for a few ticks to let everything sort out
-		fn exit(mut exit: EventWriter<AppExit>, mut ticks: Local<u32>) {
+		fn exit(mut exit: MessageWriter<AppExit>, mut ticks: Local<u32>) {
 			*ticks += 1;
 
 			if *ticks > 3 {
@@ -367,7 +367,7 @@ mod tests {
 		}
 
 		fn validate_mesh(trigger: On<Add, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
-			let handle = &mesh_query.get(trigger.target()).unwrap().0;
+			let handle = &mesh_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Mesh");
 		}
 
@@ -376,12 +376,12 @@ mod tests {
 			material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 			asset_server: Res<AssetServer>,
 		) {
-			let handle = &material_query.get(trigger.target()).unwrap().0;
+			let handle = &material_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Material");
 		}
 
 		fn validate_scene(trigger: On<Add, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
-			let handle = &scene_query.get(trigger.target()).unwrap().0;
+			let handle = &scene_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Scene");
 		}
 

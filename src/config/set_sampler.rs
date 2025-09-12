@@ -13,7 +13,7 @@ impl ConfigPlugin {
 		mut commands: Commands,
 		map_geometry_query: Query<&GenericMaterial3d, With<MapGeometry>>,
 		generic_materials: Res<Assets<GenericMaterial>>,
-		mut image_events: EventReader<AssetEvent<Image>>,
+		mut image_events: MessageReader<AssetEvent<Image>>,
 		asset_server: Res<AssetServer>,
 		tb_server: Res<TrenchBroomServer>,
 	) {
