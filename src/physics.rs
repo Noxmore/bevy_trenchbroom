@@ -281,8 +281,9 @@ pub struct SceneCollidersReadyTests {
 }
 
 /// Triggered when all the colliders of a scene are done constructing.
-#[derive(Event, Debug, Clone)]
+#[derive(EntityEvent, Debug, Clone)]
 pub struct SceneCollidersReady {
+	#[event_target]
 	pub scene_root_entity: Entity,
 	pub collider_entities: Vec<Entity>,
 }
