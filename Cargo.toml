@@ -29,7 +29,7 @@ bevy = { version = "0.17.0-rc.1", default-features = false, features = [
 ] } # For examples
 nil = "0.15"
 enumflags2 = "0.7"
-avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "bevy-0.17", default-features = false, features = [
+avian3d = { version = "0.4.0-dev", git = "https://github.com/Jondolf/avian.git", branch = "bevy-0.17", default-features = false, features = [
     "3d",
     "collider-from-mesh",
     "debug-plugin",
@@ -78,7 +78,7 @@ bytemuck = "1.23.1" # For special materials, must stay the same version as Bevy'
 
 [dev-dependencies]
 # For tests
-bevy = { workspace = true, features = ["png", "bevy_gltf"] }
+bevy = { workspace = true, features = ["png", "bevy_gltf", "reflect_auto_register"] }
 smol = "2"
 avian3d = { workspace = true, features = ["parry-f64", "f64"] }
 
