@@ -3,14 +3,14 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
   # Sparse cargo registry for faster updates
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   RUSTFLAGS: "-D warnings"
-  RUSTDOCFLAGS: '--deny warnings'
+  RUSTDOCFLAGS: "--deny warnings"
 
 jobs:
   lint:
@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
@@ -29,9 +29,9 @@ jobs:
       - name: Populate target directory from cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}  
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
       - name: Run cargo clippy for default features
         run: cargo clippy --workspace --all-targets --exclude physics
       - name: Run cargo clippy without default features
@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
@@ -56,7 +56,7 @@ jobs:
       - name: Populate target directory from cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}  
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run cargo fmt
         run: cargo fmt --check --all
 
@@ -65,16 +65,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
       - name: Populate target directory from cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}  
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
       - name: Run cargo doc with default features
         run: cargo doc --no-deps --workspace
 
@@ -83,16 +83,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
       - name: Populate target directory from cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}  
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
       - name: Run tests with avian
         run: |
           cargo test --locked --workspace --all-targets --features bevy/x11 --features avian,client,bsp
@@ -119,7 +119,7 @@ jobs:
       - name: Populate target directory from cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}  
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install Bevy CLI
         run: cargo install --git=https://github.com/TheBevyFlock/bevy_cli --locked bevy_cli
