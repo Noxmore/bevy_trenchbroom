@@ -273,6 +273,7 @@ mod tests {
 			.init_asset::<Mesh>()
 			.init_asset::<Scene>()
 			.init_asset::<QuakeMap>()
+			.init_asset::<BrushList>()
 			.init_asset_loader::<QuakeMapLoader>()
 		;
 
