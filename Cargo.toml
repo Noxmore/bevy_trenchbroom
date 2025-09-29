@@ -78,7 +78,7 @@ bytemuck = "1.23.1" # For special materials, must stay the same version as Bevy'
 
 [dev-dependencies]
 # For tests
-bevy = { workspace = true, features = ["png", "bevy_gltf"] }
+bevy = { workspace = true, features = ["png", "bevy_gltf", "reflect_auto_register"] }
 smol = "2"
 avian3d = { workspace = true, features = ["parry-f64", "f64"] }
 
