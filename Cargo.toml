@@ -24,7 +24,7 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.17.0-rc.1", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
 	"png",
 ] } # For examples
 nil = "0.15"
@@ -47,10 +47,10 @@ bevy = { workspace = true, features = [
 	"bevy_scene",
 	"bevy_color",
 ] }
-bevy_reflect = { version = "0.17.0-rc.1", package = "bevy_reflect", features = ["documentation"] }
-bevy_mesh = { version = "0.17.0-rc.1", package = "bevy_mesh" }
+bevy_reflect = { version = "0.17", package = "bevy_reflect", features = ["documentation"] }
+bevy_mesh = { version = "0.17", package = "bevy_mesh" }
 wgpu-types = "26.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", branch = "bevy-0.17", default-features = false, features = [
+bevy_materialize = { version = "0.8", default-features = false, features = [
 	"toml",
 	"bevy_image",
 ] }
@@ -67,7 +67,7 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
-qbsp = { git = "https://github.com/Noxmore/qbsp.git", branch = "bevy-0.17", features = ["bevy_reflect", "serde"], optional = true }
+qbsp = { version = "0.6", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
