@@ -64,13 +64,14 @@ mod tests {
 
 		app.init_resource::<AppTypeRegistry>().add_plugins(BasicClassesPlugins);
 
-		for (_, ReflectQuakeClass { erased_class: class, .. }) in
+		for (type_registration, ReflectQuakeClass { erased_class: class, .. }) in
 			app.world().resource::<AppTypeRegistry>().read().iter_with_data::<ReflectQuakeClass>()
 		{
 			if class.info.ty.is_base() {
 				assert!(
 					class.info.name.starts_with(BUILTIN_BASE_CLASS_PREFIX),
-					"class {:?} does not start with prefix {BUILTIN_BASE_CLASS_PREFIX:?}",
+					"class {:?} ({}) does not start with prefix {BUILTIN_BASE_CLASS_PREFIX:?}",
+					type_registration.type_info().type_path(),
 					class.info.name
 				);
 			}
