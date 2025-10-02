@@ -293,7 +293,7 @@ mod tests {
 			geometry::BrushList,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
-		use bevy::{gltf::GltfPlugin, log::LogPlugin, render::mesh::MeshPlugin, scene::ScenePlugin};
+		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, scene::ScenePlugin};
 
 		#[point_class(
 			model("models/mushroom.glb"),
