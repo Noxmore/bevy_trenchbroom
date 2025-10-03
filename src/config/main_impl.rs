@@ -44,6 +44,11 @@ impl TrenchBroomConfig {
 		}
 	}
 
+	pub fn global_spawner_fn(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
+		self.global_spawner.set(provider);
+		self
+	}
+
 	/// - Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
 	/// - If the entity is a brush entity, rotation is reset.
 	/// - Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
