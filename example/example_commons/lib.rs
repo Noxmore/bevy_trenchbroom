@@ -19,12 +19,10 @@ impl Plugin for ExampleCommonsPlugin {
 		#[cfg(feature = "client")]
 		#[rustfmt::skip]
 		app
-			/* .add_plugins((
-				bevy_inspector_egui::bevy_egui::EguiPlugin {
-					enable_multipass_for_primary_context: true,
-				},
+			.add_plugins((
+				bevy_inspector_egui::bevy_egui::EguiPlugin::default(),
 				bevy_inspector_egui::quick::WorldInspectorPlugin::default(),
-			)) */
+			))
 			.add_systems(Update, (
 				Self::toggle_focus,
 				Self::move_debug_camera,

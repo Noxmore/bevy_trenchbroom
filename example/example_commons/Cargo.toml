@@ -13,8 +13,7 @@ doc = false
 
 [dependencies]
 bevy.workspace = true
-# bevy-inspector-egui = { version = "0.31", optional = true }
+bevy-inspector-egui = { version = "0.34", optional = true }
 
 [features]
-client = []
-# client = ["dep:bevy-inspector-egui"]
+client = ["dep:bevy-inspector-egui"]
