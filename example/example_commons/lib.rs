@@ -2,10 +2,9 @@ use bevy::prelude::*;
 #[cfg(feature = "client")]
 use bevy::{
 	input::mouse::AccumulatedMouseMotion,
+	window::CursorOptions,
 	window::{CursorGrabMode, PrimaryWindow},
 };
-#[cfg(feature = "client")]
-use bevy_scene_hot_reloading::SceneHotReloadingPlugin;
 
 // These are hardcoded because this is only for examples.
 
@@ -21,10 +20,7 @@ impl Plugin for ExampleCommonsPlugin {
 		#[rustfmt::skip]
 		app
 			.add_plugins((
-				SceneHotReloadingPlugin,
-				bevy_inspector_egui::bevy_egui::EguiPlugin {
-					enable_multipass_for_primary_context: true,
-				},
+				bevy_inspector_egui::bevy_egui::EguiPlugin::default(),
 				bevy_inspector_egui::quick::WorldInspectorPlugin::default(),
 			))
 			.add_systems(Update, (
@@ -40,11 +36,11 @@ impl ExampleCommonsPlugin {
 	pub fn move_debug_camera(
 		mouse_motion: Res<AccumulatedMouseMotion>,
 		keyboard: Res<ButtonInput<KeyCode>>,
-		window: Single<&Window, With<PrimaryWindow>>,
+		cursor_options: Single<&CursorOptions, With<PrimaryWindow>>,
 		mut camera_query: Query<&mut Transform, With<DebugCamera>>,
 		time: Res<Time>,
 	) {
-		if window.cursor_options.grab_mode == CursorGrabMode::None {
+		if cursor_options.grab_mode == CursorGrabMode::None {
 			return;
 		}
 
@@ -94,19 +90,19 @@ impl ExampleCommonsPlugin {
 	}
 
 	#[cfg(feature = "client")]
-	pub fn toggle_focus(mut window: Single<&mut Window, With<PrimaryWindow>>, keyboard: Res<ButtonInput<KeyCode>>) {
+	pub fn toggle_focus(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>, keyboard: Res<ButtonInput<KeyCode>>) {
 		if !keyboard.just_pressed(KeyCode::Escape) {
 			return;
 		}
 
-		match window.cursor_options.grab_mode {
+		match cursor_options.grab_mode {
 			CursorGrabMode::None => {
-				window.cursor_options.grab_mode = CursorGrabMode::Locked;
-				window.cursor_options.visible = false;
+				cursor_options.grab_mode = CursorGrabMode::Locked;
+				cursor_options.visible = false;
 			}
 			_ => {
-				window.cursor_options.grab_mode = CursorGrabMode::None;
-				window.cursor_options.visible = true;
+				cursor_options.grab_mode = CursorGrabMode::None;
+				cursor_options.visible = true;
 			}
 		}
 	}

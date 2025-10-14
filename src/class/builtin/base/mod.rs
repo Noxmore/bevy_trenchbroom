@@ -17,9 +17,6 @@ impl Plugin for BaseClassesPlugin {
 		#[rustfmt::skip]
 		app
 			.register_type_data::<Transform, ReflectQuakeClass>()
-
-			.register_type::<Target>()
-			.register_type::<Targetable>()
 		;
 
 		#[cfg(feature = "client")]

@@ -13,8 +13,7 @@ doc = false
 
 [dependencies]
 bevy.workspace = true
-bevy-inspector-egui = { version = "0.31", optional = true }
-bevy_scene_hot_reloading = "0.1"
+bevy-inspector-egui = { version = "0.34", optional = true }
 
 [features]
 client = ["dep:bevy-inspector-egui"]

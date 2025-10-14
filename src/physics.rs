@@ -88,9 +88,6 @@ impl Plugin for PhysicsPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.register_type::<ConvexCollision>()
-			.register_type::<TrimeshCollision>()
-
 			.init_resource::<SceneCollidersReadyTests>()
 
 			// PostUpdate to order right after scenes have been spawned
@@ -269,7 +266,10 @@ impl PhysicsPlugin {
 				}
 			}
 
-			commands.trigger_targets(SceneCollidersReady { collider_entities }, scene_root_entity);
+			commands.trigger(SceneCollidersReady {
+				scene_root_entity,
+				collider_entities,
+			});
 		}
 	}
 }
@@ -281,7 +281,9 @@ pub struct SceneCollidersReadyTests {
 }
 
 /// Triggered when all the colliders of a scene are done constructing.
-#[derive(Event, Debug, Clone)]
+#[derive(EntityEvent, Debug, Clone)]
 pub struct SceneCollidersReady {
+	#[event_target]
+	pub scene_root_entity: Entity,
 	pub collider_entities: Vec<Entity>,
 }

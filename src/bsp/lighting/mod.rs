@@ -2,14 +2,14 @@ mod types;
 pub use types::*;
 
 use bevy::{
-	asset::embedded_asset,
+	asset::{RenderAssetUsages, embedded_asset},
 	image::ImageSampler,
 	pbr::Lightmap,
 	render::{
-		Render, RenderApp, RenderSet,
+		Render, RenderApp, RenderSystems,
 		extract_resource::{ExtractResource, ExtractResourcePlugin},
 		globals::{GlobalsBuffer, GlobalsUniform},
-		render_asset::{RenderAssetPlugin, RenderAssetUsages, RenderAssets},
+		render_asset::{RenderAssetPlugin, RenderAssets},
 		render_graph::{RenderGraph, RenderLabel},
 		render_resource::{binding_types::*, *},
 		renderer::{RenderDevice, RenderQueue},
@@ -53,10 +53,7 @@ impl Plugin for BspLightingPlugin {
 		app
 			.add_plugins(RenderAssetPlugin::<AnimatedLighting>::default())
 
-			.register_type::<AnimatedLightingHandle>()
-
 			.add_plugins(ExtractResourcePlugin::<LightingAnimators>::default())
-			.register_type::<LightingAnimators>()
 			.init_resource::<LightingAnimators>()
 
 			.init_asset::<AnimatedLighting>()
@@ -68,7 +65,10 @@ impl Plugin for BspLightingPlugin {
 
 		render_app.init_resource::<AnimatedLightingBindGroups>();
 
-		render_app.add_systems(Render, Self::prepare_animated_lighting_bind_groups.in_set(RenderSet::PrepareBindGroups));
+		render_app.add_systems(
+			Render,
+			Self::prepare_animated_lighting_bind_groups.in_set(RenderSystems::PrepareBindGroups),
+		);
 
 		let mut render_graph = render_app.world_mut().resource_mut::<RenderGraph>();
 		render_graph.add_node(AnimatedLightingLabel, AnimatedLightingNode);
@@ -255,7 +255,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			push_constant_ranges: vec![],
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_lightmaps.wgsl"),
 			shader_defs: vec![],
-			entry_point: "main".into(),
+			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
 		});
 
@@ -265,7 +265,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			push_constant_ranges: vec![],
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_irradiance_volumes.wgsl"),
 			shader_defs: vec![],
-			entry_point: "main".into(),
+			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
 		});
 

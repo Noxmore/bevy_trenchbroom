@@ -13,10 +13,12 @@ use super::*;
 	classname("light_point"),
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlyPointLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("light_point"))]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlyPointLight;
 
 /// [`LightingWorkflow::DynamicOnly`] implementation.
@@ -26,10 +28,12 @@ pub struct DynamicOnlyPointLight;
 	classname("light_spot"),
 	iconsprite({ path: "sprites/light_spot.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlySpotLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("light_spot"))]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlySpotLight;
 
 /// [`LightingWorkflow::DynamicOnly`] implementation.
@@ -39,10 +43,12 @@ pub struct DynamicOnlySpotLight;
 	classname("light_directional"),
 	iconsprite({ path: "sprites/light_directional.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlyDirectionalLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("light_directional"))]
+#[reflect(no_auto_register)]
 pub struct DynamicOnlyDirectionalLight;
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +63,7 @@ pub struct DynamicOnlyDirectionalLight;
 	// TODO: switch to different models/sprites when spot or sun light
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct BakedOnlyLight;
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -71,6 +78,7 @@ pub struct BakedOnlyLight;
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
+#[reflect(no_auto_register)]
 pub struct MapDynamicBspBakedLight;
 #[cfg(all(feature = "bsp", feature = "client"))]
 impl MapDynamicBspBakedLight {
@@ -85,6 +93,7 @@ impl MapDynamicBspBakedLight {
 
 #[cfg(all(feature = "bsp", not(feature = "client")))]
 #[point_class(classname("light"))]
+#[reflect(no_auto_register)]
 pub struct MapDynamicBspBakedLight;
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +108,7 @@ pub struct MapDynamicBspBakedLight;
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 	hooks(SpawnHooks::new().push(Self::spawn_hook)),
 )]
+#[reflect(no_auto_register)]
 pub struct CombinedLight;
 #[cfg(all(feature = "bsp", feature = "client"))]
 impl CombinedLight {
@@ -117,6 +127,7 @@ impl CombinedLight {
 
 #[cfg(all(feature = "bsp", not(feature = "client")))]
 #[point_class(classname("light"))]
+#[reflect(no_auto_register)]
 pub struct CombinedLight;
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -130,10 +141,12 @@ pub struct CombinedLight;
 	classname("dynamiclight_point"),
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicPointLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("dynamiclight_point"))]
+#[reflect(no_auto_register)]
 pub struct DynamicPointLight;
 
 /// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
@@ -143,10 +156,12 @@ pub struct DynamicPointLight;
 	classname("dynamiclight_spot"),
 	iconsprite({ path: "sprites/light_spot.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicSpotLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("dynamiclight_spot"))]
+#[reflect(no_auto_register)]
 pub struct DynamicSpotLight;
 
 /// [`LightingWorkflow::DynamicAndBakedSeparate`] implementation.
@@ -156,8 +171,10 @@ pub struct DynamicSpotLight;
 	classname("dynamiclight_directional"),
 	iconsprite({ path: "sprites/light_directional.png", scale: 0.1 }),
 )]
+#[reflect(no_auto_register)]
 pub struct DynamicDirectionalLight;
 
 #[cfg(not(feature = "client"))]
 #[point_class(classname("dynamiclight_directional"))]
+#[reflect(no_auto_register)]
 pub struct DynamicDirectionalLight;

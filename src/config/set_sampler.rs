@@ -5,11 +5,6 @@ use crate::{geometry::MapGeometry, TrenchBroomServer};
 
 use super::ConfigPlugin;
 
-/// Workaround until https://github.com/bevyengine/bevy/pull/19105 lands
-fn samplers_eq(a: &ImageSampler, b: &ImageSampler) -> bool {
-	format!("{a:?}") == format!("{b:?}")
-}
-
 impl ConfigPlugin {
 	/// Sets the samplers of any images within the materials within entities with [`MapGeometry`] components to [`TrenchBroomConfig::texture_sampler`](super::TrenchBroomConfig::texture_sampler).
 	/// 
@@ -18,7 +13,7 @@ impl ConfigPlugin {
 		mut commands: Commands,
 		map_geometry_query: Query<&GenericMaterial3d, With<MapGeometry>>,
 		generic_materials: Res<Assets<GenericMaterial>>,
-		mut image_events: EventReader<AssetEvent<Image>>,
+		mut image_events: MessageReader<AssetEvent<Image>>,
 		asset_server: Res<AssetServer>,
 		tb_server: Res<TrenchBroomServer>,
 	) {
@@ -79,7 +74,7 @@ impl ConfigPlugin {
 								continue;
 							};
 	
-							if samplers_eq(&image.sampler, &sampler) {
+							if image.sampler == sampler {
 								continue;
 							}
 	

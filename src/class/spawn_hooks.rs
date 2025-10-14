@@ -1,7 +1,7 @@
 use super::*;
 use crate::config::SpawnFnOnce;
 use crate::*;
-use bevy::ecs::component::HookContext;
+use bevy::ecs::lifecycle::HookContext;
 use bevy::{asset::AssetPath, ecs::world::DeferredWorld};
 use bevy_mesh::VertexAttributeValues;
 
@@ -290,15 +290,10 @@ mod tests {
 	#[cfg(feature = "client")]
 	fn preloading() {
 		use crate::{
-			geometry::{BrushList, Brushes},
+			geometry::BrushList,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
-		use bevy::{
-			gltf::GltfPlugin,
-			log::LogPlugin,
-			render::{mesh::MeshPlugin, view::VisibilityClass},
-			scene::ScenePlugin,
-		};
+		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, scene::ScenePlugin};
 
 		#[point_class(
 			model("models/mushroom.glb"),
@@ -332,15 +327,6 @@ mod tests {
 			.insert_resource(TrenchBroomServer::new(
 				TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
 			))
-			.register_type::<Mushroom>()
-			.register_type::<Visibility>()
-			.register_type::<InheritedVisibility>()
-			.register_type::<ViewVisibility>()
-			.register_type::<PreloadedAssets>()
-			.register_type::<MeshMaterial3d<StandardMaterial>>()
-			.register_type::<Aabb>()
-			.register_type::<VisibilityClass>()
-			.register_type::<Brushes>()
 			.init_asset::<Image>()
 			.init_asset::<BrushList>()
 			.init_asset::<StandardMaterial>()
@@ -372,7 +358,7 @@ mod tests {
 		}
 
 		/// Live for a few ticks to let everything sort out
-		fn exit(mut exit: EventWriter<AppExit>, mut ticks: Local<u32>) {
+		fn exit(mut exit: MessageWriter<AppExit>, mut ticks: Local<u32>) {
 			*ticks += 1;
 
 			if *ticks > 3 {
@@ -380,22 +366,22 @@ mod tests {
 			}
 		}
 
-		fn validate_mesh(trigger: Trigger<OnAdd, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
-			let handle = &mesh_query.get(trigger.target()).unwrap().0;
+		fn validate_mesh(trigger: On<Add, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
+			let handle = &mesh_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Mesh");
 		}
 
 		fn validate_material(
-			trigger: Trigger<OnAdd, MeshMaterial3d<StandardMaterial>>,
+			trigger: On<Add, MeshMaterial3d<StandardMaterial>>,
 			material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 			asset_server: Res<AssetServer>,
 		) {
-			let handle = &material_query.get(trigger.target()).unwrap().0;
+			let handle = &material_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Material");
 		}
 
-		fn validate_scene(trigger: Trigger<OnAdd, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
-			let handle = &scene_query.get(trigger.target()).unwrap().0;
+		fn validate_scene(trigger: On<Add, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
+			let handle = &scene_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Scene");
 		}
 

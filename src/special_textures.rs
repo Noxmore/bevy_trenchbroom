@@ -71,15 +71,19 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 		// We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
 
 		fn separate_sky_image(view: &mut EmbeddedTextureLoadView, x_range: std::ops::Range<u32>, alpha_on_black: bool) -> Image {
+			let Ok(pixel_size) = view.image.texture_descriptor.format.pixel_size() else {
+				// Embedded texture format should always be the same.
+				unreachable!();
+			};
+
 			// Technically, we know what the format should be, but this is just a bit more generic && reusable i guess
-			let mut data: Vec<u8> =
-				Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * view.image.texture_descriptor.format.pixel_size());
+			let mut data: Vec<u8> = Vec::with_capacity(((view.image.width() / 2) * view.image.height()) as usize * pixel_size);
 
 			// Because of the borrow checker we have to use a classic for loop instead of the iterator API :DDD
 			for y in 0..view.image.height() {
 				for x in x_range.clone() {
 					if alpha_on_black && view.image.get_color_at(x, y).unwrap().to_srgba() == Srgba::BLACK {
-						data.extend(repeat_n(0, view.image.texture_descriptor.format.pixel_size()));
+						data.extend(repeat_n(0, pixel_size));
 						// data.extend([127, 127, 127, 0]);
 					} else {
 						data.extend(view.image.pixel_bytes(uvec3(x, y, 0)).unwrap());
@@ -179,7 +183,7 @@ pub struct LiquidMaterialExt {
 	pub cycles: f32,
 }
 impl MaterialExtension for LiquidMaterialExt {
-	fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+	fn fragment_shader() -> bevy::shader::ShaderRef {
 		"embedded://bevy_trenchbroom/liquid.wgsl".into()
 	}
 }
@@ -221,17 +225,36 @@ pub struct QuakeSkyMaterial {
 	#[default(Some(Face::Back))]
 	pub cull_mode: Option<Face>,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
 pub struct QuakeSkyKey {
-	pub cull_mode: Option<Face>,
+	/// 0 = `None`, 1 = `Some(Front)`, 2 = `Some(Back)`.
+	///
+	/// Yes, this is dumb.
+	cull_mode: u8,
 }
 impl From<&QuakeSkyMaterial> for QuakeSkyKey {
 	fn from(value: &QuakeSkyMaterial) -> Self {
-		Self { cull_mode: value.cull_mode }
+		Self {
+			cull_mode: match value.cull_mode {
+				None => 0,
+				Some(Face::Front) => 1,
+				Some(Face::Back) => 2,
+			},
+		}
+	}
+}
+impl QuakeSkyKey {
+	pub fn cull_mode(&self) -> Option<Face> {
+		match self.cull_mode {
+			1 => Some(Face::Front),
+			2 => Some(Face::Back),
+			_ => None,
+		}
 	}
 }
 impl Material for QuakeSkyMaterial {
-	fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+	fn fragment_shader() -> bevy::shader::ShaderRef {
 		"embedded://bevy_trenchbroom/quake_sky.wgsl".into()
 	}
 
@@ -240,7 +263,7 @@ impl Material for QuakeSkyMaterial {
 	}
 
 	fn specialize(
-		_pipeline: &bevy::pbr::MaterialPipeline<Self>,
+		_pipeline: &bevy::pbr::MaterialPipeline,
 		descriptor: &mut bevy::render::render_resource::RenderPipelineDescriptor,
 		_layout: &bevy_mesh::MeshVertexBufferLayoutRef,
 		key: bevy::pbr::MaterialPipelineKey<Self>,
@@ -249,7 +272,7 @@ impl Material for QuakeSkyMaterial {
 		// rendering culled faces, showing the app clear color instead of anything behind them.
 		// This causes some nasty visual errors in some maps.
 		// Why does this fix that? I have no idea !!!!
-		descriptor.primitive.cull_mode = key.bind_group_data.cull_mode;
+		descriptor.primitive.cull_mode = key.bind_group_data.cull_mode();
 		Ok(())
 	}
 }

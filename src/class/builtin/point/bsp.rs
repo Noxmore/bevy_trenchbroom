@@ -6,4 +6,5 @@ use super::*;
 /// `WARNING: Reached occupant "info_player_start" at (1000 -296 -40), no filling performed.`
 /// which fails the build just as if level geometry is not enclosed.)
 #[point_class]
+#[reflect(no_auto_register)]
 pub struct InfoPlayerStart;

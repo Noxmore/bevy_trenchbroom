@@ -9,13 +9,13 @@ struct QuakeSkyMaterial {
 	sphere_scale: vec3f,
 }
 
-@group(2) @binding(1) var fg_texture: texture_2d<f32>;
-@group(2) @binding(2) var fg_sampler: sampler;
+@group(#{MATERIAL_BIND_GROUP}) @binding(1) var fg_texture: texture_2d<f32>;
+@group(#{MATERIAL_BIND_GROUP}) @binding(2) var fg_sampler: sampler;
 
-@group(2) @binding(3) var bg_texture: texture_2d<f32>;
-@group(2) @binding(4) var bg_sampler: sampler;
+@group(#{MATERIAL_BIND_GROUP}) @binding(3) var bg_texture: texture_2d<f32>;
+@group(#{MATERIAL_BIND_GROUP}) @binding(4) var bg_sampler: sampler;
 
-@group(2) @binding(0) var<uniform> material: QuakeSkyMaterial;
+@group(#{MATERIAL_BIND_GROUP}) @binding(0) var<uniform> material: QuakeSkyMaterial;
 
 @fragment
 fn fragment(

@@ -12,8 +12,6 @@ impl Plugin for GeometryPlugin {
 		#[rustfmt::skip]
 		app
 			.init_asset::<BrushList>()
-			.register_type::<Brushes>()
-			.register_type::<MapGeometry>()
 		;
 	}
 }

@@ -14,10 +14,6 @@ More specifically, integration and support for the following workflows:
 
 <br>
 
-## TEMP NOTICE:
-Map hot-reloading currently doesn't work out of the box. This is a Bevy issue and will be fixed when [bevy#18358](https://github.com/bevyengine/bevy/pull/18358) lands.
-Until then, use [bevy_scene_hot_reloading](https://crates.io/crates/bevy_scene_hot_reloading) if you want to hot-reload maps!
-
 # Quickstart
 - Add the `bevy_trenchbroom` to your project: `cargo add bevy_trenchbroom`.
 
@@ -50,8 +46,6 @@ struct MyClass {
 	property_b: String,
 }
 ```
-
-Then register the type with `.register_type::<MyClass>()` on app initialization.
 
 Now just run your game once, and it should automatically be available in TrenchBroom!
 
@@ -123,12 +117,13 @@ bevy_trenchbroom = { version = "...", default-features = false }
 See the [Migration Guide](https://github.com/Noxmore/bevy_trenchbroom/blob/main/Migration%20Guide.md) when updating between versions!
 
 # Version support table
-| Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools |
-|------|------------------|---------------|-------------|
-| 0.16 | 0.8-0.9          | 2025.3        | 2.0.0-alpha9
-| 0.15 | 0.6-0.7          | 2025.1-2025.2 | N/A
-| 0.14 | 0.4-0.5          | 2024.1        | N/A
-| 0.13 | 0.1-0.3          | 2024.1        | N/A
+| Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools   |
+|------|------------------|---------------|---------------|
+| 0.17 | 0.10             | 2025.3        | 2.0.0-alpha10 |
+| 0.16 | 0.8-0.9          | 2025.3        | 2.0.0-alpha9  |
+| 0.15 | 0.6-0.7          | 2025.1-2025.2 | N/A           |
+| 0.14 | 0.4-0.5          | 2024.1        | N/A           |
+| 0.13 | 0.1-0.3          | 2024.1        | N/A           |
 
 <sup>There is a good chance other versions of TrenchBroom and ericw-tools will work, especially close ones, these are just the versions we officially support.</sup>
 

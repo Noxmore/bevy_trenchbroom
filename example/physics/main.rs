@@ -43,7 +43,6 @@ fn main() {
 			// I use bsp_loading to write the config.
 			.disable::<WriteTrenchBroomConfigOnStartPlugin>(),
 		)
-		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(FixedUpdate, spawn_cubes)
 		.run();

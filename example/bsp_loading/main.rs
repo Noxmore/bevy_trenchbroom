@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(feature = "example_client")]
-use bevy::ecs::{component::HookContext, world::DeferredWorld};
+use bevy::ecs::{lifecycle::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::*;
@@ -70,10 +70,6 @@ fn main() {
 				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
 		.add_plugins(example_commons::ExampleCommonsPlugin)
-		.register_type::<Cube>()
-		.register_type::<Mushroom>()
-		.register_type::<FuncWall>()
-		.register_type::<FuncDoor>()
 		.add_systems(PostStartup, setup_scene)
 		.run();
 }

@@ -4,17 +4,6 @@ use enumflags2::{BitFlag, BitFlags};
 
 use crate::*;
 
-pub struct FgdPlugin;
-impl Plugin for FgdPlugin {
-	fn build(&self, app: &mut App) {
-		#[rustfmt::skip]
-		app
-			.register_type::<IntBool>()
-			.register_type::<Srgb>()
-		;
-	}
-}
-
 /// Writes classes in a type registry to a string for writing `fgd` (entity definition) files.
 pub fn write_fgd(type_registry: &TypeRegistry) -> String {
 	let classes = type_registry

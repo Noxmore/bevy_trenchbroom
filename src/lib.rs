@@ -46,13 +46,11 @@ impl PluginGroup for TrenchBroomPlugins {
 	fn build(self) -> PluginGroupBuilder {
 		let builder = PluginGroupBuilder::start::<Self>()
 			.add(CorePlugin(self.0))
-			.add(fgd::FgdPlugin)
 			.add(class::QuakeClassPlugin)
 			.add_group(class::builtin::BasicClassesPlugins)
 			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)
 			.add(geometry::GeometryPlugin)
-			.add(bevy_fix_gltf_coordinate_system::FixGltfCoordinateSystemPlugin)
 			.add(util::UtilPlugin);
 
 		// Have to use let here because "attributes on expressions are experimental"
@@ -96,7 +94,7 @@ impl Plugin for CorePlugin {
 impl CorePlugin {
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub fn set_lightmap_exposure(
-		mut asset_events: EventReader<AssetEvent<StandardMaterial>>,
+		mut asset_events: MessageReader<AssetEvent<StandardMaterial>>,
 		mut standard_materials: ResMut<Assets<StandardMaterial>>,
 		tb_server: Res<TrenchBroomServer>,
 	) {

@@ -21,7 +21,7 @@ struct LiquidMaterial {
 	cycles: f32,
 }
 
-@group(2) @binding(100) var<uniform> material: LiquidMaterial;
+@group(#{MATERIAL_BIND_GROUP}) @binding(100) var<uniform> material: LiquidMaterial;
 
 @fragment
 fn fragment(

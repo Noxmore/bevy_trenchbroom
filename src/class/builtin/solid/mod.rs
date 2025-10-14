@@ -17,7 +17,7 @@ impl Plugin for SolidClassesPlugin {
 		;
 
 		#[cfg(feature = "bsp")]
-		app.register_type::<BspSolidEntity>().register_type::<BspWorldspawn>().register_type::<FuncDetail>();
+		app.register_type::<FuncDetail>();
 	}
 }
 
@@ -28,12 +28,14 @@ impl Plugin for SolidClassesPlugin {
 	#[cfg(feature = "bsp")] BspWorldspawn,
 ))]
 #[derive(Debug, Clone)]
+#[reflect(no_auto_register)]
 pub struct Worldspawn;
 
 /// Groups a set of brushes together in-editor. Merged into `worldspawn` on compile.
 #[cfg(feature = "bsp")]
 #[solid_class(base(BspSolidEntity))]
 #[derive(Debug, Clone)]
+#[reflect(no_auto_register)]
 pub struct FuncGroup;
 
 /// Groups a set of brushes together in-editor.
@@ -42,6 +44,7 @@ pub struct FuncGroup;
 	#[cfg(feature = "client")] Visibility,
 ))]
 #[derive(Debug, Clone)]
+#[reflect(no_auto_register)]
 pub struct FuncGroup;
 
 /// Generic brush entity to separate from world geometry. bevy_trenchbroom's version of Quake's `func_wall`.
@@ -52,4 +55,5 @@ pub struct FuncGroup;
 	)
 )]
 #[derive(Debug, Clone)]
+#[reflect(no_auto_register)]
 pub struct FuncGeneric;
