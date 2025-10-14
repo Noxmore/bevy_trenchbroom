@@ -1,5 +1,5 @@
 [workspace]
-members = ["example/*", "macros"]
+members = ["example/*", "subcrates/*"]
 
 [workspace.package]
 version = "0.10.0"
@@ -39,7 +39,7 @@ bevy_rapier3d = "0.31"
 example_commons = { path = "example/example_commons" }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.10.0", path = "macros" }
+bevy_trenchbroom_macros = { version = "0.10.0", path = "subcrates/bevy_trenchbroom_macros" }
 
 anyhow = "1.0"
 bevy = { workspace = true, features = [
