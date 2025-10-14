@@ -44,6 +44,11 @@ impl TrenchBroomConfig {
 		}
 	}
 
+	pub fn global_spawner_fn(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
+		self.global_spawner.set(provider);
+		self
+	}
+
 	/// - Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
 	/// - If the entity is a brush entity, rotation is reset.
 	/// - Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
@@ -51,12 +56,24 @@ impl TrenchBroomConfig {
 	pub fn default_global_spawner(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
-		if view.tb_config.global_transform_application && !view.class.info.derives_from::<Transform>() {
-			view.world.entity_mut(view.entity).insert(Transform {
-				translation: read_translation_from_entity(view.src_entity, view.tb_config)?,
-				rotation: read_rotation_from_entity(view.src_entity)?,
-				scale: Vec3::ONE,
-			});
+		let mut ent = view.world.entity_mut(view.entity);
+		
+		// We can assume that the entity doesn't derive from Transform
+		if !ent.contains::<Transform>() {
+			if view.tb_config.global_transform_application {
+				ent.insert(Transform {
+					translation: read_translation_from_entity(view.src_entity, view.tb_config)?,
+					rotation: read_rotation_from_entity(view.src_entity)?,
+					scale: Vec3::ONE,
+				});
+			} else {
+				ent.insert(Transform::default());
+			}
+		}
+
+		#[cfg(feature = "client")]
+		if !ent.contains::<Visibility>() {
+			ent.insert(Visibility::default());
 		}
 		
 		// For things like doors where the `angles` property means open direction.
@@ -76,16 +93,6 @@ impl TrenchBroomConfig {
 				.map(|name| format!("{classname} ({name})"))
 				.unwrap_or(classname),
 		));
-
-		let mut ent = view.world.entity_mut(view.entity);
-
-		#[cfg(feature = "client")]
-		if !ent.contains::<Visibility>() {
-			ent.insert(Visibility::default());
-		}
-		if !ent.contains::<Transform>() {
-			ent.insert(Transform::default());
-		}
 
 		for mesh_view in view.meshes.iter() {
 			view.world

@@ -62,7 +62,7 @@ pub struct TrenchBroomConfig {
 	pub file_formats: Vec<MapFileFormat>,
 	/// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
 	#[builder(skip)] // bevy_trenchbroom currently *only* supports loose files
-	package_format: AssetPackageFormat,
+	pub package_format: AssetPackageFormat,
 
 	/// The root directory to look for textures in the [`assets_path`](Self::assets_path). (Default: "textures")
 	///
