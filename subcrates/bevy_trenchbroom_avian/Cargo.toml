@@ -1,0 +1,13 @@
+[package]
+name = "bevy_trenchbroom_avian"
+version.workspace = true
+description.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+bevy.workspace = true
+bevy_trenchbroom = { version = "0.10", path = "../..", default-features = false, features = ["physics-integration"] }
+avian3d.workspace = true
