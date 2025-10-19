@@ -13,7 +13,7 @@ doc = false
 
 [dependencies]
 bevy = { workspace = true, features = ["default"] }
-avian3d = { workspace = true, default-features = true, optional = true } # TODO: re-add `features = ["parry-f64", "f64"]`
+avian3d = { workspace = true, features = ["parry-f64", "f64"] }
 bevy_trenchbroom = { path = "../..", default-features = false, features = [
 	"client",
 	"bsp"
