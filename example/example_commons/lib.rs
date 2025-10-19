@@ -9,7 +9,7 @@ use bevy::{
 // These are hardcoded because this is only for examples.
 
 #[cfg(feature = "client")]
-pub const SENSITIVITY: f32 = 0.0007;
+pub const SENSITIVITY: f32 = 0.002;
 #[cfg(feature = "client")]
 pub const BASE_MOVEMENT_SPEED: f32 = 4.;
 
