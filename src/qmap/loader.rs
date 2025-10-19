@@ -209,6 +209,7 @@ impl AssetLoader for QuakeMapLoader {
 					world: &mut world,
 					entity,
 					load_context,
+					transform_override: None,
 					meshes: &mut mesh_views,
 				};
 
