@@ -209,6 +209,7 @@ impl AssetLoader for QuakeMapLoader {
 					world: &mut world,
 					entity,
 					load_context,
+					transform_override: None,
 					meshes: &mut mesh_views,
 				};
 
@@ -230,10 +231,13 @@ impl AssetLoader for QuakeMapLoader {
 					mesh_handles.push(handle);
 				}
 
-				let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
-				brush_lists.insert(map_entity_idx, brush_list_handle.clone());
+				// If we have brushes, add them as an asset and insert them
+				if !map_entity.brushes.is_empty() {
+					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
+					brush_lists.insert(map_entity_idx, brush_list_handle.clone());
 
-				world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
+					world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
+				}
 			}
 
 			Ok(QuakeMap {

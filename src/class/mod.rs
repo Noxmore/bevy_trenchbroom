@@ -180,6 +180,9 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	/// Entity in the scene world.
 	pub entity: Entity,
 	pub load_context: &'l mut LoadContext<'w>,
+	/// If [`Some`], sets the entity's transform in the default global spawner, overriding any other.
+	/// This is mainly useful if you have [`TrenchBroomConfig::global_transform_application`] enabled.
+	pub transform_override: Option<Transform>,
 
 	/// Information about the mesh entities this entity contains.
 	pub meshes: &'l mut Vec<QuakeClassMeshView<'l>>,
@@ -376,6 +379,7 @@ mod tests {
 				world: &mut world,
 				entity,
 				load_context: &mut load_context,
+				transform_override: None,
 				meshes: &mut Vec::new(),
 			})
 			.unwrap();

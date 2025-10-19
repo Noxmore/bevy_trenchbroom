@@ -5,6 +5,7 @@
 
 /assets/maps/autosave
 /assets/maps/arcane
+/assets/maps/q1
 /assets/maps/*.log
 /assets/maps/*.prt
 /assets/maps/*.lit

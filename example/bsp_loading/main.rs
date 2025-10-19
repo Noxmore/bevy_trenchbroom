@@ -32,6 +32,9 @@ pub struct FuncWall;
 #[solid_class(base(BspSolidEntity))]
 pub struct FuncIllusionary;
 
+#[solid_class(base(BspSolidEntity))]
+pub struct FuncPlat;
+
 #[point_class]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
 pub struct Cube;

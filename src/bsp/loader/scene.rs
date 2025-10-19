@@ -76,6 +76,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			world: &mut world,
 			entity,
 			load_context: ctx.load_context,
+			transform_override: None,
 			meshes: &mut meshes,
 		};
 
