@@ -13,7 +13,7 @@ doc = false
 
 [dependencies]
 bevy.workspace = true
-bevy_trenchbroom = { path = "../..", default-features = false, features = ["bsp"] }
+bevy_trenchbroom = { workspace = true, features = ["bsp"] }
 example_commons.workspace = true
 nil.workspace = true
 enumflags2.workspace = true

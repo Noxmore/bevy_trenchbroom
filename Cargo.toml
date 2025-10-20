@@ -36,6 +36,7 @@ avian3d = { version = "0.4", default-features = false, features = [
 bevy_rapier3d = "0.31" # TODO: Not updated to Bevy 0.17 yet
 
 example_commons = { path = "example/example_commons" }
+bevy_trenchbroom = { version = "0.10.0", path = ".", default-features = false }
 
 [dependencies]
 bevy_trenchbroom_macros = { version = "0.10.0", path = "subcrates/bevy_trenchbroom_macros" }
