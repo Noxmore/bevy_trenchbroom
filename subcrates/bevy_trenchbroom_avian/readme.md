@@ -1,5 +1,7 @@
 Official integration between `bevy_trenchbroom` and the Avian physics engine.
 
+The version of this crate will the same as the version of `bevy_trenchbroom` it supports.
+
 # Usage
 Simply add a `TrenchBroomPhysicsPlugin` with the provided `AvianPhysicsBackend` to your app.
 ```rust
