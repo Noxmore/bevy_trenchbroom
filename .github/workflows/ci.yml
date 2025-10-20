@@ -33,15 +33,11 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
       - name: Run cargo clippy for default features
-        run: cargo clippy --workspace --all-targets --exclude physics
+        run: cargo clippy --workspace --all-targets
       - name: Run cargo clippy without default features
-        run: cargo clippy --workspace --all-targets --no-default-features --exclude physics
+        run: cargo clippy --workspace --all-targets --no-default-features
       - name: Run cargo clippy for bsps
-        run: cargo clippy --workspace --all-targets --features bsp --exclude physics
-      - name: Run cargo clippy for avian
-        run: cargo clippy --lib --all-targets --features avian
-      - name: Run cargo clippy for rapier
-        run: cargo clippy --lib --all-targets --features rapier
+        run: cargo clippy --workspace --all-targets --features bsp
 
   format:
     runs-on: ubuntu-latest
@@ -93,12 +89,12 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
-      - name: Run tests with avian
+      - name: Run tests\
         run: |
-          cargo test --locked --lib --all-targets --features bevy/x11 --features avian,client,bsp
+          cargo test --locked --lib --all-targets --features bevy/x11 --features client,bsp
           # Running doc tests separately is a workaround for https://github.com/rust-lang/cargo/issues/6669
           # Setting LD_LIBRARY_PATH is a workaround for https://github.com/TheBevyFlock/bevy_new_2d/pull/318#issuecomment-2585935350
-          LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --lib --doc --features bevy/x11 --features avian,client,bsp
+          LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --lib --doc --features bevy/x11 --features client,bsp
 
   # Check that the crate builds for web.
   build-web:
