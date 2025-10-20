@@ -77,7 +77,7 @@ fn main() {
 
 	// I use bsp_loading to write the config.
 	// This is feature locked for headless to work.
-	#[cfg(all(not(target_family = "wasm"), feature = "client"))]
+	#[cfg(all(not(target_family = "wasm"), feature = "example_client"))]
 	{
 		trenchbroom_plugins = trenchbroom_plugins.disable::<WriteTrenchBroomConfigOnStartPlugin>();
 	}
