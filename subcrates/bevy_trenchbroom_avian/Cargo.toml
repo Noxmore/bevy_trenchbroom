@@ -6,6 +6,7 @@ edition.workspace = true
 authors.workspace = true
 repository.workspace = true
 license.workspace = true
+readme = "readme.md"
 
 [dependencies]
 bevy.workspace = true

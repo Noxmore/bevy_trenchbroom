@@ -1,10 +1,11 @@
 [package]
 name = "bevy_trenchbroom_rapier"
-version.workspace = true
+version = "0.0.0"
 description.workspace = true
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true
 license.workspace = true
+readme = "readme.md"
 
 [dependencies]
