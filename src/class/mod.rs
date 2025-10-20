@@ -350,6 +350,7 @@ mod tests {
 				Ok(())
 			}))
 		)]
+		#[reflect(no_auto_register)]
 		struct Base;
 
 		#[point_class(
@@ -360,6 +361,7 @@ mod tests {
 				Ok(())
 			}))
 		)]
+		#[reflect(no_auto_register)]
 		struct Class;
 
 		let asset_server = create_test_asset_server();
