@@ -3,9 +3,6 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::needless_doctest_main)]
 
-#[cfg(all(feature = "rapier", feature = "avian"))]
-compile_error!("can only have one collider backend enabled");
-
 // For proc macros to be able to use the `bevy_trenchbroom` path.
 extern crate self as bevy_trenchbroom;
 
@@ -21,7 +18,7 @@ pub mod class;
 pub mod config;
 pub mod fgd;
 pub mod geometry;
-#[cfg(any(feature = "rapier", feature = "avian"))]
+#[cfg(feature = "physics-integration")]
 pub mod physics;
 pub mod prelude;
 pub mod qmap;
@@ -54,9 +51,6 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(util::UtilPlugin);
 
 		// Have to use let here because "attributes on expressions are experimental"
-		#[cfg(any(feature = "rapier", feature = "avian"))]
-		let builder = builder.add(physics::PhysicsPlugin);
-
 		#[cfg(feature = "client")]
 		let builder = builder.add(special_textures::SpecialTexturesPlugin);
 

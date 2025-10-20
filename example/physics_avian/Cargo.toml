@@ -1,0 +1,23 @@
+[package]
+name = "physics_avian"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "physics_avian"
+path = "main.rs"
+test = false
+bench = false
+doc = false
+
+[dependencies]
+bevy = { workspace = true, features = ["default"] }
+avian3d = { workspace = true, features = ["parry-f64", "f64"] }
+bevy_trenchbroom = { workspace = true, features = [
+	"client",
+	"bsp"
+] }
+bevy_trenchbroom_avian = { path = "../../subcrates/bevy_trenchbroom_avian" }
+example_commons = { workspace = true, features = ["client"] }
+nil.workspace = true

@@ -4,41 +4,21 @@ use brush::ConvexHull;
 use bsp::BspBrushesAsset;
 use geometry::{BrushList, Brushes};
 
-#[cfg(feature = "rapier")]
-use bevy_rapier3d::math::Vect as Vector;
-#[cfg(feature = "rapier")]
-use bevy_rapier3d::{parry::shape::SharedShape, prelude::*};
-/// Simplified version of Avian's trait by the same name because as far as i can tell, bevy_rapier3d doesn't support f64.
-#[cfg(feature = "rapier")]
-trait AdjustPrecision: Sized {
-	type Output;
-	fn adjust_precision(self) -> Self::Output;
-}
-#[cfg(feature = "rapier")]
-impl AdjustPrecision for DVec3 {
-	type Output = Vec3;
-	#[inline]
-	fn adjust_precision(self) -> Self::Output {
-		self.as_vec3()
-	}
-}
-#[cfg(feature = "rapier")]
-impl AdjustPrecision for Vec3 {
-	type Output = Self;
-	#[inline]
-	fn adjust_precision(self) -> Self::Output {
-		self
-	}
-}
+/// Generic physics engine interface.
+pub trait PhysicsBackend: Send + Sync + 'static {
+	type Vector: std::ops::SubAssign;
+	const ZERO: Self::Vector;
+	fn vec3(v: Vec3) -> Self::Vector;
+	fn dvec3(v: DVec3) -> Self::Vector;
 
-#[cfg(feature = "avian")]
-use avian3d::{
-	math::{AdjustPrecision, Vector},
-	parry::shape::SharedShape,
-	prelude::*,
-};
+	type Collider: Component;
+	fn cuboid_collider(half_extents: Self::Vector) -> Self::Collider;
+	fn convex_collider(points: Vec<Self::Vector>) -> Option<Self::Collider>;
+	fn trimesh_collider(mesh: &Mesh) -> Option<Self::Collider>;
+	fn compound_collider(colliders: Vec<(Self::Vector, Quat, Self::Collider)>) -> Self::Collider;
 
-// We use component hooks rather than systems to ensure that colliders are available for things like observers.
+	fn insert_static_collider(entity: EntityCommands, collider: Self::Collider);
+}
 
 /// Automatically creates convex colliders for entities with [`Brushes`].
 #[derive(Component, Reflect, Debug, Clone)]
@@ -50,26 +30,26 @@ pub struct ConvexCollision;
 #[reflect(Component)]
 pub struct TrimeshCollision;
 
-enum ConvexPhysicsGeometry {
-	ConvexHull(Vec<Vector>),
-	Cuboid { center: Vector, half_extents: Vector },
+enum ConvexPhysicsGeometry<B: PhysicsBackend> {
+	ConvexHull(Vec<B::Vector>),
+	Cuboid { center: B::Vector, half_extents: B::Vector },
 }
 
 /// Attempts to calculate vertices on the brushes contained within for use in physics, if it can find said brushes.
 ///
 /// If it can't find them (like if the asset isn't loaded), returns [`None`].
-fn calculate_convex_physics_geometry<'l, 'w: 'l>(
+fn calculate_convex_physics_geometry<'l, 'w: 'l, B: PhysicsBackend>(
 	brushes: &Brushes,
 	brush_lists: &'w Assets<BrushList>,
 	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BspBrushesAsset>,
-) -> Option<Vec<ConvexPhysicsGeometry>> {
-	fn extract_vertices<T: ConvexHull>(brush: &T) -> ConvexPhysicsGeometry {
+) -> Option<Vec<ConvexPhysicsGeometry<B>>> {
+	fn extract_vertices<B: PhysicsBackend, T: ConvexHull>(brush: &T) -> ConvexPhysicsGeometry<B> {
 		match brush.as_cuboid() {
 			Some((from, to)) => ConvexPhysicsGeometry::Cuboid {
-				center: (0.5 * (from + to)).adjust_precision(),
-				half_extents: (0.5 * (to - from)).adjust_precision(),
+				center: B::dvec3(0.5 * (from + to)),
+				half_extents: B::dvec3(0.5 * (to - from)),
 			},
-			None => ConvexPhysicsGeometry::ConvexHull(brush.calculate_vertices().map(|(position, _)| position.adjust_precision()).collect()),
+			None => ConvexPhysicsGeometry::ConvexHull(brush.calculate_vertices().map(|(position, _)| B::dvec3(position)).collect()),
 		}
 	}
 
@@ -83,8 +63,11 @@ fn calculate_convex_physics_geometry<'l, 'w: 'l>(
 	}
 }
 
-pub struct PhysicsPlugin;
-impl Plugin for PhysicsPlugin {
+// Has the `TrenchBroom` prefix because it is meant to be commonly used in user code.
+pub struct TrenchBroomPhysicsPlugin<B: PhysicsBackend> {
+	pub backend: B,
+}
+impl<B: PhysicsBackend> Plugin for TrenchBroomPhysicsPlugin<B> {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
@@ -99,10 +82,14 @@ impl Plugin for PhysicsPlugin {
 		;
 	}
 }
-impl PhysicsPlugin {
+impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
+	pub fn new(backend: B) -> Self {
+		Self { backend }
+	}
+
 	pub fn add_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<Collider>)>,
+		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<B::Collider>)>,
 		brush_lists: Res<Assets<BrushList>>,
 		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BspBrushesAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
@@ -117,7 +104,7 @@ impl PhysicsPlugin {
 				continue;
 			};
 			let mut colliders = Vec::new();
-			let Some(brush_geometries) = calculate_convex_physics_geometry(
+			let Some(brush_geometries) = calculate_convex_physics_geometry::<B>(
 				brushes,
 				&brush_lists,
 				#[cfg(feature = "bsp")]
@@ -129,11 +116,7 @@ impl PhysicsPlugin {
 			for (brush_idx, physics_geometry) in brush_geometries.into_iter().enumerate() {
 				match physics_geometry {
 					ConvexPhysicsGeometry::Cuboid { center, half_extents } => {
-						colliders.push((
-							center,
-							transform.rotation.inverse(),
-							SharedShape::cuboid(half_extents.x, half_extents.y, half_extents.z).into(),
-						));
+						colliders.push((center, transform.rotation.inverse(), B::cuboid_collider(half_extents)));
 					}
 
 					ConvexPhysicsGeometry::ConvexHull(mut vertices) => {
@@ -145,31 +128,18 @@ impl PhysicsPlugin {
 						#[cfg(feature = "bsp")]
 						if !matches!(brushes, Brushes::Bsp(_)) {
 							for vertex in &mut vertices {
-								*vertex -= transform.translation.adjust_precision();
+								*vertex -= B::vec3(transform.translation);
 							}
 						}
 
-						macro_rules! fail {
-							() => {
-								error!(
-									"Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!"
-								);
-								continue;
-							};
-						}
-
-						#[cfg(feature = "avian")]
-						let Some(collider) = Collider::convex_hull(vertices) else {
-							fail!();
+						let Some(collider) = B::convex_collider(vertices) else {
+							error!(
+								"Entity {entity}'s brush (index {brush_idx}) is invalid (non-convex), and a collider could not be computed for it!"
+							);
+							continue;
 						};
 
-						// bevy_rapier3d::geometry::Collider::cub
-						#[cfg(feature = "rapier")]
-						let Some(collider) = Collider::convex_hull(&vertices) else {
-							fail!();
-						};
-
-						colliders.push((Vector::ZERO, transform.rotation.inverse(), collider));
+						colliders.push((B::ZERO, transform.rotation.inverse(), collider));
 					}
 				}
 			}
@@ -182,14 +152,7 @@ impl PhysicsPlugin {
 				continue;
 			}
 
-			#[cfg(feature = "avian")]
-			commands
-				.entity(entity)
-				.insert(Collider::compound(colliders))
-				.insert_if_new(RigidBody::Static);
-
-			#[cfg(feature = "rapier")]
-			commands.entity(entity).insert(Collider::compound(colliders));
+			B::insert_static_collider(commands.entity(entity), B::compound_collider(colliders));
 
 			tests.added_colliders_to_entities.insert(entity);
 		}
@@ -197,7 +160,7 @@ impl PhysicsPlugin {
 
 	pub fn add_trimesh_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, &Mesh3d), (With<TrimeshCollision>, Without<Collider>)>,
+		query: Query<(Entity, &Mesh3d), (With<TrimeshCollision>, Without<B::Collider>)>,
 		meshes: Res<Assets<Mesh>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
@@ -206,28 +169,11 @@ impl PhysicsPlugin {
 				continue;
 			};
 
-			macro_rules! fail {
-				() => {
-					error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format.");
-					continue;
-				};
-			}
-
-			#[cfg(feature = "avian")]
-			{
-				let Some(collider) = Collider::trimesh_from_mesh(mesh) else {
-					fail!();
-				};
-				commands.entity(entity).insert(collider).insert_if_new(RigidBody::Static);
-			}
-
-			#[cfg(feature = "rapier")]
-			{
-				let Some(collider) = Collider::from_bevy_mesh(mesh, &ComputedColliderShape::TriMesh(default())) else {
-					fail!();
-				};
-				commands.entity(entity).insert(collider);
-			}
+			let Some(collider) = B::trimesh_collider(mesh) else {
+				error!("Entity {entity} has TrimeshCollision, but index buffer or vertex buffer of the mesh are in an incompatible format.");
+				continue;
+			};
+			B::insert_static_collider(commands.entity(entity), collider);
 
 			tests.added_colliders_to_entities.insert(entity);
 		}
@@ -241,8 +187,8 @@ impl PhysicsPlugin {
 		has_scene_root: Query<(), With<SceneRoot>>,
 
 		children_query: Query<&Children>,
-		has_collider: Query<(), With<Collider>>,
-		still_not_collider_query: Query<(), (Or<(With<ConvexCollision>, With<TrimeshCollision>)>, Without<Collider>)>,
+		has_collider: Query<(), With<B::Collider>>,
+		still_not_collider_query: Query<(), (Or<(With<ConvexCollision>, With<TrimeshCollision>)>, Without<B::Collider>)>,
 	) {
 		let mut scene_roots = HashSet::new();
 

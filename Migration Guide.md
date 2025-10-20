@@ -1,3 +1,6 @@
+# 0.9 to 0.10
+- Physics integrations have been decoupled into the `bevy_trenchbroom_rapier` and `bevy_trenchbroom_avian` crates to make releasing updates quicker. Add one of those into your project, and add the plugin `TrenchBroomPhysicsPlugin::new(/*(physics engine)*/}PhysicsBackend)`.
+
 # 0.8 to 0.9
 - Derive macros have been converted to attribute macros to greatly reduce boilerplate
 	- Replace your `#[derive(<type>Class)]` with `#[<type>_class]`

@@ -1,28 +1,13 @@
-#[cfg(all(not(feature = "rapier"), not(feature = "avian")))]
-compile_error!("Please enable either the `rapier` or `avian` feature flags to test a specific physics engine!");
-
-#[cfg(feature = "avian")]
 use avian3d::prelude::*;
 use bevy::math::*;
 use bevy::prelude::*;
-#[cfg(feature = "rapier")]
-use bevy_rapier3d::prelude::*;
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
+use bevy_trenchbroom_avian::AvianPhysicsBackend;
 use nil::prelude::*;
 
 #[solid_class]
 pub struct FuncDoor;
-
-#[cfg(feature = "avian")]
-fn physics_plugins(app: &mut App) {
-	app.add_plugins((PhysicsPlugins::default(), PhysicsDebugPlugin::default()));
-}
-
-#[cfg(feature = "rapier")]
-fn physics_plugins(app: &mut App) {
-	app.add_plugins((RapierPhysicsPlugin::<()>::default(), RapierDebugRenderPlugin::default()));
-}
 
 fn main() {
 	App::new()
@@ -30,7 +15,6 @@ fn main() {
 			file_path: "../../assets".s(),
 			..default()
 		}))
-		.add_plugins(physics_plugins)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(Update, make_unlit)
 		.add_plugins(
@@ -43,6 +27,11 @@ fn main() {
 			// I use bsp_loading to write the config.
 			.disable::<WriteTrenchBroomConfigOnStartPlugin>(),
 		)
+		.add_plugins((
+			PhysicsPlugins::default(),
+			PhysicsDebugPlugin,
+			TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend),
+		))
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(FixedUpdate, spawn_cubes)
 		.run();

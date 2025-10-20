@@ -104,7 +104,8 @@ For more information, please see [the manual](https://docs.rs/bevy_trenchbroom/l
 
 `bevy_trenchbroom` supports [bevy_rapier3d](https://crates.io/crates/bevy_rapier3d) and [avian3d](https://crates.io/crates/avian3d) to easily add colliders when spawning geometry.
 
-First, enable the `rapier` or `avian` feature on the crate, then either call `convex_collider` or `trimesh_collider` on your class's `SpawnHooks` to create the respective type of collider(s) with said geometry.
+First, add the `bevy_trenchbroom_rapier` or `bevy_trenchbroom_avian` integration crates, then add the plugin `TrenchBroomPhysicsPlugin::new(RapierPhysicsBackend)` or `TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend)` respectively.
+Now you can either call `convex_collider` or `trimesh_collider` on your class's `SpawnHooks` to create the respective type of collider(s) with said geometry.
 
 ## Multiplayer
 
