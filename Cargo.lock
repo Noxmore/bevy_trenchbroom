@@ -1651,7 +1651,6 @@ version = "0.10.0"
 dependencies = [
  "anyhow",
  "atomicow",
- "avian3d",
  "bevy",
  "bevy_materialize",
  "bevy_mesh",
