@@ -63,7 +63,10 @@ impl TrenchBroomConfig {
 				.unwrap_or(classname),
 		));
 
-		if view.tb_config.global_transform_application && !view.class.info.derives_from::<Transform>() {
+		// We make sure this class doesn't derive from transform to avoid doing this twice,
+		// and we make sure this entity doesn't already have a Transform, in case someone wants to override
+		// it with by prepending this hook.
+		if view.tb_config.global_transform_application && !view.class.info.derives_from::<Transform>() && !ent.contains::<Transform>() {
 			ent.insert(Transform {
 				translation: read_translation_from_entity(view.src_entity, view.tb_config)?,
 				rotation: read_rotation_from_entity(view.src_entity)?,
