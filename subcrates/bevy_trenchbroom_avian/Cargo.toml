@@ -1,7 +1,8 @@
 [package]
 name = "bevy_trenchbroom_avian"
+description = "Integration between `bevy_trenchbroom` and the Avian physics engine."
+
 version.workspace = true
-description.workspace = true
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true

@@ -3,7 +3,6 @@ members = ["example/*", "subcrates/*"]
 
 [workspace.package]
 version = "0.10.0"
-description = "TrenchBroom and ericw-tools integration with Bevy"
 edition = "2024"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -15,8 +14,8 @@ readme = "readme.md"
 categories = ["game-development"]
 exclude = ["/assets", "/ci", "/compile_map.sh"]
 keywords = ["bevy"]
+description = "TrenchBroom and ericw-tools integration with Bevy."
 
-description.workspace = true
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

@@ -1,7 +1,7 @@
 [package]
 name = "bevy_trenchbroom_macros"
+description = "Procedural macro crate for bevy_trenchbroom."
 
-description.workspace = true
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

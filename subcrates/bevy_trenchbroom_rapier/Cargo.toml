@@ -1,7 +1,8 @@
 [package]
 name = "bevy_trenchbroom_rapier"
-version = "0.0.0"
-description.workspace = true
+description = "Integration between `bevy_trenchbroom` and the Avian physics engine."
+
+version = "0.0.0" # TODO: TMP
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true
