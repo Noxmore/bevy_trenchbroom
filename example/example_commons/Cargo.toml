@@ -12,7 +12,7 @@ bench = false
 doc = false
 
 [dependencies]
-bevy.workspace = true
+bevy = { workspace = true, features = ["reflect_auto_register", "png"] }
 bevy-inspector-egui = { version = "0.34", optional = true }
 
 [features]

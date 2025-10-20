@@ -6,6 +6,7 @@ use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::LightingClassesPlugin;
 use bevy_trenchbroom::class::builtin::LightingWorkflow;
+#[allow(unused)]
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
 use nil::prelude::*;
@@ -65,21 +66,28 @@ impl Light {
 }
 
 fn main() {
+	// Unfortunately, due to Rust limitations on attributes, we have to build this through a variable.
+	#[allow(unused_mut)]
+	let mut trenchbroom_plugins = TrenchBroomPlugins(
+		TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle()),
+	)
+	.build()
+	// This is because we use a custom light class for parity with bsp_loading.
+	.set(LightingClassesPlugin(LightingWorkflow::Custom));
+
+	// I use bsp_loading to write the config.
+	// This is feature locked for headless to work.
+	#[cfg(all(not(target_family = "wasm"), feature = "client"))]
+	{
+		trenchbroom_plugins = trenchbroom_plugins.disable::<WriteTrenchBroomConfigOnStartPlugin>();
+	}
+
 	App::new()
 		.add_plugins(DefaultPlugins.set(AssetPlugin {
 			file_path: "../../assets".s(),
 			..default()
 		}))
-		.add_plugins(
-			TrenchBroomPlugins(
-				TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle()),
-			)
-			.build()
-			// I use bsp_loading to write the config.
-			.disable::<WriteTrenchBroomConfigOnStartPlugin>()
-			// This is because we use a custom light class for parity with bsp_loading.
-			.set(LightingClassesPlugin(LightingWorkflow::Custom)),
-		)
+		.add_plugins(trenchbroom_plugins)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(PostStartup, setup_scene)
 		.run();
