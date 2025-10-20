@@ -1,5 +1,6 @@
 # 0.9 to 0.10
 - Physics integrations have been decoupled into the `bevy_trenchbroom_rapier` and `bevy_trenchbroom_avian` crates to make releasing updates quicker. Add one of those into your project, and add the plugin `TrenchBroomPhysicsPlugin::new(/*(physics engine)*/}PhysicsBackend)`.
+- The global spawner in `TrenchBroomConfig` has been split into `pre_spawn_hook` and `post_spawn_hook`.
 
 # 0.8 to 0.9
 - Derive macros have been converted to attribute macros to greatly reduce boilerplate

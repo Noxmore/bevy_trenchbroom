@@ -180,9 +180,6 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	/// Entity in the scene world.
 	pub entity: Entity,
 	pub load_context: &'l mut LoadContext<'w>,
-	/// If [`Some`], sets the entity's transform in the default global spawner, overriding any other.
-	/// This is mainly useful if you have [`TrenchBroomConfig::global_transform_application`] enabled.
-	pub transform_override: Option<Transform>,
 
 	/// Information about the mesh entities this entity contains.
 	pub meshes: &'l mut Vec<QuakeClassMeshView<'l>>,
@@ -237,6 +234,7 @@ impl ErasedQuakeClass {
 		}
 	}
 
+	/// Calls [`Self::spawn_fn`] recursively for all base classes. For almost all cases, you should use the [`spawn_quake_entity_into_scene`] function instead of this.
 	pub fn apply_spawn_fn_recursive(&self, view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		self.apply_spawn_fn_recursive_internal(view, &mut default())
 	}
@@ -260,6 +258,14 @@ impl ErasedQuakeClass {
 	pub fn id(&self) -> TypeId {
 		(self.type_id)()
 	}
+}
+
+/// Fully spawns a Quake entity into a scene through a [`QuakeClassSpawnView`], calling [`ErasedQuakeClass::spawn_fn`] recursively for all base classes, as well as pre and post spawn hooks.
+pub fn spawn_quake_entity_into_scene(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+	// We use string formatting because I am not a fan of anyhow's context adding system
+	(view.tb_config.pre_spawn_hook)(view).map_err(|err| anyhow!("pre_spawn_hook: {err}"))?;
+	view.class.apply_spawn_fn_recursive(view)?;
+	(view.tb_config.post_spawn_hook)(view).map_err(|err| anyhow!("post_spawn_hook: {err}"))
 }
 
 /// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`], unless not [`enabled`](Self::enabled).
@@ -381,7 +387,6 @@ mod tests {
 				world: &mut world,
 				entity,
 				load_context: &mut load_context,
-				transform_override: None,
 				meshes: &mut Vec::new(),
 			})
 			.unwrap();

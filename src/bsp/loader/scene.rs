@@ -2,7 +2,7 @@ use super::*;
 #[cfg(feature = "client")]
 use crate::bsp::lighting::AnimatedLightingHandle;
 use crate::{
-	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
+	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
 	geometry::MapGeometry,
 	util::MapFileType,
 	*,
@@ -76,7 +76,6 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			world: &mut world,
 			entity,
 			load_context: ctx.load_context,
-			transform_override: None,
 			meshes: &mut meshes,
 		};
 
@@ -90,11 +89,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 				.insert(AnimatedLightingHandle(animated_lighting_handle.clone()));
 		}
 
-		class
-			.apply_spawn_fn_recursive(&mut view)
-			.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
-
-		(config.global_spawner)(&mut view).map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+		spawn_quake_entity_into_scene(&mut view).map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
 		// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 		for mesh_view in view.meshes.iter() {

@@ -8,7 +8,7 @@ use config::TextureLoadView;
 use geometry::{BrushList, Brushes, MapGeometryTexture};
 
 use crate::{
-	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map},
+	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
 	geometry::MapGeometry,
 	util::MapFileType,
 };
@@ -209,16 +209,10 @@ impl AssetLoader for QuakeMapLoader {
 					world: &mut world,
 					entity,
 					load_context,
-					transform_override: None,
 					meshes: &mut mesh_views,
 				};
 
-				class
-					.apply_spawn_fn_recursive(&mut view)
-					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
-
-				(self.tb_server.config.global_spawner)(&mut view)
-					.map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}) with global spawner: {err}"))?;
+				spawn_quake_entity_into_scene(&mut view).map_err(|err| anyhow!("spawning entity {map_entity_idx} ({classname}): {err}"))?;
 
 				for (mesh_entity, mesh, _) in meshes {
 					let handle = load_context.add_labeled_asset(format!("Mesh{}", mesh_handles.len()), mesh);
