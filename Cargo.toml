@@ -81,3 +81,6 @@ default = ["client"]
 client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 physics-integration = []
 bsp = ["dep:qbsp"]
+
+[patch.crates-io]
+qbsp = { git = "https://github.com/eira-fransham/qbsp.git", branch = "bsp-30-and-38" }

@@ -22,7 +22,7 @@ pub use bevy_materialize::prelude::*;
 #[cfg(feature = "bsp")]
 pub use qbsp::{
 	self, Palette, QUAKE_PALETTE,
-	data::bsp::{BspTexFlags, LightmapStyle},
+	data::{BspTexFlags, LightmapStyle},
 	mesh::lightmap::{ComputeLightmapSettings, LightmapAtlas},
 };
 
