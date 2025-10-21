@@ -24,12 +24,14 @@ impl<'d> EmbeddedTextures<'d> {
 			.textures
 			.iter()
 			.flatten()
-			.filter(|texture| texture.data.is_some())
+			.filter(|texture| texture.data.full.is_some())
 			.map(|texture| {
-				let Some(data) = &texture.data else { unreachable!() };
+				let Some(data) = &texture.data.full else { unreachable!() };
 				let name = texture.header.name.as_str();
 
 				let is_cutout_texture = name.starts_with('{');
+
+				let palette = texture.data.palette.as_ref().unwrap_or(&palette);
 
 				let mut image = Image::new(
 					Extent3d {
