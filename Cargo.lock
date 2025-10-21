@@ -1645,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "anyhow",
  "atomicow",
@@ -1676,7 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom_avian"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "avian3d",
  "bevy",
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom_macros"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "deluxe",
  "heck 0.5.0",
@@ -1917,7 +1917,7 @@ dependencies = [
 
 [[package]]
 name = "bsp_loading"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -2718,7 +2718,7 @@ dependencies = [
 
 [[package]]
 name = "example_commons"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
@@ -3724,7 +3724,7 @@ dependencies = [
 
 [[package]]
 name = "map_loading"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "bevy",
  "bevy_trenchbroom",
@@ -3759,9 +3759,9 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "memmap2"
-version = "0.9.8"
+version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843a98750cd611cc2965a8213b53b43e715f13c37a9e096c6408e69990961db7"
+checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
 dependencies = [
  "libc",
 ]
@@ -4578,7 +4578,7 @@ dependencies = [
 
 [[package]]
 name = "physics_avian"
-version = "0.10.0"
+version = "0.11.0-dev"
 dependencies = [
  "avian3d",
  "bevy",
@@ -5858,9 +5858,9 @@ checksum = "1df77b101bcc4ea3d78dafc5ad7e4f58ceffe0b2b16bf446aeb50b6cb4157656"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.19"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f63a545481291138910575129486daeaf8ac54aee4387fe7906919f7830c7d9d"
+checksum = "462eeb75aeb73aea900253ce739c8e18a67423fadf006037cd3ff27e82748a06"
 
 [[package]]
 name = "unicode-linebreak"
@@ -6285,9 +6285,9 @@ dependencies = [
 
 [[package]]
 name = "wgpu-hal"
-version = "26.0.4"
+version = "26.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7df2c64ac282a91ad7662c90bc4a77d4a2135bc0b2a2da5a4d4e267afc034b9e"
+checksum = "4f66204fca99d4e5a4e9efe76042218f4f7019eaf85b33b62ecacb763e7fbd99"
 dependencies = [
  "android_system_properties",
  "arrayvec",
