@@ -58,7 +58,7 @@ impl<'d> EmbeddedTextures<'d> {
 
 				let image_handle = ctx.load_context.get_label_handle(format!("{TEXTURE_PREFIX}{name}"));
 
-				(texture.header.name.as_str(), (image, image_handle))
+				(name, (image, image_handle))
 			})
 			.collect();
 
@@ -80,6 +80,7 @@ impl<'d> EmbeddedTextures<'d> {
 					embedded_textures: Some(&images),
 				},
 
+				bsp_format: ctx.data.parse_ctx.format,
 				image_handle,
 				image,
 			})

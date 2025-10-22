@@ -1,3 +1,5 @@
+use qbsp::BspFormat;
+
 use super::*;
 
 pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
@@ -53,6 +55,8 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 	#[deref]
 	pub parent_view: TextureLoadView<'a, 'b>,
 
+	/// The format of the bsp file that this texture was loaded from.
+	pub bsp_format: BspFormat,
 	/// The handle of the image of this embedded texture.
 	pub image_handle: &'a Handle<Image>,
 	/// The actual image data behind the texture.
