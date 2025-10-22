@@ -107,6 +107,11 @@ For more information, please see [the manual](https://docs.rs/bevy_trenchbroom/l
 First, add the `bevy_trenchbroom_rapier` or `bevy_trenchbroom_avian` integration crates, then add the plugin `TrenchBroomPhysicsPlugin::new(RapierPhysicsBackend)` or `TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend)` respectively.
 Now you can either call `convex_collider` or `trimesh_collider` on your class's `SpawnHooks` to create the respective type of collider(s) with said geometry.
 
+TIP: If you want Brush entities to have a collider by *default*, you can add this to your `TrenchBroomConfig`:
+```rust ignore
+.default_solid_spawn_hooks(|| SpawnHooks::new().convex_collider())
+```
+
 ## Multiplayer
 
 For dedicated servers `bevy_trenchbroom` supports headless mode by turning off its `client` feature. e.g.
