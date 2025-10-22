@@ -4773,9 +4773,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af20de58318868f389d6eb6ae6157cad49868286461f1a8bed7f43d4fa27bf12"
+checksum = "c0ee23a4d601b7bcf352c6071d6da787aebf12e7b8f6750c578274050fa0eb00"
 dependencies = [
  "bevy_reflect",
  "bitflags 2.10.0",
@@ -4793,9 +4793,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp_macros"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ab0292f1ffa46f40338d98ceef95403d2d7c896fa98204f5b2da8c10c3d8eb0"
+checksum = "f64cd133e0ec7c6f133a693f85c9ce6bfd5c354277130fdb8960bc1a3392b872"
 dependencies = [
  "proc-macro2",
  "quote",
