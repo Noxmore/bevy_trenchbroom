@@ -4773,8 +4773,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp"
-version = "0.6.2"
-source = "git+https://github.com/eira-fransham/qbsp.git?branch=bsp-30-and-38#9e5dcf24e2c3ee70b9c002eb20b15761b13bea3e"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af20de58318868f389d6eb6ae6157cad49868286461f1a8bed7f43d4fa27bf12"
 dependencies = [
  "bevy_reflect",
  "bitflags 2.10.0",
@@ -4792,8 +4793,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp_macros"
-version = "0.6.2"
-source = "git+https://github.com/eira-fransham/qbsp.git?branch=bsp-30-and-38#9e5dcf24e2c3ee70b9c002eb20b15761b13bea3e"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ab0292f1ffa46f40338d98ceef95403d2d7c896fa98204f5b2da8c10c3d8eb0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5141,9 +5143,9 @@ dependencies = [
 
 [[package]]
 name = "self_cell"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f7d95a54511e0c7be3f51e8867aa8cf35148d7b9445d44de2f943e2b206e749"
+checksum = "16c2f82143577edb4921b71ede051dac62ca3c16084e918bf7b40c96ae10eb33"
 
 [[package]]
 name = "send_wrapper"

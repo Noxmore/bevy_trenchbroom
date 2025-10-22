@@ -62,7 +62,7 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.6", features = ["bevy_reflect", "serde"], optional = true }
+qbsp = { version = "0.7", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
@@ -81,6 +81,3 @@ default = ["client"]
 client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 physics-integration = []
 bsp = ["dep:qbsp"]
-
-[patch.crates-io]
-qbsp = { git = "https://github.com/eira-fransham/qbsp.git", branch = "bsp-30-and-38" }
