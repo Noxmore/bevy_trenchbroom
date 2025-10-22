@@ -49,7 +49,7 @@ impl TrenchBroomConfig {
 		self
 	}
 
-	/// - Names the entity based on the classname, and `targetname` if the property exists. (See documentation on [`TrenchBroomConfig::global_spawner`])
+	/// - Names the entity based on the classname, and `targetname` if the property exists.
 	/// - Handles [`TrenchBroomConfig::global_transform_application`]
 	pub fn default_pre_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
