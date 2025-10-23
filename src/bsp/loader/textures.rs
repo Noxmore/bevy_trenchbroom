@@ -1,12 +1,72 @@
+use std::hash::{Hash, Hasher};
+
 use bsp::*;
 use loader::BspLoadCtx;
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 use crate::*;
 
+// For some reason, `<() as PartialReflect>::reflect_hash` returns `None` even though `(): Hash`
+#[derive(Reflect, Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[reflect(Hash)]
+#[reflect(PartialEq)]
+pub struct NoMaterialProperties;
+
+pub trait MaterialProperties: PartialReflect {
+	fn write_material(&self, material: &mut StandardMaterial) -> anyhow::Result<()>;
+}
+
+pub struct MaterialId<T: ?Sized = dyn MaterialProperties> {
+	name: String,
+	props: T,
+}
+
+impl MaterialProperties for NoMaterialProperties {
+	fn write_material(&self, _material: &mut StandardMaterial) -> anyhow::Result<()> {
+		Ok(())
+	}
+}
+
+impl<T> MaterialId<T>
+where
+	T: PartialReflect,
+{
+	pub fn name(&self) -> String {
+		format!(
+			"{}${}",
+			self.name,
+			self.props
+				.reflect_hash()
+				.expect("To be used as a material property, a type must implement `Hash` and be annotated with `#[reflect(Hash)]`")
+		)
+	}
+}
+
+impl PartialEq for Box<MaterialId> {
+	fn eq(&self, other: &Self) -> bool {
+		self.name == other.name
+			&& self
+				.props
+				.reflect_partial_eq(&other.props)
+				.expect("To be used as a material property, a type must implement `PartialEq` and be annotated with `#[reflect(PartialEq)]`")
+	}
+}
+
+impl Eq for Box<MaterialId> {}
+
+impl Hash for Box<MaterialId> {
+	fn hash<H: Hasher>(&self, hasher: &mut H) {
+		self.name.hash(&mut *hasher);
+		self.props
+			.reflect_hash()
+			.expect("To be used as a material property, a type must implement `Hash`")
+			.hash(&mut *hasher);
+	}
+}
+
 pub struct EmbeddedTextures<'d> {
 	pub images: HashMap<&'d str, (Image, Handle<Image>)>,
-	pub textures: HashMap<String, BspEmbeddedTexture>,
+	pub materials: HashMap<Box<MaterialId>, BspEmbeddedTexture>,
 }
 
 impl<'d> EmbeddedTextures<'d> {
@@ -24,12 +84,14 @@ impl<'d> EmbeddedTextures<'d> {
 			.textures
 			.iter()
 			.flatten()
-			.filter(|texture| texture.data.is_some())
+			.filter(|texture| texture.data.full.is_some())
 			.map(|texture| {
-				let Some(data) = &texture.data else { unreachable!() };
+				let is_cutout_texture = texture.header.name.as_str().starts_with('{');
+
+				let Some(data) = &texture.data.full else { unreachable!() };
 				let name = texture.header.name.as_str();
 
-				let is_cutout_texture = name.starts_with('{');
+				let palette = texture.data.palette.as_ref().unwrap_or(&palette);
 
 				let mut image = Image::new(
 					Extent3d {
@@ -60,11 +122,31 @@ impl<'d> EmbeddedTextures<'d> {
 			})
 			.collect();
 
-		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity_and_hasher(images.len(), default());
+		Ok(Self {
+			images,
+			materials: default(),
+		})
+	}
 
-		for (name, (image, image_handle)) in &images {
-			#[cfg(feature = "client")]
+	pub async fn material<S, MatProps>(&mut self, ctx: &mut BspLoadCtx<'_, '_>, name: S, mat_props: MatProps) -> Option<Handle<GenericMaterial>>
+	where
+		S: AsRef<str>,
+		MatProps: MaterialProperties,
+	{
+		let name = name.as_ref();
+		let material_id: Box<MaterialId> = Box::new(MaterialId {
+			name: name.to_string(),
+			props: mat_props,
+		});
+
+		if let Some(mat) = self.materials.get(&material_id) {
+			Some(mat.material.clone())
+		} else {
 			let is_cutout_texture = name.starts_with('{');
+
+			let (image, image_handle) = self.images.get(name)?;
+
+			let config = &ctx.loader.tb_server.config;
 
 			let material = (config.load_embedded_texture)(EmbeddedTextureLoadView {
 				parent_view: TextureLoadView {
@@ -75,24 +157,26 @@ impl<'d> EmbeddedTextures<'d> {
 					entities: ctx.entities,
 					#[cfg(feature = "client")]
 					alpha_mode: is_cutout_texture.then_some(AlphaMode::Mask(0.5)),
-					embedded_textures: Some(&images),
+					embedded_textures: Some(&self.images),
 				},
 
 				image_handle,
 				image,
+
+				material_properties: &material_id.props,
 			})
 			.await;
 
-			textures.insert(
-				name.s(),
+			self.materials.insert(
+				material_id,
 				BspEmbeddedTexture {
 					image: image_handle.clone(),
-					material,
+					material: material.clone(),
 				},
 			);
-		}
 
-		Ok(Self { images, textures })
+			Some(material)
+		}
 	}
 
 	/// Loads the placeholder images, and returns the embedded textures.
@@ -101,6 +185,6 @@ impl<'d> EmbeddedTextures<'d> {
 			ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
 		}
 
-		self.textures
+		self.materials.into_iter().map(|(k, v)| (k.name, v)).collect()
 	}
 }

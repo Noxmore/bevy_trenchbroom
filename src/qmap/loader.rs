@@ -179,7 +179,7 @@ impl AssetLoader for QuakeMapLoader {
 							mesh,
 							MapGeometryTexture {
 								name: texture.s(),
-								material,
+								material: Some(material),
 								#[cfg(all(feature = "client", feature = "bsp"))]
 								lightmap: None,
 								#[cfg(feature = "bsp")]

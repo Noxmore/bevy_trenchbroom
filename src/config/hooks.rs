@@ -1,3 +1,6 @@
+#[cfg(feature = "bsp")]
+use crate::bsp::MaterialProperties;
+
 use super::*;
 
 pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
@@ -53,6 +56,9 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 	#[deref]
 	pub parent_view: TextureLoadView<'a, 'b>,
 
+	#[cfg(feature = "bsp")]
+	pub material_properties: &'a dyn MaterialProperties,
+
 	/// The handle of the image of this embedded texture.
 	pub image_handle: &'a Handle<Image>,
 	/// The actual image data behind the texture.
@@ -62,7 +68,7 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	
+
 	#[test]
 	fn hook_stack() {
 		let mut hook: Hook<dyn Fn() -> i32 + Send + Sync> = Hook(Arc::new(|| 2));

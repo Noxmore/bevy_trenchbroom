@@ -163,7 +163,7 @@ pub fn generate_class_map(registry: &TypeRegistry) -> HashMap<&'static str, &'st
 }
 
 /// Inputs provided when spawning an entity into the scene world of a loading map.
-pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
+pub struct QuakeClassSpawnView<'l, 'w, 'sw, 'm> {
 	// 'l: local, 'w: world, 'sw: scene world
 	/// The file type of the map being loaded.
 	pub file_type: MapFileType,
@@ -182,9 +182,9 @@ pub struct QuakeClassSpawnView<'l, 'w, 'sw> {
 	pub load_context: &'l mut LoadContext<'w>,
 
 	/// Information about the mesh entities this entity contains.
-	pub meshes: &'l mut Vec<QuakeClassMeshView<'l>>,
+	pub meshes: &'l mut Vec<QuakeClassMeshView<'m>>,
 }
-impl QuakeClassSpawnView<'_, '_, '_> {
+impl QuakeClassSpawnView<'_, '_, '_, '_> {
 	/// Store an asset that you wish to load, but not use for anything yet.
 	pub fn preload_asset(&mut self, handle: UntypedHandle) {
 		self.world
@@ -261,7 +261,7 @@ impl ErasedQuakeClass {
 }
 
 /// Fully spawns a Quake entity into a scene through a [`QuakeClassSpawnView`], calling [`ErasedQuakeClass::spawn_fn`] recursively for all base classes, as well as pre and post spawn hooks.
-pub fn spawn_quake_entity_into_scene(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+pub fn spawn_quake_entity_into_scene<'a, 'b, 'c, 'd, 'e>(view: &'a mut QuakeClassSpawnView<'b, 'c, 'd, 'e>) -> anyhow::Result<()> {
 	// We use string formatting because I am not a fan of anyhow's context adding system
 	(view.tb_config.pre_spawn_hook)(view).map_err(|err| anyhow!("pre_spawn_hook: {err}"))?;
 	view.class.apply_spawn_fn_recursive(view)?;
