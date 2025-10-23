@@ -20,11 +20,12 @@ use lightmap::BspLightmap;
 use models::{compute_models, finalize_models};
 use qmap::QuakeMapEntities;
 use scene::initialize_scene;
-use textures::EmbeddedTextures;
 
-use crate::*;
+pub use textures::{MaterialProperties, NoMaterialProperties};
 
-pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
+use crate::{bsp::loader::textures::EmbeddedTextures, *};
+
+pub(crate) struct BspLoadCtx<'a, 'lc> {
 	pub loader: &'a BspLoader,
 	pub load_context: &'a mut LoadContext<'lc>,
 	pub asset_server: &'a AssetServer,
@@ -84,18 +85,18 @@ impl AssetLoader for BspLoader {
 				entities: &entities,
 			};
 
-			let embedded_textures = EmbeddedTextures::setup(&mut ctx).await?;
+			let mut embedded_textures = EmbeddedTextures::setup(&mut ctx).await?;
 
 			#[cfg(feature = "client")]
 			let lightmap = BspLightmap::compute(&mut ctx)?;
 			#[cfg(not(feature = "client"))]
 			let lightmap = None;
 
-			let mut models = compute_models(&mut ctx, &lightmap, &embedded_textures).await;
+			let mut models = compute_models(&mut ctx, &lightmap).await;
+
+			let mut world = initialize_scene(&mut ctx, &mut models, &mut embedded_textures).await?;
 
 			let embedded_textures = embedded_textures.finalize(&mut ctx);
-
-			let mut world = initialize_scene(&mut ctx, &mut models)?;
 
 			let bsp_models = finalize_models(&mut ctx, models, &mut world)?;
 

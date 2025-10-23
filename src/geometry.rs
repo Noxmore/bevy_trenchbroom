@@ -45,7 +45,7 @@ impl std::ops::Deref for BrushList {
 #[derive(Reflect, Debug, Clone, PartialEq, Eq)]
 pub struct MapGeometryTexture {
 	pub name: String,
-	pub material: Handle<GenericMaterial>,
+	pub material: Option<Handle<GenericMaterial>>,
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	/// If the texture should be full-bright

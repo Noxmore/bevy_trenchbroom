@@ -1,5 +1,5 @@
 use super::*;
-use crate::*;
+use crate::{bsp::loader::textures::NoMaterialProperties, *};
 use bevy_mesh::{Indices, PrimitiveTopology};
 use bsp::*;
 
@@ -28,11 +28,7 @@ type Lightmap = BspLightmap;
 #[cfg(not(feature = "client"))]
 type Lightmap = LightmapUvMap;
 
-pub async fn compute_models<'a, 'lc: 'a>(
-	ctx: &mut BspLoadCtx<'a, 'lc>,
-	lightmap: &Option<Lightmap>,
-	embedded_textures: &EmbeddedTextures<'a>,
-) -> Vec<InternalModel> {
+pub async fn compute_models<'a, 'lc: 'a>(ctx: &mut BspLoadCtx<'a, 'lc>, lightmap: &Option<Lightmap>) -> Vec<InternalModel> {
 	let config = &ctx.loader.tb_server.config;
 	#[cfg(feature = "client")]
 	let lightmap_uvs = lightmap.as_ref().map(|lm| &lm.uv_map);
@@ -72,27 +68,9 @@ pub async fn compute_models<'a, 'lc: 'a>(
 					exported_mesh.texture
 				);
 			}
-
-			let material = match embedded_textures.textures.get(&exported_mesh.texture) {
-				Some(embedded_texture) => embedded_texture.material.clone(),
-				None => {
-					(config.load_loose_texture)(TextureLoadView {
-						name: &exported_mesh.texture,
-						tb_config: config,
-						load_context: ctx.load_context,
-						asset_server: ctx.asset_server,
-						entities: ctx.entities,
-						#[cfg(feature = "client")]
-						alpha_mode: None,
-						embedded_textures: Some(&embedded_textures.images),
-					})
-					.await
-				}
-			};
-
 			model.meshes.push(InternalModelMesh {
 				texture: MapGeometryTexture {
-					material,
+					material: None,
 					#[cfg(feature = "client")]
 					lightmap: lightmap.as_ref().map(|lm| lm.animated_lighting.clone()),
 					name: exported_mesh.texture,

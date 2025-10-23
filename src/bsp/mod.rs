@@ -11,6 +11,8 @@ use lighting::AnimatedLighting;
 use loader::BspLoader;
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 
+pub use loader::{MaterialProperties, NoMaterialProperties};
+
 use crate::{util::BevyTrenchbroomCoordinateConversions, *};
 
 pub struct BspPlugin;
