@@ -1,6 +1,6 @@
 use brush::Brush;
 use fgd::FgdType;
-use geometry::BrushList;
+use geometry::BrushesAsset;
 
 use crate::*;
 
@@ -23,7 +23,7 @@ pub struct QuakeMap {
 	pub scene: Handle<Scene>,
 	pub meshes: Vec<Handle<Mesh>>,
 	/// Maps from entity indexes to brush lists.
-	pub brush_lists: HashMap<usize, Handle<BrushList>>,
+	pub brush_lists: HashMap<usize, Handle<BrushesAsset>>,
 	pub entities: QuakeMapEntities,
 }
 

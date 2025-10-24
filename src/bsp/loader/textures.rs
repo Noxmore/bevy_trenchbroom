@@ -1,16 +1,21 @@
 use bsp::*;
 use loader::BspLoadCtx;
+use qbsp::data::texture::EmbeddedTextureName;
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 use crate::*;
 
-pub struct EmbeddedTextures<'d> {
-	pub images: HashMap<&'d str, (Image, Handle<Image>)>,
-	pub textures: HashMap<String, BspEmbeddedTexture>,
+pub struct EmbeddedTextures {
+	pub images: HashMap<EmbeddedTextureName, (Image, Handle<Image>)>,
+	pub textures: HashMap<EmbeddedTextureName, BspEmbeddedTexture>,
 }
 
-impl<'d> EmbeddedTextures<'d> {
-	pub async fn setup<'a: 'd, 'lc>(ctx: &mut BspLoadCtx<'a, 'lc>) -> anyhow::Result<Self> {
+fn is_cutout_texture(name: &EmbeddedTextureName) -> bool {
+	name.as_bytes()[0] == b'{'
+}
+
+impl EmbeddedTextures {
+	pub async fn setup<'a, 'lc>(ctx: &mut BspLoadCtx<'a, 'lc>) -> anyhow::Result<Self> {
 		let config = &ctx.loader.tb_server.config;
 
 		// Have to clone `texture_pallette` for the borrow checker. Can't figure out why.
@@ -19,7 +24,7 @@ impl<'d> EmbeddedTextures<'d> {
 			None => QUAKE_PALETTE.clone(),
 		};
 
-		let images: HashMap<&str, (Image, Handle<Image>)> = ctx
+		let images: HashMap<EmbeddedTextureName, (Image, Handle<Image>)> = ctx
 			.data
 			.textures
 			.iter()
@@ -27,9 +32,9 @@ impl<'d> EmbeddedTextures<'d> {
 			.filter(|texture| texture.data.full.is_some())
 			.map(|texture| {
 				let Some(data) = &texture.data.full else { unreachable!() };
-				let name = texture.header.name.as_str();
+				let name = texture.header.name;
 
-				let is_cutout_texture = name.starts_with('{');
+				let is_cutout_texture = is_cutout_texture(&name);
 
 				let palette = texture.data.palette.as_ref().unwrap_or(&palette);
 
@@ -62,16 +67,16 @@ impl<'d> EmbeddedTextures<'d> {
 			})
 			.collect();
 
-		let mut textures: HashMap<String, BspEmbeddedTexture> = HashMap::with_capacity_and_hasher(images.len(), default());
+		let mut textures: HashMap<EmbeddedTextureName, BspEmbeddedTexture> = HashMap::with_capacity_and_hasher(images.len(), default());
 
 		for (name, (image, image_handle)) in &images {
 			#[cfg(feature = "client")]
-			let is_cutout_texture = name.starts_with('{');
+			let is_cutout_texture = is_cutout_texture(name);
 
 			let material = (config.load_embedded_texture)(EmbeddedTextureLoadView {
 				parent_view: TextureLoadView {
-					name,
-					tb_config: config,
+					name: name.as_str(),
+					tb_server: &ctx.loader.tb_server,
 					load_context: ctx.load_context,
 					asset_server: ctx.asset_server,
 					entities: ctx.entities,
@@ -87,7 +92,7 @@ impl<'d> EmbeddedTextures<'d> {
 			.await;
 
 			textures.insert(
-				name.s(),
+				*name,
 				BspEmbeddedTexture {
 					image: image_handle.clone(),
 					material,
@@ -99,7 +104,7 @@ impl<'d> EmbeddedTextures<'d> {
 	}
 
 	/// Loads the placeholder images, and returns the embedded textures.
-	pub fn finalize(self, ctx: &mut BspLoadCtx) -> HashMap<String, BspEmbeddedTexture> {
+	pub fn finalize(self, ctx: &mut BspLoadCtx) -> HashMap<EmbeddedTextureName, BspEmbeddedTexture> {
 		for (name, (image, _)) in self.images {
 			ctx.load_context.add_labeled_asset(format!("{TEXTURE_PREFIX}{name}"), image);
 		}

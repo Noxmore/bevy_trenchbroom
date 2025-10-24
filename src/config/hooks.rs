@@ -1,7 +1,12 @@
-use qbsp::BspFormat;
+#[cfg(feature = "bsp")]
+use qbsp::{
+	BspFormat,
+	data::texture::EmbeddedTextureName,
+};
 
 use super::*;
 
+#[cfg(feature = "bsp")]
 pub type LoadEmbeddedTextureFn = dyn for<'a, 'b> Fn(EmbeddedTextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type LoadLooseTextureFn = dyn for<'a, 'b> Fn(TextureLoadView<'a, 'b>) -> BoxedFuture<'a, Handle<GenericMaterial>> + Send + Sync;
 pub type SpawnFn = dyn Fn(&mut QuakeClassSpawnView) -> anyhow::Result<()> + Send + Sync;
@@ -30,7 +35,7 @@ impl<F: ?Sized> Hook<F> {
 /// Various inputs available when loading textures.
 pub struct TextureLoadView<'a, 'b> {
 	pub name: &'a str,
-	pub tb_config: &'a TrenchBroomConfig,
+	pub tb_server: &'a TrenchBroomServer,
 	pub load_context: &'a mut LoadContext<'b>,
 	/// Because [`LoadContext`] doesn't expose its [`AssetServer`], this does it for you, allowing you do do things you couldn't with just the load context.
 	pub asset_server: &'a AssetServer,
@@ -38,18 +43,27 @@ pub struct TextureLoadView<'a, 'b> {
 	/// `Some` if it is determined that a specific alpha mode should be used for a material, such as in some embedded textures.
 	#[cfg(feature = "client")]
 	pub alpha_mode: Option<AlphaMode>,
+
 	/// If the map contains embedded textures, this will be a map of texture names to image handles.
 	/// This is useful for things like animated textures.
-	pub embedded_textures: Option<&'a HashMap<&'a str, (Image, Handle<Image>)>>,
+	#[cfg(feature = "bsp")]
+	pub embedded_textures: Option<&'a HashMap<EmbeddedTextureName, (Image, Handle<Image>)>>,
 }
-impl TextureLoadView<'_, '_> {
+impl<'a, 'b> TextureLoadView<'a, 'b> {
 	/// Shorthand for adding a material asset with the correct label.
 	#[cfg(feature = "client")]
 	pub fn add_material<M: Material>(&mut self, material: M) -> Handle<M> {
 		self.load_context.add_labeled_asset(format!("Material_{}", self.name), material)
 	}
+
+	/// Shorthand for `self.tb_server.config`.
+	#[inline]
+	pub fn tb_config(&self) -> &'a TrenchBroomConfig {
+		&self.tb_server.config
+	}
 }
 
+#[cfg(feature = "bsp")]
 #[derive(Deref, DerefMut)]
 pub struct EmbeddedTextureLoadView<'a, 'b> {
 	#[deref]

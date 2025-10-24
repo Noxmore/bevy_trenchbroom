@@ -49,11 +49,17 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			meshes.reserve(model.meshes.len());
 
 			for model_mesh in &mut model.meshes {
-				if config.auto_remove_textures.contains(&model_mesh.texture.name) {
-					continue;
+				let mut name = Cow::Borrowed("<TEXTURE MISSING>");
+
+				if let Some(texture_name) = &model_mesh.texture.name {
+					if config.auto_remove_textures.contains(texture_name) {
+						continue;
+					}
+
+					name = Cow::Owned(texture_name.clone());
 				}
 
-				let mesh_entity = world.spawn((Name::new(model_mesh.texture.name.clone()), Transform::default())).id();
+				let mesh_entity = world.spawn((Name::new(name), Transform::default())).id();
 
 				meshes.push(QuakeClassMeshView {
 					entity: mesh_entity,

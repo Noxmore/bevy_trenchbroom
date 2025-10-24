@@ -170,9 +170,9 @@ impl TrenchBroomConfig {
 			let source = view.load_context.asset_path().source().clone_owned();
 
 			// Search for material files
-			for ext in &view.tb_config.generic_material_extensions {
+			for ext in &view.tb_config().generic_material_extensions {
 				let path = view
-					.tb_config
+					.tb_config()
 					.material_root
 					.join(format!("{}.{}", view.name, ext));
 
@@ -184,9 +184,9 @@ impl TrenchBroomConfig {
 			
 			// None found, look for image files
 
-			for ext in &view.tb_config.texture_extensions {
+			for ext in &view.tb_config().texture_extensions {
 				let path = view
-					.tb_config
+					.tb_config()
 					.material_root
 					.join(format!("{}.{}", view.name, ext));
 
@@ -195,8 +195,8 @@ impl TrenchBroomConfig {
 				}
 			}
 
-			error!("Failed to find a texture \"{}\" with the GenericMaterial extension(s) {:?} or the image extension(s) {:?}", view.name, view.tb_config.generic_material_extensions, view.tb_config.texture_extensions);
-			Handle::default()
+			error!("Failed to find a texture \"{}\" with the GenericMaterial extension(s) {:?} or the image extension(s) {:?}", view.name, view.tb_config().generic_material_extensions, view.tb_config().texture_extensions);
+			view.tb_server.missing_material.read().clone()
 		})
 	}
 
