@@ -284,11 +284,11 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 	let size = option(opts.size.map(|size| size.to_string()));
 	let decal = opts.decal;
 
-	let spawn_hooks = match opts.hooks {
+	let scene_hooks = match opts.hooks {
 		None => match ty {
-			QuakeClassType::Base => quote! { (view.tb_config.default_base_spawn_hooks)() },
-			QuakeClassType::Point => quote! { (view.tb_config.default_point_spawn_hooks)() },
-			QuakeClassType::Solid => quote! { (view.tb_config.default_solid_spawn_hooks)() },
+			QuakeClassType::Base => quote! { (view.tb_config.default_base_scene_hooks)() },
+			QuakeClassType::Point => quote! { (view.tb_config.default_point_scene_hooks)() },
+			QuakeClassType::Solid => quote! { (view.tb_config.default_solid_scene_hooks)() },
 		},
 		Some(hooks) => hooks.to_token_stream(),
 	};
@@ -317,7 +317,7 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 				use ::bevy_trenchbroom::qmap::QuakeEntityErrorResultExt;
 				#spawn_constructor_default_value
 				view.world.entity_mut(view.entity).insert(#spawn_constructor);
-				let hooks: ::bevy_trenchbroom::class::spawn_hooks::SpawnHooks = #spawn_hooks;
+				let hooks: ::bevy_trenchbroom::class::scene_hooks::SceneHooks = #scene_hooks;
 				hooks.apply(view)?;
 				Ok(())
 			}

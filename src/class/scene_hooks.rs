@@ -10,10 +10,10 @@ pub const DEFAULT_NORMAL_SMOOTH_THRESHOLD: f32 = std::f32::consts::FRAC_PI_4;
 
 /// Functions that occur during the spawning of an [`QuakeClass`] entity into a scene world.
 #[derive(Default)]
-pub struct SpawnHooks {
+pub struct SceneHooks {
 	pub hooks: Vec<Box<SpawnFnOnce>>,
 }
-impl SpawnHooks {
+impl SceneHooks {
 	pub fn new() -> Self {
 		Self::default()
 	}
@@ -228,7 +228,7 @@ impl SpawnHooks {
 	/// #[point_class(
 	///     model("models/mushroom.glb"),
 	///     size(-4 -4 0, 4 4 16),
-	///     hooks(SpawnHooks::new().spawn_class_gltf::<Self>()),
+	///     hooks(SceneHooks::new().spawn_class_gltf::<Self>()),
 	/// )]
 	/// pub struct Mushroom;
 	/// ```
@@ -236,7 +236,7 @@ impl SpawnHooks {
 		self.spawn_class_model_internal::<T>(Some("Scene0"))
 	}
 
-	/// Spawn hook that simply loads the path specified in the model, adding it to the map's asset dependencies.
+	/// Scene hook that simply loads the path specified in the model, adding it to the map's asset dependencies.
 	///
 	/// TODO: This currently only works for simple paths (e.g. `#[model("path/to/model")]`), more advanced uses of the `model` property won't work.
 	///
@@ -246,7 +246,7 @@ impl SpawnHooks {
 	/// # use bevy_trenchbroom::prelude::*;
 	/// #[point_class(
 	///     model("models/torch.glb"),
-	///     hooks(SpawnHooks::new().preload_model::<Self>()),
+	///     hooks(SceneHooks::new().preload_model::<Self>()),
 	/// )]
 	/// pub struct Torch;
 	/// ```
@@ -297,7 +297,7 @@ mod tests {
 
 		#[point_class(
 			model("models/mushroom.glb"),
-			hooks(SpawnHooks::new().preload_model::<Self>()),
+			hooks(SceneHooks::new().preload_model::<Self>()),
 		)]
 		#[component(on_add = Self::on_add)]
 		pub struct Mushroom;

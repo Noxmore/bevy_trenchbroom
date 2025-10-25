@@ -1,5 +1,5 @@
 pub mod builtin;
-pub mod spawn_hooks;
+pub mod scene_hooks;
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
@@ -260,7 +260,7 @@ impl ErasedQuakeClass {
 	}
 }
 
-/// Fully spawns a Quake entity into a scene through a [`QuakeClassSpawnView`], calling [`ErasedQuakeClass::spawn_fn`] recursively for all base classes, as well as pre and post spawn hooks.
+/// Fully spawns a Quake entity into a scene through a [`QuakeClassSpawnView`], calling [`ErasedQuakeClass::spawn_fn`] recursively for all base classes, as well as pre and post scene hooks.
 pub fn spawn_quake_entity_into_scene(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 	// We use string formatting because I am not a fan of anyhow's context adding system
 	(view.tb_config.pre_spawn_hook)(view).map_err(|err| anyhow!("pre_spawn_hook: {err}"))?;
@@ -350,7 +350,7 @@ mod tests {
 		static mut CLASS_CALLED: bool = false;
 
 		#[base_class(
-			hooks(SpawnHooks::new().push(|_| {
+			hooks(SceneHooks::new().push(|_| {
 				assert!(unsafe { !BASE_CALLED });
 				unsafe { BASE_CALLED = true; }
 				Ok(())
@@ -361,7 +361,7 @@ mod tests {
 
 		#[point_class(
 			base(Base, Base),
-			hooks(SpawnHooks::new().push(|_| {
+			hooks(SceneHooks::new().push(|_| {
 				assert!(unsafe { !CLASS_CALLED });
 				unsafe { CLASS_CALLED = true; }
 				Ok(())
