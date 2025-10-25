@@ -34,6 +34,8 @@ pub(crate) use prelude::*;
 pub use anyhow;
 pub use bevy_materialize;
 
+use crate::util::{DEFAULT_MISSING_TEXTURE_SIZE, create_missing_texture};
+
 /// Contains all the plugins that makes up bevy_trenchbroom. Most of these you don't want to get rid of or change, but there are a few exceptions.
 /// - If you want to change the [`LightingWorkflow`](class::builtin::LightingWorkflow) you're using, set [`LightingClassesPlugin`](class::builtin::LightingClassesPlugin).
 /// - [`WriteTrenchBroomConfigOnStartPlugin`](config::WriteTrenchBroomConfigOnStartPlugin) writes the [`TrenchBroomConfig`] on startup, disable if you want to write it out a different time.
@@ -81,8 +83,10 @@ impl Plugin for CorePlugin {
 			app.add_systems(Update, Self::set_lightmap_exposure);
 		}
 
+		let asset_server = app.world().resource::<AssetServer>();
+
 		// I'd rather not clone here, but i only have a reference to self
-		app.insert_resource(TrenchBroomServer::new(config.clone()));
+		app.insert_resource(TrenchBroomServer::new(config.clone(), asset_server));
 	}
 }
 impl CorePlugin {
@@ -110,9 +114,17 @@ pub struct TrenchBroomServer {
 	data: Arc<TrenchBroomServerData>,
 }
 impl TrenchBroomServer {
-	pub fn new(config: TrenchBroomConfig) -> Self {
+	pub fn new(config: TrenchBroomConfig, asset_server: &AssetServer) -> Self {
 		Self {
-			data: Arc::new(TrenchBroomServerData { config }),
+			data: Arc::new(TrenchBroomServerData {
+				config,
+				missing_material: RwLock::new(asset_server.add(GenericMaterial::new(asset_server.add(StandardMaterial {
+					base_color_texture: Some(asset_server.add(create_missing_texture())),
+					// Instead of scaling UVs in the mesh, we scale down the missing texture itself.
+					uv_transform: Affine2::from_scale(1. / Vec2::splat(DEFAULT_MISSING_TEXTURE_SIZE as f32)),
+					..default()
+				})))),
+			}),
 		}
 	}
 }
@@ -125,4 +137,6 @@ impl std::ops::Deref for TrenchBroomServer {
 #[derive(Debug)]
 pub struct TrenchBroomServerData {
 	pub config: TrenchBroomConfig,
+	/// The material used when a texture can't be found when loading a map.
+	pub missing_material: RwLock<Handle<GenericMaterial>>,
 }

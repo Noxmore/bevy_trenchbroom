@@ -168,7 +168,7 @@ impl SpawnHooks {
 
 	/// Inserts a compound collider of every brush in this entity into said entity. Brushes will be fully solid.
 	///
-	/// NOTE: If you're using BSPs, use the `-wrbrushesonly` command-line argument for `qbsp`, otherwise no brushes will be inserted into the BSP, and no collision will be built!
+	/// NOTE: If you're using Q1 BSPs, use the `-wrbrushesonly` command-line argument for `qbsp`, otherwise no brushes will be inserted into the BSP, and no collision will be built!
 	#[cfg(feature = "physics-integration")]
 	pub fn convex_collider(self) -> Self {
 		self.with(crate::physics::ConvexCollision)
@@ -290,7 +290,7 @@ mod tests {
 	#[cfg(feature = "client")]
 	fn preloading() {
 		use crate::{
-			geometry::BrushList,
+			geometry::BrushesAsset,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
 		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, scene::ScenePlugin};
@@ -323,12 +323,10 @@ mod tests {
 				MaterializePlugin::new(TomlMaterialDeserializer),
 				GltfPlugin::default(),
 				ImagePlugin::default(),
-			))
-			.insert_resource(TrenchBroomServer::new(
-				TrenchBroomConfig::default().suppress_invalid_entity_definitions(true),
+				CorePlugin(TrenchBroomConfig::default().suppress_invalid_entity_definitions(true)),
 			))
 			.init_asset::<Image>()
-			.init_asset::<BrushList>()
+			.init_asset::<BrushesAsset>()
 			.init_asset::<StandardMaterial>()
 			.init_asset::<QuakeMap>()
 			.init_asset_loader::<QuakeMapLoader>()

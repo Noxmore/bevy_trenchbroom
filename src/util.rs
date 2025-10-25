@@ -1,12 +1,19 @@
+use std::hash::Hash;
+
 use crate::*;
 use atomicow::CowArc;
-use bevy::asset::io::AssetSourceId;
-use bevy::asset::meta::AssetHash;
 use bevy::asset::{AssetPath, ErasedLoadedAsset, UntypedAssetId};
+use bevy::asset::{RenderAssetUsages, meta::AssetHash};
+#[cfg_attr(test, expect(unused_imports))] // See TextureSizeCache::entry
+use bevy::{
+	asset::{AssetLoadError, LoadContext, LoadDirectError, io::AssetSourceId},
+	platform::collections::hash_map::Entry,
+};
 use bevy::{
 	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
+use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 pub struct UtilPlugin;
 impl Plugin for UtilPlugin {
@@ -146,6 +153,92 @@ pub(crate) fn create_test_asset_server() -> AssetServer {
 		false,
 		default(),
 	)
+}
+
+/// A little bit of code that retrieves and caches image size based on a texture name when loading level geometry.
+#[derive(Debug, Default)]
+pub(crate) struct TextureSizeCache<K> {
+	#[cfg_attr(test, expect(unused))]
+	map: HashMap<K, UVec2>,
+}
+impl<K: Eq + Hash + Clone + fmt::Debug + fmt::Display> TextureSizeCache<K> {
+	/// If this cache already contains `texture`, return the cached size.
+	/// Otherwise, try to load the texture by looking through all [`TrenchBroomConfig::texture_extensions`].
+	#[cfg(not(test))]
+	pub async fn entry(&mut self, texture: K, load_context: &mut LoadContext<'_>, config: &TrenchBroomConfig) -> UVec2 {
+		*match self.map.entry(texture.clone()) {
+			Entry::Occupied(x) => x.into_mut(),
+			Entry::Vacant(x) => x.insert('size_searcher: {
+				for ext in &config.texture_extensions {
+					match load_context
+						.loader()
+						.immediate()
+						.load::<Image>(config.material_root.join(format!("{texture}.{ext}")))
+						.await
+					{
+						Ok(image) => break 'size_searcher image.take().size(),
+						Err(LoadDirectError::LoadError {
+							dependency: _,
+							error: AssetLoadError::AssetReaderError(_),
+						}) => {}
+						Err(err) => {
+							error!("Failed to get size for texture \"{texture}.{ext}\": {err}");
+							break 'size_searcher UVec2::splat(1);
+						}
+					}
+				}
+
+				error!(
+					"Failed to get size for texture {texture:?} looking for the following extensions: {:?}",
+					config.texture_extensions,
+				);
+				UVec2::splat(1)
+			}),
+		}
+	}
+
+	/// For tests, loading an image from the immediate loader seems to hang indefinitely. Instead we can return a dummy value.
+	#[expect(unused)]
+	#[cfg(test)]
+	pub async fn entry(&mut self, texture: K, load_context: &mut LoadContext<'_>, config: &TrenchBroomConfig) -> UVec2 {
+		UVec2::ONE
+	}
+}
+
+pub const DEFAULT_MISSING_TEXTURE_SIZE: u32 = 32;
+
+pub fn create_missing_texture() -> Image {
+	create_missing_texture_sized(DEFAULT_MISSING_TEXTURE_SIZE, DEFAULT_MISSING_TEXTURE_SIZE)
+}
+
+pub fn create_missing_texture_sized(width: u32, height: u32) -> Image {
+	let mut image = Image::new_fill(
+		Extent3d {
+			width,
+			height,
+			depth_or_array_layers: 1,
+		},
+		TextureDimension::D2,
+		&[0, 0, 0, 255],
+		TextureFormat::Rgba8Unorm,
+		RenderAssetUsages::all(),
+	);
+
+	// Top-left pink
+	for x in 0..width / 2 {
+		for y in 0..height / 2 {
+			image.set_color_at(x, y, Color::linear_rgb(1., 0., 1.)).unwrap();
+		}
+	}
+
+	// Bottom-right pink
+	for x in width / 2..width {
+		for y in height / 2..height {
+			image.set_color_at(x, y, Color::linear_rgb(1., 0., 1.)).unwrap();
+		}
+	}
+
+	image
 }
 
 pub trait BevyTrenchbroomCoordinateConversions {

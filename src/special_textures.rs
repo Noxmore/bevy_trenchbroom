@@ -14,6 +14,10 @@ use bevy_materialize::animation::{GenericMaterialAnimationState, ImagesAnimation
 use bsp::TEXTURE_PREFIX;
 #[cfg(feature = "bsp")]
 use config::EmbeddedTextureLoadView;
+#[cfg(feature = "bsp")]
+use qbsp::data::texture::EmbeddedTextureName;
+#[cfg(feature = "bsp")]
+use std::str::FromStr;
 use wgpu_types::Face;
 
 use crate::*;
@@ -37,12 +41,13 @@ impl Plugin for SpecialTexturesPlugin {
 pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &StandardMaterial) -> Option<GenericMaterial> {
 	// We save a teeny tiny bit of time by only cloning if we need to :)
 	let mut material = material.clone();
-	if let Some(exposure) = view.tb_config.lightmap_exposure {
+	if let Some(exposure) = view.tb_config().lightmap_exposure {
 		material.lightmap_exposure = exposure;
 	}
 
-	if let Some(default_fn) = view.tb_config.embedded_liquid_material
-		&& view.name.starts_with('*')
+	if let Some(default_fn) = view.tb_config().embedded_liquid_material
+		&& let Some(liquid_prefix) = view.bsp_format.liquid_prefix()
+		&& view.name.starts_with(liquid_prefix)
 	{
 		let water_alpha: f32 = view
 			.entities
@@ -65,7 +70,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			properties: default(),
 		});
 	}
-	if let Some(default_fn) = view.tb_config.embedded_quake_sky_material
+	if let Some(default_fn) = view.tb_config().embedded_quake_sky_material
 		&& view.name.starts_with("sky")
 	{
 		// We need to separate the sky into the 2 foreground and background images here because otherwise we will get weird wrapping when linear filtering is on.
@@ -100,10 +105,10 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				TextureDimension::D2,
 				data,
 				view.image.texture_descriptor.format,
-				view.tb_config.bsp_textures_asset_usages,
+				view.tb_config().bsp_textures_asset_usages,
 			);
 
-			image.sampler = view.tb_config.texture_sampler.clone();
+			image.sampler = view.tb_config().texture_sampler.clone();
 
 			image
 		}
@@ -127,7 +132,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 			properties: default(),
 		});
 	}
-	if let Some(fps) = view.tb_config.embedded_texture_animation_fps
+	if let Some(fps) = view.tb_config().embedded_texture_animation_fps
 		&& view.name.starts_with('+')
 	{
 		let embedded_textures = view.embedded_textures?;
@@ -140,7 +145,9 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 
 		let mut frames = Vec::new();
 		let mut frame_num = 0;
-		while let Some((_, frame_handle)) = embedded_textures.get(format!("+{frame_num}{name_content}").as_str()) {
+		while let Ok(frame_name) = EmbeddedTextureName::from_str(&format!("+{frame_num}{name_content}"))
+			&& let Some((_, frame_handle)) = embedded_textures.get(&frame_name)
+		{
 			frames.push(frame_handle.clone());
 			frame_num += 1;
 		}

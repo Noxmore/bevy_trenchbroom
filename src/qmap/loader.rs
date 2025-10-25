@@ -1,16 +1,16 @@
 use bevy::{
-	asset::{AssetLoadError, AssetLoader, AsyncReadExt, LoadDirectError},
+	asset::{AssetLoader, AsyncReadExt},
 	platform::collections::hash_map::Entry,
 	tasks::ConditionalSendFuture,
 };
 use brush::{BrushSurfacePolygon, ConvexHull, generate_mesh_from_brush_polygons};
 use config::TextureLoadView;
-use geometry::{BrushList, Brushes, MapGeometryTexture};
+use geometry::{Brushes, BrushesAsset, MapGeometryTexture};
 
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
 	geometry::MapGeometry,
-	util::MapFileType,
+	util::{MapFileType, TextureSizeCache},
 };
 
 use super::*;
@@ -97,7 +97,7 @@ impl AssetLoader for QuakeMapLoader {
 
 				if class.info.ty.is_solid() {
 					let mut grouped_polygons: HashMap<&str, Vec<BrushSurfacePolygon>> = default();
-					let mut texture_size_cache: HashMap<&str, UVec2> = default();
+					let mut texture_size_cache: TextureSizeCache<&str> = default();
 					let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();
 
 					for brush in &map_entity.brushes {
@@ -113,52 +113,21 @@ impl AssetLoader for QuakeMapLoader {
 							continue;
 						}
 
-						let texture_size = *match texture_size_cache.entry(texture) {
-							Entry::Occupied(x) => x.into_mut(),
-							Entry::Vacant(x) => x.insert('size_searcher: {
-								for ext in &self.tb_server.config.texture_extensions {
-									match load_context
-										.loader()
-										.immediate()
-										.load::<Image>(
-											self.tb_server
-												.config
-												.material_root
-												.join(format!("{}.{}", &polygons[0].surface.texture, ext)),
-										)
-										.await
-									{
-										Ok(image) => break 'size_searcher image.take().size(),
-										Err(LoadDirectError::LoadError {
-											dependency: _,
-											error: AssetLoadError::AssetReaderError(_),
-										}) => {}
-										Err(err) => {
-											error!("Failed to get size for texture \"{texture}.{ext}\": {err}");
-											break 'size_searcher UVec2::splat(1);
-										}
-									}
-								}
+						let texture_size = texture_size_cache.entry(texture, load_context, &self.tb_server.config).await;
 
-								error!(
-									"Failed to get size for texture {texture:?} looking for the following extensions: {:?}",
-									self.tb_server.config.texture_extensions
-								);
-								UVec2::splat(1)
-							}),
-						};
-
+						// Unrolled into match expression because async
 						let material = match material_cache.entry(texture) {
 							Entry::Occupied(x) => x.into_mut(),
 							Entry::Vacant(x) => x.insert(
 								(self.tb_server.config.load_loose_texture)(TextureLoadView {
 									name: texture,
-									tb_config: &self.tb_server.config,
+									tb_server: &self.tb_server,
 									load_context,
 									asset_server: &self.asset_server,
 									entities: &entities,
 									#[cfg(feature = "client")]
 									alpha_mode: None,
+									#[cfg(feature = "bsp")]
 									embedded_textures: None,
 								})
 								.await,
@@ -178,7 +147,7 @@ impl AssetLoader for QuakeMapLoader {
 							mesh_entity,
 							mesh,
 							MapGeometryTexture {
-								name: texture.s(),
+								name: Some(texture.to_owned()),
 								material,
 								#[cfg(all(feature = "client", feature = "bsp"))]
 								lightmap: None,
@@ -227,7 +196,8 @@ impl AssetLoader for QuakeMapLoader {
 
 				// If we have brushes, add them as an asset and insert them
 				if !map_entity.brushes.is_empty() {
-					let brush_list_handle = load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushList(map_entity.brushes.clone()));
+					let brush_list_handle =
+						load_context.add_labeled_asset(format!("Brushes{map_entity_idx}"), BrushesAsset(map_entity.brushes.clone()));
 					brush_lists.insert(map_entity_idx, brush_list_handle.clone());
 
 					world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
@@ -261,17 +231,23 @@ mod tests {
 		// Can't find a better solution than this mess :(
 		#[rustfmt::skip]
 		app
-			.add_plugins((AssetPlugin::default(), TaskPoolPlugin::default(), bevy::time::TimePlugin))
-			.insert_resource(TrenchBroomServer::new(
-				TrenchBroomConfig::default()
-					.suppress_invalid_entity_definitions(true)
+			.add_plugins((
+				AssetPlugin::default(),
+				TaskPoolPlugin::default(),
+				bevy::time::TimePlugin,
 			))
 			.init_asset::<Image>()
 			.init_asset::<StandardMaterial>()
+			.add_plugins(
+				CorePlugin(
+					TrenchBroomConfig::default()
+						.suppress_invalid_entity_definitions(true)
+				)
+			)
 			.init_asset::<Mesh>()
 			.init_asset::<Scene>()
 			.init_asset::<QuakeMap>()
-			.init_asset::<BrushList>()
+			.init_asset::<BrushesAsset>()
 			.init_asset_loader::<QuakeMapLoader>()
 		;
 

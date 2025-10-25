@@ -1,8 +1,8 @@
 use crate::*;
 use brush::ConvexHull;
 #[cfg(feature = "bsp")]
-use bsp::BspBrushesAsset;
-use geometry::{BrushList, Brushes};
+use bsp::BrushHullsAsset;
+use geometry::{Brushes, BrushesAsset};
 
 /// Generic physics engine interface.
 pub trait PhysicsBackend: Send + Sync + 'static {
@@ -40,8 +40,8 @@ enum ConvexPhysicsGeometry<B: PhysicsBackend> {
 /// If it can't find them (like if the asset isn't loaded), returns [`None`].
 fn calculate_convex_physics_geometry<'l, 'w: 'l, B: PhysicsBackend>(
 	brushes: &Brushes,
-	brush_lists: &'w Assets<BrushList>,
-	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BspBrushesAsset>,
+	brush_lists: &'w Assets<BrushesAsset>,
+	#[cfg(feature = "bsp")] bsp_brushes: &'w Assets<BrushHullsAsset>,
 ) -> Option<Vec<ConvexPhysicsGeometry<B>>> {
 	fn extract_vertices<B: PhysicsBackend, T: ConvexHull>(brush: &T) -> ConvexPhysicsGeometry<B> {
 		match brush.as_cuboid() {
@@ -59,7 +59,7 @@ fn calculate_convex_physics_geometry<'l, 'w: 'l, B: PhysicsBackend>(
 		#[cfg(feature = "bsp")]
 		Brushes::Bsp(handle) => bsp_brushes
 			.get(handle)
-			.map(|brushes_asset| brushes_asset.brushes.iter().map(extract_vertices).collect()),
+			.map(|brushes_asset| brushes_asset.0.iter().map(extract_vertices).collect()),
 	}
 }
 
@@ -90,15 +90,15 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 	pub fn add_convex_colliders(
 		mut commands: Commands,
 		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<B::Collider>)>,
-		brush_lists: Res<Assets<BrushList>>,
-		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BspBrushesAsset>>,
+		brush_lists: Res<Assets<BrushesAsset>>,
+		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BrushHullsAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
 		#[allow(unused)]
 		for (entity, brushes, transform) in &query {
 			let Some(brushes) = brushes else {
 				error!(
-					"Entity {entity} has `ConvexCollision`, but no `Brushes`! If you're using BSPs, you may have forgotten to add the `-wrbrushesonly` flag to qbsp. Removing ConvexCollision component..."
+					"Entity {entity} has `ConvexCollision`, but no `Brushes`! If you're using Q1 BSPs, you may have forgotten to add the `-wrbrushesonly` flag to qbsp. Removing ConvexCollision component..."
 				);
 				commands.entity(entity).remove::<ConvexCollision>();
 				continue;

@@ -142,15 +142,18 @@ mod tests {
 				MaterializePlugin::new(TomlMaterialDeserializer),
 				ImagePlugin::default(),
 			))
-			.insert_resource(TrenchBroomServer::new(
-				TrenchBroomConfig::default()
-					.suppress_invalid_entity_definitions(true)
-			))
 			.init_asset::<Image>()
 			.init_asset::<StandardMaterial>()
+			.add_plugins(
+				CorePlugin(
+					TrenchBroomConfig::default()
+						.suppress_invalid_entity_definitions(true)
+				)
+			)
 			.init_asset::<AnimatedLighting>()
 			.init_asset::<Mesh>()
-			.init_asset::<BspBrushesAsset>()
+			.init_asset::<BrushHullsAsset>()
+			.init_asset::<BrushesAsset>()
 			.init_asset::<Scene>()
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()

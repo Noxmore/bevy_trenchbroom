@@ -9,16 +9,17 @@ use geometry::{Brushes, MapGeometryTexture};
 #[cfg(feature = "client")]
 use lighting::AnimatedLighting;
 use loader::BspLoader;
+use qbsp::data::texture::EmbeddedTextureName;
 use qmap::{QuakeMapEntities, QuakeMapEntity};
 
-use crate::{util::BevyTrenchbroomCoordinateConversions, *};
+use crate::{geometry::BrushesAsset, util::BevyTrenchbroomCoordinateConversions, *};
 
 pub struct BspPlugin;
 impl Plugin for BspPlugin {
 	fn build(&self, app: &mut App) {
 		#[rustfmt::skip]
 		app
-			.init_asset::<BspBrushesAsset>()
+			.init_asset::<BrushHullsAsset>()
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()
 		;
@@ -38,7 +39,7 @@ pub static TEXTURE_PREFIX: &str = "Texture_";
 pub struct Bsp {
 	/// The main scene of everything put together.
 	pub scene: Handle<Scene>,
-	pub embedded_textures: HashMap<String, BspEmbeddedTexture>,
+	pub embedded_textures: HashMap<EmbeddedTextureName, BspEmbeddedTexture>,
 	#[cfg(feature = "client")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	#[cfg(feature = "client")]
@@ -55,25 +56,29 @@ pub struct Bsp {
 #[derive(Reflect, Debug)]
 pub struct BspModel {
 	/// Maps texture names to mesh handles.
-	pub meshes: Vec<(String, Handle<Mesh>)>,
+	pub meshes: Vec<(Option<String>, Handle<Mesh>)>,
 
-	/// If the BSP contains the `BRUSHLIST` BSPX lump, this will be [`Some`] containing a handle to the brushes for this model.
-	pub brushes: Option<Handle<BspBrushesAsset>>,
+	/// If the BSP contains the `BRUSHLIST` BSPX lump, or supports built-in brushes, this will be [`Some`] containing a handle to the brushes for this model.
+	pub brushes: Option<GenericBrushListHandle>,
 }
 
-/// Wrapper for a `Vec<`[`BspBrush`]`>` in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).
+/// Wrapper for a `Vec<`[`BrushHull`]`>` in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).
 #[derive(Asset, Reflect, Debug, Clone, Default)]
-pub struct BspBrushesAsset {
-	pub brushes: Vec<BspBrush>,
+pub struct BrushHullsAsset(pub Vec<BrushHull>);
+
+#[derive(Reflect, Debug)]
+pub enum GenericBrushListHandle {
+	Hulls(Handle<BrushHullsAsset>),
+	Brushes(Handle<BrushesAsset>),
 }
 
 /// Like a [`Brush`](crate::brush::Brush), but only contains the hull geometry, no texture information.
 #[derive(Reflect, Debug, Clone, Default)]
-pub struct BspBrush {
+pub struct BrushHull {
 	pub planes: Vec<BrushPlane>,
 }
 
-impl ConvexHull for BspBrush {
+impl ConvexHull for BrushHull {
 	#[inline]
 	fn plane_count(&self) -> usize {
 		self.planes.len()
