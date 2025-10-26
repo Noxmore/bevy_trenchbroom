@@ -2,11 +2,16 @@ use super::*;
 #[cfg(feature = "client")]
 use crate::bsp::lighting::AnimatedLightingHandle;
 use crate::{
-	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
+	class::{
+		QuakeClassMeshView, QuakeClassSpawnView, generate_class_map,
+		scene_systems::{LoadContextRes, PostSpawn, SceneLoadContext},
+		spawn_quake_entity_into_scene,
+	},
 	geometry::MapGeometry,
 	util::MapFileType,
 	*,
 };
+use bevy::ecs::schedule::{NodeId, ReportCycles};
 use bsp::*;
 use models::InternalModel;
 
@@ -102,6 +107,27 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 			view.world.entity_mut(mesh_view.entity).insert((ChildOf(entity), MapGeometry));
 		}
 	}
+
+	// world.insert_non_send_resource(unsafe { LoadContextRes::new(ctx.load_context) });
+
+	/* let scene_schedules = ctx.loader.scene_schedules.schedules.read();
+	if let Some(schedule) = scene_schedules.get(PostSpawn) {
+		let systems = schedule.graph().topsort_graph(schedule.graph().hierarchy().graph(), ReportCycles::Hierarchy).unwrap();
+		for node_id in systems {
+			match node_id {
+				NodeId::System(system_key) => {
+					let system = schedule.graph().systems.get(system_key).unwrap();
+					world.register_boxed_system::<SQuakeSpawnView, ()>(system.system);
+				}
+				NodeId::Set(set_key) => {
+
+				}
+			}
+			// schedule.graph().system_sets.
+			// world.register_system(system)
+			// world.run_system_with(id, input);
+		}
+	} */
 
 	Ok(world)
 }

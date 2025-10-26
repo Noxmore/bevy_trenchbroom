@@ -22,7 +22,7 @@ use qmap::QuakeMapEntities;
 use scene::initialize_scene;
 use textures::EmbeddedTextures;
 
-use crate::*;
+use crate::{class::scene_systems::SceneSchedules, *};
 
 pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub loader: &'a BspLoader,
@@ -38,6 +38,7 @@ pub struct BspLoader {
 	pub tb_server: TrenchBroomServer,
 	pub asset_server: AssetServer,
 	pub type_registry: AppTypeRegistry,
+	pub scene_schedules: SceneSchedules,
 }
 impl FromWorld for BspLoader {
 	fn from_world(world: &mut World) -> Self {
@@ -45,6 +46,7 @@ impl FromWorld for BspLoader {
 			tb_server: world.resource::<TrenchBroomServer>().clone(),
 			asset_server: world.resource::<AssetServer>().clone(),
 			type_registry: world.resource::<AppTypeRegistry>().clone(),
+			scene_schedules: world.resource::<SceneSchedules>().clone(),
 		}
 	}
 }
