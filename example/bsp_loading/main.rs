@@ -56,7 +56,7 @@ impl Cube {
 #[point_class(
 	model("models/mushroom.glb"),
 	size(-4 -4 0, 4 4 16),
-	hooks(SpawnHooks::new().spawn_class_gltf::<Self>()),
+	hooks(SceneHooks::new().spawn_class_gltf::<Self>()),
 )]
 pub struct Mushroom;
 

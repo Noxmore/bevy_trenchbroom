@@ -39,7 +39,7 @@ pub use crate::{
 	class::{
 		QuakeClass, QuakeClassAppExt, ReflectQuakeClass,
 		builtin::{Target, Targetable},
-		spawn_hooks::*,
+		scene_hooks::*,
 	},
 	config::TrenchBroomConfig,
 	qmap::QuakeMapEntity,

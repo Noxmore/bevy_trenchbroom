@@ -149,9 +149,9 @@ struct MyPointClass;
 ```
 
 ### ***Attribute: `hooks`***
-This attribute requires a Rust expression that produces a `SpawnHooks` instance. If this attribute isn't specified, it uses the default spawn hooks defined in [`TrenchBroomConfig`](bevy_trenchbroom::config::TrenchBroomConfig).
+This attribute requires a Rust expression that produces a `SceneHooks` instance. If this attribute isn't specified, it uses the default scene hooks defined in [`TrenchBroomConfig`](bevy_trenchbroom::config::TrenchBroomConfig).
 
-[`SpawnHooks`](bevy_trenchbroom::class::spawn_hooks::SpawnHooks) is a struct containing a list of functions to be called in the [scene world](#loading-maps) when an entity spawns, provided with [context](bevy_trenchbroom::class::QuakeClassSpawnView) for the spawn.
+[`SceneHooks`](bevy_trenchbroom::class::scene_hooks::SceneHooks) is a struct containing a list of functions to be called in the [scene world](#loading-maps) when an entity spawns, provided with [context](bevy_trenchbroom::class::QuakeClassSpawnView) for the spawn.
 
 Examples:
 ```rust
@@ -161,7 +161,7 @@ Examples:
 // When creating your App...
 TrenchBroomPlugins(
 	TrenchBroomConfig::new("example")
-		.default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle())
+		.default_solid_scene_hooks(|| SceneHooks::new().smooth_by_default_angle())
 		// The above call will make slightly angled brush faces have
 		// interpolated normals, allowing smooth curves in geometry.
 		// If you're using a physics engine integration, this is
@@ -171,13 +171,13 @@ TrenchBroomPlugins(
 # ;
 // ...
 
-// Default solid class spawn hooks will be used.
+// Default solid class scene hooks will be used.
 #[solid_class]
 struct SolidClassA;
 
 #[solid_class(
 	// This overrides the above hooks. This geometry will not be smoothed.
-	hooks(SpawnHooks::new().push(Self::example_spawn_hook)),
+	hooks(SceneHooks::new().push(Self::example_spawn_hook)),
 )]
 struct SolidClassB;
 impl SolidClassB {
@@ -198,7 +198,7 @@ Some hooks are included by default, some you might be interested in are
 - `.convex_collider()` and `.trimesh_collider()` which add colliders if you have a physics engine integration enabled.
 - `.with(<bundle>)` and `.meshes_with(<bundle>)` if all you want to do is add components to the entity or its mesh entities.
 
-Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the spawn hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
+Hacky note: Because of the macro implementation, you technically have access to the [`QuakeClassSpawnView`](bevy_trenchbroom::class::QuakeClassSpawnView) variable called `view` when creating the scene hooks instance, allowing you to extend default hooks through it. You probably shouldn't rely on this.
 
 ### ***Field Attribute: `must_set`***
 Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
@@ -370,7 +370,7 @@ fn spawn_test_map(
 }
 ```
 
-`test.map` and `test.bsp` load `QuakeMap` and `Bsp` assets respectively. Both of these construct a ready-to-spawn scene when loaded, calling classes' spawn hooks in the loading process.
+`test.map` and `test.bsp` load `QuakeMap` and `Bsp` assets respectively. Both of these construct a ready-to-spawn scene when loaded, calling classes' scene hooks in the loading process.
 This scene is labeled "Scene" and can be retrieved with Bevy's `<path>#<label>` asset path syntax as the code above shows.
 
 TIP: For processes in the main world that depend on colliders (e.g. AI navigation mesh construction), observe the `SceneCollidersReady` rather than the `SceneInstanceReady` trigger.

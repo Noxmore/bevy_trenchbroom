@@ -34,7 +34,7 @@ impl Cube {
 #[point_class(
 	model("models/mushroom.glb"),
 	size(-4 -4 0, 4 4 16),
-	hooks(SpawnHooks::new().spawn_class_gltf::<Self>()),
+	hooks(SceneHooks::new().spawn_class_gltf::<Self>()),
 )]
 pub struct Mushroom;
 
@@ -69,7 +69,7 @@ fn main() {
 	// Unfortunately, due to Rust limitations on attributes, we have to build this through a variable.
 	#[allow(unused_mut)]
 	let mut trenchbroom_plugins = TrenchBroomPlugins(
-		TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_spawn_hooks(|| SpawnHooks::new().smooth_by_default_angle()),
+		TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_scene_hooks(|| SceneHooks::new().smooth_by_default_angle()),
 	)
 	.build()
 	// This is because we use a custom light class for parity with bsp_loading.

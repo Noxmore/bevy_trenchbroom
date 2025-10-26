@@ -20,7 +20,7 @@ use syn::*;
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
 /// - `base(<type ...>)` Adds base classes to inherit.
-/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
+/// - `hooks(<SceneHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
@@ -40,7 +40,7 @@ pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
 /// - `base(<type ...>)` Adds base classes to inherit.
-/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
+/// - `hooks(<SceneHooks expression>)` Functions to run inside the spawn function of this class. Use for things like adding colliders.
 ///
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
@@ -65,7 +65,7 @@ pub fn solid_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// - `classname(<string>)` When outputted to fgd, use the specified string instead of a classname with case converted via the previous attribute.
 /// - `group(<string>)` Prefixes `<string>_` to your classname to avoid namespace stuttering.
 /// - `base(<type ...>)` Adds base classes to inherit.
-/// - `hooks(<SpawnHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
+/// - `hooks(<SceneHooks expression>)` Functions to run inside the spawn function of this class. Use for things like spawning models.
 ///
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.

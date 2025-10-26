@@ -20,7 +20,7 @@ fn main() {
 		.add_plugins(
 			TrenchBroomPlugins(
 				TrenchBroomConfig::new("bevy_trenchbroom_example")
-					.default_solid_spawn_hooks(|| SpawnHooks::new().convex_collider())
+					.default_solid_scene_hooks(|| SceneHooks::new().convex_collider())
 					.no_bsp_lighting(true),
 			)
 			.build()

@@ -76,7 +76,7 @@ pub struct BakedOnlyLight;
 	base(MixedLight),
 	classname("light"),
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
-	hooks(SpawnHooks::new().push(Self::spawn_hook)),
+	hooks(SceneHooks::new().push(Self::spawn_hook)),
 )]
 #[reflect(no_auto_register)]
 pub struct MapDynamicBspBakedLight;
@@ -106,7 +106,7 @@ pub struct MapDynamicBspBakedLight;
 	base(MixedLight),
 	classname("light"),
 	iconsprite({ path: "sprites/light_point.png", scale: 0.1 }),
-	hooks(SpawnHooks::new().push(Self::spawn_hook)),
+	hooks(SceneHooks::new().push(Self::spawn_hook)),
 )]
 #[reflect(no_auto_register)]
 pub struct CombinedLight;

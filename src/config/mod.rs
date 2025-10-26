@@ -255,15 +255,15 @@ pub struct TrenchBroomConfig {
 	#[default(Hook(Arc::new(Self::default_post_spawn_hook)))]
 	pub post_spawn_hook: Hook<SpawnFn>,
 
-	/// Spawn hooks to run on solid classes unless overridden.
-	#[default(SpawnHooks::new)]
-	pub default_solid_spawn_hooks: fn() -> SpawnHooks,
-	/// Spawn hooks to run on point classes unless overridden.
-	#[default(SpawnHooks::new)]
-	pub default_point_spawn_hooks: fn() -> SpawnHooks,
-	/// Spawn hooks to run on base classes unless overridden.
-	#[default(SpawnHooks::new)]
-	pub default_base_spawn_hooks: fn() -> SpawnHooks,
+	/// Scene hooks to run on solid classes unless overridden.
+	#[default(SceneHooks::new)]
+	pub default_solid_scene_hooks: fn() -> SceneHooks,
+	/// Scene hooks to run on point classes unless overridden.
+	#[default(SceneHooks::new)]
+	pub default_point_scene_hooks: fn() -> SceneHooks,
+	/// Scene hooks to run on base classes unless overridden.
+	#[default(SceneHooks::new)]
+	pub default_base_scene_hooks: fn() -> SceneHooks,
 
 	/// Whether to apply the translation and rotation fields regardless of having [`Transform`] as a base class.
 	/// Adds convenance and removes a foot-gun, but is less flexible, hence why it is disableable.
