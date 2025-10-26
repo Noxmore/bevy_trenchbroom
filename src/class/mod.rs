@@ -1,5 +1,6 @@
 pub mod builtin;
-pub mod spawn_hooks;
+pub mod scene_systems;
+pub mod spawn_hooks; // TODO: remove
 
 use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
