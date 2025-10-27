@@ -44,14 +44,14 @@ impl TrenchBroomConfig {
 		}
 	}
 
-	pub fn pre_spawn_hook(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
-		self.pre_spawn_hook.set(provider);
+	pub fn pre_scene_spawn_hook(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
+		self.pre_scene_spawn_hook.set(provider);
 		self
 	}
 
 	/// - Names the entity based on the classname, and `targetname` if the property exists.
 	/// - Handles [`TrenchBroomConfig::global_transform_application`]
-	pub fn default_pre_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+	pub fn default_pre_scene_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
 		let mut ent = view.world.entity_mut(view.entity);
@@ -77,15 +77,15 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	pub fn post_spawn_hook(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
-		self.post_spawn_hook.set(provider);
+	pub fn post_scene_spawn_hook(mut self, provider: impl FnOnce(Arc<SpawnFn>) -> Arc<SpawnFn>) -> Self {
+		self.post_scene_spawn_hook.set(provider);
 		self
 	}
 
 	/// - If the entity is a brush entity, rotation is reset.
 	/// - Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
 	/// - Adds [`GenericMaterial3d`]s.
-	pub fn default_post_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+	pub fn default_post_scene_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 		let classname = view.src_entity.classname()?.s();
 
 		let mut ent = view.world.entity_mut(view.entity);

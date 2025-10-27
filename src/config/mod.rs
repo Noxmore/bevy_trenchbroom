@@ -245,15 +245,15 @@ pub struct TrenchBroomConfig {
 	#[cfg(feature = "bsp")]
 	pub bsp_parse_settings: BspParseSettings,
 
-	/// Entity spawners that get run on every single entity before the regular spawners, regardless of classname. (Default: [`TrenchBroomConfig::default_pre_spawn_hook`])
+	/// Entity spawners that get run on every single entity before the regular spawners, regardless of classname. (Default: [`TrenchBroomConfig::default_pre_scene_spawn_hook`])
 	#[builder(skip)]
-	#[default(Hook(Arc::new(Self::default_pre_spawn_hook)))]
-	pub pre_spawn_hook: Hook<SpawnFn>,
+	#[default(Hook(Arc::new(Self::default_pre_scene_spawn_hook)))]
+	pub pre_scene_spawn_hook: Hook<SpawnFn>,
 
-	/// Entity spawners that get run on every single entity after the regular spawners, regardless of classname. (Default: [`TrenchBroomConfig::default_pre_spawn_hook`])
+	/// Entity spawners that get run on every single entity after the regular spawners, regardless of classname. (Default: [`TrenchBroomConfig::default_pre_scene_spawn_hook`])
 	#[builder(skip)]
-	#[default(Hook(Arc::new(Self::default_post_spawn_hook)))]
-	pub post_spawn_hook: Hook<SpawnFn>,
+	#[default(Hook(Arc::new(Self::default_post_scene_spawn_hook)))]
+	pub post_scene_spawn_hook: Hook<SpawnFn>,
 
 	/// Scene hooks to run on solid classes unless overridden.
 	#[default(SceneHooks::new)]

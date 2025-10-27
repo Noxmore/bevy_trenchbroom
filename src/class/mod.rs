@@ -263,9 +263,9 @@ impl ErasedQuakeClass {
 /// Fully spawns a Quake entity into a scene through a [`QuakeClassSpawnView`], calling [`ErasedQuakeClass::spawn_fn`] recursively for all base classes, as well as pre and post scene hooks.
 pub fn spawn_quake_entity_into_scene(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
 	// We use string formatting because I am not a fan of anyhow's context adding system
-	(view.tb_config.pre_spawn_hook)(view).map_err(|err| anyhow!("pre_spawn_hook: {err}"))?;
+	(view.tb_config.pre_scene_spawn_hook)(view).map_err(|err| anyhow!("pre_spawn_hook: {err}"))?;
 	view.class.apply_spawn_fn_recursive(view)?;
-	(view.tb_config.post_spawn_hook)(view).map_err(|err| anyhow!("post_spawn_hook: {err}"))
+	(view.tb_config.post_scene_spawn_hook)(view).map_err(|err| anyhow!("post_spawn_hook: {err}"))
 }
 
 /// Reflects [`QuakeClass::ERASED_CLASS`]. Any type with this data in the type registry will be considered a registered [`QuakeClass`], unless not [`enabled`](Self::enabled).
