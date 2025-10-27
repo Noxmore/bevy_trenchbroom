@@ -5,12 +5,14 @@ use bevy::ecs::{lifecycle::HookContext, world::DeferredWorld};
 use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::*;
-use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
+#[cfg(feature = "example_client")]
+use bevy_trenchbroom::render_modes::{GoldSrcRenderModesPlugin, RenderModes};
+use bevy_trenchbroom::{fgd::FgdFlags, prelude::qbsp::BspFormat, util::MapFileType};
 use enumflags2::*;
 use nil::prelude::*;
 
-#[solid_class(base(BspSolidEntity))]
+#[solid_class(base(BspSolidEntity, #[cfg(feature = "example_client")] RenderModes))]
 #[derive(Default)]
 pub struct FuncDoor {
 	pub awesome: FgdFlags<FlagsTest>,
@@ -26,14 +28,17 @@ pub enum FlagsTest {
 	Bap = 1 << 2,
 }
 
-#[solid_class(base(BspSolidEntity))]
+#[solid_class(base(BspSolidEntity, #[cfg(feature = "example_client")] RenderModes))]
 pub struct FuncWall;
 
-#[solid_class(base(BspSolidEntity))]
+#[solid_class(base(BspSolidEntity, #[cfg(feature = "example_client")] RenderModes))]
 pub struct FuncIllusionary;
 
-#[solid_class(base(BspSolidEntity))]
+#[solid_class(base(BspSolidEntity, #[cfg(feature = "example_client")] RenderModes))]
 pub struct FuncPlat;
+
+#[solid_class(base(BspSolidEntity, #[cfg(feature = "example_client")] RenderModes))]
+pub struct FuncBreakable;
 
 #[point_class]
 #[cfg_attr(feature = "example_client", component(on_add = Self::on_add))]
@@ -60,6 +65,11 @@ impl Cube {
 )]
 pub struct Mushroom;
 
+fn add_render_modes_if_client(#[allow(unused)] app: &mut App) {
+	#[cfg(feature = "example_client")]
+	app.add_plugins(GoldSrcRenderModesPlugin);
+}
+
 fn main() {
 	App::new()
 		.add_plugins(DefaultPlugins.set(AssetPlugin {
@@ -70,8 +80,10 @@ fn main() {
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)
 				.bicubic_lightmap_filtering(true)
+				.limit_render_modes_to_file_type(MapFileType::Bsp(BspFormat::BSP30))
 				.compute_lightmap_settings(ComputeLightmapSettings { extrusion: 1, ..default() }),
 		))
+		.add_plugins(add_render_modes_if_client)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(PostStartup, setup_scene)
 		.run();

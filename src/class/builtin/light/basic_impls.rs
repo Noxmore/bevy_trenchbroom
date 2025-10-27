@@ -83,7 +83,7 @@ pub struct MapDynamicBspBakedLight;
 #[cfg(all(feature = "bsp", feature = "client"))]
 impl MapDynamicBspBakedLight {
 	pub fn spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		if view.file_type == MapFileType::Bsp {
+		if view.file_type.is_bsp() {
 			return Ok(());
 		}
 

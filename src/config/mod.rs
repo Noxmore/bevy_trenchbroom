@@ -19,7 +19,7 @@ use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
 
 #[cfg(all(feature = "client", feature = "bsp"))]
 use crate::special_textures::{LiquidMaterialExt, QuakeSkyMaterial};
-use crate::{class::QuakeClassSpawnView, *};
+use crate::{class::QuakeClassSpawnView, util::MapFileType, *};
 
 pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
@@ -294,6 +294,12 @@ pub struct TrenchBroomConfig {
 	#[cfg(feature = "bsp")]
 	#[default(RenderAssetUsages::RENDER_WORLD)]
 	pub bsp_textures_asset_usages: RenderAssetUsages,
+
+	/// TODO: Temp way to get information through for [`RenderModes`](crate::render_modes::RenderModes) until we can get scene systems.
+	///
+	/// Limits the application of GoldSrc render modes to a specific file type. If you're supporting loading BSPs from multiple games, you'll probably put BSP30 here.
+	#[builder(into)]
+	pub limit_render_modes_to_file_type: Option<MapFileType>,
 }
 
 #[cfg(test)]

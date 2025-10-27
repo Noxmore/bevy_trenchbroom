@@ -23,6 +23,8 @@ pub mod physics;
 pub mod prelude;
 pub mod qmap;
 #[cfg(feature = "client")]
+pub mod render_modes;
+#[cfg(feature = "client")]
 pub mod special_textures;
 pub mod util;
 
@@ -34,6 +36,7 @@ pub(crate) use prelude::*;
 pub use anyhow;
 pub use bevy_materialize;
 
+#[cfg(feature = "client")]
 use crate::util::{DEFAULT_MISSING_TEXTURE_SIZE, create_missing_texture};
 
 /// Contains all the plugins that makes up bevy_trenchbroom. Most of these you don't want to get rid of or change, but there are a few exceptions.
@@ -118,12 +121,15 @@ impl TrenchBroomServer {
 		Self {
 			data: Arc::new(TrenchBroomServerData {
 				config,
+				#[cfg(feature = "client")]
 				missing_material: RwLock::new(asset_server.add(GenericMaterial::new(asset_server.add(StandardMaterial {
 					base_color_texture: Some(asset_server.add(create_missing_texture())),
 					// Instead of scaling UVs in the mesh, we scale down the missing texture itself.
 					uv_transform: Affine2::from_scale(1. / Vec2::splat(DEFAULT_MISSING_TEXTURE_SIZE as f32)),
 					..default()
 				})))),
+				#[cfg(not(feature = "client"))]
+				missing_material: RwLock::new(asset_server.add(GenericMaterial::default())),
 			}),
 		}
 	}

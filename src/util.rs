@@ -13,6 +13,8 @@ use bevy::{
 	ecs::world::DeferredWorld,
 	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
+#[cfg(feature = "bsp")]
+use qbsp::BspFormat;
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
 pub struct UtilPlugin;
@@ -397,10 +399,11 @@ impl IsSceneWorld for DeferredWorld<'_> {
 }
 
 /// Represents a type of Quake map file, whether a `.map` source file, or a compiled `.bsp`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIs)]
 pub enum MapFileType {
 	Map,
-	Bsp,
+	#[cfg(feature = "bsp")]
+	Bsp(BspFormat),
 }
 
 /// Holds a point, spot, or directional Bevy light.
