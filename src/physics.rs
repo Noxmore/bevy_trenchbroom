@@ -6,7 +6,7 @@ use geometry::{Brushes, BrushesAsset};
 
 /// Generic physics engine interface.
 pub trait PhysicsBackend: Send + Sync + 'static {
-	type Vector: std::ops::SubAssign;
+	type Vector: std::ops::SubAssign + std::ops::Sub<Output = Self::Vector>;
 	const ZERO: Self::Vector;
 	fn vec3(v: Vec3) -> Self::Vector;
 	fn dvec3(v: DVec3) -> Self::Vector;
@@ -116,7 +116,11 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 			for (brush_idx, physics_geometry) in brush_geometries.into_iter().enumerate() {
 				match physics_geometry {
 					ConvexPhysicsGeometry::Cuboid { center, half_extents } => {
-						colliders.push((center, transform.rotation.inverse(), B::cuboid_collider(half_extents)));
+						colliders.push((
+							center - B::vec3(transform.translation),
+							transform.rotation.inverse(),
+							B::cuboid_collider(half_extents),
+						));
 					}
 
 					ConvexPhysicsGeometry::ConvexHull(mut vertices) => {
