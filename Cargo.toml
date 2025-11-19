@@ -2,7 +2,7 @@
 members = ["example/*", "subcrates/*"]
 
 [workspace.package]
-version = "0.11.0-dev"
+version = "0.11.0"
 edition = "2024"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -33,10 +33,10 @@ avian3d = { version = "0.4", default-features = false, features = [
 bevy_rapier3d = "0.31" # TODO: Not updated to Bevy 0.17 yet
 
 example_commons = { path = "example/example_commons" }
-bevy_trenchbroom = { version = "0.11.0-dev", path = ".", default-features = false }
+bevy_trenchbroom = { version = "0.11.0", path = ".", default-features = false }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.11.0-dev", path = "subcrates/bevy_trenchbroom_macros" }
+bevy_trenchbroom_macros = { version = "0.11.0", path = "subcrates/bevy_trenchbroom_macros" }
 
 anyhow = "1.0"
 bevy = { workspace = true, features = [
