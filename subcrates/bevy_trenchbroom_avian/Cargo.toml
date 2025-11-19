@@ -16,5 +16,5 @@ avian3d.workspace = true
 
 # Unfortunately, to release on crates.io we have to specify a default here.
 [features]
-default = ["f32", "bevy_trenchbroom/client"]
+default = ["f32"]
 f32 = ["avian3d/parry-f32"]
