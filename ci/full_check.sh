@@ -8,14 +8,14 @@ set -x
 cargo fmt --check --all
 
 
-{ echo; echo; echo "Run cargo clippy for default features"; } 2> /dev/null
+{ echo; echo; echo "Run cargo clippy on workspace for default features"; } 2> /dev/null
 cargo clippy --workspace --all-targets
 
 { echo; echo; echo "Run cargo clippy without default features"; } 2> /dev/null
-cargo clippy --workspace --all-targets --no-default-features
+cargo clippy --all-targets --no-default-features
 
 { echo; echo; echo "Run cargo clippy for bsps"; } 2> /dev/null
-cargo clippy --workspace --all-targets --features bsp
+cargo clippy --all-targets --features bsp
 
 
 { echo; echo; echo "Run tests"; } 2> /dev/null
