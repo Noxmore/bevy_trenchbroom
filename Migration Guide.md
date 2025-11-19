@@ -1,6 +1,8 @@
 # 0.10 to 0.11
 - The global spawner in `TrenchBroomConfig` has been split into `pre_spawn_hook` and `post_spawn_hook` for more granular control.
 - Quake 2 and GoldSrc BSP formats are now supported. If you are using BSPs, you should probably switch to the Quake 2 QBISM format, as it is a direct upgrade to BSP2. Check the [BSP section in the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html#bsp) for updated recommended command arguments.
+	- Quake 2 BSPs made from Quake 1 `.map` files currently fail to load BSPX data. (See [`qbsp/#12`](https://github.com/Noxmore/qbsp/issues/12))
+- Quake 2 maps are now supported, and the default map format has changed to `Quake2Valve`. If you want to use them, you'll have to manually convert them. such as with ericw-tools' `maputil`.
 - Spawn hooks have been renamed into scene hooks to better represent where they are run.
 
 # 0.9 to 0.10

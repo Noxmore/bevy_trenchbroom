@@ -13,3 +13,6 @@ rm assets/maps/$1-light.log
 
 # Contains phong information, which currently we don't use.
 rm assets/maps/$1.texinfo.json
+
+# Contains leaf(?) information. Not useful.
+rm assets/maps/$1.content.json

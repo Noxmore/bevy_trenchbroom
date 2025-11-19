@@ -54,10 +54,10 @@ pub struct TrenchBroomConfig {
 	/// By default, the Bevy logo is used.
 	#[default(Some(include_bytes!("default_icon.png").into()))]
 	pub icon: Option<Cow<'static, [u8]>>,
-	/// Supported map file formats. Currently, only the loading of [`Valve`](MapFileFormat::Valve) is supported.
+	/// Supported map file formats. [`Quake2Valve`](MapFileFormat::Quake2Valve) is the one supported with the most features, so it is the default.
 	///
-	/// (Default: [`MapFileFormat::Valve`])
-	#[default(vec![MapFileFormat::Valve])]
+	/// (Default: [`MapFileFormat::Quake2Valve`])
+	#[default(vec![MapFileFormat::Quake2Valve])]
 	#[builder(into)]
 	pub file_formats: Vec<MapFileFormat>,
 	/// The format for asset packages. If you are just using loose files, this probably doesn't matter to you, and you can leave it defaulted.
