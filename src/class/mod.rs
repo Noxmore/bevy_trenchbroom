@@ -126,7 +126,7 @@ impl QuakeClassInfo {
 	pub fn derives_from<T: QuakeClass>(&self) -> bool {
 		self.base
 			.iter()
-			.any(|class| class.id() == TypeId::of::<T>() || class.info.derives_from::<T>())
+			.any(|class| class.type_id == TypeId::of::<T>() || class.info.derives_from::<T>())
 	}
 
 	/// Returns the path of the in-editor model of this class.
@@ -220,15 +220,15 @@ pub type QuakeClassSpawnFn = fn(&mut QuakeClassSpawnView) -> anyhow::Result<()>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ErasedQuakeClass {
-	/// The Rust type of this class. Is a function because `TypeId::of` is not yet stable as a const fn.
-	pub type_id: fn() -> TypeId,
+	/// The Rust type of this class.
+	pub type_id: TypeId,
 	pub info: QuakeClassInfo,
 	pub spawn_fn: QuakeClassSpawnFn,
 }
 impl ErasedQuakeClass {
 	pub const fn of<T: QuakeClass>() -> Self {
 		Self {
-			type_id: TypeId::of::<T>,
+			type_id: TypeId::of::<T>(),
 			info: T::CLASS_INFO,
 			spawn_fn: T::class_spawn,
 		}
@@ -241,22 +241,16 @@ impl ErasedQuakeClass {
 
 	fn apply_spawn_fn_recursive_internal(&self, view: &mut QuakeClassSpawnView, spawned_classes: &mut HashSet<TypeId>) -> anyhow::Result<()> {
 		for base in self.info.base {
-			if spawned_classes.contains(&base.id()) {
+			if spawned_classes.contains(&base.type_id) {
 				continue;
 			}
 			base.apply_spawn_fn_recursive_internal(view, spawned_classes)?;
-			spawned_classes.insert(base.id());
+			spawned_classes.insert(base.type_id);
 		}
 
 		(self.spawn_fn)(view)?;
 
 		Ok(())
-	}
-
-	/// The Rust type of this [`QuakeClass`]. Not called `type_id` as to not shadow [`Any`].
-	#[inline]
-	pub fn id(&self) -> TypeId {
-		(self.type_id)()
 	}
 }
 
