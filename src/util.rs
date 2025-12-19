@@ -94,7 +94,7 @@ impl AssetServerExistsExt for AssetServer {
 		self.get_source(source)
 			.expect("Could not find asset source")
 			.reader()
-			.read(path)
+			.read(path, default())
 			.await
 			.is_ok()
 	}
@@ -148,7 +148,7 @@ pub(crate) fn create_test_asset_server() -> AssetServer {
 	let mut builders = bevy::asset::io::AssetSourceBuilders::default();
 	builders.init_default_source("assets", None);
 	AssetServer::new(
-		builders.build_sources(false, false),
+		Arc::new(builders.build_sources(false, false)),
 		bevy::asset::AssetServerMode::Unprocessed,
 		false,
 		default(),

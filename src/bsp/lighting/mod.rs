@@ -205,7 +205,7 @@ impl FromWorld for AnimatedLightingPipeline {
 	fn from_world(world: &mut World) -> Self {
 		let render_device = world.resource::<RenderDevice>();
 
-		let lightmap_bind_group_layout = render_device.create_bind_group_layout(
+		let lightmap_bind_group_layout = BindGroupLayoutDescriptor::new(
 			"LightmapCompositeImages",
 			&BindGroupLayoutEntries::sequential(
 				ShaderStages::COMPUTE,
@@ -221,7 +221,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			),
 		);
 
-		let irradiance_volume_bind_group_layout = render_device.create_bind_group_layout(
+		let irradiance_volume_bind_group_layout = BindGroupLayoutDescriptor::new(
 			"IrradianceVolumeCompositeImages",
 			&BindGroupLayoutEntries::sequential(
 				ShaderStages::COMPUTE,
@@ -242,8 +242,8 @@ impl FromWorld for AnimatedLightingPipeline {
 			),
 		);
 
-		let globals_bind_group_layout = render_device.create_bind_group_layout(
-			None,
+		let globals_bind_group_layout = BindGroupLayoutDescriptor::new(
+			"globals",
 			&BindGroupLayoutEntries::single(ShaderStages::COMPUTE, uniform_buffer_sized(false, Some(GlobalsUniform::SHADER_SIZE))),
 		);
 
@@ -270,9 +270,14 @@ impl FromWorld for AnimatedLightingPipeline {
 		});
 
 		Self {
-			lightmap_bind_group_layout,
-			irradiance_volume_bind_group_layout,
-			globals_bind_group_layout,
+			lightmap_bind_group_layout: render_device
+				.create_bind_group_layout(Some(lightmap_bind_group_layout.label.as_ref()), &lightmap_bind_group_layout.entries),
+			irradiance_volume_bind_group_layout: render_device.create_bind_group_layout(
+				Some(irradiance_volume_bind_group_layout.label.as_ref()),
+				&irradiance_volume_bind_group_layout.entries,
+			),
+			globals_bind_group_layout: render_device
+				.create_bind_group_layout(Some(globals_bind_group_layout.label.as_ref()), &globals_bind_group_layout.entries),
 			lightmap_pipeline,
 			irradiance_volume_pipeline,
 		}

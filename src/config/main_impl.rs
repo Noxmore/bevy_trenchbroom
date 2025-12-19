@@ -167,7 +167,7 @@ impl TrenchBroomConfig {
 	/// Tries to load a [`GenericMaterial`] with the [`generic_material_extensions`](Self::generic_material_extensions), as a fallback tries [`texture_extensions`](Self::texture_extensions).
 	pub fn default_load_loose_texture<'a>(view: TextureLoadView<'a, '_>) -> BoxedFuture<'a, Handle<GenericMaterial>> {
 		Box::pin(async move {
-			let source = view.load_context.asset_path().source().clone_owned();
+			let source = view.load_context.path().source().clone_owned();
 
 			// Search for material files
 			for ext in &view.tb_config().generic_material_extensions {

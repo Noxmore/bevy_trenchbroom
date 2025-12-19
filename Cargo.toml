@@ -2,7 +2,7 @@
 members = ["example/*", "subcrates/*"]
 
 [workspace.package]
-version = "0.11.0"
+version = "0.12.0-dev"
 edition = "2024"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -23,7 +23,7 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.17", default-features = false }
+bevy = { version = "0.18.0-rc", default-features = false }
 nil = "0.15"
 enumflags2 = "0.7"
 avian3d = { version = "0.4", default-features = false, features = [
@@ -33,10 +33,10 @@ avian3d = { version = "0.4", default-features = false, features = [
 bevy_rapier3d = "0.31" # TODO: Not updated to Bevy 0.17 yet
 
 example_commons = { path = "example/example_commons" }
-bevy_trenchbroom = { version = "0.11.0", path = ".", default-features = false }
+bevy_trenchbroom = { version = "0.12.0-dev", path = ".", default-features = false }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.11.0", path = "subcrates/bevy_trenchbroom_macros" }
+bevy_trenchbroom_macros = { version = "0.12.0-dev", path = "subcrates/bevy_trenchbroom_macros" }
 
 anyhow = "1.0"
 bevy = { workspace = true, features = [
@@ -44,10 +44,11 @@ bevy = { workspace = true, features = [
 	"bevy_scene",
 	"bevy_color",
 ] }
-bevy_reflect = { version = "0.17", package = "bevy_reflect", features = ["documentation"] }
-bevy_mesh = { version = "0.17", package = "bevy_mesh" }
-wgpu-types = "26.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { version = "0.8", default-features = false, features = [
+bevy_reflect = { version = "0.18.0-rc", package = "bevy_reflect", features = ["reflect_documentation"] }
+bevy_mesh = { version = "0.18.0-rc", package = "bevy_mesh" }
+wgpu-types = "27.0.0" # Must be the same version as Bevy uses
+bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "5db2326", default-features = false, features = [
+# bevy_materialize = { version = "0.8", default-features = false, features = [
 	"toml",
 	"bevy_image",
 ] }
@@ -62,7 +63,8 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2.0"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.10", features = ["bevy_reflect", "serde"], optional = true }
+qbsp = { git = "https://github.com/Noxmore/qbsp.git", rev = "61b8610", features = ["bevy_reflect", "serde"], optional = true }
+# qbsp = { version = "0.10", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }

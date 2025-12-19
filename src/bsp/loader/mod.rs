@@ -33,6 +33,7 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub entities: &'a QuakeMapEntities,
 }
 
+#[derive(TypePath)]
 pub struct BspLoader {
 	pub tb_server: TrenchBroomServer,
 	pub asset_server: AssetServer,
@@ -63,7 +64,7 @@ impl AssetLoader for BspLoader {
 			let mut bytes = Vec::new();
 			reader.read_to_end(&mut bytes).await?;
 
-			let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
+			let lit = load_context.read_asset_bytes(load_context.path().path().with_extension("lit")).await.ok();
 
 			let data = BspData::parse(BspParseInput {
 				bsp: &bytes,
