@@ -17,6 +17,7 @@ impl Plugin for BaseClassesPlugin {
 		#[rustfmt::skip]
 		app
 			.register_type_data::<Transform, ReflectQuakeClass>()
+			.register_type_data::<Name, ReflectQuakeClass>()
 		;
 
 		#[cfg(feature = "client")]
@@ -75,6 +76,36 @@ impl QuakeClass for Transform {
 				Err(_) => view.src_entity.get::<Vec3>("scale")?.xzy(),
 			},
 		});
+		Ok(())
+	}
+}
+
+impl QuakeClass for Name {
+	const CLASS_INFO: QuakeClassInfo = QuakeClassInfo {
+		ty: QuakeClassType::Base,
+		name: "__name",
+		description: None,
+		base: &[],
+
+		model: None,
+		color: None,
+		iconsprite: None,
+		size: None,
+		decal: false,
+
+		properties: &[
+			QuakeClassProperty {
+				ty: String::PROPERTY_TYPE,
+				name: "name",
+				title: Some("Name"),
+				description: None,
+				default_value: Some(String::new),
+			},
+		],
+	};
+
+	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
+		view.world.entity_mut(view.entity).insert(Name::new(view.src_entity.get::<String>("name")?));
 		Ok(())
 	}
 }
