@@ -23,7 +23,7 @@ repository.workspace = true
 license.workspace = true
 
 [workspace.dependencies]
-bevy = { version = "0.18.0-rc", default-features = false }
+bevy = { version = "0.18.0", default-features = false }
 nil = "0.15"
 enumflags2 = "0.7"
 avian3d = { version = "0.5", default-features = false, features = [
@@ -44,8 +44,8 @@ bevy = { workspace = true, features = [
 	"bevy_scene",
 	"bevy_color",
 ] }
-bevy_reflect = { version = "0.18.0-rc", package = "bevy_reflect", features = ["reflect_documentation"] }
-bevy_mesh = { version = "0.18.0-rc", package = "bevy_mesh" }
+bevy_reflect = { version = "0.18.0", package = "bevy_reflect", features = ["reflect_documentation"] }
+bevy_mesh = { version = "0.18.0", package = "bevy_mesh" }
 wgpu-types = "27.0.0" # Must be the same version as Bevy uses
 bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "5db2326", default-features = false, features = [
 # bevy_materialize = { version = "0.8", default-features = false, features = [
