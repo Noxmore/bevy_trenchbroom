@@ -19,4 +19,5 @@ App::new()
 # Version support table
 | Bevy | Avian | bevy_trenchbroom_avian |
 |------|-------|------------------------|
-| 0.17 | 0.4   | 0.10                   |
+| 0.18 | 0.5   | 0.12                   |
+| 0.17 | 0.4   | 0.10-0.11              |
