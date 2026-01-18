@@ -15,6 +15,7 @@ use crate::{
 
 use super::*;
 
+#[derive(TypePath)]
 pub struct QuakeMapLoader {
 	pub asset_server: AssetServer,
 	pub tb_server: TrenchBroomServer,

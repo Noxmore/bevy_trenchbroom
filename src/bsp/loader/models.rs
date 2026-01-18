@@ -89,6 +89,8 @@ pub async fn compute_models<'a, 'lc: 'a>(
 			}
 			mesh.insert_indices(Indices::U32(exported_mesh.indices.into_flattened()));
 
+			// Servers don't care about things like normal maps.
+			#[cfg(feature = "client")]
 			if let Err(err) = mesh.generate_tangents() {
 				error!(
 					"Failed to generate tangents for model {model_idx}, mesh with texture {:?}: {err}",

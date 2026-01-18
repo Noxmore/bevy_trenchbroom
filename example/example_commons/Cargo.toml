@@ -13,7 +13,7 @@ doc = false
 
 [dependencies]
 bevy = { workspace = true, features = ["reflect_auto_register", "png"] }
-bevy-inspector-egui = { version = "0.34", optional = true }
+bevy-inspector-egui = { version = "0.36", optional = true }
 
 [features]
 client = ["dep:bevy-inspector-egui"]

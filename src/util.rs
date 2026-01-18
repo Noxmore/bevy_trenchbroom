@@ -148,7 +148,7 @@ pub(crate) fn create_test_asset_server() -> AssetServer {
 	let mut builders = bevy::asset::io::AssetSourceBuilders::default();
 	builders.init_default_source("assets", None);
 	AssetServer::new(
-		builders.build_sources(false, false),
+		Arc::new(builders.build_sources(false, false)),
 		bevy::asset::AssetServerMode::Unprocessed,
 		false,
 		default(),

@@ -80,7 +80,7 @@ fn main() {
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 	#[cfg(feature = "example_client")]
 	{
-		commands.insert_resource(AmbientLight::NONE);
+		commands.insert_resource(GlobalAmbientLight::NONE);
 
 		#[rustfmt::skip]
 		commands.insert_resource(LightingAnimators::new([

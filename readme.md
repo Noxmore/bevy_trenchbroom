@@ -125,6 +125,7 @@ See the [Migration Guide](https://github.com/Noxmore/bevy_trenchbroom/blob/main/
 # Version support table
 | Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools   |
 |------|------------------|---------------|---------------|
+| 0.18 | 0.12             | 2025.3        | 2.0.0-alpha10 |
 | 0.17 | 0.10-0.11        | 2025.3        | 2.0.0-alpha10 |
 | 0.16 | 0.8-0.9          | 2025.3        | 2.0.0-alpha9  |
 | 0.15 | 0.6-0.7          | 2025.1-2025.2 | N/A           |

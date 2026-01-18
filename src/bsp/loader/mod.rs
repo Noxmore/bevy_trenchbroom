@@ -33,6 +33,7 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub entities: &'a QuakeMapEntities,
 }
 
+#[derive(TypePath)]
 pub struct BspLoader {
 	pub tb_server: TrenchBroomServer,
 	pub asset_server: AssetServer,
@@ -63,7 +64,7 @@ impl AssetLoader for BspLoader {
 			let mut bytes = Vec::new();
 			reader.read_to_end(&mut bytes).await?;
 
-			let lit = load_context.read_asset_bytes(load_context.path().with_extension("lit")).await.ok();
+			let lit = load_context.read_asset_bytes(load_context.path().path().with_extension("lit")).await.ok();
 
 			let data = BspData::parse(BspParseInput {
 				bsp: &bytes,
@@ -71,8 +72,10 @@ impl AssetLoader for BspLoader {
 				settings: self.tb_server.config.bsp_parse_settings.clone(),
 			})?;
 
+			let fixed_entities_lump = qbsp::util::quake_string_to_utf8(&data.entities, "\\<b>", "\\</b>");
+
 			let quake_util_map =
-				quake_util::qmap::parse(&mut io::Cursor::new(data.entities.as_bytes())).map_err(|err| anyhow!("Parsing entities: {err}"))?;
+				quake_util::qmap::parse(&mut io::Cursor::new(fixed_entities_lump)).map_err(|err| anyhow!("Parsing entities: {err}"))?;
 			let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
 
 			let mut ctx = BspLoadCtx {
