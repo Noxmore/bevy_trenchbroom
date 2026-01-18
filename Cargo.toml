@@ -30,7 +30,7 @@ avian3d = { version = "0.5", default-features = false, features = [
 	"3d",
 	"collider-from-mesh",
 ] }
-bevy_rapier3d = "0.31" # TODO: Not updated to Bevy 0.18 yet
+bevy_rapier3d = "0.32" # TODO: Not updated to Bevy 0.18 yet
 
 example_commons = { path = "example/example_commons" }
 bevy_trenchbroom = { version = "0.12.0-dev", path = ".", default-features = false }
@@ -47,8 +47,7 @@ bevy = { workspace = true, features = [
 bevy_reflect = { version = "0.18.0", package = "bevy_reflect", features = ["reflect_documentation"] }
 bevy_mesh = { version = "0.18.0", package = "bevy_mesh" }
 wgpu-types = "27.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { git = "https://github.com/Noxmore/bevy_materialize.git", rev = "5db2326", default-features = false, features = [
-# bevy_materialize = { version = "0.8", default-features = false, features = [
+bevy_materialize = { version = "0.9", default-features = false, features = [
 	"toml",
 	"bevy_image",
 ] }
