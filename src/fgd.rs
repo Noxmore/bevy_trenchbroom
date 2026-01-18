@@ -380,6 +380,11 @@ impl FgdType for LightmapStyle {
 	const PROPERTY_TYPE: QuakeClassPropertyType = u8::PROPERTY_TYPE;
 
 	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		// Fallback for empty strings for compatibility.
+		if input.trim().is_empty() {
+			return Ok(Self::NORMAL);
+		}
+
 		u8::fgd_parse(input).map(Self)
 	}
 
