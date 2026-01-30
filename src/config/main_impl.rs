@@ -26,16 +26,6 @@ impl TrenchBroomConfig {
 		TrenchBroomTag::new("empty", "__TB_empty").attributes([TrenchBroomTagAttribute::Transparent])
 	}
 
-	/// A repeating, nearest-neighbor sampler.
-	pub fn default_texture_sampler() -> ImageSampler {
-		ImageSampler::nearest().repeat()
-	}
-
-	/// Switches to using linear (smooth) filtering on textures.
-	pub fn linear_filtering(self) -> Self {
-		self.texture_sampler(ImageSampler::linear().repeat())
-	}
-
 	#[cfg(feature = "bsp")]
 	pub fn default_compute_lightmap_settings() -> ComputeLightmapSettings {
 		ComputeLightmapSettings {
