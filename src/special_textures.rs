@@ -96,7 +96,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				}
 			}
 
-			let mut image = Image::new(
+			Image::new(
 				Extent3d {
 					width: view.image.width() / 2,
 					height: view.image.height(),
@@ -106,11 +106,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				data,
 				view.image.texture_descriptor.format,
 				view.tb_config().bsp_textures_asset_usages,
-			);
-
-			image.sampler = view.tb_config().texture_sampler.clone();
-
-			image
+			)
 		}
 
 		let fg = separate_sky_image(view, 0..view.image.width() / 2, true);

@@ -4,14 +4,11 @@ use crate::*;
 use atomicow::CowArc;
 use bevy::asset::{AssetPath, ErasedLoadedAsset, UntypedAssetId};
 use bevy::asset::{RenderAssetUsages, meta::AssetHash};
+use bevy::ecs::world::DeferredWorld;
 #[cfg_attr(test, expect(unused_imports))] // See TextureSizeCache::entry
 use bevy::{
 	asset::{AssetLoadError, LoadContext, LoadDirectError, io::AssetSourceId},
 	platform::collections::hash_map::Entry,
-};
-use bevy::{
-	ecs::world::DeferredWorld,
-	image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor},
 };
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
 
@@ -58,30 +55,6 @@ impl Aabb {
 	#[inline]
 	pub fn max(&self) -> Vec3A {
 		self.center + self.half_extents
-	}
-}
-
-pub trait ImageSamplerRepeatExt {
-	/// Sets the address mode of this sampler to repeat.
-	fn repeat(self) -> Self;
-}
-impl ImageSamplerRepeatExt for ImageSamplerDescriptor {
-	fn repeat(self) -> Self {
-		Self {
-			address_mode_u: ImageAddressMode::Repeat,
-			address_mode_v: ImageAddressMode::Repeat,
-			address_mode_w: ImageAddressMode::Repeat,
-			..self
-		}
-	}
-}
-impl ImageSamplerRepeatExt for ImageSampler {
-	fn repeat(mut self) -> Self {
-		let descriptor = self.get_or_init_descriptor();
-		descriptor.address_mode_u = ImageAddressMode::Repeat;
-		descriptor.address_mode_v = ImageAddressMode::Repeat;
-		descriptor.address_mode_w = ImageAddressMode::Repeat;
-		self
 	}
 }
 

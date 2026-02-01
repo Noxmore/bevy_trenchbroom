@@ -11,10 +11,14 @@ pub struct FuncDoor;
 
 fn main() {
 	App::new()
-		.add_plugins(DefaultPlugins.set(AssetPlugin {
-			file_path: "../../assets".s(),
-			..default()
-		}))
+		.add_plugins(
+			DefaultPlugins
+				.set(AssetPlugin {
+					file_path: "../../assets".s(),
+					..default()
+				})
+				.set(ImagePlugin::default_nearest()),
+		)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(Update, make_unlit)
 		.add_plugins(

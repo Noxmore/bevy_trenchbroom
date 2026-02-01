@@ -1,8 +1,6 @@
 flat! {
 	hooks;
 	main_impl;
-	#[cfg(feature = "client")]
-	set_sampler;
 	tb_types;
 	writing;
 }
@@ -10,25 +8,15 @@ flat! {
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
 	asset::{AssetPath, LoadContext, RenderAssetUsages},
-	image::ImageSampler,
 	tasks::BoxedFuture,
 };
 use fgd::FgdType;
 use qmap::QuakeMapEntities;
-use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
+use util::BevyTrenchbroomCoordinateConversions;
 
 #[cfg(all(feature = "client", feature = "bsp"))]
 use crate::special_textures::{LiquidMaterialExt, QuakeSkyMaterial};
 use crate::{class::QuakeClassSpawnView, *};
-
-pub struct ConfigPlugin;
-impl Plugin for ConfigPlugin {
-	fn build(&self, #[allow(unused)] app: &mut App) {
-		// This is in PostUpdate to happen after SpawnScene. If set before, hot-reloading fails.
-		#[cfg(feature = "client")]
-		app.add_systems(PostUpdate, Self::set_image_samplers);
-	}
-}
 
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
@@ -273,12 +261,6 @@ pub struct TrenchBroomConfig {
 	/// (Default: `true`)
 	#[default(true)]
 	pub global_transform_application: bool,
-
-	/// The image sampler used with textures loaded from maps.
-	/// Use [`Self::linear_filtering`] to easily switch to smooth texture interpolation.
-	/// (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
-	#[default(Self::default_texture_sampler())]
-	pub texture_sampler: ImageSampler,
 
 	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
 	///
