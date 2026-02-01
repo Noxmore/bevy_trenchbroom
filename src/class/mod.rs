@@ -81,6 +81,17 @@ pub enum QuakeClassPropertyType {
 	/// API is different than other variants because of integration with [`enumflags2`].
 	Flags(fn() -> Box<dyn Iterator<Item = (u32, &'static str)>>),
 }
+impl QuakeClassPropertyType {
+	/// Like PartialEq, but [`QuakeClassPropertyType::Flags`] ignores the function contains within for better determinism.
+	pub fn rough_eq(&self, other: &Self) -> bool {
+		match (self, other) {
+			(Self::Value(s), Self::Value(other_s)) => s == other_s,
+			(Self::Choices(choices), Self::Choices(other_choices)) => choices == other_choices,
+			(Self::Flags(_), Self::Flags(_)) => true,
+			_ => false,
+		}
+	}
+}
 
 impl Default for QuakeClassPropertyType {
 	fn default() -> Self {
@@ -150,6 +161,25 @@ impl QuakeClassInfo {
 			return None;
 		}
 		Some(model.trim_matches('"'))
+	}
+
+	/// If any property in this class or its base classes has this property type, returns `true`, else `false`.
+	///
+	/// NOTE: See [`QuakeClassPropertyType::rough_eq`] documentation for limitations.
+	pub fn contains_property_type(&self, property_type: QuakeClassPropertyType) -> bool {
+		for property in self.properties {
+			if property.ty.rough_eq(&property_type) {
+				return true;
+			}
+		}
+
+		for base in self.base {
+			if base.info.contains_property_type(property_type) {
+				return true;
+			}
+		}
+
+		false
 	}
 }
 

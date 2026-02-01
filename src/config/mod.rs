@@ -262,6 +262,15 @@ pub struct TrenchBroomConfig {
 	#[default(true)]
 	pub global_transform_application: bool,
 
+	/// As of writing, the `targetname`, `target`, and `killtarget` properties are shown on every entity in TrenchBroom without any `target_source` or `target_destination` properties.
+	/// When this setting is enabled, the [`Targetable`], [`Target`], and [`KillTarget`] components are automatically inserted on entities which define these properties, regardless of having them as a base class.
+	///
+	/// The code checks if the entity has any `target_source` or `target_destination` properties defined, so it should only insert components if those properties appear visually in-editor.
+	///
+	/// (Default: `true`)
+	#[default(true)]
+	pub global_target_application: bool,
+
 	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
 	///
 	/// NOTE: It's recommended you add a pixel of padding in [`compute_lightmap_settings`](Self::compute_lightmap_settings), otherwise there will be obvious lightmap leaking.

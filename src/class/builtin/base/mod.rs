@@ -1,3 +1,5 @@
+use crate::fgd::{TargetDestination, TargetSource};
+
 use super::*;
 
 flat! {
@@ -158,6 +160,8 @@ impl QuakeClass for Visibility {
 	}
 }
 
+// TODO: It would be nice to have these be tuple structs.
+
 /// Quake entity IO - Able to target entities with the [`Targetable`] component.
 ///
 /// TODO: this is currently just a skeleton struct, first-class entity IO hasn't been added yet.
@@ -166,9 +170,15 @@ impl QuakeClass for Visibility {
 #[reflect(Default, Serialize, Deserialize)]
 pub struct Target {
 	/// If [`Some`], when this entity's IO fires, it will activate all entities with its [`Targetable::targetname`] set to this, with whatever input that functionality that entity has set up.
-	pub target: Option<String>,
+	pub target: TargetDestination,
+}
+
+#[base_class(classname("__kill_target"))]
+#[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
+#[reflect(Default, Serialize, Deserialize)]
+pub struct KillTarget {
 	/// If [`Some`], when this entity's IO fires, it will kill all entities with its [`Targetable::targetname`] set to this.
-	pub killtarget: Option<String>,
+	pub killtarget: TargetDestination,
 }
 
 /// Quake entity IO - Able to be targeted from a [`Target`] component.
@@ -179,5 +189,5 @@ pub struct Target {
 #[reflect(Default, Serialize, Deserialize)]
 pub struct Targetable {
 	/// The name for entities with [`Target`] components to point to.
-	pub targetname: Option<String>,
+	pub targetname: TargetSource,
 }

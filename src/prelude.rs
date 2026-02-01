@@ -38,7 +38,7 @@ pub use crate::{
 	TrenchBroomPlugins, TrenchBroomServer,
 	class::{
 		QuakeClass, QuakeClassAppExt, ReflectQuakeClass,
-		builtin::{Target, Targetable},
+		builtin::{KillTarget, Target, Targetable},
 		scene_hooks::*,
 	},
 	config::TrenchBroomConfig,
