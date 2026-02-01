@@ -4779,9 +4779,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp"
-version = "0.14.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6de920feb783d1818f57f1384b91023368afbce2ae2400c303161f17df479b2"
+checksum = "c8a854b3baefbde3dda718289f9f9d1bb9320d3c256cd0f93329226dc83dcadd"
 dependencies = [
  "bevy_reflect",
  "bitflags 2.10.0",
@@ -4798,9 +4798,9 @@ dependencies = [
 
 [[package]]
 name = "qbsp_macros"
-version = "0.14.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d37e647f4b7ed627f73b515b07a9469f8d1a9ffec09b76bd90708a4339d35169"
+checksum = "96d248f8559db2ea81292a9dd712010265425beabc13f52aef3e4c31e19cc8a1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7023,9 +7023,9 @@ dependencies = [
 
 [[package]]
 name = "zmij"
-version = "1.0.18"
+version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1966f8ac2c1f76987d69a74d0e0f929241c10e78136434e3be70ff7f58f64214"
+checksum = "3ff05f8caa9038894637571ae6b9e29466c1f4f829d26c9b28f869a29cbe3445"
 
 [[package]]
 name = "zune-core"

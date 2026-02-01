@@ -393,6 +393,41 @@ impl FgdType for LightmapStyle {
 	}
 }
 
+/// Name of entity to trigger. Provides a drop-down list of other entity's [`target_source`](TargetSource) values.
+///
+/// This is very useful for handling multiple outputs of an entity.
+#[derive(Reflect, Debug, Clone, Default, PartialEq, Hash, Deref, DerefMut, Serialize, Deserialize)]
+pub struct TargetDestination(pub String);
+impl FgdType for TargetDestination {
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("target_destination");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		String::fgd_parse(input).map(Self)
+	}
+
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.0.fgd_to_string_unquoted()
+	}
+}
+
+/// Marks property as being the name that other entities may target.
+///
+/// NOTE: There isn't a separate between sources: any [`TargetDestination`] can target any [`TargetSource`],
+/// so, unless you know what you're doing, you should probably use the [`Targetable`] base class instead of a new property.
+#[derive(Reflect, Debug, Clone, Default, PartialEq, Hash, Deref, DerefMut, Serialize, Deserialize)]
+pub struct TargetSource(pub String);
+impl FgdType for TargetSource {
+	const PROPERTY_TYPE: QuakeClassPropertyType = QuakeClassPropertyType::Value("target_source");
+
+	fn fgd_parse(input: &str) -> anyhow::Result<Self> {
+		String::fgd_parse(input).map(Self)
+	}
+
+	fn fgd_to_string_unquoted(&self) -> String {
+		self.0.fgd_to_string_unquoted()
+	}
+}
+
 // We don't support the more common `bitflags` crate because it doesn't seem to support `derive(Reflect)`,
 // and as far as i know i can't get documentation from each flag.
 
