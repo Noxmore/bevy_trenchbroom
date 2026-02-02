@@ -94,8 +94,8 @@ impl TrenchBroomTag {
 		}
 	}
 
-	pub(crate) fn to_json(&self, match_type: &str) -> json::JsonValue {
-		let mut json = json::object! {
+	pub(crate) fn to_json(&self, match_type: &str) -> jzon::JsonValue {
+		let mut json = jzon::object! {
 			"name": self.name.clone(),
 			"attribs": self.attributes.iter().copied().map(TrenchBroomTagAttribute::config_str).collect::<Vec<_>>(),
 			"match": match_type,
@@ -133,12 +133,12 @@ pub enum BitFlag {
 	/// Shows up in-editor with the specified name and optional description.
 	Used { name: String, description: Option<String> },
 }
-impl From<BitFlag> for json::JsonValue {
+impl From<BitFlag> for jzon::JsonValue {
 	fn from(value: BitFlag) -> Self {
 		match value {
-			BitFlag::Unused => json::object! { "unused": true },
+			BitFlag::Unused => jzon::object! { "unused": true },
 			BitFlag::Used { name, description } => {
-				let mut json = json::object! {
+				let mut json = jzon::object! {
 					"name": name.clone(),
 				};
 
@@ -181,9 +181,9 @@ impl DefaultFaceAttributes {
 			|| self.color.is_some()
 	}
 }
-impl From<&DefaultFaceAttributes> for json::JsonValue {
+impl From<&DefaultFaceAttributes> for jzon::JsonValue {
 	fn from(value: &DefaultFaceAttributes) -> Self {
-		let mut json = json::JsonValue::new_object();
+		let mut json = jzon::JsonValue::new_object();
 
 		if let Some(value) = value.offset {
 			json.insert("offset", value.to_array().as_ref()).unwrap();
