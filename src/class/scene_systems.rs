@@ -1,4 +1,4 @@
-use std::{pin::Pin, sync::Arc};
+use std::{pin::Pin, ptr::NonNull, sync::Arc};
 
 use bevy::{
 	asset::LoadContext,
@@ -31,8 +31,16 @@ impl SystemInput for SceneLoadContext<'_> {
 	}
 }
 
-pub struct LoadContextRes {
-	ptr: LoadContext<'static>,
+/// This is private so that the user can't remove the resource, breaking the lifetime
+/// TODO: we could probably use implied types to get it out
+struct SpawnContext {
+	load_context: *mut LoadContext<'static>,
+
+	/// The file type of the map being loaded.
+	file_type: MapFileType,
+
+	pub tb_config: &'l TrenchBroomConfig,
+	pub type_registry: &'l TypeRegistry,
 }
 impl LoadContextRes {
 	pub unsafe fn new(load_context: LoadContext) -> Self {
