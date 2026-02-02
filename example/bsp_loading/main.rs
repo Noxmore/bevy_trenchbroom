@@ -107,24 +107,3 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 		example_commons::default_debug_camera_transform(),
 	));
 }
-
-/* pub trait WithResource {
-	fn with_non_send_resource<T>(&mut self, resource: T, f: impl FnMut(&mut World)) -> T;
-}
-impl WithResource for World {
-	fn with_non_send_resource<T>(&mut self, resource: T, mut f: impl FnMut(&mut World)) -> T {
-		self.register_resource_with_descriptor(descriptor)
-		self.insert_non_send_by_id(self.component_id(), value, caller);
-		// self.remove_non_send_by_id(component_id)
-		let previous = self.remove_non_send_resource::<T>();
-		self.insert_non_send_resource(resource);
-		f(self);
-		if let Some(mut value) = previous {
-			std::mem::swap(self.non_send_resource_mut::<T>().as_mut(), &mut value);
-			value
-		} else {
-			self.remove_non_send_resource::<T>().unwrap()
-		}
-	}
-}
- */
