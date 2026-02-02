@@ -67,7 +67,7 @@ impl AssetServerExistsExt for AssetServer {
 		self.get_source(source)
 			.expect("Could not find asset source")
 			.reader()
-			.read(path)
+			.is_directory(path)
 			.await
 			.is_ok()
 	}
