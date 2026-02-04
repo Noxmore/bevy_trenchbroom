@@ -425,7 +425,8 @@ For compiling the `.map` into a `.bsp`, many of the compiler's defaults are spec
 - `-path assets` This lets the compiler read your loose textures from assets/textures (currently, ["textures" is hardcoded](https://github.com/ericwa/ericw-tools/issues/451)).
 - `-notex` Allows use of loose textures, but doesn't embed WAD textures. See [this issue](https://github.com/ericwa/ericw-tools/issues/404) for context.
 
-`light -extra4 -lightgrid -path assets`
+`light -wrnormals -extra4 -lightgrid -path assets`
+- `-wrnormals` - Embed vertex normals and tangents, letting phong-shaded surfaces work better with dynamic lights.
 - `-extra4` - Multisampling, makes shadows smoother.
 - `-lightgrid` - Calculate volumetric lighting parsed into irradiance volumes, dynamic objects won't have any lighting without this.
 - `-path assets` - Same as above, for color bouncing

@@ -81,11 +81,11 @@ To this end, i've created the [bevy_materialize crate](https://github.com/Noxmor
 Texture loaders for loose and embedded textures can be changed in `TrenchBroomConfig`.
 
 The default loader for loose textures first looks for `<texture>.<GenericMaterial extension>`.
-`<GenericMaterial extension>` is also defined in your config, and is "material" by default.
+`<GenericMaterial extension>` is also defined in your config, and is "toml" by default.
 
 If the file can't be found, it then tries to load `<texture>.<Image extension>` into a `StandardMaterial` as a fallback.
 `<Image extension>` can similarly changed in your config.
-The fallback is because if you have a bunch of simple textures where the material file would look something like
+The fallback is very useful because if you have a bunch of simple textures where the material file would look something like
 ```toml
 [material]
 base_color_texture = "example.png"

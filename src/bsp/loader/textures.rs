@@ -38,7 +38,7 @@ impl EmbeddedTextures {
 
 				let palette = texture.data.palette.as_ref().unwrap_or(&palette);
 
-				let mut image = Image::new(
+				let image = Image::new(
 					Extent3d {
 						width: texture.header.width,
 						height: texture.header.height,
@@ -59,7 +59,6 @@ impl EmbeddedTextures {
 					TextureFormat::Rgba8UnormSrgb,
 					config.bsp_textures_asset_usages,
 				);
-				image.sampler = config.texture_sampler.clone();
 
 				let image_handle = ctx.load_context.get_label_handle(format!("{TEXTURE_PREFIX}{name}"));
 

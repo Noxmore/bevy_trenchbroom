@@ -62,10 +62,14 @@ pub struct Mushroom;
 
 fn main() {
 	App::new()
-		.add_plugins(DefaultPlugins.set(AssetPlugin {
-			file_path: "../../assets".s(),
-			..default()
-		}))
+		.add_plugins(
+			DefaultPlugins
+				.set(AssetPlugin {
+					file_path: "../../assets".s(),
+					..default()
+				})
+				.set(ImagePlugin::default_nearest()),
+		)
 		.add_plugins(TrenchBroomPlugins(
 			TrenchBroomConfig::new("bevy_trenchbroom_example")
 				.suppress_invalid_entity_definitions(true)

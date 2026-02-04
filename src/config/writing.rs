@@ -224,10 +224,10 @@ impl TrenchBroomConfig {
 		//////////////////////////////////////////////////////////////////////////////////
 
 		// The game config file is basically json, so we can get 99% of the way there by just creating a json object.
-		let mut json = json::object! {
+		let mut json = jzon::object! {
 			"version": self.tb_format_version,
 			"name": self.name.clone(),
-			"fileformats": self.file_formats.iter().map(|format| json::object! { "format": format.config_str() }).collect::<Vec<_>>(),
+			"fileformats": self.file_formats.iter().map(|format| jzon::object! { "format": format.config_str() }).collect::<Vec<_>>(),
 			"filesystem": {
 				"searchpath": self.assets_path.s(),
 				"packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
@@ -259,7 +259,7 @@ impl TrenchBroomConfig {
 
 		let insert_defaults = self.default_face_attributes.is_any_set();
 		if insert_defaults || !self.surface_flags.is_empty() || !self.content_flags.is_empty() {
-			let mut face_attributes = json::object! {
+			let mut face_attributes = jzon::object! {
 				"surfaceflags": self.surface_flags.as_slice(),
 				"contentflags": self.content_flags.as_slice(),
 			};

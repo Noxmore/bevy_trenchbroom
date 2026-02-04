@@ -19,48 +19,45 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 
 	// Calculate irradiance volumes for light grids.
 	// Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
-	Ok(if let Some(light_grid) = ctx.data.bspx.parse_light_grid_octree(&ctx.data.parse_ctx) {
-		let mut light_grid = light_grid?;
-		light_grid.mins = config.to_bevy_space(light_grid.mins.to_array().into()).to_array().into();
+	Ok(if let Some(light_grid) = &ctx.data.bspx.light_grid_octree {
+		let grid_mins = config.to_bevy_space(light_grid.mins);
 		// We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
-		light_grid.size = light_grid.size.yzx() + 1;
-		light_grid.step = config.to_bevy_space(light_grid.step.to_array().into()).to_array().into();
+		let grid_size = light_grid.size.yzx() + 1;
+		let grid_step = config.to_bevy_space(light_grid.step);
 
 		let mut input_builders: [Option<IrradianceVolumeBuilder>; 4] = [(); 4].map(|_| None);
 
-		let new_builder = || IrradianceVolumeBuilder::new(light_grid.size.to_array(), [0, 0, 0, 255], config.irradiance_volume_multipliers);
+		let new_builder = || IrradianceVolumeBuilder::new(grid_size, [0, 0, 0, 255], config.irradiance_volume_multipliers);
 
-		let mut style_map_builder = IrradianceVolumeBuilder::new(light_grid.size.to_array(), [255; 4], IrradianceVolumeMultipliers::IDENTITY);
+		let mut style_map_builder = IrradianceVolumeBuilder::new(grid_size, [255; 4], IrradianceVolumeMultipliers::IDENTITY);
 
-		for mut leaf in light_grid.leafs {
-			leaf.mins = leaf.mins.yzx();
-			let size = leaf.size().yzx();
+		for leaf in &light_grid.leafs {
+			let leaf_mins = leaf.mins.yzx();
+			let leaf_size = leaf.size().yzx();
 
-			for x in 0..size.x {
-				for y in 0..size.y {
-					for z in 0..size.z {
+			for x in 0..leaf_size.x {
+				for y in 0..leaf_size.y {
+					for z in 0..leaf_size.z {
 						let LightGridCell::Filled(samples) = leaf.get_cell(z, x, y) else { continue };
-						let (dst_x, dst_y, dst_z) = (x + leaf.mins.x, y + leaf.mins.y, z + leaf.mins.z);
+						let dest = uvec3(x + leaf_mins.x, y + leaf_mins.y, z + leaf_mins.z);
 						let mut style_map: [u8; 4] = [255; 4];
 
 						for (slot_idx, sample) in samples.into_iter().enumerate() {
 							if slot_idx >= 4 {
 								error!(
 									"Light grid cell at {} has more than 4 samples! Data past sample 4 will be thrown away!",
-									leaf.mins + uvec3(x, y, z)
+									leaf_mins + uvec3(x, y, z)
 								);
 								break;
 							}
 
 							let [r, g, b] = sample.color;
 
-							input_builders[slot_idx]
-								.get_or_insert_with(new_builder)
-								.put_all([dst_x, dst_y, dst_z], [r, g, b, 255]);
+							input_builders[slot_idx].get_or_insert_with(new_builder).put_all(dest, [r, g, b, 255]);
 							style_map[slot_idx] = sample.style.0;
 						}
 
-						style_map_builder.put_all([dst_x, dst_y, dst_z], style_map);
+						style_map_builder.put_all(dest, style_map);
 					}
 				}
 			}
@@ -69,7 +66,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		// This is pretty much instructed by FTE docs
 		flood_non_filled(&mut input_builders, &mut style_map_builder, &new_builder);
 
-		let full_size = IrradianceVolumeBuilder::full_size(light_grid.size);
+		let full_size = IrradianceVolumeBuilder::full_size(grid_size);
 
 		let mut slot_idx = 0;
 		let input = input_builders.map(|builder| {
@@ -120,15 +117,14 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 			},
 		);
 
-		let mins: Vec3 = light_grid.mins.to_array().into();
-		let scale: Vec3 = (light_grid.size.as_vec3() * light_grid.step).to_array().into();
+		let scale: Vec3 = grid_size.as_vec3() * grid_step;
 
 		world.spawn((
 			Name::new("Light Grid Irradiance Volume"),
 			LightProbe,
 			AnimatedLightingHandle(animated_lighting_handle.clone()),
 			Transform {
-				translation: mins + scale / 2. - Vec3::from_array(light_grid.step.to_array()) / 2.,
+				translation: grid_mins + scale / 2. - Vec3::from_array(grid_step.to_array()) / 2.,
 				scale,
 				..default()
 			},
@@ -184,8 +180,8 @@ struct IrradianceVolumeBuilder {
 	multipliers: IrradianceVolumeMultipliers,
 }
 impl IrradianceVolumeBuilder {
-	pub fn new(size: impl Into<UVec3>, default_color: [u8; 4], multipliers: IrradianceVolumeMultipliers) -> Self {
-		let size: UVec3 = size.into();
+	pub fn new(size: UVec3, default_color: [u8; 4], multipliers: IrradianceVolumeMultipliers) -> Self {
+		let size: UVec3 = size;
 		let full_size = Self::full_size(size);
 		let shape = RuntimeShape::<u32, 3>::new(full_size.to_array());
 		let vec_size = shape.usize();
@@ -210,15 +206,15 @@ impl IrradianceVolumeBuilder {
 		(pos - grid_offset * self.size, dir)
 	}
 
-	pub fn linearize(&self, pos: impl Into<UVec3>, dir: IrradianceVolumeDirection) -> usize {
-		let mut pos: UVec3 = pos.into();
+	pub fn linearize(&self, pos: UVec3, dir: IrradianceVolumeDirection) -> usize {
+		let mut pos: UVec3 = pos;
 		pos += dir.offset() * self.size;
 		Shape::linearize(&self.full_shape, [pos.x, pos.y, pos.z]) as usize
 	}
 
 	#[inline]
 	#[track_caller]
-	pub fn put(&mut self, pos: impl Into<UVec3>, dir: IrradianceVolumeDirection, color: [u8; 4]) {
+	pub fn put(&mut self, pos: UVec3, dir: IrradianceVolumeDirection, color: [u8; 4]) {
 		let idx = self.linearize(pos, dir);
 
 		self.data[idx] = color;
@@ -227,7 +223,7 @@ impl IrradianceVolumeBuilder {
 
 	#[inline]
 	#[track_caller]
-	pub fn put_all(&mut self, pos: impl Into<UVec3>, color: [u8; 4]) {
+	pub fn put_all(&mut self, pos: UVec3, color: [u8; 4]) {
 		#[inline]
 		fn clamp(x: f32) -> f32 {
 			x.clamp(0., 255.)
@@ -243,7 +239,6 @@ impl IrradianceVolumeBuilder {
 			]
 		}
 
-		let pos = pos.into();
 		self.put(pos, IrradianceVolumeDirection::X, mul_color(color, self.multipliers.x));
 		self.put(pos, IrradianceVolumeDirection::Y, mul_color(color, self.multipliers.y));
 		self.put(pos, IrradianceVolumeDirection::Z, mul_color(color, self.multipliers.z));
@@ -304,7 +299,7 @@ fn flood_non_filled(
 			for y in min.y..=max.y {
 				for z in min.z..=max.z {
 					// For each cell around this one
-					let offset_idx = builder.linearize([x, y, z], dir);
+					let offset_idx = builder.linearize(uvec3(x, y, z), dir);
 
 					if builder.filled[offset_idx] {
 						let contributing_styles = style_map_builder.data[offset_idx].map(LightmapStyle);

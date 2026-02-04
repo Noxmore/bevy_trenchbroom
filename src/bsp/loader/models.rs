@@ -26,11 +26,6 @@ pub struct InternalModelMesh {
 	pub entity: Option<Entity>,
 }
 
-#[inline]
-fn convert_vec3(config: &TrenchBroomConfig) -> impl Fn(qbsp::glam::Vec3) -> Vec3 + '_ {
-	|x| config.to_bevy_space(Vec3::from_array(x.to_array()))
-}
-
 #[cfg(feature = "client")]
 type Lightmap = BspLightmap;
 #[cfg(not(feature = "client"))]
@@ -70,20 +65,19 @@ pub async fn compute_models<'a, 'lc: 'a>(
 				}
 			}
 
+			for position in &mut exported_mesh.positions {
+				*position = config.to_bevy_space(*position);
+			}
+
+			for normal in &mut exported_mesh.normals {
+				*normal = normal.trenchbroom_to_bevy();
+			}
+
 			let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, config.brush_mesh_asset_usages);
 
-			mesh.insert_attribute(
-				Mesh::ATTRIBUTE_POSITION,
-				exported_mesh.positions.into_iter().map(convert_vec3(config)).collect_vec(),
-			);
-			mesh.insert_attribute(
-				Mesh::ATTRIBUTE_NORMAL,
-				exported_mesh.normals.into_iter().map(convert_vec3(config)).collect_vec(),
-			);
-			mesh.insert_attribute(
-				Mesh::ATTRIBUTE_UV_0,
-				exported_mesh.uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec(),
-			);
+			mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, exported_mesh.positions);
+			mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, exported_mesh.normals);
+			mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, exported_mesh.uvs);
 			if let Some(lightmap_uvs) = &exported_mesh.lightmap_uvs {
 				mesh.insert_attribute(Mesh::ATTRIBUTE_UV_1, lightmap_uvs.iter().map(qbsp::glam::Vec2::to_array).collect_vec());
 			}
@@ -91,7 +85,13 @@ pub async fn compute_models<'a, 'lc: 'a>(
 
 			// Servers don't care about things like normal maps.
 			#[cfg(feature = "client")]
-			if let Err(err) = mesh.generate_tangents() {
+			if let Some(mut tangents) = exported_mesh.tangents {
+				for tangent in &mut tangents {
+					*tangent = tangent.xyz().trenchbroom_to_bevy().extend(tangent.w);
+				}
+
+				mesh.insert_attribute(Mesh::ATTRIBUTE_TANGENT, tangents);
+			} else if let Err(err) = mesh.generate_tangents() {
 				error!(
 					"Failed to generate tangents for model {model_idx}, mesh with texture {:?}: {err}",
 					exported_mesh.texture
@@ -218,8 +218,8 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, internal_models: Vec<InternalModel>
 				})
 				.collect(),
 
-			brushes: match ctx.data.bspx.parse_brush_list(&ctx.data.parse_ctx) {
-				Some(brush_list) => brush_list?
+			brushes: match &ctx.data.bspx.brush_list {
+				Some(brush_list) => brush_list
 					.iter()
 					.find(|model_brushes| model_brushes.model_idx as usize == model_idx)
 					.map(|model_brushes| {

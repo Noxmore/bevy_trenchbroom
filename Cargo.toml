@@ -55,14 +55,14 @@ default-struct-builder = "0.5.0"
 float-ord = "0.3"
 image = { version = "0.25", default-features = false }
 itertools = "0.14"
-json = "0.12"
+jzon = "0.12"
 quake-util = { version = "0.4.0", features = ["std"] }
 serde = { version = "1", features = [
 	"derive",
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.13", features = ["bevy_reflect", "serde"], optional = true }
+qbsp = { version = "0.14", features = ["bevy_reflect", "serde"], optional = true }
 nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }

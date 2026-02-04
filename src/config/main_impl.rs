@@ -1,4 +1,4 @@
-use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, util::AssetServerExistsExt};
+use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, fgd::{TargetDestination, TargetSource}, util::AssetServerExistsExt};
 #[cfg(feature = "bsp")]
 use bsp::GENERIC_MATERIAL_PREFIX;
 
@@ -24,16 +24,6 @@ impl TrenchBroomConfig {
 	/// (See documentation on [`TrenchBroomConfig::face_tags`])
 	pub fn empty_face_tag() -> TrenchBroomTag {
 		TrenchBroomTag::new("empty", "__TB_empty").attributes([TrenchBroomTagAttribute::Transparent])
-	}
-
-	/// A repeating, nearest-neighbor sampler.
-	pub fn default_texture_sampler() -> ImageSampler {
-		ImageSampler::nearest().repeat()
-	}
-
-	/// Switches to using linear (smooth) filtering on textures.
-	pub fn linear_filtering(self) -> Self {
-		self.texture_sampler(ImageSampler::linear().repeat())
 	}
 
 	#[cfg(feature = "bsp")]
@@ -72,6 +62,20 @@ impl TrenchBroomConfig {
 				rotation: read_rotation_from_entity(view.src_entity)?,
 				scale: Vec3::ONE,
 			});
+		}
+
+		if view.tb_config.global_target_application && !view.class.info.contains_property_type(TargetDestination::PROPERTY_TYPE) && !view.class.info.contains_property_type(TargetSource::PROPERTY_TYPE) {
+			if let Ok(targetname) = view.src_entity.get::<TargetSource>("targetname") && !ent.contains::<Targetable>() {
+				ent.insert(Targetable { targetname });
+			}
+
+			if let Ok(target) = view.src_entity.get::<TargetDestination>("target") && !ent.contains::<Target>() {
+				ent.insert(Target { target });
+			}
+
+			if let Ok(killtarget) = view.src_entity.get::<TargetDestination>("killtarget") && !ent.contains::<KillTarget>() {
+				ent.insert(KillTarget { killtarget });
+			}
 		}
 
 		Ok(())

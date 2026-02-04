@@ -130,7 +130,11 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 
 						// Bring the vertices to the origin if they're generated in world-space (non-bsp)
 						#[cfg(feature = "bsp")]
-						if !matches!(brushes, Brushes::Bsp(_)) {
+						let is_bsp = matches!(brushes, Brushes::Bsp(_));
+						#[cfg(not(feature = "bsp"))]
+						let is_bsp = false;
+
+						if !is_bsp {
 							for vertex in &mut vertices {
 								*vertex -= B::vec3(transform.translation);
 							}

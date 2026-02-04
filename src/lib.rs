@@ -17,6 +17,8 @@ pub mod bsp;
 pub mod class;
 pub mod config;
 pub mod fgd;
+#[cfg(feature = "client")]
+pub mod fix_default_sampler;
 pub mod geometry;
 #[cfg(feature = "physics-integration")]
 pub mod physics;
@@ -48,14 +50,15 @@ impl PluginGroup for TrenchBroomPlugins {
 			.add(CorePlugin(self.0))
 			.add(class::QuakeClassPlugin)
 			.add_group(class::builtin::BasicClassesPlugins)
-			.add(config::ConfigPlugin)
 			.add(qmap::QuakeMapPlugin)
 			.add(geometry::GeometryPlugin)
 			.add(util::UtilPlugin);
 
 		// Have to use let here because "attributes on expressions are experimental"
 		#[cfg(feature = "client")]
-		let builder = builder.add(special_textures::SpecialTexturesPlugin);
+		let builder = builder
+			.add(special_textures::SpecialTexturesPlugin)
+			.add(fix_default_sampler::RepeatDefaultSamplerPlugin);
 
 		#[cfg(feature = "bsp")]
 		let builder = builder.add(bsp::BspPlugin);

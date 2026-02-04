@@ -1,8 +1,6 @@
 flat! {
 	hooks;
 	main_impl;
-	#[cfg(feature = "client")]
-	set_sampler;
 	tb_types;
 	writing;
 }
@@ -10,25 +8,15 @@ flat! {
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
 	asset::{AssetPath, LoadContext, RenderAssetUsages},
-	image::ImageSampler,
 	tasks::BoxedFuture,
 };
 use fgd::FgdType;
 use qmap::QuakeMapEntities;
-use util::{BevyTrenchbroomCoordinateConversions, ImageSamplerRepeatExt};
+use util::BevyTrenchbroomCoordinateConversions;
 
 #[cfg(all(feature = "client", feature = "bsp"))]
 use crate::special_textures::{LiquidMaterialExt, QuakeSkyMaterial};
 use crate::{class::QuakeClassSpawnView, *};
-
-pub struct ConfigPlugin;
-impl Plugin for ConfigPlugin {
-	fn build(&self, #[allow(unused)] app: &mut App) {
-		// This is in PostUpdate to happen after SpawnScene. If set before, hot-reloading fails.
-		#[cfg(feature = "client")]
-		app.add_systems(PostUpdate, Self::set_image_samplers);
-	}
-}
 
 /// The main configuration structure of bevy_trenchbroom.
 #[derive(Debug, Clone, SmartDefault, DefaultBuilder)]
@@ -274,11 +262,14 @@ pub struct TrenchBroomConfig {
 	#[default(true)]
 	pub global_transform_application: bool,
 
-	/// The image sampler used with textures loaded from maps.
-	/// Use [`Self::linear_filtering`] to easily switch to smooth texture interpolation.
-	/// (Default: [`Self::default_texture_sampler`] (repeating nearest neighbor))
-	#[default(Self::default_texture_sampler())]
-	pub texture_sampler: ImageSampler,
+	/// As of writing, the `targetname`, `target`, and `killtarget` properties are shown on every entity in TrenchBroom without any `target_source` or `target_destination` properties.
+	/// When this setting is enabled, the [`Targetable`], [`Target`], and [`KillTarget`] components are automatically inserted on entities which define these properties, regardless of having them as a base class.
+	///
+	/// The code checks if the entity has any `target_source` or `target_destination` properties defined, so it should only insert components if those properties appear visually in-editor.
+	///
+	/// (Default: `true`)
+	#[default(true)]
+	pub global_target_application: bool,
 
 	/// If `true`, lightmaps spawned from BSPs will use bicubic filtering. (Default: `false`)
 	///

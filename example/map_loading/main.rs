@@ -83,10 +83,14 @@ fn main() {
 	}
 
 	App::new()
-		.add_plugins(DefaultPlugins.set(AssetPlugin {
-			file_path: "../../assets".s(),
-			..default()
-		}))
+		.add_plugins(
+			DefaultPlugins
+				.set(AssetPlugin {
+					file_path: "../../assets".s(),
+					..default()
+				})
+				.set(ImagePlugin::default_nearest()),
+		)
 		.add_plugins(trenchbroom_plugins)
 		.add_plugins(example_commons::ExampleCommonsPlugin)
 		.add_systems(PostStartup, setup_scene)
@@ -94,7 +98,8 @@ fn main() {
 }
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-	commands.spawn(SceneRoot(asset_server.load("maps/example.map#Scene")));
+	let map = std::env::args().nth(1).unwrap_or("example.map".s());
+	commands.spawn(SceneRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]
 	commands.spawn((
