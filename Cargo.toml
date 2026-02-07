@@ -26,7 +26,7 @@ license.workspace = true
 bevy = { version = "0.18.0", default-features = false }
 nil = "0.15"
 enumflags2 = "0.7"
-avian3d = { version = "0.5", default-features = false, features = [
+avian3d = { version = "0.6.0-rc.1", default-features = false, features = [
 	"3d",
 	"collider-from-mesh",
 ] }
