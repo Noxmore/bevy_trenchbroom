@@ -433,7 +433,7 @@ For compiling the `.map` into a `.bsp`, many of the compiler's defaults are spec
 
 Along with these, there are also worldspawn keys that can make the default lighting look a lot prettier.
 These settings can either be put into the worldspawn entity, where they are prefixed with an underscore `_`, or as `light` command-line arguments prefixed with a dash `-`.
-Here are some that I recommend adding, presented as command-line:
+Here are some that I recommend adding, presented as command-line so you can just copy & paste them:
 
 `-bounce 8 -bouncecolorscale 1 -bouncestyled 1 -dirt 1 -phong 1`
 - `-bounce 8` - 8 passes of indirect lighting. More passes gives diminishing returns, 8 is usually plenty.
