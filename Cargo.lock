@@ -1747,7 +1747,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_trenchbroom_avian"
-version = "0.13.0-dev"
+version = "0.13.0-rc.1"
 dependencies = [
  "avian3d",
  "bevy",

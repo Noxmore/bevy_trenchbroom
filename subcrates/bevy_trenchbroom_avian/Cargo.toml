@@ -2,7 +2,7 @@
 name = "bevy_trenchbroom_avian"
 description = "Integration between `bevy_trenchbroom` and the Avian physics engine."
 
-version = "0.13.0-dev"
+version = "0.13.0-rc.1"
 edition.workspace = true
 authors.workspace = true
 repository.workspace = true
