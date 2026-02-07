@@ -69,7 +69,9 @@ fn main() {
 	// Unfortunately, due to Rust limitations on attributes, we have to build this through a variable.
 	#[allow(unused_mut)]
 	let mut trenchbroom_plugins = TrenchBroomPlugins(
-		TrenchBroomConfig::new("bevy_trenchbroom_example").default_solid_scene_hooks(|| SceneHooks::new().smooth_by_default_angle()),
+		TrenchBroomConfig::new("bevy_trenchbroom_example")
+			.default_solid_scene_hooks(|| SceneHooks::new().smooth_by_default_angle())
+			.asset_manifest(manifest!("assets")),
 	)
 	.build()
 	// This is because we use a custom light class for parity with bsp_loading.
