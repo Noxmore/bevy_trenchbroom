@@ -1,6 +1,7 @@
 # 0.12 to 0.13
 - `TrenchBroomConfig::asset_manifest` has been added, allowing faster map loading for mainly web builds.
 - `AssetServer::exists(...)` has been moved to `TrenchBroomConfig::asset_exists(...)` to support asset manifests.
+- The buggy `ConfigPlugin::set_image_samplers` system has been replaced with `RepeatDefaultSamplerPlugin`. You might notice that your textures suddenly uses linear filtering. To change this, do `DefaultPlugins.set(ImagePlugin::default_nearest())`.
 
 # 0.10 to 0.11
 - The global spawner in `TrenchBroomConfig` has been split into `pre_spawn_hook` and `post_spawn_hook` for more granular control.
