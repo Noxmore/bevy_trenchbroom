@@ -82,6 +82,9 @@ impl AssetLoader for QuakeMapLoader {
 
 			let class_map = self.generate_class_map();
 
+			let mut texture_size_cache: TextureSizeCache<&str> = default();
+			let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();
+
 			for (map_entity_idx, map_entity) in entities.iter().enumerate() {
 				let Some(classname) = map_entity.properties.get("classname") else { continue };
 				let Some(class) = class_map.get(classname.as_str()).copied() else {
@@ -98,12 +101,13 @@ impl AssetLoader for QuakeMapLoader {
 
 				if class.info.ty.is_solid() {
 					let mut grouped_polygons: HashMap<&str, Vec<BrushSurfacePolygon>> = default();
-					let mut texture_size_cache: TextureSizeCache<&str> = default();
-					let mut material_cache: HashMap<&str, Handle<GenericMaterial>> = default();
 
 					for brush in &map_entity.brushes {
 						for polygon in brush.polygonize() {
-							grouped_polygons.entry(&polygon.surface.texture).or_default().push(polygon);
+							grouped_polygons
+								.entry(&polygon.surface.texture)
+								.or_insert_with(|| Vec::with_capacity(8))
+								.push(polygon);
 						}
 					}
 
@@ -204,6 +208,9 @@ impl AssetLoader for QuakeMapLoader {
 					world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
 				}
 			}
+
+			drop(texture_size_cache);
+			drop(material_cache);
 
 			Ok(QuakeMap {
 				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
