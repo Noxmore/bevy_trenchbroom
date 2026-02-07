@@ -1,6 +1,7 @@
 flat! {
 	hooks;
 	main_impl;
+	manifest;
 	tb_types;
 	writing;
 }
@@ -8,6 +9,7 @@ flat! {
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
 	asset::{AssetPath, LoadContext, RenderAssetUsages},
+	platform::collections::HashSet,
 	tasks::BoxedFuture,
 };
 use fgd::FgdType;
@@ -126,6 +128,9 @@ pub struct TrenchBroomConfig {
 	///
 	/// NOTE: This bounding box is in TrenchBroom space (Z up).
 	pub soft_map_bounds: Option<[Vec3; 2]>,
+
+	#[builder(skip)]
+	pub asset_manifest: Option<Manifest>,
 
 	/// The file extension used when loading [`GenericMaterial`]s.
 	///

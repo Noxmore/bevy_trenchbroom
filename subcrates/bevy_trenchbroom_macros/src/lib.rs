@@ -1,4 +1,5 @@
 mod fgd_type;
+mod manifest;
 mod quake_class;
 
 use heck::*;
@@ -84,6 +85,14 @@ pub fn base_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream)
 #[proc_macro_derive(FgdType, attributes(number_key))]
 pub fn fgd_type_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	fgd_type::fgd_type_derive(parse_macro_input!(input as DeriveInput)).into()
+}
+
+/// Generates a manifest accounting the structure of a folder at compile time. Use like `manifest!("folder path from project root")`.
+///
+/// NOTE: Strips the root directory from the path of entries.
+#[proc_macro]
+pub fn manifest(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	manifest::manifest_impl(parse_macro_input!(input as LitStr).value()).into()
 }
 
 /// Returns `true` if the path contains a single segment, that segment being `s`.

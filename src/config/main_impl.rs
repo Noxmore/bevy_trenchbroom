@@ -1,4 +1,5 @@
-use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, fgd::{TargetDestination, TargetSource}, util::AssetServerExistsExt};
+use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, fgd::{TargetDestination, TargetSource}};
+use bevy::asset::io::AssetSourceId;
 #[cfg(feature = "bsp")]
 use bsp::GENERIC_MATERIAL_PREFIX;
 
@@ -180,7 +181,7 @@ impl TrenchBroomConfig {
 					.material_root
 					.join(format!("{}.{}", view.name, ext));
 
-				if view.asset_server.exists(&source, &path).await {
+				if view.tb_config().asset_exists(view.asset_server, &source, &path).await {
 					// We found one, let's load it!
 					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
 				}
@@ -194,7 +195,7 @@ impl TrenchBroomConfig {
 					.material_root
 					.join(format!("{}.{}", view.name, ext));
 
-				if view.asset_server.exists(&source, &path).await {
+				if view.tb_config().asset_exists(view.asset_server, &source, &path).await {
 					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
 				}
 			}
@@ -229,5 +230,19 @@ impl TrenchBroomConfig {
 	/// The opposite of [`Self::to_bevy_space_f64`], converts from a y-up coordinate space to z-up, and scales everything up by this config's scale.
 	pub fn from_bevy_space_f64(&self, vec: DVec3) -> DVec3 {
 		vec.bevy_to_trenchbroom() * self.scale as f64
+	}
+
+
+	pub async fn asset_exists(&self, asset_server: &AssetServer, source: &AssetSourceId<'_>, path: &Path) -> bool {
+		if let Some(manifest) = &self.asset_manifest {
+			return manifest.file_set().contains(path);
+		}
+		
+		asset_server.get_source(source)
+			.expect("Could not find asset source")
+			.reader()
+			.read(path)
+			.await
+			.is_ok()
 	}
 }

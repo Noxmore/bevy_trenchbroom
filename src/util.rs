@@ -7,7 +7,7 @@ use bevy::asset::{RenderAssetUsages, meta::AssetHash};
 use bevy::ecs::world::DeferredWorld;
 #[cfg_attr(test, expect(unused_imports))] // See TextureSizeCache::entry
 use bevy::{
-	asset::{AssetLoadError, LoadContext, LoadDirectError, io::AssetSourceId},
+	asset::{AssetLoadError, LoadContext, LoadDirectError},
 	platform::collections::hash_map::Entry,
 };
 use wgpu_types::{Extent3d, TextureDimension, TextureFormat};
@@ -55,21 +55,6 @@ impl Aabb {
 	#[inline]
 	pub fn max(&self) -> Vec3A {
 		self.center + self.half_extents
-	}
-}
-
-pub trait AssetServerExistsExt {
-	/// Workaround, attempts to get a reader for a path via an asset source. If it succeeds, return `true`, else `false`.
-	fn exists(&self, source: &AssetSourceId<'_>, path: &Path) -> impl std::future::Future<Output = bool>;
-}
-impl AssetServerExistsExt for AssetServer {
-	async fn exists(&self, source: &AssetSourceId<'_>, path: &Path) -> bool {
-		self.get_source(source)
-			.expect("Could not find asset source")
-			.reader()
-			.read(path)
-			.await
-			.is_ok()
 	}
 }
 

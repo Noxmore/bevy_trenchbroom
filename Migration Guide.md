@@ -1,3 +1,7 @@
+# 0.12 to 0.13
+- `TrenchBroomConfig::asset_manifest` has been added, allowing faster map loading for mainly web builds.
+- `AssetServer::exists(...)` has been moved to `TrenchBroomConfig::asset_exists(...)` to support asset manifests.
+
 # 0.10 to 0.11
 - The global spawner in `TrenchBroomConfig` has been split into `pre_spawn_hook` and `post_spawn_hook` for more granular control.
 - Quake 2 and GoldSrc BSP formats are now supported. If you are using BSPs, you should probably switch to the Quake 2 QBISM format, as it is a direct upgrade to BSP2. Check the [BSP section in the manual](https://docs.rs/bevy_trenchbroom/latest/bevy_trenchbroom/manual/index.html#bsp) for updated recommended command arguments.
