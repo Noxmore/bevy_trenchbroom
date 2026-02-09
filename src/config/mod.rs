@@ -145,6 +145,9 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub generic_material_extensions: Vec<String>,
 
+	/// Specifies the settings to use when loading materials from images.
+	pub image_material_loader: SimpleGenericMaterialLoader,
+
 	/// If `Some`, sets the lightmap exposure on any `StandardMaterial` loaded. (Default: Some(10,000))
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(Some(10_000.))]

@@ -196,7 +196,18 @@ impl TrenchBroomConfig {
 					.join(format!("{}.{}", view.name, ext));
 
 				if view.tb_config().asset_exists(view.asset_server, &source, &path).await {
-					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
+					#[cfg(feature = "client")]
+					let image = view.load_context.load::<Image>(AssetPath::from_path(&path).with_source(source));
+					#[cfg(feature = "client")]
+					let material = (view.tb_config().image_material_loader.material)(image);
+					#[cfg(feature = "client")]
+					let material_handle = material.add_labeled_asset(view.load_context, format!("Material_{}", view.name));
+					
+					return view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), GenericMaterial {
+						#[cfg(feature = "client")]
+						handle: material_handle,
+						properties: (view.tb_config().image_material_loader.properties)(),
+					});
 				}
 			}
 

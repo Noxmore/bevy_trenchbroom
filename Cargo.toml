@@ -47,7 +47,7 @@ bevy = { workspace = true, features = [
 bevy_reflect = { version = "0.18.0", package = "bevy_reflect", features = ["reflect_documentation"] }
 bevy_mesh = { version = "0.18.0", package = "bevy_mesh" }
 wgpu-types = "27.0.0" # Must be the same version as Bevy uses
-bevy_materialize = { version = "0.9", default-features = false, features = [
+bevy_materialize = { version = "0.10", default-features = false, features = [
 	"toml",
 	"bevy_image",
 ] }
