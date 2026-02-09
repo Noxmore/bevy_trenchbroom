@@ -256,4 +256,146 @@ impl TrenchBroomConfig {
 			.await
 			.is_ok()
 	}
+	pub fn default_quake2_surface_flags() -> Vec<BitFlag> {
+		vec![
+			BitFlag::new(
+				"light",
+				Some("Emit light from the surface, brightness is specified in the 'value' field")
+			),
+			BitFlag::new(
+				"slick",
+				Some("The surface is slippery")
+			),
+			BitFlag::new(
+				"sky",
+				Some("The surface is sky, the texture will not be drawn, but the background sky box is used instead")
+			),
+			BitFlag::new(
+				"warp",
+				Some("The surface warps (like water textures do)")
+			),
+			BitFlag::new(
+				"trans33",
+				Some("The surface is 33% transparent")
+			),
+			BitFlag::new(
+				"trans66",
+				Some("The surface is 66% transparent")
+			),
+			BitFlag::new(
+				"flowing",
+				Some("The texture wraps in a downward 'flowing' pattern (warp must also be set)")
+			),
+			BitFlag::new(
+				"nodraw",
+				Some("Used for non-fixed-size brush triggers and clip brushes")
+			),
+			BitFlag::new(
+				"hint",
+				Some("Make a primary bsp splitter")
+			),
+			BitFlag::new(
+				"skip",
+				Some("Completely ignore, allowing non-closed brushes")
+			),
+		]
+	}
+	
+	pub fn default_quake2_content_flags() -> Vec<BitFlag> {
+		vec![
+			BitFlag::new(
+				"solid",
+				Some("Default for all brushes")
+			),
+			BitFlag::new(
+				"window",
+				Some("Brush is a window (not really used)")
+			),
+			BitFlag::new(
+				"aux",
+				Some("Unused by the engine")
+			),
+			BitFlag::new(
+				"lava",
+				Some("The brush is lava")
+			),
+			BitFlag::new(
+				"slime",
+				Some("The brush is slime")
+			),
+			BitFlag::new(
+				"water",
+				Some("The brush is water")
+			),
+			BitFlag::new(
+				"mist",
+				Some("The brush is non-solid")
+			),
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::Unused,
+			BitFlag::new(
+				"playerclip",
+				Some("Player cannot pass through the brush (other things can)")
+			),
+			BitFlag::new(
+				"monsterclip",
+				Some("Monster cannot pass through the brush (player and other things can)")
+			),
+			BitFlag::new(
+				"current_0",
+				Some("Brush has a current in direction of 0 degrees")
+			),
+			BitFlag::new(
+				"current_90",
+				Some("Brush has a current in direction of 90 degrees")
+			),
+			BitFlag::new(
+				"current_180",
+				Some("Brush has a current in direction of 180 degrees")
+			),
+			BitFlag::new(
+				"current_270",
+				Some("Brush has a current in direction of 270 degrees")
+			),
+			BitFlag::new(
+				"current_up",
+				Some("Brush has a current in the up direction")
+			),
+			BitFlag::new(
+				"current_dn",
+				Some("Brush has a current in the down direction")
+			),
+			BitFlag::new(
+				"origin",
+				Some("Special brush used for specifying origin of rotation for rotating brushes")
+			),
+			BitFlag::new(
+				"monster",
+				Some("Purpose unknown")
+			),
+			BitFlag::new(
+				"corpse",
+				Some("Purpose unknown")
+			),
+			BitFlag::new(
+				"detail",
+				Some("Detail brush")
+			),
+			BitFlag::new(
+				"translucent",
+				Some("Use for opaque water that does not block vis")
+			),
+			BitFlag::new(
+				"ladder",
+				Some("Brushes with this flag allow a player to move up and down a vertical surface")
+			),
+		]
+	}
 }
