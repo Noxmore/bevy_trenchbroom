@@ -108,15 +108,17 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub face_tags: Vec<TrenchBroomTag>,
 
-	/// Game-defined flags per face.
+	/// Game-defined flags per face. When using BSPs, this is also used by the compiler.
 	///
-	/// TODO: Currently, these do not save in the map file, or are able to be loaded, as it requires [MapFileFormat::Quake2] or higher, which isn't supported yet.
+	/// These require [MapFileFormat::Quake2] or higher. Quake2 is the default format.
+	#[cfg_attr(feature = "bsp", default(Self::default_quake2_surface_flags()))]
 	#[builder(into)]
 	pub surface_flags: Vec<BitFlag>,
-	/// Game-defined flags per face.
+	/// Game-defined flags per face. When using BSPs, this is also used by the compiler.
 	/// According to [TrenchBroom docs](https://trenchbroom.github.io/manual/latest/#game_configuration_files), unlike [`Self::surface_flags`], this is "generally affecting the behavior of the brush containing the face".
 	///
-	/// TODO: Currently, these do not save in the map file, or are able to be loaded, as it requires [MapFileFormat::Quake2] or higher, which isn't supported yet.
+	/// These require [MapFileFormat::Quake2] or higher. Quake2 is the default format.
+	#[cfg_attr(feature = "bsp", default(Self::default_quake2_content_flags()))]
 	#[builder(into)]
 	pub content_flags: Vec<BitFlag>,
 

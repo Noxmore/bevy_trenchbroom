@@ -390,7 +390,9 @@ When loading embedded textures (ones stored directly in the BSP file), these are
 [`TrenchBroomConfig::auto_remove_textures`](bevy_trenchbroom::config::TrenchBroomConfig::auto_remove_textures) is a set of texture names whose meshes are skipped on map load. By default, "__TB_empty"—the name used for untextured faces—is in this set. If you're using a `.map` workflow, this can drastically reduce the amount of redundant or unseen faces in your level mesh.
 
 [`TrenchBroomConfig::origin_textures`](bevy_trenchbroom::config::TrenchBroomConfig::origin_textures) is a set of texture names that sets the transform origin of a brush entity to a brush within it if the brush is fully textured with any of these textures. This allows for example, a door or rotating entity to rotate around a specific point.<br>
-NOTE: For [BSPs](#bsp), this step is done at compile time, and only works on a texture called "origin". For this reason, "origin" is the singular default string in this set.
+NOTE: For [BSPs](#bsp), this step is done at compile time,
+- Quake 1: This only works on a texture called "origin". For this reason, "origin" is the singular default string in this set.
+- Quake 2: This instead relies on the "origin" brush content flag, which can be set in TrenchBroom.
 
 # BSP
 Quake doesn't support loading `.map`s, instead they are compiled into `.bsp` files by a map compiler, such as [ericw-tools](https://ericwa.github.io/ericw-tools/), which this crate also supports if the `bsp` feature is enabled. See the [version support table](https://github.com/Noxmore/bevy_trenchbroom/blob/main/readme.md#version-support-table) for which version of ericw-tools you should use for your version of bevy_trenchbroom. It tries to stay near or at the latest version.

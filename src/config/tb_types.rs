@@ -131,7 +131,13 @@ pub enum BitFlag {
 	#[default]
 	Unused,
 	/// Shows up in-editor with the specified name and optional description.
-	Used { name: String, description: Option<String> },
+	Used { name: Cow<'static, str>, description: Option<Cow<'static, str>> },
+}
+impl BitFlag {
+	#[inline] // We use &str to avoid `None` description causing an unspecified generic
+	pub fn new(name: &'static str, description: Option<&'static str>) -> Self {
+		Self::Used { name: name.into(), description: description.map(Into::into) }
+	}
 }
 impl From<BitFlag> for jzon::JsonValue {
 	fn from(value: BitFlag) -> Self {
@@ -139,11 +145,11 @@ impl From<BitFlag> for jzon::JsonValue {
 			BitFlag::Unused => jzon::object! { "unused": true },
 			BitFlag::Used { name, description } => {
 				let mut json = jzon::object! {
-					"name": name.clone(),
+					"name": name.as_ref(),
 				};
 
 				if let Some(description) = description {
-					json.insert("description", description.clone()).unwrap();
+					json.insert("description", description.as_ref()).unwrap();
 				}
 
 				json
