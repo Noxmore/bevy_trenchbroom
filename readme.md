@@ -17,7 +17,7 @@ More specifically, integration and support for the following workflows:
 # Quickstart
 - Add the `bevy_trenchbroom` to your project: `cargo add bevy_trenchbroom`.
 
-- Add the `TrenchBroomPlugin` with a supplied `TrenchBroomConfig` to your app like so:
+- Add `TrenchBroomPlugins` with a supplied `TrenchBroomConfig` to your app like so:
 
 ```rust no_run
 use bevy::prelude::*;
@@ -76,7 +76,7 @@ Because Bevy's material system so heavily relies on generics, storing and insert
 
 To this end, i've created the [bevy_materialize crate](https://github.com/Noxmore/bevy_materialize), which `bevy_trenchbroom` uses.
 
-`TrenchBroomPlugin` Automatically adds `MaterializePlugin` with the default `toml` deserializer. If you wish to use a different deserializer, add your own `MaterializePlugin` before adding `TrenchBroomPlugin`.
+`TrenchBroomPlugins` Automatically adds `MaterializePlugin` with the default `toml` deserializer. If you wish to use a different deserializer, add your own `MaterializePlugin` before adding `TrenchBroomPlugins`.
 
 Texture loaders for loose and embedded textures can be changed in `TrenchBroomConfig`.
 
