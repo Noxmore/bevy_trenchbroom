@@ -74,9 +74,8 @@ impl AssetLoader for BspLoader {
 
 			let fixed_entities_lump = qbsp::util::quake_string_to_utf8(&data.entities, "\\<b>", "\\</b>");
 
-			let quake_util_map =
-				quake_util::qmap::parse(&mut io::Cursor::new(fixed_entities_lump)).map_err(|err| anyhow!("Parsing entities: {err}"))?;
-			let entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
+			let quake_map = quake_map::parse(&mut io::Cursor::new(fixed_entities_lump)).map_err(|err| anyhow!("Parsing entities: {err}"))?;
+			let entities = QuakeMapEntities::from_quake_map(quake_map, &self.tb_server.config);
 
 			let mut ctx = BspLoadCtx {
 				loader: self,

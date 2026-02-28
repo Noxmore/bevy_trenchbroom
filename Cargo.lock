@@ -1736,7 +1736,7 @@ dependencies = [
  "ndshape",
  "nil",
  "qbsp",
- "quake-util",
+ "quake-map",
  "serde",
  "serde_json",
  "smol",
@@ -4887,10 +4887,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "quake-util"
-version = "0.4.0"
+name = "quake-map"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "663a8931940a7bf465a672f54ad19864b91d761695f64c18cbe6cb9782d40023"
+checksum = "7ed69f76c45eb73e516ad0f1132c43b7d37a0bc23c3c8d10c197baaccbfdea3e"
 
 [[package]]
 name = "quick-error"

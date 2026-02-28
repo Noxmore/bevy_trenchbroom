@@ -103,8 +103,8 @@ pub struct Brush {
 }
 
 impl Brush {
-	/// Converts a brush from [`quake_util`] to a bevy_trenchbroom brush.
-	pub(crate) fn from_quake_util(brush: &quake_util::qmap::Brush, config: &TrenchBroomConfig) -> Self {
+	/// Converts a brush from the [`quake_map`] crate to a bevy_trenchbroom brush.
+	pub(crate) fn from_quake_map(brush: &quake_map::Brush, config: &TrenchBroomConfig) -> Self {
 		Self {
 			surfaces: brush
 				.iter()

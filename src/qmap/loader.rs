@@ -52,8 +52,8 @@ impl AssetLoader for QuakeMapLoader {
 			let mut input = String::new();
 			reader.read_to_string(&mut input).await?;
 
-			let quake_util_map = quake_util::qmap::parse(&mut io::Cursor::new(input))?;
-			let mut entities = QuakeMapEntities::from_quake_util(quake_util_map, &self.tb_server.config);
+			let quake_map = quake_map::parse(&mut io::Cursor::new(input))?;
+			let mut entities = QuakeMapEntities::from_quake_map(quake_map, &self.tb_server.config);
 
 			let mut mesh_handles = Vec::new();
 			let mut brush_lists = HashMap::default();
