@@ -3,6 +3,8 @@
 - `AssetServer::exists(...)` has been moved to `TrenchBroomConfig::asset_exists(...)` to support asset manifests.
 - The buggy `ConfigPlugin::set_image_samplers` system has been replaced with `RepeatDefaultSamplerPlugin`. You might notice that your textures suddenly uses linear filtering. To change this, do `DefaultPlugins.set(ImagePlugin::default_nearest())`.
 - To avoid image loader conflicts, map textures loaded directly from images now use a local `TrenchBroomConfig::image_material_loader`, so if you were using a custom material for map textures, move your code to there.
+- Built-in `bevy_rapier3d` support has been dropped, and Avian support moved back into the main crate. The `PhysicsBackend` trait still exists, and allows you to easily add back support.
+	- You you don't need to add a separate plugin for physics anymore. Simply enabling the `avian_f32` or `avian_f64` features will automatically add the correct plugin.
 
 # 0.10 to 0.11
 - The global spawner in `TrenchBroomConfig` has been split into `pre_spawn_hook` and `post_spawn_hook` for more granular control.
