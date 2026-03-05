@@ -1,5 +1,5 @@
 [workspace]
-members = ["example/*", "subcrates/*"]
+members = ["example/*", "macros"]
 
 [workspace.package]
 version = "0.13.0-rc.1"
@@ -29,15 +29,15 @@ enumflags2 = "0.7"
 avian3d = { version = "0.6.0-rc.1", default-features = false, features = [
 	"3d",
 	"collider-from-mesh",
-] }
-bevy_rapier3d = "0.32" # TODO: Not updated to Bevy 0.18 yet
+]}
 
 example_commons = { path = "example/example_commons" }
 bevy_trenchbroom = { version = "0.13.0-rc.1", path = ".", default-features = false }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.13.0-rc.1", path = "subcrates/bevy_trenchbroom_macros" }
+bevy_trenchbroom_macros = { version = "0.13.0-rc.1", path = "macros" }
 
+avian3d = { workspace = true, optional = true }
 anyhow = "1"
 bevy = { workspace = true, features = [
 	"bevy_asset",
@@ -80,4 +80,6 @@ smol = "2"
 default = ["client"]
 client = ["bevy/bevy_pbr", "bevy_materialize/bevy_pbr"]
 physics-integration = []
+avian_f32 = ["physics-integration", "dep:avian3d", "avian3d/f32", "avian3d/parry-f32"]
+avian_f64 = ["physics-integration", "dep:avian3d", "avian3d/f64", "avian3d/parry-f64"]
 bsp = ["dep:qbsp"]

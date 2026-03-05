@@ -22,6 +22,8 @@ pub mod fix_default_sampler;
 pub mod geometry;
 #[cfg(feature = "physics-integration")]
 pub mod physics;
+#[cfg(any(feature = "avian_f32", feature = "avian_f64"))]
+pub mod physics_avian;
 pub mod prelude;
 pub mod qmap;
 #[cfg(feature = "client")]
@@ -65,6 +67,9 @@ impl PluginGroup for TrenchBroomPlugins {
 
 		#[cfg(all(not(target_family = "wasm"), feature = "client"))]
 		let builder = builder.add(config::WriteTrenchBroomConfigOnStartPlugin);
+
+		#[cfg(any(feature = "avian_f32", feature = "avian_f64"))]
+		let builder = builder.add(physics::TrenchBroomPhysicsPlugin::new(physics_avian::AvianPhysicsBackend));
 
 		builder
 	}

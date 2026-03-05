@@ -6,6 +6,7 @@ use avian3d::{
 use bevy::math::{DVec3, Vec3};
 use bevy_trenchbroom::physics::PhysicsBackend;
 
+/// Integration between the Avian physics engine and bevy_trenchbroom.
 pub struct AvianPhysicsBackend;
 impl PhysicsBackend for AvianPhysicsBackend {
 	type Vector = avian3d::math::Vector;
