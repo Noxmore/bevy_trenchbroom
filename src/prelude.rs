@@ -26,9 +26,6 @@ pub use qbsp::{
 	mesh::lightmap::{ComputeLightmapSettings, LightmapAtlas},
 };
 
-#[cfg(feature = "physics-integration")]
-pub use crate::physics::TrenchBroomPhysicsPlugin;
-
 #[cfg(all(feature = "client", feature = "bsp"))]
 pub use crate::bsp::{
 	lighting::{LightingAnimator, LightingAnimators},

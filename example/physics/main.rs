@@ -3,7 +3,6 @@ use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
-use bevy_trenchbroom_avian::AvianPhysicsBackend;
 use nil::prelude::*;
 
 #[solid_class]
@@ -31,11 +30,7 @@ fn main() {
 			// I use bsp_loading to write the config.
 			.disable::<WriteTrenchBroomConfigOnStartPlugin>(),
 		)
-		.add_plugins((
-			PhysicsPlugins::default(),
-			PhysicsDebugPlugin,
-			TrenchBroomPhysicsPlugin::new(AvianPhysicsBackend),
-		))
+		.add_plugins((PhysicsPlugins::default(), PhysicsDebugPlugin))
 		.add_systems(PostStartup, setup_scene)
 		.add_systems(FixedUpdate, spawn_cubes)
 		.run();

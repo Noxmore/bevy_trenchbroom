@@ -4,7 +4,7 @@ use brush::ConvexHull;
 use bsp::BrushHullsAsset;
 use geometry::{Brushes, BrushesAsset};
 
-/// Generic physics engine interface.
+/// Generic physics engine interface. This allows you to support your own physics engine, instead of being forced to use Avian.
 pub trait PhysicsBackend: Send + Sync + 'static {
 	type Vector: std::ops::SubAssign + std::ops::Sub<Output = Self::Vector>;
 	const ZERO: Self::Vector;
