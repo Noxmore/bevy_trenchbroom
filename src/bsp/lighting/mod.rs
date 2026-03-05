@@ -1,6 +1,9 @@
 mod types;
 pub use types::*;
 
+mod lightmap_dynamic;
+pub use lightmap_dynamic::*;
+
 use bevy::{
 	asset::{RenderAssetUsages, embedded_asset},
 	image::ImageSampler,

@@ -23,11 +23,6 @@ impl Plugin for BspPlugin {
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()
 		;
-
-		#[cfg(feature = "client")]
-		if !app.world().resource::<TrenchBroomServer>().config.no_bsp_lighting {
-			app.add_plugins(lighting::BspLightingPlugin);
-		}
 	}
 }
 
@@ -45,21 +40,29 @@ pub struct Bsp {
 	#[cfg(feature = "client")]
 	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
-	pub models: Vec<BspModel>,
+	pub models: Vec<BspModelData>,
 	/// The source data this BSP's assets was created from.
-	pub data: BspData,
+	pub data: Arc<BspData>,
 	/// The entities parsed from the map that was used to construct the scene.
 	pub entities: QuakeMapEntities,
 }
 
 /// Geometry and brushes of a `SolidClass` entity.
 #[derive(Reflect, Debug)]
-pub struct BspModel {
+pub struct BspModelData {
 	/// Maps texture names to mesh handles.
 	pub meshes: Vec<(Option<String>, Handle<Mesh>)>,
 
 	/// If the BSP contains the `BRUSHLIST` BSPX lump, or supports built-in brushes, this will be [`Some`] containing a handle to the brushes for this model.
 	pub brushes: Option<GenericBrushListHandle>,
+}
+
+/// A `SolidClass` entity loaded from a BSP. Points to the original model data.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct BspModel {
+	pub data: Arc<BspData>,
+	pub model_idx: usize,
 }
 
 /// Wrapper for a `Vec<`[`BrushHull`]`>` in an asset so that it can be easily referenced from other places without referencing the [`Bsp`] (such as in the [`Bsp`]'s scene).

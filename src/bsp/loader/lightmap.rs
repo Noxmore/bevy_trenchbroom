@@ -20,10 +20,6 @@ impl BspLightmap {
 	pub fn compute(ctx: &mut BspLoadCtx) -> anyhow::Result<Option<Self>> {
 		let config = &ctx.loader.tb_server.config;
 
-		if config.no_bsp_lighting {
-			return Ok(None);
-		}
-
 		match ctx
 			.data
 			.compute_lightmap_atlas(PerSlotLightmapPacker::new(config.compute_lightmap_settings))

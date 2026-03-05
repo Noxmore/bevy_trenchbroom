@@ -194,13 +194,20 @@ fn for_each_leaf(data: &BspData, node_ref: BspNodeRef, f: &mut impl FnMut(&BspLe
 	}
 }
 
-pub fn finalize_models(ctx: &mut BspLoadCtx, internal_models: Vec<InternalModel>, world: &mut World) -> anyhow::Result<Vec<BspModel>> {
+pub fn finalize_models(ctx: &mut BspLoadCtx, internal_models: Vec<InternalModel>, world: &mut World) -> anyhow::Result<Vec<BspModelData>> {
 	let config = &ctx.loader.tb_server.config;
 
 	let mut models = Vec::with_capacity(internal_models.len());
 
 	for (model_idx, model) in internal_models.into_iter().enumerate() {
-		models.push(BspModel {
+		if let Some(entity) = model.entity {
+			world.entity_mut(entity).insert(BspModel {
+				data: ctx.data.clone(),
+				model_idx,
+			});
+		}
+
+		models.push(BspModelData {
 			meshes: model
 				.meshes
 				.into_iter()

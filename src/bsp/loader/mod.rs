@@ -29,7 +29,7 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 	pub load_context: &'a mut LoadContext<'lc>,
 	pub asset_server: &'a AssetServer,
 	pub type_registry: &'a AppTypeRegistry,
-	pub data: &'a BspData,
+	pub data: &'a Arc<BspData>,
 	pub entities: &'a QuakeMapEntities,
 }
 
@@ -66,11 +66,11 @@ impl AssetLoader for BspLoader {
 
 			let lit = load_context.read_asset_bytes(load_context.path().path().with_extension("lit")).await.ok();
 
-			let data = BspData::parse(BspParseInput {
+			let data = Arc::new(BspData::parse(BspParseInput {
 				bsp: &bytes,
 				lit: lit.as_deref(),
 				settings: self.tb_server.config.bsp_parse_settings.clone(),
-			})?;
+			})?);
 
 			let fixed_entities_lump = qbsp::util::quake_string_to_utf8(&data.entities, "\\<b>", "\\</b>");
 
