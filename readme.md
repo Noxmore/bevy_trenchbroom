@@ -103,9 +103,10 @@ For more information, please see [the manual](https://docs.rs/bevy_trenchbroom/l
 ## Physics/Collisions
 
 `bevy_trenchbroom` supports [avian3d](https://crates.io/crates/avian3d) to easily add colliders when spawning geometry.
+
 Other physics engines aren't built-in, but can be integrated by enabling the `physics-integration` feature, implementing the `PhysicsBackend` trait, and adding it through `TrenchBroomPhysicsPlugin`.
 
-To use the integration, enable the `avian_f32` (or `avian_f64` if you use double-precision) feature.
+To use the Avian integration, enable the `avian_f32` feature (or `avian_f64` if you use double-precision).
 Now you can either call `convex_collider` or `trimesh_collider` on your class's `SceneHooks` to create the respective type of collider(s) with said geometry.
 
 TIP: If you want Brush entities to have a collider by *default*, you can add this to your `TrenchBroomConfig`:
