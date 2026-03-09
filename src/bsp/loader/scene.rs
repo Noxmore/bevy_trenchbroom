@@ -59,7 +59,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 					name = Cow::Owned(texture_name.clone());
 				}
 
-				let mesh_entity = world.spawn((Name::new(name), Transform::default())).id();
+				let mesh_entity = world.spawn((Name::new(name), Transform::default(), Visibility::default())).id();
 
 				meshes.push(QuakeClassMeshView {
 					entity: mesh_entity,
