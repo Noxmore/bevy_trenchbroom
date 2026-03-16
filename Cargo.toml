@@ -43,6 +43,7 @@ bevy = { workspace = true, features = [
 	"bevy_asset",
 	"bevy_scene",
 	"bevy_color",
+	"free_camera",
 ] }
 bevy_reflect = { version = "0.18", package = "bevy_reflect", features = ["reflect_documentation"] }
 bevy_mesh = { version = "0.18", package = "bevy_mesh" }
