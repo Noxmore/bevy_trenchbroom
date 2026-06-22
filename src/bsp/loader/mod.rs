@@ -103,8 +103,7 @@ impl AssetLoader for BspLoader {
 
 			// TODO: Lightmaps + irradiance volume currently doesn't work until 0.19.1 (https://github.com/bevyengine/bevy/pull/24714)
 			#[cfg(feature = "client")]
-			let irradiance_volume = None;
-			// let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
+			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
 				world: load_context.add_labeled_asset("Scene".s(), WorldAsset::new(world)),
