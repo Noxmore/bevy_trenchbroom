@@ -293,7 +293,7 @@ mod tests {
 			geometry::BrushesAsset,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
-		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, scene::ScenePlugin};
+		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, world_serialization::WorldSerializationPlugin};
 
 		#[point_class(
 			model("models/mushroom.glb"),
@@ -317,7 +317,7 @@ mod tests {
 				MinimalPlugins,
 				AssetPlugin::default(),
 				LogPlugin::default(),
-				ScenePlugin,
+				WorldSerializationPlugin,
 				TransformPlugin,
 				MeshPlugin,
 				MaterializePlugin::new(TomlMaterialDeserializer),
