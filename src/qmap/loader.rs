@@ -9,7 +9,7 @@ use geometry::{Brushes, BrushesAsset, MapGeometryTexture};
 
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
-	geometry::MapGeometry,
+	geometry::BrushGeometry,
 	util::{MapFileType, TextureSizeCache},
 };
 
@@ -194,7 +194,7 @@ impl AssetLoader for QuakeMapLoader {
 					// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 					world
 						.entity_mut(mesh_entity)
-						.insert((Mesh3d(handle.clone()), ChildOf(entity), MapGeometry));
+						.insert((Mesh3d(handle.clone()), ChildOf(entity), BrushGeometry));
 
 					mesh_handles.push(handle);
 				}
