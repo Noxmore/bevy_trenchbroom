@@ -41,7 +41,7 @@ avian3d = { workspace = true, optional = true }
 anyhow = "1"
 bevy = { workspace = true, features = [
 	"bevy_asset",
-	"bevy_scene",
+	"bevy_world_serialization",
 	"bevy_color",
 ] }
 bevy_reflect = { version = "0.19", package = "bevy_reflect", features = ["reflect_documentation"] }
