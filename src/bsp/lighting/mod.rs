@@ -3,6 +3,7 @@ pub use types::*;
 
 use bevy::{
 	asset::{RenderAssetUsages, embedded_asset},
+	core_pipeline::schedule::camera_driver,
 	image::ImageSampler,
 	pbr::Lightmap,
 	render::{
@@ -10,9 +11,8 @@ use bevy::{
 		extract_resource::{ExtractResource, ExtractResourcePlugin},
 		globals::{GlobalsBuffer, GlobalsUniform},
 		render_asset::{RenderAssetPlugin, RenderAssets},
-		render_graph::{RenderGraph, RenderLabel},
 		render_resource::{binding_types::*, *},
-		renderer::{RenderDevice, RenderQueue},
+		renderer::{RenderContext, RenderDevice, RenderQueue},
 		texture::GpuImage,
 	},
 };
@@ -69,11 +69,7 @@ impl Plugin for BspLightingPlugin {
 			Render,
 			Self::prepare_animated_lighting_bind_groups.in_set(RenderSystems::PrepareBindGroups),
 		);
-
-		let mut render_graph = render_app.world_mut().resource_mut::<RenderGraph>();
-		render_graph.add_node(AnimatedLightingLabel, AnimatedLightingNode);
-
-		render_graph.add_node_edge(AnimatedLightingLabel, bevy::render::graph::CameraDriverLabel);
+		render_app.add_systems(RenderGraph, Self::animate_lighting.in_set(RenderSystems::Render).before(camera_driver));
 	}
 
 	fn finish(&self, app: &mut App) {
@@ -103,7 +99,7 @@ impl BspLightingPlugin {
 					commands.entity(entity).insert(IrradianceVolume {
 						voxels: animated_lighting.output.clone(),
 						intensity: tb_server.config.default_irradiance_volume_intensity,
-						affects_lightmapped_meshes: false, // TODO: This might help with normals?
+						affects_lightmapped_meshes: false,
 					});
 				}
 			}
@@ -183,6 +179,60 @@ impl BspLightingPlugin {
 			}
 		}
 	}
+
+	pub fn animate_lighting(
+		bind_groups: Res<AnimatedLightingBindGroups>,
+		pipeline_cache: Res<PipelineCache>,
+		pipeline: Res<AnimatedLightingPipeline>,
+		animated_lighting_assets: Res<RenderAssets<AnimatedLighting>>,
+		gpu_images: Res<RenderAssets<GpuImage>>,
+		mut render_context: RenderContext,
+	) {
+		let Some(globals_bind_group) = &bind_groups.globals else { return };
+
+		let mut pass = render_context.command_encoder().begin_compute_pass(&ComputePassDescriptor {
+			label: Some("Composite animated lighting"),
+			..default()
+		});
+
+		for (id, bind_group) in &bind_groups.values {
+			let Some(animated_lighting) = animated_lighting_assets.get(*id) else { continue };
+			let Some(output_image) = gpu_images.get(&animated_lighting.output) else { continue };
+
+			// TODO: if there is only unanimated styles, and it's already run once, we don't need to run it again!
+			match animated_lighting.ty {
+				AnimatedLightingType::Lightmap => {
+					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.lightmap_pipeline) else { return };
+
+					pass.set_pipeline(pipeline);
+
+					pass.set_bind_group(0, bind_group, &[]);
+					pass.set_bind_group(1, globals_bind_group, &[]);
+
+					pass.dispatch_workgroups(
+						output_image.texture.width().div_ceil(LIGHTMAP_WORKGROUP_SIZE),
+						output_image.texture.height().div_ceil(LIGHTMAP_WORKGROUP_SIZE),
+						1,
+					);
+				}
+
+				AnimatedLightingType::IrradianceVolume => {
+					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.irradiance_volume_pipeline) else { return };
+
+					pass.set_pipeline(pipeline);
+
+					pass.set_bind_group(0, bind_group, &[]);
+					pass.set_bind_group(1, globals_bind_group, &[]);
+
+					pass.dispatch_workgroups(
+						output_image.texture.width().div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.texture.height().div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+						output_image.texture.depth_or_array_layers().div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
+					);
+				}
+			}
+		}
+	}
 }
 
 #[derive(Resource, Default)]
@@ -252,7 +302,7 @@ impl FromWorld for AnimatedLightingPipeline {
 		let lightmap_pipeline = pipeline_cache.queue_compute_pipeline(ComputePipelineDescriptor {
 			label: Some("Composite Lightmap Images Pipeline".into()),
 			layout: vec![lightmap_bind_group_layout.clone(), globals_bind_group_layout.clone()],
-			push_constant_ranges: vec![],
+			immediate_size: 0,
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_lightmaps.wgsl"),
 			shader_defs: vec![],
 			entry_point: Some("main".into()),
@@ -262,7 +312,7 @@ impl FromWorld for AnimatedLightingPipeline {
 		let irradiance_volume_pipeline = pipeline_cache.queue_compute_pipeline(ComputePipelineDescriptor {
 			label: Some("Composite Irradiance Volume Images Pipeline".into()),
 			layout: vec![irradiance_volume_bind_group_layout.clone(), globals_bind_group_layout.clone()],
-			push_constant_ranges: vec![],
+			immediate_size: 0,
 			shader: world.load_asset("embedded://bevy_trenchbroom/bsp/lighting/composite_irradiance_volumes.wgsl"),
 			shader_defs: vec![],
 			entry_point: Some("main".into()),
@@ -281,71 +331,5 @@ impl FromWorld for AnimatedLightingPipeline {
 			lightmap_pipeline,
 			irradiance_volume_pipeline,
 		}
-	}
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-struct AnimatedLightingLabel;
-
-pub struct AnimatedLightingNode;
-
-impl bevy::render::render_graph::Node for AnimatedLightingNode {
-	fn run<'w>(
-		&self,
-		_graph: &mut bevy::render::render_graph::RenderGraphContext,
-		render_context: &mut bevy::render::renderer::RenderContext<'w>,
-		world: &'w World,
-	) -> Result<(), bevy::render::render_graph::NodeRunError> {
-		let bind_groups = world.resource::<AnimatedLightingBindGroups>();
-		let Some(globals_bind_group) = &bind_groups.globals else { return Ok(()) };
-		let pipeline_cache = world.resource::<PipelineCache>();
-		let pipeline = world.resource::<AnimatedLightingPipeline>();
-		let animated_lighting_assets = world.resource::<RenderAssets<AnimatedLighting>>();
-		let gpu_images = world.resource::<RenderAssets<GpuImage>>();
-
-		let mut pass = render_context.command_encoder().begin_compute_pass(&ComputePassDescriptor {
-			label: Some("Composite animated lighting"),
-			..default()
-		});
-
-		for (id, bind_group) in &bind_groups.values {
-			let Some(animated_lighting) = animated_lighting_assets.get(*id) else { continue };
-			let Some(output_image) = gpu_images.get(&animated_lighting.output) else { continue };
-
-			// TODO if there is only unanimated styles, and it's already run once, we don't need to run it again!
-			match animated_lighting.ty {
-				AnimatedLightingType::Lightmap => {
-					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.lightmap_pipeline) else { return Ok(()) };
-
-					pass.set_pipeline(pipeline);
-
-					pass.set_bind_group(0, bind_group, &[]);
-					pass.set_bind_group(1, globals_bind_group, &[]);
-
-					pass.dispatch_workgroups(
-						output_image.size.width.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
-						output_image.size.height.div_ceil(LIGHTMAP_WORKGROUP_SIZE),
-						1,
-					);
-				}
-
-				AnimatedLightingType::IrradianceVolume => {
-					let Some(pipeline) = pipeline_cache.get_compute_pipeline(pipeline.irradiance_volume_pipeline) else { return Ok(()) };
-
-					pass.set_pipeline(pipeline);
-
-					pass.set_bind_group(0, bind_group, &[]);
-					pass.set_bind_group(1, globals_bind_group, &[]);
-
-					pass.dispatch_workgroups(
-						output_image.size.width.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
-						output_image.size.height.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
-						output_image.size.depth_or_array_layers.div_ceil(IRRADIANCE_VOLUME_WORKGROUP_SIZE),
-					);
-				}
-			}
-		}
-
-		Ok(())
 	}
 }

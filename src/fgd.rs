@@ -1,4 +1,7 @@
-use bevy_reflect::{DynamicEnum, DynamicVariant, Enum, GetTypeRegistration, TypeRegistry};
+use bevy_reflect::{
+	GetTypeRegistration, TypeRegistry,
+	enums::{DynamicEnum, DynamicVariant, Enum},
+};
 use class::{ChoicesKey, QuakeClassPropertyType};
 use enumflags2::{BitFlag, BitFlags};
 

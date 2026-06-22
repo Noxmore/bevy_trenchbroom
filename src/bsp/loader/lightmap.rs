@@ -78,7 +78,7 @@ impl BspLightmap {
 				});
 
 				let styles = ctx.load_context.add_labeled_asset(
-					"LightmapStyles".s(),
+					"LightmapStyles",
 					Image::new(
 						Extent3d {
 							width: size.x,
@@ -93,7 +93,7 @@ impl BspLightmap {
 				);
 
 				let handle = ctx.load_context.add_labeled_asset(
-					"LightmapAnimator".s(),
+					"LightmapAnimator",
 					AnimatedLighting {
 						ty: AnimatedLightingType::Lightmap,
 						output,

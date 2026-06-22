@@ -91,7 +91,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		});
 
 		let output = ctx.load_context.add_labeled_asset(
-			"IrradianceVolume".s(),
+			"IrradianceVolume",
 			new_animated_lighting_output_image(
 				Extent3d {
 					width: full_size.x,
@@ -108,7 +108,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		let styles = ctx.load_context.add_labeled_asset("IrradianceVolumeStyleMap".s(), style_map_image);
 
 		let animated_lighting_handle = ctx.load_context.add_labeled_asset(
-			"IrradianceVolumeAnimator".s(),
+			"IrradianceVolumeAnimator",
 			AnimatedLighting {
 				ty: AnimatedLightingType::IrradianceVolume,
 				output,
@@ -121,7 +121,7 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 
 		world.spawn((
 			Name::new("Light Grid Irradiance Volume"),
-			LightProbe,
+			// LightProbe::new(), // TODO: remove?
 			AnimatedLightingHandle(animated_lighting_handle.clone()),
 			Transform {
 				translation: grid_mins + scale / 2. - Vec3::from_array(grid_step.to_array()) / 2.,

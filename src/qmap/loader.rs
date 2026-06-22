@@ -213,7 +213,7 @@ impl AssetLoader for QuakeMapLoader {
 			drop(material_cache);
 
 			Ok(QuakeMap {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+				world: load_context.add_labeled_asset("Scene", WorldAsset::new(world)),
 				meshes: mesh_handles,
 				brush_lists,
 				entities,
@@ -253,7 +253,7 @@ mod tests {
 				)
 			)
 			.init_asset::<Mesh>()
-			.init_asset::<Scene>()
+			.init_asset::<WorldAsset>()
 			.init_asset::<QuakeMap>()
 			.init_asset::<BrushesAsset>()
 			.init_asset_loader::<QuakeMapLoader>()
@@ -262,6 +262,7 @@ mod tests {
 		smol::block_on(async {
 			app.world()
 				.resource::<AssetServer>()
+				.load_builder()
 				.load_untyped_async("maps/example.map")
 				.await
 				.unwrap();

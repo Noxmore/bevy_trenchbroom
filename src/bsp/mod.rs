@@ -38,7 +38,7 @@ pub static TEXTURE_PREFIX: &str = "Texture_";
 #[derive(Asset, Reflect, Debug)]
 pub struct Bsp {
 	/// The main scene of everything put together.
-	pub scene: Handle<Scene>,
+	pub world: Handle<WorldAsset>,
 	pub embedded_textures: HashMap<EmbeddedTextureName, BspEmbeddedTexture>,
 	#[cfg(feature = "client")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,

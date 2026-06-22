@@ -116,6 +116,8 @@ impl TrenchBroomConfig {
 			}
 		}
 
+		// view.load_context.add_labeled_asset("test", StandardMaterial::default());
+		
 		for mesh_view in view.meshes.iter() {
 			view.world
 				.entity_mut(mesh_view.entity)

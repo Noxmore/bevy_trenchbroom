@@ -364,9 +364,9 @@ fn spawn_test_map(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
+    commands.spawn(WorldAssetRoot(asset_server.load("maps/test.map#Scene")));
     // Or, if you're using BSPs.
-    commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
+    commands.spawn(WorldAssetRoot(asset_server.load("maps/test.bsp#Scene")));
 }
 ```
 

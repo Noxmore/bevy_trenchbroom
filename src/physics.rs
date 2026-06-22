@@ -192,7 +192,7 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 		mut tests: ResMut<SceneCollidersReadyTests>,
 
 		parent_query: Query<&ChildOf>,
-		has_scene_root: Query<(), With<SceneRoot>>,
+		has_scene_root: Query<(), With<WorldAssetRoot>>,
 
 		children_query: Query<&Children>,
 		has_collider: Query<(), With<B::Collider>>,
