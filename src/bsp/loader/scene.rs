@@ -3,7 +3,7 @@ use super::*;
 use crate::bsp::lighting::AnimatedLightingHandle;
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
-	geometry::MapGeometry,
+	geometry::BrushGeometry,
 	util::MapFileType,
 	*,
 };
@@ -102,7 +102,7 @@ pub fn initialize_scene(ctx: &mut BspLoadCtx, models: &mut [InternalModel]) -> a
 
 		// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 		for mesh_view in view.meshes.iter() {
-			view.world.entity_mut(mesh_view.entity).insert((ChildOf(entity), MapGeometry));
+			view.world.entity_mut(mesh_view.entity).insert((ChildOf(entity), BrushGeometry));
 		}
 	}
 

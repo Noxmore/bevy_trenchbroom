@@ -32,6 +32,13 @@ pub enum Brushes {
 	Bsp(Handle<BrushHullsAsset>),
 }
 
+/// Component marking that a solid entity comes from a BSP and thus has local-space brush geometry. Not feature locked because the `add_convex_colliders` function would basically have to be duplicated.
+/// This is kind of a hack because I don't feel like figuring out how to translate a brush.
+#[derive(Component, Reflect, Clone)]
+#[component(storage = "SparseSet")]
+#[reflect(Component)]
+pub struct LocalSpaceBrushes;
+
 #[derive(Asset, Reflect, Debug, Clone)]
 pub struct BrushesAsset(pub Vec<Brush>);
 impl std::ops::Deref for BrushesAsset {
@@ -56,4 +63,4 @@ pub struct MapGeometryTexture {
 /// Marker component that marks meshes as level geometry produced by brushes.
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
-pub struct MapGeometry;
+pub struct BrushGeometry;

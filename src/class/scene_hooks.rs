@@ -210,7 +210,7 @@ impl SceneHooks {
 
 			let model_handle = view.load_context.load(model_path);
 
-			view.world.entity_mut(view.entity).insert(SceneRoot(model_handle));
+			view.world.entity_mut(view.entity).insert(WorldAssetRoot(model_handle));
 			Ok(())
 		})
 	}
@@ -256,7 +256,7 @@ impl SceneHooks {
 				anyhow::bail!("`spawn_class_model` called but `model` property missing/invalid!");
 			};
 
-			let handle = view.load_context.loader().with_unknown_type().load(model_path);
+			let handle = view.load_context.load_builder().load_untyped(model_path);
 			view.preload_asset(handle.untyped());
 			Ok(())
 		})
@@ -293,7 +293,7 @@ mod tests {
 			geometry::BrushesAsset,
 			qmap::{QuakeMap, loader::QuakeMapLoader},
 		};
-		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, scene::ScenePlugin};
+		use bevy::{gltf::GltfPlugin, log::LogPlugin, mesh::MeshPlugin, world_serialization::WorldSerializationPlugin};
 
 		#[point_class(
 			model("models/mushroom.glb"),
@@ -307,7 +307,7 @@ mod tests {
 				// Loads the scene after adding to the main world.
 				let handle = asset_server.load(GltfAssetLabel::Scene(0).from_asset(Self::CLASS_INFO.model_path().unwrap()));
 
-				world.commands().entity(ctx.entity).insert(SceneRoot(handle));
+				world.commands().entity(ctx.entity).insert(WorldAssetRoot(handle));
 			}
 		}
 
@@ -317,7 +317,7 @@ mod tests {
 				MinimalPlugins,
 				AssetPlugin::default(),
 				LogPlugin::default(),
-				ScenePlugin,
+				WorldSerializationPlugin,
 				TransformPlugin,
 				MeshPlugin,
 				MaterializePlugin::new(TomlMaterialDeserializer),
@@ -339,18 +339,24 @@ mod tests {
 			.run();
 
 		#[derive(Resource)]
-		struct MapScene(Handle<Scene>);
+		struct MapScene(Handle<WorldAsset>);
 
 		fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-			let handle = smol::block_on(async { asset_server.load_untyped_async("maps/example.map#Scene").await.expect("Asset error") });
+			let handle = smol::block_on(async {
+				asset_server
+					.load_builder()
+					.load_untyped_async("maps/example.map#Scene")
+					.await
+					.expect("Asset error")
+			});
 
 			// This is set back so that the Scene can be put in Assets<Scene>, otherwise validate_scene will fail with it.
-			commands.insert_resource(MapScene(handle.try_typed::<Scene>().unwrap()));
+			commands.insert_resource(MapScene(handle.try_typed::<WorldAsset>().unwrap()));
 		}
 
 		fn spawn_scene(mut commands: Commands, scene: Res<MapScene>, mut init: Local<bool>) {
 			if !*init {
-				commands.spawn(SceneRoot(scene.0.clone()));
+				commands.spawn(WorldAssetRoot(scene.0.clone()));
 				*init = true;
 			}
 		}
@@ -378,7 +384,7 @@ mod tests {
 			validate_asset(handle, &asset_server, "Material");
 		}
 
-		fn validate_scene(trigger: On<Add, SceneRoot>, scene_query: Query<&SceneRoot>, asset_server: Res<AssetServer>) {
+		fn validate_scene(trigger: On<Add, WorldAssetRoot>, scene_query: Query<&WorldAssetRoot>, asset_server: Res<AssetServer>) {
 			let handle = &scene_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Scene");
 		}

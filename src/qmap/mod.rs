@@ -20,7 +20,7 @@ impl Plugin for QuakeMapPlugin {
 /// Quake map loaded from a .map file.
 #[derive(Reflect, Asset, Debug, Clone)]
 pub struct QuakeMap {
-	pub scene: Handle<Scene>,
+	pub world: Handle<WorldAsset>,
 	pub meshes: Vec<Handle<Mesh>>,
 	/// Maps from entity indexes to brush lists.
 	pub brush_lists: HashMap<usize, Handle<BrushesAsset>>,

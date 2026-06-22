@@ -101,11 +101,12 @@ impl AssetLoader for BspLoader {
 
 			let bsp_models = finalize_models(&mut ctx, models, &mut world)?;
 
+			// TODO: Lightmaps + irradiance volume currently doesn't work until 0.19.1 (https://github.com/bevyengine/bevy/pull/24714)
 			#[cfg(feature = "client")]
 			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+				world: load_context.add_labeled_asset("Scene".s(), WorldAsset::new(world)),
 				embedded_textures,
 				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),
@@ -156,7 +157,7 @@ mod tests {
 			.init_asset::<Mesh>()
 			.init_asset::<BrushHullsAsset>()
 			.init_asset::<BrushesAsset>()
-			.init_asset::<Scene>()
+			.init_asset::<WorldAsset>()
 			.init_asset::<Bsp>()
 			.init_asset_loader::<BspLoader>()
 		;
@@ -164,6 +165,7 @@ mod tests {
 		smol::block_on(async {
 			app.world()
 				.resource::<AssetServer>()
+				.load_builder()
 				.load_untyped_async("maps/example.bsp")
 				.await
 				.unwrap();

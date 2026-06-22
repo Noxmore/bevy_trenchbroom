@@ -55,8 +55,14 @@ fn spawn_cubes(mut commands: Commands, time: Res<Time>, mut local: Local<Option<
 }
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-	commands.spawn((SceneRoot(asset_server.load("maps/example.map#Scene")), Transform::from_xyz(-5., 0., 0.)));
-	commands.spawn((SceneRoot(asset_server.load("maps/example.bsp#Scene")), Transform::from_xyz(5., 0., 0.)));
+	commands.spawn((
+		WorldAssetRoot(asset_server.load("maps/example.map#Scene")),
+		Transform::from_xyz(-5., 0., 0.),
+	));
+	commands.spawn((
+		WorldAssetRoot(asset_server.load("maps/example.bsp#Scene")),
+		Transform::from_xyz(5., 0., 0.),
+	));
 
 	commands.spawn((
 		example_commons::DebugCamera,

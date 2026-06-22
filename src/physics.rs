@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{geometry::LocalSpaceBrushes, *};
 use brush::ConvexHull;
 #[cfg(feature = "bsp")]
 use bsp::BrushHullsAsset;
@@ -89,13 +89,13 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 
 	pub fn add_convex_colliders(
 		mut commands: Commands,
-		query: Query<(Entity, Option<&Brushes>, &Transform), (With<ConvexCollision>, Without<B::Collider>)>,
+		query: Query<(Entity, Option<&Brushes>, &Transform, Has<LocalSpaceBrushes>), (With<ConvexCollision>, Without<B::Collider>)>,
 		brush_lists: Res<Assets<BrushesAsset>>,
 		#[cfg(feature = "bsp")] brush_assets: Res<Assets<BrushHullsAsset>>,
 		mut tests: ResMut<SceneCollidersReadyTests>,
 	) {
 		#[allow(unused)]
-		for (entity, brushes, transform) in &query {
+		for (entity, brushes, transform, is_local_space) in &query {
 			let Some(brushes) = brushes else {
 				error!(
 					"Entity {entity} has `ConvexCollision`, but no `Brushes`! If you're using Q1 BSPs, you may have forgotten to add the `-wrbrushesonly` flag to qbsp. Removing ConvexCollision component..."
@@ -129,12 +129,7 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 						}
 
 						// Bring the vertices to the origin if they're generated in world-space (non-bsp)
-						#[cfg(feature = "bsp")]
-						let is_bsp = matches!(brushes, Brushes::Bsp(_));
-						#[cfg(not(feature = "bsp"))]
-						let is_bsp = false;
-
-						if !is_bsp {
+						if !is_local_space {
 							for vertex in &mut vertices {
 								*vertex -= B::vec3(transform.translation);
 							}
@@ -154,7 +149,7 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 
 			if colliders.is_empty() {
 				error!(
-					"No colliders produced by brushes for entity {entity}, removing ConvexCollision component. If this is expected behavior, make an issue and i will remove this message."
+					"No colliders produced by brushes for entity {entity}, removing ConvexCollision component. If this is expected behavior, make an issue and I will remove this message."
 				);
 				commands.entity(entity).remove::<ConvexCollision>();
 				continue;
@@ -192,7 +187,7 @@ impl<B: PhysicsBackend> TrenchBroomPhysicsPlugin<B> {
 		mut tests: ResMut<SceneCollidersReadyTests>,
 
 		parent_query: Query<&ChildOf>,
-		has_scene_root: Query<(), With<SceneRoot>>,
+		has_scene_root: Query<(), With<WorldAssetRoot>>,
 
 		children_query: Query<&Children>,
 		has_collider: Query<(), With<B::Collider>>,

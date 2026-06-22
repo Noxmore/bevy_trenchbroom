@@ -138,10 +138,17 @@ impl QuakeClass for PointLight {
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
-				name: "shadows_enabled",
+				name: "shadows_enabled", // Not shadow_maps_enabled for backwards compatibility.
 				title: Some("Enable Shadows"),
 				description: None,
-				default_value: Some(|| PointLight::default().shadows_enabled.fgd_to_string()),
+				default_value: Some(|| PointLight::default().shadow_maps_enabled.fgd_to_string()),
+			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "contact_shadows_enabled",
+				title: Some("Enable Contact Shadows"),
+				description: None,
+				default_value: Some(|| PointLight::default().contact_shadows_enabled.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
@@ -188,7 +195,8 @@ impl QuakeClass for PointLight {
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
-			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
+			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
 			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
@@ -248,10 +256,17 @@ impl QuakeClass for SpotLight {
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
-				name: "shadows_enabled",
+				name: "shadows_enabled", // Not shadow_maps_enabled for backwards compatibility.
 				title: Some("Enable Shadows"),
 				description: None,
-				default_value: Some(|| SpotLight::default().shadows_enabled.fgd_to_string()),
+				default_value: Some(|| SpotLight::default().shadow_maps_enabled.fgd_to_string()),
+			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "contact_shadows_enabled",
+				title: Some("Enable Contact Shadows"),
+				description: None,
+				default_value: Some(|| SpotLight::default().contact_shadows_enabled.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
@@ -317,7 +332,8 @@ impl QuakeClass for SpotLight {
 			intensity: view.src_entity.get("intensity").with_default(default.intensity)?,
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
-			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
+			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
 			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
@@ -373,10 +389,17 @@ impl QuakeClass for DirectionalLight {
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
-				name: "shadows_enabled",
+				name: "shadows_enabled", // Not shadow_maps_enabled for backwards compatibility.
 				title: Some("Enable Shadows"),
 				description: None,
-				default_value: Some(|| DirectionalLight::default().shadows_enabled.fgd_to_string()),
+				default_value: Some(|| DirectionalLight::default().shadow_maps_enabled.fgd_to_string()),
+			},
+			QuakeClassProperty {
+				ty: bool::PROPERTY_TYPE,
+				name: "contact_shadows_enabled",
+				title: Some("Enable Contact Shadows"),
+				description: None,
+				default_value: Some(|| DirectionalLight::default().contact_shadows_enabled.fgd_to_string()),
 			},
 			QuakeClassProperty {
 				ty: bool::PROPERTY_TYPE,
@@ -414,7 +437,8 @@ impl QuakeClass for DirectionalLight {
 		view.world.entity_mut(view.entity).insert(DirectionalLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
-			shadows_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadows_enabled)?,
+			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
+			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
 			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,

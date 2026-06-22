@@ -64,9 +64,9 @@ fn spawn_test_map(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(SceneRoot(asset_server.load("maps/test.map#Scene")));
+    commands.spawn(WorldAssetRoot(asset_server.load("maps/test.map#Scene")));
     // Or, if you're using BSPs.
-    commands.spawn(SceneRoot(asset_server.load("maps/test.bsp#Scene")));
+    commands.spawn(WorldAssetRoot(asset_server.load("maps/test.bsp#Scene")));
 }
 ```
 
@@ -127,7 +127,7 @@ See the [Migration Guide](https://github.com/Noxmore/bevy_trenchbroom/blob/main/
 # Version support table
 | Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools   | Avian |
 |------|------------------|---------------|---------------|-------|
-| 0.18 | 0.14             | 2025.4        | 2.0.0-alpha10 | 0.6   |
+| 0.19 | 0.14             | 2026.1        | 2.0.0-alpha11 | 0.7   |
 | 0.18 | 0.12-0.13        | 2025.4        | 2.0.0-alpha10 | 0.5   |
 | 0.17 | 0.10-0.11        | 2025.3        | 2.0.0-alpha10 | 0.4   |
 | 0.16 | 0.8-0.9          | 2025.3        | 2.0.0-alpha9  | N/A   |

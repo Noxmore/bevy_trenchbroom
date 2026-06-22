@@ -95,7 +95,7 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 	}
 
 	let map = std::env::args().nth(1).unwrap_or("example.bsp".s());
-	commands.spawn(SceneRoot(asset_server.load(format!("maps/{map}#Scene"))));
+	commands.spawn(WorldAssetRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]
 	commands.spawn((

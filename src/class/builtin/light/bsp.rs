@@ -243,6 +243,8 @@ pub struct MixedLight {
 	pub dynamic_radius: Option<f32>,
 	/// Whether this light casts dynamic shadows.
 	pub dynamic_shadows_enabled: bool,
+	/// Whether this light casts dynamic contact shadows.
+	pub contacted_shadows_enabled: bool,
 	/// Whether this light contributes diffuse lighting to meshes with lightmaps.
 	/// Note that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light.
 	#[default(true)]
@@ -285,7 +287,8 @@ impl MixedLight {
 			DynamicLight::Directional(DirectionalLight {
 				color: color.into(),
 				illuminance: quake_light_to_lux(light),
-				shadows_enabled: self.dynamic_shadows_enabled,
+				shadow_maps_enabled: self.dynamic_shadows_enabled,
+				contact_shadows_enabled: self.contacted_shadows_enabled,
 				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
 				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(DirectionalLight::DEFAULT_SHADOW_DEPTH_BIAS),
 				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(DirectionalLight::DEFAULT_SHADOW_NORMAL_BIAS),
@@ -298,7 +301,8 @@ impl MixedLight {
 				intensity: quake_light_to_lum(light),
 				range: self.dynamic_range,
 				radius,
-				shadows_enabled: self.dynamic_shadows_enabled,
+				shadow_maps_enabled: self.dynamic_shadows_enabled,
+				contact_shadows_enabled: self.contacted_shadows_enabled,
 				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
 				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(SpotLight::DEFAULT_SHADOW_DEPTH_BIAS),
 				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(SpotLight::DEFAULT_SHADOW_NORMAL_BIAS),
@@ -314,7 +318,8 @@ impl MixedLight {
 				intensity: quake_light_to_lum(light),
 				range: self.dynamic_range,
 				radius,
-				shadows_enabled: self.dynamic_shadows_enabled,
+				shadow_maps_enabled: self.dynamic_shadows_enabled,
+				contact_shadows_enabled: self.contacted_shadows_enabled,
 				affects_lightmapped_mesh_diffuse: self.dynamic_affects_lightmapped_mesh_diffuse,
 				shadow_depth_bias: self.dynamic_shadow_depth_bias.unwrap_or(PointLight::DEFAULT_SHADOW_DEPTH_BIAS),
 				shadow_normal_bias: self.dynamic_shadow_normal_bias.unwrap_or(PointLight::DEFAULT_SHADOW_NORMAL_BIAS),

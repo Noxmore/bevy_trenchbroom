@@ -9,7 +9,7 @@ use geometry::{Brushes, BrushesAsset, MapGeometryTexture};
 
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
-	geometry::MapGeometry,
+	geometry::BrushGeometry,
 	util::{MapFileType, TextureSizeCache},
 };
 
@@ -194,7 +194,7 @@ impl AssetLoader for QuakeMapLoader {
 					// We add the children at the end to prevent the console flooding with warnings about broken Transform and Visibility hierarchies.
 					world
 						.entity_mut(mesh_entity)
-						.insert((Mesh3d(handle.clone()), ChildOf(entity), MapGeometry));
+						.insert((Mesh3d(handle.clone()), ChildOf(entity), BrushGeometry));
 
 					mesh_handles.push(handle);
 				}
@@ -213,7 +213,7 @@ impl AssetLoader for QuakeMapLoader {
 			drop(material_cache);
 
 			Ok(QuakeMap {
-				scene: load_context.add_labeled_asset("Scene".s(), Scene::new(world)),
+				world: load_context.add_labeled_asset("Scene", WorldAsset::new(world)),
 				meshes: mesh_handles,
 				brush_lists,
 				entities,
@@ -253,7 +253,7 @@ mod tests {
 				)
 			)
 			.init_asset::<Mesh>()
-			.init_asset::<Scene>()
+			.init_asset::<WorldAsset>()
 			.init_asset::<QuakeMap>()
 			.init_asset::<BrushesAsset>()
 			.init_asset_loader::<QuakeMapLoader>()
@@ -262,6 +262,7 @@ mod tests {
 		smol::block_on(async {
 			app.world()
 				.resource::<AssetServer>()
+				.load_builder()
 				.load_untyped_async("maps/example.map")
 				.await
 				.unwrap();
