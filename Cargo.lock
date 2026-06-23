@@ -4185,6 +4185,7 @@ dependencies = [
  "bevy",
  "bevy_trenchbroom",
  "example_commons",
+ "smart-default",
 ]
 
 [[package]]

@@ -12,7 +12,11 @@ More specifically, integration and support for the following workflows:
 <img src="assets/screenshots/ad_tears.png">
 <sup>Arcane Dimensions - Tears of the False God .bsp loaded and rendered in Bevy</sup>
 
-<br>
+<br><br>
+
+> NOTICE: This crate is on low maintenance/life support. I love working in TrenchBroom, but I only have so much time, and would like to instead allocate it to Bevy editor tooling that feels as good to use as TrenchBroom.
+>
+> I'll still update to new Bevy versions until said tooling is realized, but I almost certainly won't add any new major features.
 
 # Quickstart
 - Add the `bevy_trenchbroom` to your project: `cargo add bevy_trenchbroom`.

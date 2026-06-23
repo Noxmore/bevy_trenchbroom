@@ -9,6 +9,7 @@ use bevy_trenchbroom::class::builtin::LightingWorkflow;
 #[allow(unused)]
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
+use smart_default::SmartDefault;
 
 #[solid_class]
 pub struct FuncDetail;

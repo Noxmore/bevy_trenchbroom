@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
 	brush::{Brush, BrushSurface, BrushUV},
+	geometry::LocalSpaceBrushes,
 	util::TextureSizeCache,
 	*,
 };
@@ -229,7 +230,7 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, internal_models: Vec<InternalModel>
 						);
 
 						if let Some(entity) = model.entity {
-							world.entity_mut(entity).insert(Brushes::Bsp(brushes_asset.clone()));
+							world.entity_mut(entity).insert((Brushes::Bsp(brushes_asset.clone()), LocalSpaceBrushes));
 						}
 
 						GenericBrushListHandle::Hulls(brushes_asset)
@@ -281,7 +282,7 @@ pub fn finalize_models(ctx: &mut BspLoadCtx, internal_models: Vec<InternalModel>
 							.add_labeled_asset(format!("Model{model_idx}Brushes"), BrushesAsset(brushes));
 
 						if let Some(entity) = model.entity {
-							world.entity_mut(entity).insert(Brushes::Shared(handle.clone()));
+							world.entity_mut(entity).insert((Brushes::Shared(handle.clone()), LocalSpaceBrushes));
 						}
 
 						Some(GenericBrushListHandle::Brushes(handle))

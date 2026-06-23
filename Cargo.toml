@@ -29,6 +29,7 @@ avian3d = { version = "0.7", default-features = false, features = [
 	"3d",
 	"collider-from-mesh",
 ]}
+smart-default = "0.7"
 
 example_commons = { path = "example/example_commons" }
 bevy_trenchbroom = { version = "0.14.0-dev", path = ".", default-features = false }
@@ -40,7 +41,7 @@ avian3d = { workspace = true, optional = true }
 anyhow = "1"
 bevy = { workspace = true, features = [
 	"bevy_asset",
-	"bevy_scene",
+	"bevy_world_serialization",
 	"bevy_color",
 ] }
 bevy_reflect = { version = "0.19", package = "bevy_reflect", features = ["reflect_documentation"] }
@@ -69,7 +70,7 @@ serde_json = "1"
 atomicow = "1" # For dummy LoadContext hack, must stay the same version as Bevy's
 bytemuck = "1" # For special materials, must stay the same version as Bevy's
 parking_lot = "0.12"
-smart-default = "0.7.1"
+smart-default.workspace = true
 
 [dev-dependencies]
 # For tests

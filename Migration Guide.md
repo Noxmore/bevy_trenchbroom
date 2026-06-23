@@ -1,3 +1,6 @@
+# 0.13 to 0.14
+- `MapGeometry` is now called `BrushGeometry`.
+
 # 0.12 to 0.13
 - `TrenchBroomConfig::asset_manifest` has been added, allowing faster map loading for mainly web builds.
 - `AssetServer::exists(...)` has been moved to `TrenchBroomConfig::asset_exists(...)` to support asset manifests.
