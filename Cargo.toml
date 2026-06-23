@@ -2,7 +2,7 @@
 members = ["example/*", "macros"]
 
 [workspace.package]
-version = "0.14.0-dev"
+version = "0.14.0"
 edition = "2024"
 authors = ["Noxmore"]
 repository = "https://github.com/Noxmore/bevy_trenchbroom"
@@ -32,10 +32,10 @@ avian3d = { version = "0.7", default-features = false, features = [
 smart-default = "0.7"
 
 example_commons = { path = "example/example_commons" }
-bevy_trenchbroom = { version = "0.14.0-dev", path = ".", default-features = false }
+bevy_trenchbroom = { version = "0.14.0", path = ".", default-features = false }
 
 [dependencies]
-bevy_trenchbroom_macros = { version = "0.14.0-dev", path = "macros" }
+bevy_trenchbroom_macros = { version = "0.14.0", path = "macros" }
 
 avian3d = { workspace = true, optional = true }
 anyhow = "1"
