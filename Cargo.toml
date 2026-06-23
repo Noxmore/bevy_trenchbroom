@@ -24,7 +24,6 @@ license.workspace = true
 
 [workspace.dependencies]
 bevy = { version = "0.19", default-features = false }
-nil = "0.15"
 enumflags2 = "0.7"
 avian3d = { version = "0.7", default-features = false, features = [
 	"3d",
@@ -63,13 +62,14 @@ serde = { version = "1", features = [
 thiserror = "2"
 disjoint-sets = "0.4.2"
 qbsp = { version = "0.15", features = ["bevy_reflect", "serde"], optional = true }
-nil.workspace = true
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
 enumflags2.workspace = true
 serde_json = "1"
 atomicow = "1" # For dummy LoadContext hack, must stay the same version as Bevy's
 bytemuck = "1" # For special materials, must stay the same version as Bevy's
+parking_lot = "0.12"
+smart-default = "0.7.1"
 
 [dev-dependencies]
 # For tests

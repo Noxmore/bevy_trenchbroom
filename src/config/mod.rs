@@ -1,10 +1,14 @@
-flat! {
-	hooks;
-	main_impl;
-	manifest;
-	tb_types;
-	writing;
-}
+mod hooks;
+pub use hooks::*;
+mod main_impl;
+mod manifest;
+pub use manifest::*;
+mod tb_types;
+pub use tb_types::*;
+mod writing;
+pub use writing::*;
+
+use std::{borrow::Cow, path::PathBuf};
 
 pub use crate::bevy_materialize::load::simple::SimpleGenericMaterialLoader;
 use bevy::{
@@ -14,6 +18,7 @@ use bevy::{
 };
 use fgd::FgdType;
 use qmap::QuakeMapEntities;
+use smart_default::SmartDefault;
 use util::BevyTrenchbroomCoordinateConversions;
 
 #[cfg(all(feature = "client", feature = "bsp"))]
@@ -63,7 +68,7 @@ pub struct TrenchBroomConfig {
 	/// The supported extensions of your texture files. This is also used for material loading as a fallback. (Default: ["png"])
 	///
 	/// Each one of these adds a filesystem call to check if the file exists when loading loose textures, so try to keep this to what you absolutely need.
-	#[default(["png".s()].into())]
+	#[default(["png".to_string()].into())]
 	#[builder(into)]
 	pub texture_extensions: Vec<String>,
 	/// The palette file path and data used for WADs. The path roots from your [`AssetServer`]'s assets folder.
@@ -94,7 +99,7 @@ pub struct TrenchBroomConfig {
 	#[builder(into)]
 	pub entity_default_color: Vec4,
 	/// An expression to evaluate how big entities' models are. Any instances of the string "%%scale%%" will be replaced wit with this config's scale. (Default: `{{ scale == undefined -> %%scale%%, scale }}``)
-	#[default(Some("{{ scale == undefined -> %%scale%%, scale }}".s()))]
+	#[default(Some("{{ scale == undefined -> %%scale%%, scale }}".to_string()))]
 	#[builder(into)]
 	pub entity_scale_expression: Option<String>,
 	/// Whether to set property defaults into an entity on creation, or leave them to use the default value that is defined in entity definitions. It is not recommended to use this.
@@ -143,7 +148,7 @@ pub struct TrenchBroomConfig {
 	/// Each one of these adds a filesystem call to check if the file exists when loading loose textures, so try to keep this to what you absolutely need.
 	///
 	/// (Default: "toml" because the default material deserializer is toml)
-	#[default(["toml".s()].into())]
+	#[default(["toml".to_string()].into())]
 	#[builder(into)]
 	pub generic_material_extensions: Vec<String>,
 
@@ -215,7 +220,7 @@ pub struct TrenchBroomConfig {
 	pub embedded_texture_cutouts: bool,
 
 	/// Set of textures to skip meshes of on map load. (Default: `["clip", "skip", "__TB_empty"]`)
-	#[default(["clip".s(), "skip".s(), "__TB_empty".s()].into())]
+	#[default(["clip".to_string(), "skip".to_string(), "__TB_empty".to_string()].into())]
 	#[builder(into)]
 	pub auto_remove_textures: HashSet<String>,
 
@@ -224,7 +229,7 @@ pub struct TrenchBroomConfig {
 	/// This allows, for example, your `func_rotate` entity to easily rotate around a specific point.
 	///
 	/// (Default: `["origin"]`)
-	#[default(["origin".s()].into())]
+	#[default(["origin".to_string()].into())]
 	#[builder(into)]
 	pub origin_textures: HashSet<String>,
 

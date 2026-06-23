@@ -105,7 +105,9 @@ pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow
 		let mut style_map_image = style_map_builder.build();
 		style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;
 
-		let styles = ctx.load_context.add_labeled_asset("IrradianceVolumeStyleMap".s(), style_map_image);
+		let styles = ctx
+			.load_context
+			.add_labeled_asset("IrradianceVolumeStyleMap".to_string(), style_map_image);
 
 		let animated_lighting_handle = ctx.load_context.add_labeled_asset(
 			"IrradianceVolumeAnimator",

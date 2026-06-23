@@ -1,6 +1,9 @@
 pub mod builtin;
 pub mod scene_hooks;
 
+use core::fmt;
+use std::any::TypeId;
+
 use bevy::{asset::LoadContext, platform::collections::HashSet};
 use bevy_reflect::{FromType, GetTypeRegistration, TypeRegistry};
 use qmap::QuakeMapEntity;

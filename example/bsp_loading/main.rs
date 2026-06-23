@@ -8,7 +8,6 @@ use bevy_trenchbroom::class::builtin::*;
 use bevy_trenchbroom::fgd::FgdFlags;
 use bevy_trenchbroom::prelude::*;
 use enumflags2::*;
-use nil::prelude::*;
 
 #[solid_class(base(BspSolidEntity))]
 #[derive(Default)]
@@ -65,7 +64,7 @@ fn main() {
 		.add_plugins(
 			DefaultPlugins
 				.set(AssetPlugin {
-					file_path: "../../assets".s(),
+					file_path: "../../assets".to_string(),
 					..default()
 				})
 				.set(ImagePlugin::default_nearest()),
@@ -94,7 +93,7 @@ fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 		]));
 	}
 
-	let map = std::env::args().nth(1).unwrap_or("example.bsp".s());
+	let map = std::env::args().nth(1).unwrap_or("example.bsp".to_string());
 	commands.spawn(WorldAssetRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]

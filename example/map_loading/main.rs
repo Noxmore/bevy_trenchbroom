@@ -9,7 +9,6 @@ use bevy_trenchbroom::class::builtin::LightingWorkflow;
 #[allow(unused)]
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
-use nil::prelude::*;
 
 #[solid_class]
 pub struct FuncDetail;
@@ -88,7 +87,7 @@ fn main() {
 		.add_plugins(
 			DefaultPlugins
 				.set(AssetPlugin {
-					file_path: "../../assets".s(),
+					file_path: "../../assets".to_string(),
 					..default()
 				})
 				.set(ImagePlugin::default_nearest()),
@@ -100,7 +99,7 @@ fn main() {
 }
 
 fn setup_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-	let map = std::env::args().nth(1).unwrap_or("example.map".s());
+	let map = std::env::args().nth(1).unwrap_or("example.map".to_string());
 	commands.spawn(WorldAssetRoot(asset_server.load(format!("maps/{map}#Scene"))));
 
 	#[cfg(feature = "example_client")]

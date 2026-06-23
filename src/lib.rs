@@ -30,8 +30,12 @@ pub mod qmap;
 pub mod special_textures;
 pub mod util;
 
+use std::sync::Arc;
+
 use bevy::app::PluginGroupBuilder;
 use bevy_materialize::MaterializeMarkerPlugin;
+#[cfg(feature = "client")]
+use parking_lot::RwLock;
 pub(crate) use prelude::*;
 
 // Re-exports

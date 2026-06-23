@@ -15,7 +15,6 @@ doc = false
 bevy.workspace = true
 bevy_trenchbroom.workspace = true
 example_commons.workspace = true
-nil.workspace = true
 
 # Run with --no-default-features to run headless
 

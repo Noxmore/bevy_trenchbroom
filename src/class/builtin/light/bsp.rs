@@ -1,15 +1,15 @@
+use smart_default::SmartDefault;
+
+use crate::fgd::{IntBool, IntBoolOverride, Srgb};
 #[cfg(feature = "client")]
 use crate::util::DynamicLight;
-use crate::fgd::{IntBool, IntBoolOverride, Srgb};
 
 use super::*;
 
 /// Contains properties used by the `ericw-tools` compiler for any entity with a classname starting with the first five letters "light". E.g. "light", "light_spot", "light_flame_small_yellow", etc.
-/// 
+///
 /// This is a combined class instead of split into point, spot, and directional lights because `ericw-tools` makes no distinction based on entity type. You have to specify per-entity what kind of light it is.
-#[base_class(
-	classname("__bsp_combined_light"),
-)]
+#[base_class(classname("__bsp_combined_light"))]
 #[derive(Debug, Clone, SmartDefault, Serialize, Deserialize)]
 #[reflect(Debug, Default, Serialize, Deserialize)]
 pub struct BspLight {
@@ -218,14 +218,10 @@ pub enum BspLightAttenuation {
 	ReciprocalSquareTweaked = 5,
 }
 
-
 /// Combined bsp and dynamic lighting.
 /// Because [`BspLight`] isn't split up (see docs on it), inheritors should produce [`PointLight`], [`SpotLight`], or [`DirectionalLight`] based on its properties.
 #[cfg(all(feature = "bsp", feature = "client"))]
-#[base_class(
-	base(BspLight),
-	classname("__mixed_light"),
-)]
+#[base_class(base(BspLight), classname("__mixed_light"))]
 #[derive(Debug, Clone, Copy, SmartDefault, Serialize, Deserialize)]
 #[reflect(Debug, Default, Serialize, Deserialize)]
 pub struct MixedLight {
@@ -258,7 +254,7 @@ pub struct MixedLight {
 	/// (Dynamic lighting) The distance from the light to near Z plane in the shadow map.
 	/// If not specified, uses the default value for the specific type of light.
 	pub dynamic_shadow_map_near_z: Option<f32>,
-	
+
 	/// (Dynamic lighting, spot light) Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees.
 	/// If not specified, uses the `angle` property.
 	pub dynamic_outer_angle: Option<f32>,
@@ -280,8 +276,10 @@ impl MixedLight {
 		let outer_angle = self.dynamic_outer_angle.unwrap_or(bsp_light.angle).to_radians();
 		let mut inner_angle = self.dynamic_inner_angle.unwrap_or(bsp_light._softangle).to_radians();
 		// According to the docs on _softangle, 0 is a special case that disables it.
-		if inner_angle == 0. { inner_angle = outer_angle }
-		
+		if inner_angle == 0. {
+			inner_angle = outer_angle
+		}
+
 		Some(if bsp_light.is_sun() {
 			#[allow(clippy::needless_update)]
 			DynamicLight::Directional(DirectionalLight {

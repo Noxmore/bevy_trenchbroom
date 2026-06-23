@@ -1,3 +1,5 @@
+use std::io;
+
 use bevy::{
 	asset::{AssetLoader, AsyncReadExt},
 	platform::collections::hash_map::Entry,
@@ -75,7 +77,7 @@ impl AssetLoader for QuakeMapLoader {
 					.map(|(brush_idx, brush)| (brush_idx, self.tb_server.config.from_bevy_space_f64(brush.center()).as_vec3()));
 
 				if let Some((origin_brush_idx, origin_point)) = origin_point {
-					map_entity.properties.insert("origin".s(), origin_point.fgd_to_string_unquoted());
+					map_entity.properties.insert("origin".to_string(), origin_point.fgd_to_string_unquoted());
 					map_entity.brushes.remove(origin_brush_idx);
 				}
 			}
@@ -146,7 +148,7 @@ impl AssetLoader for QuakeMapLoader {
 							mesh = mesh.translated_by(self.tb_server.config.to_bevy_space(-origin_point));
 						}
 
-						let mesh_entity = world.spawn((Name::new(texture.s()), Transform::default())).id();
+						let mesh_entity = world.spawn((Name::new(texture.to_string()), Transform::default())).id();
 
 						meshes.push((
 							mesh_entity,

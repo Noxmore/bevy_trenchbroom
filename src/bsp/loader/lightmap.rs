@@ -1,3 +1,5 @@
+use std::fs;
+
 use super::*;
 use crate::*;
 use bevy::{
@@ -44,7 +46,7 @@ impl BspLightmap {
 				}
 
 				let output = ctx.load_context.add_labeled_asset(
-					"LightmapOutput".s(),
+					"LightmapOutput".to_string(),
 					new_animated_lighting_output_image(
 						Extent3d {
 							width: size.x,

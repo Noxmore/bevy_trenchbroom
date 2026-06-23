@@ -1,3 +1,5 @@
+use std::{env, fs, io, path::Path};
+
 use bevy_reflect::TypeRegistry;
 
 use crate::fgd::write_fgd;
@@ -229,14 +231,14 @@ impl TrenchBroomConfig {
 			"name": self.name.clone(),
 			"fileformats": self.file_formats.iter().map(|format| jzon::object! { "format": format.config_str() }).collect::<Vec<_>>(),
 			"filesystem": {
-				"searchpath": self.assets_path.s(),
+				"searchpath": self.assets_path.to_string_lossy().as_ref(),
 				"packageformat": { "extension": self.package_format.extension(), "format": self.package_format.format() }
 			},
 			"materials": {
-				"root": self.material_root.s(),
+				"root": self.material_root.to_string_lossy().as_ref(),
 				// .D is required for WADs to work
 				"extensions": self.texture_extensions.clone(),
-				"palette": self.texture_pallette.s(),
+				"palette": self.texture_pallette.to_string_lossy().as_ref(),
 				"attribute": "wad",
 				"excludes": self.texture_exclusions.clone(),
 			},

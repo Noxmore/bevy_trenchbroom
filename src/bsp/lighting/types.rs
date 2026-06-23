@@ -1,4 +1,6 @@
 //! Data types split off from the main lighting module for organization.
+use core::fmt;
+
 use bevy::render::{extract_resource::ExtractResource, render_asset::RenderAsset, render_resource::*};
 use ser::SerializeStruct;
 

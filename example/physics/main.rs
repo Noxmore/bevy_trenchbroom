@@ -3,7 +3,6 @@ use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
-use nil::prelude::*;
 
 #[solid_class]
 pub struct FuncDoor;
@@ -13,7 +12,7 @@ fn main() {
 		.add_plugins(
 			DefaultPlugins
 				.set(AssetPlugin {
-					file_path: "../../assets".s(),
+					file_path: "../../assets".to_string(),
 					..default()
 				})
 				.set(ImagePlugin::default_nearest()),

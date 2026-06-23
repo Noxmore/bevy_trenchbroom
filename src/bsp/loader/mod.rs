@@ -1,5 +1,7 @@
 #[cfg(feature = "client")]
 mod irradiance_volume;
+use std::io;
+
 #[cfg(feature = "client")]
 pub use irradiance_volume::IrradianceVolumeMultipliers;
 #[cfg(feature = "client")]
@@ -107,7 +109,7 @@ impl AssetLoader for BspLoader {
 			// let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
 
 			Ok(Bsp {
-				world: load_context.add_labeled_asset("Scene".s(), WorldAsset::new(world)),
+				world: load_context.add_labeled_asset("Scene".to_string(), WorldAsset::new(world)),
 				embedded_textures,
 				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),

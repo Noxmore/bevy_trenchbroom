@@ -16,8 +16,10 @@ use bsp::TEXTURE_PREFIX;
 use config::EmbeddedTextureLoadView;
 #[cfg(feature = "bsp")]
 use qbsp::data::texture::EmbeddedTextureName;
+use smart_default::SmartDefault;
+use std::f32::consts::PI;
 #[cfg(feature = "bsp")]
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 use wgpu_types::Face;
 
 use crate::*;
@@ -158,7 +160,7 @@ pub fn load_special_texture(view: &mut EmbeddedTextureLoadView, material: &Stand
 				next: None,
 				images: Some(ImagesAnimation {
 					fps,
-					fields: [("base_color_texture".s(), frames)].into_iter().collect(),
+					fields: [("base_color_texture".to_string(), frames)].into_iter().collect(),
 					state: GenericMaterialAnimationState {
 						current_frame: texture_frame_idx.wrapping_sub(1) as usize,
 						next_frame_time: Duration::default(),

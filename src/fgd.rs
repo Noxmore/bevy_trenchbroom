@@ -1,3 +1,5 @@
+use core::fmt;
+
 use bevy_reflect::{
 	GetTypeRegistration, TypeRegistry,
 	enums::{DynamicEnum, DynamicVariant, Enum},
@@ -228,7 +230,7 @@ impl FgdType for IntBool {
 	}
 
 	fn fgd_to_string_unquoted(&self) -> String {
-		if self.0 { "1".s() } else { "0".s() }
+		if self.0 { "1".to_string() } else { "0".to_string() }
 	}
 }
 
@@ -253,9 +255,9 @@ impl FgdType for IntBoolOverride {
 	}
 	fn fgd_to_string_unquoted(&self) -> String {
 		match self {
-			Self::Enable => "1".s(),
-			Self::Inherit => "0".s(),
-			Self::Disable => "-1".s(),
+			Self::Enable => "1".to_string(),
+			Self::Inherit => "0".to_string(),
+			Self::Disable => "-1".to_string(),
 		}
 	}
 }

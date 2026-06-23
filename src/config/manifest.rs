@@ -7,8 +7,13 @@ use super::TrenchBroomConfig;
 /// Static manifest of a directory tree. Paths are stored as `&str`s as `Path::new(...)` isn't stabilized as const at the time of writing.
 #[derive(Debug, Clone, Copy)]
 pub enum ManifestEntry {
-	Directory { path: &'static str, children: &'static [ManifestEntry] },
-	File { path: &'static str },
+	Directory {
+		path: &'static str,
+		children: &'static [ManifestEntry],
+	},
+	File {
+		path: &'static str,
+	},
 }
 impl ManifestEntry {
 	pub const fn path(&self) -> &'static str {
@@ -65,6 +70,9 @@ impl TrenchBroomConfig {
 	/// NOTE: This will cause problems with adding/removing assets when hot-reloading is enabled. You might want to feature lock this to production builds.
 	#[inline]
 	pub fn asset_manifest(self, root: ManifestEntry) -> Self {
-		Self { asset_manifest: Some(Manifest::new(root)), ..self }
+		Self {
+			asset_manifest: Some(Manifest::new(root)),
+			..self
+		}
 	}
 }

@@ -1,8 +1,8 @@
+use core::fmt;
+use std::any::type_name;
+
 #[cfg(feature = "bsp")]
-use qbsp::{
-	BspFormat,
-	data::texture::EmbeddedTextureName,
-};
+use qbsp::{BspFormat, data::texture::EmbeddedTextureName};
 
 use super::*;
 
@@ -80,7 +80,7 @@ pub struct EmbeddedTextureLoadView<'a, 'b> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	
+
 	#[test]
 	fn hook_stack() {
 		let mut hook: Hook<dyn Fn() -> i32 + Send + Sync> = Hook(Arc::new(|| 2));

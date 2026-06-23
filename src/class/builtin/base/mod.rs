@@ -2,10 +2,11 @@ use crate::fgd::{TargetDestination, TargetSource};
 
 use super::*;
 
-flat! {
-	#[cfg(feature = "bsp")]
-	bsp;
-}
+#[cfg(feature = "bsp")]
+mod bsp;
+#[cfg(feature = "bsp")]
+pub use bsp::*;
+use smart_default::SmartDefault;
 
 /// The prefix used by base classes provided by bevy_trenchbroom.
 ///
@@ -95,19 +96,19 @@ impl QuakeClass for Name {
 		size: None,
 		decal: false,
 
-		properties: &[
-			QuakeClassProperty {
-				ty: String::PROPERTY_TYPE,
-				name: "name",
-				title: Some("Name"),
-				description: None,
-				default_value: Some(String::new),
-			},
-		],
+		properties: &[QuakeClassProperty {
+			ty: String::PROPERTY_TYPE,
+			name: "name",
+			title: Some("Name"),
+			description: None,
+			default_value: Some(String::new),
+		}],
 	};
 
 	fn class_spawn(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		view.world.entity_mut(view.entity).insert(Name::new(view.src_entity.get::<String>("name")?));
+		view.world
+			.entity_mut(view.entity)
+			.insert(Name::new(view.src_entity.get::<String>("name")?));
 		Ok(())
 	}
 }
@@ -136,7 +137,7 @@ impl QuakeClass for Visibility {
 			name: "visibility",
 			title: Some("Visibility"),
 			description: None,
-			default_value: Some(|| "\"Inherited\"".s()),
+			default_value: Some(|| "\"Inherited\"".to_string()),
 		}],
 	};
 
@@ -147,10 +148,10 @@ impl QuakeClass for Visibility {
 			Some("Visible") => Visibility::Visible,
 			None => Visibility::default(),
 			Some(value) => Err(qmap::QuakeEntityError::PropertyParseError {
-				property: "visibility".s(),
-				value: value.s(),
+				property: "visibility".to_string(),
+				value: value.to_string(),
 				required_type: "Visibility",
-				error: "Must be either `Inherited`, `Hidden`, or `Visible`".s(),
+				error: "Must be either `Inherited`, `Hidden`, or `Visible`".to_string(),
 			})?,
 		};
 

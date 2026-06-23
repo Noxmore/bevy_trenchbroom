@@ -131,12 +131,18 @@ pub enum BitFlag {
 	#[default]
 	Unused,
 	/// Shows up in-editor with the specified name and optional description.
-	Used { name: Cow<'static, str>, description: Option<Cow<'static, str>> },
+	Used {
+		name: Cow<'static, str>,
+		description: Option<Cow<'static, str>>,
+	},
 }
 impl BitFlag {
 	#[inline] // We use &str to avoid `None` description causing an unspecified generic
 	pub fn new(name: &'static str, description: Option<&'static str>) -> Self {
-		Self::Used { name: name.into(), description: description.map(Into::into) }
+		Self::Used {
+			name: name.into(),
+			description: description.map(Into::into),
+		}
 	}
 }
 impl From<BitFlag> for jzon::JsonValue {

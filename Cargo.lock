@@ -1887,11 +1887,12 @@ dependencies = [
  "itertools 0.14.0",
  "jzon",
  "ndshape",
- "nil",
+ "parking_lot",
  "qbsp",
  "quake-map",
  "serde",
  "serde_json",
+ "smart-default",
  "smol",
  "strum",
  "thiserror 2.0.18",
@@ -2185,7 +2186,6 @@ dependencies = [
  "bevy_trenchbroom",
  "enumflags2",
  "example_commons",
- "nil",
 ]
 
 [[package]]
@@ -4185,7 +4185,6 @@ dependencies = [
  "bevy",
  "bevy_trenchbroom",
  "example_commons",
- "nil",
 ]
 
 [[package]]
@@ -4319,17 +4318,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "975bce586ad637e27f6dc26ee907c07050686a588695bfd64b7873a9d48a700c"
 dependencies = [
  "static_assertions",
-]
-
-[[package]]
-name = "nil"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1c6c63f2ce41341a220e83ad2fc86ca6280c794e4af7bb0c6fd92cfa2231163"
-dependencies = [
- "once_cell",
- "parking_lot",
- "smart-default",
 ]
 
 [[package]]
@@ -5076,7 +5064,6 @@ dependencies = [
  "bevy",
  "bevy_trenchbroom",
  "example_commons",
- "nil",
 ]
 
 [[package]]

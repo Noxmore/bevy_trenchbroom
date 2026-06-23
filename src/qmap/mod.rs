@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use brush::Brush;
 use fgd::FgdType;
 use geometry::BrushesAsset;
@@ -91,11 +93,11 @@ impl QuakeMapEntity {
 		let s = self
 			.properties
 			.get(key)
-			.ok_or_else(|| QuakeEntityError::RequiredPropertyNotFound { property: key.s() })?;
+			.ok_or_else(|| QuakeEntityError::RequiredPropertyNotFound { property: key.to_string() })?;
 
 		T::fgd_parse(s).map_err(|err| QuakeEntityError::PropertyParseError {
-			property: key.s(),
-			value: s.s(),
+			property: key.to_string(),
+			value: s.to_string(),
 			required_type: type_name::<T>(),
 			error: format!("{err}"),
 		})

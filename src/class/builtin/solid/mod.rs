@@ -1,9 +1,9 @@
 use super::*;
 
-flat! {
-	#[cfg(feature = "bsp")]
-	bsp;
-}
+#[cfg(feature = "bsp")]
+mod bsp;
+#[cfg(feature = "bsp")]
+pub use bsp::*;
 
 #[derive(Default)]
 pub struct SolidClassesPlugin;

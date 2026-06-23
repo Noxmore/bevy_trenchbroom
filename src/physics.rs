@@ -1,4 +1,5 @@
 use crate::*;
+use bevy::platform::collections::HashSet;
 use brush::ConvexHull;
 #[cfg(feature = "bsp")]
 use bsp::BrushHullsAsset;

@@ -2,12 +2,14 @@
 
 // These modules aren't feature locked so that the plugins within can still be referenced,
 // removing the need for the user to feature lock disabling them.
-flat! {
-	base;
-	light;
-	point;
-	solid;
-}
+mod base;
+pub use base::*;
+mod light;
+pub use light::*;
+mod point;
+pub use point::*;
+mod solid;
+pub use solid::*;
 
 use bevy::app::plugin_group;
 use fgd::FgdType;

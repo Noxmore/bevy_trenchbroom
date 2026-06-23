@@ -20,4 +20,3 @@ bevy_trenchbroom = { workspace = true, features = [
 	"avian_f32"
 ] }
 example_commons = { workspace = true, features = ["client"] }
-nil.workspace = true

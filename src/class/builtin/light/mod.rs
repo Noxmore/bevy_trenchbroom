@@ -1,10 +1,11 @@
 use super::*;
 
-flat! {
-	#[cfg(feature = "bsp")]
-	bsp;
-	basic_impls;
-}
+#[cfg(feature = "bsp")]
+mod bsp;
+#[cfg(feature = "bsp")]
+pub use bsp::*;
+mod basic_impls;
+pub use basic_impls::*;
 
 pub const QUAKE_LIGHT_TO_LUM_MULTIPLIER: f32 = 1000.;
 /// Quake light (such as the `light` property used in light entities) conversion to lumens.
@@ -65,28 +66,33 @@ impl Plugin for LightingClassesPlugin {
 			.register_type_data::<SpotLight, ReflectQuakeClass>()
 			.register_type_data::<DirectionalLight, ReflectQuakeClass>()
 		;
-		
+
 		match self.0 {
 			LightingWorkflow::DynamicOnly => {
-				app.register_type::<DynamicOnlyPointLight>().register_type::<DynamicOnlySpotLight>().register_type::<DynamicOnlyDirectionalLight>();
-			},
+				app.register_type::<DynamicOnlyPointLight>()
+					.register_type::<DynamicOnlySpotLight>()
+					.register_type::<DynamicOnlyDirectionalLight>();
+			}
 			#[cfg(feature = "bsp")]
 			LightingWorkflow::BakedOnly => {
 				app.register_type::<BakedOnlyLight>();
-			},
+			}
 			#[cfg(feature = "bsp")]
 			LightingWorkflow::MapDynamicBspBaked => {
 				app.register_type::<MapDynamicBspBakedLight>();
-			},
+			}
 			#[cfg(feature = "bsp")]
 			LightingWorkflow::DynamicAndBakedCombined => {
 				app.register_type::<CombinedLight>();
-			},
+			}
 			#[cfg(feature = "bsp")]
 			LightingWorkflow::DynamicAndBakedSeparate => {
-				app.register_type::<BakedOnlyLight>().register_type::<DynamicPointLight>().register_type::<DynamicSpotLight>().register_type::<DynamicDirectionalLight>();
-			},
-			LightingWorkflow::Custom => {},
+				app.register_type::<BakedOnlyLight>()
+					.register_type::<DynamicPointLight>()
+					.register_type::<DynamicSpotLight>()
+					.register_type::<DynamicDirectionalLight>();
+			}
+			LightingWorkflow::Custom => {}
 		}
 	}
 }
@@ -111,7 +117,7 @@ impl QuakeClass for PointLight {
 				name: "color",
 				title: Some("Light Color"),
 				description: None,
-				default_value: Some(|| "\"1 1 1\"".s()),
+				default_value: Some(|| "\"1 1 1\"".to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -133,7 +139,9 @@ impl QuakeClass for PointLight {
 				ty: f32::PROPERTY_TYPE,
 				name: "radius",
 				title: Some("Light Radius"),
-				description: Some("Simulates a light source coming from a spherical volume with the given radius. This affects the size of specular highlights created by this light."),
+				description: Some(
+					"Simulates a light source coming from a spherical volume with the given radius. This affects the size of specular highlights created by this light.",
+				),
 				default_value: Some(|| PointLight::default().radius.fgd_to_string()),
 			},
 			QuakeClassProperty {
@@ -154,7 +162,9 @@ impl QuakeClass for PointLight {
 				ty: bool::PROPERTY_TYPE,
 				name: "affects_lightmapped_mesh_diffuse",
 				title: Some("Affects Lightmapped Mesh Diffuse"),
-				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				description: Some(
+					"Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light.",
+				),
 				default_value: Some(|| PointLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
 			},
 			// Soft shadows can't be included because it's locked behind a feature
@@ -196,8 +206,14 @@ impl QuakeClass for PointLight {
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
 			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
-			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
-			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
+			contact_shadows_enabled: view
+				.src_entity
+				.get("contact_shadows_enabled")
+				.with_default(default.contact_shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view
+				.src_entity
+				.get("affects_lightmapped_mesh_diffuse")
+				.with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
@@ -229,7 +245,7 @@ impl QuakeClass for SpotLight {
 				name: "color",
 				title: Some("Light Color"),
 				description: None,
-				default_value: Some(|| "\"1 1 1\"".s()),
+				default_value: Some(|| "\"1 1 1\"".to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -272,7 +288,9 @@ impl QuakeClass for SpotLight {
 				ty: bool::PROPERTY_TYPE,
 				name: "affects_lightmapped_mesh_diffuse",
 				title: Some("Affects Lightmapped Mesh Diffuse"),
-				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				description: Some(
+					"Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light.",
+				),
 				default_value: Some(|| SpotLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
 			},
 			// Soft shadows can't be included because it's locked behind a feature
@@ -309,7 +327,7 @@ impl QuakeClass for SpotLight {
 				description: Some(
 					"Angle defining the distance from the spot light direction to the outer limit of the light's cone of effect in degrees.",
 				),
-				default_value: Some(|| "\"45\"".s()),
+				default_value: Some(|| "\"45\"".to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -318,7 +336,7 @@ impl QuakeClass for SpotLight {
 				description: Some(
 					"Angle defining the distance from the spot light direction to the inner limit of the light's cone of effect in degrees.",
 				),
-				default_value: Some(|| "\"0\"".s()),
+				default_value: Some(|| "\"0\"".to_string()),
 			},
 		],
 	};
@@ -333,8 +351,14 @@ impl QuakeClass for SpotLight {
 			range: view.src_entity.get("range").with_default(default.range)?,
 			radius: view.src_entity.get("radius").with_default(default.radius)?,
 			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
-			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
-			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
+			contact_shadows_enabled: view
+				.src_entity
+				.get("contact_shadows_enabled")
+				.with_default(default.contact_shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view
+				.src_entity
+				.get("affects_lightmapped_mesh_diffuse")
+				.with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			shadow_map_near_z: view.src_entity.get("shadow_map_near_z").with_default(default.shadow_map_near_z)?,
@@ -376,7 +400,7 @@ impl QuakeClass for DirectionalLight {
 				name: "color",
 				title: Some("Light Color"),
 				description: None,
-				default_value: Some(|| "\"1 1 1\"".s()),
+				default_value: Some(|| "\"1 1 1\"".to_string()),
 			},
 			QuakeClassProperty {
 				ty: f32::PROPERTY_TYPE,
@@ -405,7 +429,9 @@ impl QuakeClass for DirectionalLight {
 				ty: bool::PROPERTY_TYPE,
 				name: "affects_lightmapped_mesh_diffuse",
 				title: Some("Affects Lightmapped Mesh Diffuse"),
-				description: Some("Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light."),
+				description: Some(
+					"Whether this light contributes diffuse lighting to meshes with lightmaps.\nNote that the specular portion of the light is always considered, because Bevy currently has no means to bake specular light.",
+				),
 				default_value: Some(|| DirectionalLight::default().affects_lightmapped_mesh_diffuse.fgd_to_string()),
 			},
 			// Soft shadows can't be included because it's locked behind a feature
@@ -438,8 +464,14 @@ impl QuakeClass for DirectionalLight {
 			color: view.src_entity.get("color").with_default(default.color)?,
 			illuminance: view.src_entity.get("illuminance").with_default(default.illuminance)?,
 			shadow_maps_enabled: view.src_entity.get("shadows_enabled").with_default(default.shadow_maps_enabled)?,
-			contact_shadows_enabled: view.src_entity.get("contact_shadows_enabled").with_default(default.contact_shadows_enabled)?,
-			affects_lightmapped_mesh_diffuse: view.src_entity.get("affects_lightmapped_mesh_diffuse").with_default(default.affects_lightmapped_mesh_diffuse)?,
+			contact_shadows_enabled: view
+				.src_entity
+				.get("contact_shadows_enabled")
+				.with_default(default.contact_shadows_enabled)?,
+			affects_lightmapped_mesh_diffuse: view
+				.src_entity
+				.get("affects_lightmapped_mesh_diffuse")
+				.with_default(default.affects_lightmapped_mesh_diffuse)?,
 			shadow_depth_bias: view.src_entity.get("shadow_depth_bias").with_default(default.shadow_depth_bias)?,
 			shadow_normal_bias: view.src_entity.get("shadow_normal_bias").with_default(default.shadow_normal_bias)?,
 			// For soft shadows
@@ -449,4 +481,3 @@ impl QuakeClass for DirectionalLight {
 		Ok(())
 	}
 }
-

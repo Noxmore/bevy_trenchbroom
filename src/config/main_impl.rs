@@ -1,4 +1,9 @@
-use crate::{class::builtin::{read_rotation_from_entity, read_translation_from_entity}, fgd::{TargetDestination, TargetSource}};
+use std::path::Path;
+
+use crate::{
+	class::builtin::{read_rotation_from_entity, read_translation_from_entity},
+	fgd::{TargetDestination, TargetSource},
+};
 use bevy::asset::io::AssetSourceId;
 #[cfg(feature = "bsp")]
 use bsp::GENERIC_MATERIAL_PREFIX;
@@ -43,7 +48,7 @@ impl TrenchBroomConfig {
 	/// - Names the entity based on the classname, and `targetname` if the property exists.
 	/// - Handles [`TrenchBroomConfig::global_transform_application`]
 	pub fn default_pre_scene_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		let classname = view.src_entity.classname()?.s();
+		let classname = view.src_entity.classname()?.to_string();
 
 		let mut ent = view.world.entity_mut(view.entity);
 
@@ -65,16 +70,25 @@ impl TrenchBroomConfig {
 			});
 		}
 
-		if view.tb_config.global_target_application && !view.class.info.contains_property_type(TargetDestination::PROPERTY_TYPE) && !view.class.info.contains_property_type(TargetSource::PROPERTY_TYPE) {
-			if let Ok(targetname) = view.src_entity.get::<TargetSource>("targetname") && !ent.contains::<Targetable>() {
+		if view.tb_config.global_target_application
+			&& !view.class.info.contains_property_type(TargetDestination::PROPERTY_TYPE)
+			&& !view.class.info.contains_property_type(TargetSource::PROPERTY_TYPE)
+		{
+			if let Ok(targetname) = view.src_entity.get::<TargetSource>("targetname")
+				&& !ent.contains::<Targetable>()
+			{
 				ent.insert(Targetable { targetname });
 			}
 
-			if let Ok(target) = view.src_entity.get::<TargetDestination>("target") && !ent.contains::<Target>() {
+			if let Ok(target) = view.src_entity.get::<TargetDestination>("target")
+				&& !ent.contains::<Target>()
+			{
 				ent.insert(Target { target });
 			}
 
-			if let Ok(killtarget) = view.src_entity.get::<TargetDestination>("killtarget") && !ent.contains::<KillTarget>() {
+			if let Ok(killtarget) = view.src_entity.get::<TargetDestination>("killtarget")
+				&& !ent.contains::<KillTarget>()
+			{
 				ent.insert(KillTarget { killtarget });
 			}
 		}
@@ -91,19 +105,19 @@ impl TrenchBroomConfig {
 	/// - Adds [`Visibility`] and [`Transform`] components if they aren't in the entity, as it is needed to clear up warnings for child meshes.
 	/// - Adds [`GenericMaterial3d`]s.
 	pub fn default_post_scene_spawn_hook(view: &mut QuakeClassSpawnView) -> anyhow::Result<()> {
-		let classname = view.src_entity.classname()?.s();
+		let classname = view.src_entity.classname()?.to_string();
 
 		let mut ent = view.world.entity_mut(view.entity);
-		
+
 		if !ent.contains::<Transform>() {
 			ent.insert(Transform::IDENTITY);
 		}
-		
+
 		#[cfg(feature = "client")]
 		if !ent.contains::<Visibility>() {
 			ent.insert(Visibility::default());
 		}
-		
+
 		// For things like doors where the `angles` property means open direction.
 		if let Some(transform) = view.world.entity(view.entity).get::<Transform>().copied()
 			&& view.class_map.get(classname.as_str()).map(|class| class.info.ty.is_solid()) == Some(true)
@@ -117,7 +131,7 @@ impl TrenchBroomConfig {
 		}
 
 		// view.load_context.add_labeled_asset("test", StandardMaterial::default());
-		
+
 		for mesh_view in view.meshes.iter() {
 			view.world
 				.entity_mut(mesh_view.entity)
@@ -178,24 +192,18 @@ impl TrenchBroomConfig {
 
 			// Search for material files
 			for ext in &view.tb_config().generic_material_extensions {
-				let path = view
-					.tb_config()
-					.material_root
-					.join(format!("{}.{}", view.name, ext));
+				let path = view.tb_config().material_root.join(format!("{}.{}", view.name, ext));
 
 				if view.tb_config().asset_exists(view.asset_server, &source, &path).await {
 					// We found one, let's load it!
 					return view.load_context.load(AssetPath::from_path(&path).with_source(source));
 				}
 			}
-			
+
 			// None found, look for image files
 
 			for ext in &view.tb_config().texture_extensions {
-				let path = view
-					.tb_config()
-					.material_root
-					.join(format!("{}.{}", view.name, ext));
+				let path = view.tb_config().material_root.join(format!("{}.{}", view.name, ext));
 
 				if view.tb_config().asset_exists(view.asset_server, &source, &path).await {
 					#[cfg(feature = "client")]
@@ -204,16 +212,24 @@ impl TrenchBroomConfig {
 					let material = (view.tb_config().image_material_loader.material)(image);
 					#[cfg(feature = "client")]
 					let material_handle = material.add_labeled_asset(view.load_context, format!("Material_{}", view.name));
-					
-					return view.load_context.add_labeled_asset(format!("GenericMaterial_{}", view.name), GenericMaterial {
-						#[cfg(feature = "client")]
-						handle: material_handle,
-						properties: (view.tb_config().image_material_loader.properties)(),
-					});
+
+					return view.load_context.add_labeled_asset(
+						format!("GenericMaterial_{}", view.name),
+						GenericMaterial {
+							#[cfg(feature = "client")]
+							handle: material_handle,
+							properties: (view.tb_config().image_material_loader.properties)(),
+						},
+					);
 				}
 			}
 
-			error!("Failed to find a texture \"{}\" with the GenericMaterial extension(s) {:?} or the image extension(s) {:?}", view.name, view.tb_config().generic_material_extensions, view.tb_config().texture_extensions);
+			error!(
+				"Failed to find a texture \"{}\" with the GenericMaterial extension(s) {:?} or the image extension(s) {:?}",
+				view.name,
+				view.tb_config().generic_material_extensions,
+				view.tb_config().texture_extensions
+			);
 			view.tb_server.missing_material.read().clone()
 		})
 	}
@@ -245,13 +261,13 @@ impl TrenchBroomConfig {
 		vec.bevy_to_trenchbroom() * self.scale as f64
 	}
 
-
 	pub async fn asset_exists(&self, asset_server: &AssetServer, source: &AssetSourceId<'_>, path: &Path) -> bool {
 		if let Some(manifest) = &self.asset_manifest {
 			return manifest.file_set().contains(path);
 		}
-		
-		asset_server.get_source(source)
+
+		asset_server
+			.get_source(source)
 			.expect("Could not find asset source")
 			.reader()
 			.read(path)
@@ -260,79 +276,34 @@ impl TrenchBroomConfig {
 	}
 	pub fn default_quake2_surface_flags() -> Vec<BitFlag> {
 		vec![
-			BitFlag::new(
-				"light",
-				Some("Emit light from the surface, brightness is specified in the 'value' field")
-			),
-			BitFlag::new(
-				"slick",
-				Some("The surface is slippery")
-			),
+			BitFlag::new("light", Some("Emit light from the surface, brightness is specified in the 'value' field")),
+			BitFlag::new("slick", Some("The surface is slippery")),
 			BitFlag::new(
 				"sky",
-				Some("The surface is sky, the texture will not be drawn, but the background sky box is used instead")
+				Some("The surface is sky, the texture will not be drawn, but the background sky box is used instead"),
 			),
-			BitFlag::new(
-				"warp",
-				Some("The surface warps (like water textures do)")
-			),
-			BitFlag::new(
-				"trans33",
-				Some("The surface is 33% transparent")
-			),
-			BitFlag::new(
-				"trans66",
-				Some("The surface is 66% transparent")
-			),
+			BitFlag::new("warp", Some("The surface warps (like water textures do)")),
+			BitFlag::new("trans33", Some("The surface is 33% transparent")),
+			BitFlag::new("trans66", Some("The surface is 66% transparent")),
 			BitFlag::new(
 				"flowing",
-				Some("The texture wraps in a downward 'flowing' pattern (warp must also be set)")
+				Some("The texture wraps in a downward 'flowing' pattern (warp must also be set)"),
 			),
-			BitFlag::new(
-				"nodraw",
-				Some("Used for non-fixed-size brush triggers and clip brushes")
-			),
-			BitFlag::new(
-				"hint",
-				Some("Make a primary bsp splitter")
-			),
-			BitFlag::new(
-				"skip",
-				Some("Completely ignore, allowing non-closed brushes")
-			),
+			BitFlag::new("nodraw", Some("Used for non-fixed-size brush triggers and clip brushes")),
+			BitFlag::new("hint", Some("Make a primary bsp splitter")),
+			BitFlag::new("skip", Some("Completely ignore, allowing non-closed brushes")),
 		]
 	}
-	
+
 	pub fn default_quake2_content_flags() -> Vec<BitFlag> {
 		vec![
-			BitFlag::new(
-				"solid",
-				Some("Default for all brushes")
-			),
-			BitFlag::new(
-				"window",
-				Some("Brush is a window (not really used)")
-			),
-			BitFlag::new(
-				"aux",
-				Some("Unused by the engine")
-			),
-			BitFlag::new(
-				"lava",
-				Some("The brush is lava")
-			),
-			BitFlag::new(
-				"slime",
-				Some("The brush is slime")
-			),
-			BitFlag::new(
-				"water",
-				Some("The brush is water")
-			),
-			BitFlag::new(
-				"mist",
-				Some("The brush is non-solid")
-			),
+			BitFlag::new("solid", Some("Default for all brushes")),
+			BitFlag::new("window", Some("Brush is a window (not really used)")),
+			BitFlag::new("aux", Some("Unused by the engine")),
+			BitFlag::new("lava", Some("The brush is lava")),
+			BitFlag::new("slime", Some("The brush is slime")),
+			BitFlag::new("water", Some("The brush is water")),
+			BitFlag::new("mist", Some("The brush is non-solid")),
 			BitFlag::Unused,
 			BitFlag::Unused,
 			BitFlag::Unused,
@@ -342,61 +313,25 @@ impl TrenchBroomConfig {
 			BitFlag::Unused,
 			BitFlag::Unused,
 			BitFlag::Unused,
-			BitFlag::new(
-				"playerclip",
-				Some("Player cannot pass through the brush (other things can)")
-			),
-			BitFlag::new(
-				"monsterclip",
-				Some("Monster cannot pass through the brush (player and other things can)")
-			),
-			BitFlag::new(
-				"current_0",
-				Some("Brush has a current in direction of 0 degrees")
-			),
-			BitFlag::new(
-				"current_90",
-				Some("Brush has a current in direction of 90 degrees")
-			),
-			BitFlag::new(
-				"current_180",
-				Some("Brush has a current in direction of 180 degrees")
-			),
-			BitFlag::new(
-				"current_270",
-				Some("Brush has a current in direction of 270 degrees")
-			),
-			BitFlag::new(
-				"current_up",
-				Some("Brush has a current in the up direction")
-			),
-			BitFlag::new(
-				"current_dn",
-				Some("Brush has a current in the down direction")
-			),
+			BitFlag::new("playerclip", Some("Player cannot pass through the brush (other things can)")),
+			BitFlag::new("monsterclip", Some("Monster cannot pass through the brush (player and other things can)")),
+			BitFlag::new("current_0", Some("Brush has a current in direction of 0 degrees")),
+			BitFlag::new("current_90", Some("Brush has a current in direction of 90 degrees")),
+			BitFlag::new("current_180", Some("Brush has a current in direction of 180 degrees")),
+			BitFlag::new("current_270", Some("Brush has a current in direction of 270 degrees")),
+			BitFlag::new("current_up", Some("Brush has a current in the up direction")),
+			BitFlag::new("current_dn", Some("Brush has a current in the down direction")),
 			BitFlag::new(
 				"origin",
-				Some("Special brush used for specifying origin of rotation for rotating brushes")
+				Some("Special brush used for specifying origin of rotation for rotating brushes"),
 			),
-			BitFlag::new(
-				"monster",
-				Some("Purpose unknown")
-			),
-			BitFlag::new(
-				"corpse",
-				Some("Purpose unknown")
-			),
-			BitFlag::new(
-				"detail",
-				Some("Detail brush")
-			),
-			BitFlag::new(
-				"translucent",
-				Some("Use for opaque water that does not block vis")
-			),
+			BitFlag::new("monster", Some("Purpose unknown")),
+			BitFlag::new("corpse", Some("Purpose unknown")),
+			BitFlag::new("detail", Some("Detail brush")),
+			BitFlag::new("translucent", Some("Use for opaque water that does not block vis")),
 			BitFlag::new(
 				"ladder",
-				Some("Brushes with this flag allow a player to move up and down a vertical surface")
+				Some("Brushes with this flag allow a player to move up and down a vertical surface"),
 			),
 		]
 	}

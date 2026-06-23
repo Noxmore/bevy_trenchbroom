@@ -11,8 +11,6 @@ pub(crate) use bevy::prelude::*;
 pub(crate) use bevy_mesh::Mesh;
 pub(crate) use default_struct_builder::*;
 pub(crate) use itertools::*;
-pub(crate) use nil::prelude::*;
-pub(crate) use nil::std_prelude::*;
 #[cfg(feature = "bsp")]
 pub(crate) use qbsp::prelude::*;
 pub(crate) use serde::*;

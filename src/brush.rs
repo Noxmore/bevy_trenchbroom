@@ -1,6 +1,9 @@
 //! Contains Brush definitions, math, and mesh generation.
 
+use std::mem;
+
 use crate::*;
+use bevy::platform::collections::HashSet;
 use bevy_mesh::{Indices, PrimitiveTopology};
 use util::{AlmostEqual, ConvertZeroToOne};
 
