@@ -1,7 +1,7 @@
 use bevy::{
 	image::{ImageAddressMode, ImageSamplerDescriptor},
 	prelude::*,
-	render::{RenderApp, RenderStartup, render_resource::DefaultImageSamplerDescriptor},
+	render::{RenderApp, RenderStartup, init_gpu_resource, render_resource::DefaultImageSamplerDescriptor, texture::DefaultImageSampler},
 };
 
 pub struct RepeatDefaultSamplerPlugin;
@@ -20,7 +20,14 @@ impl Plugin for RepeatDefaultSamplerPlugin {
 
 		render_app
 			.insert_resource(RepeatedDefaultSamplerDescriptor(sampler_descriptor))
-			.add_systems(RenderStartup, Self::repeat_default_sampler);
+			// bevy 0.19 builds the GPU `DefaultImageSampler` from `DefaultImageSamplerDescriptor`
+			// in `init_gpu_resource::<DefaultImageSampler>` (a `RenderStartup` system). We must
+			// overwrite the descriptor *before* that runs, otherwise the sampler is created with
+			// the original (clamping) address mode and texture repeating breaks (#161).
+			.add_systems(
+				RenderStartup,
+				Self::repeat_default_sampler.before(init_gpu_resource::<DefaultImageSampler>),
+			);
 	}
 }
 impl RepeatDefaultSamplerPlugin {
