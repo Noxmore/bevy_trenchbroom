@@ -1,10 +1,7 @@
 use bevy::{
 	image::{ImageAddressMode, ImageSamplerDescriptor},
 	prelude::*,
-	render::{
-		RenderApp, RenderStartup, init_gpu_resource, render_resource::DefaultImageSamplerDescriptor,
-		texture::DefaultImageSampler,
-	},
+	render::{RenderApp, RenderStartup, init_gpu_resource, render_resource::DefaultImageSamplerDescriptor, texture::DefaultImageSampler},
 };
 
 pub struct RepeatDefaultSamplerPlugin;
