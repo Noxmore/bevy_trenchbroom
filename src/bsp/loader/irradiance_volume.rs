@@ -23,10 +23,11 @@ pub fn load_irradiance_volumes(ctx: &mut BspLoadCtx, world: &mut World) -> Vec<H
 	if let Some(light_grids) = &ctx.data.bspx.light_grids {
 		light_grids
 			.iter()
-			.map(|light_grid| load_irradiance_volume(ctx, world, light_grid))
+			.enumerate()
+			.map(|(grid_idx, light_grid)| load_irradiance_volume(ctx, world, light_grid, grid_idx))
 			.collect()
 	} else if let Some(light_grid) = &ctx.data.bspx.light_grid_octree {
-		vec![load_irradiance_volume(ctx, world, light_grid)]
+		vec![load_irradiance_volume(ctx, world, light_grid, 0)]
 	} else {
 		vec![]
 	}
@@ -36,6 +37,7 @@ fn load_irradiance_volume<Sample: LightGridSample>(
 	ctx: &mut BspLoadCtx,
 	world: &mut World,
 	light_grid: &LightGridOctree<Sample>,
+	grid_idx: usize,
 ) -> Handle<AnimatedLighting> {
 	let config = &ctx.loader.tb_server.config;
 
@@ -99,13 +101,15 @@ fn load_irradiance_volume<Sample: LightGridSample>(
 		});
 		image.sampler = ImageSampler::linear();
 
-		let handle = ctx.load_context.add_labeled_asset(format!("IrradianceVolumeSlot{slot_idx}"), image);
+		let handle = ctx
+			.load_context
+			.add_labeled_asset(format!("IrradianceVolume{grid_idx}Slot{slot_idx}"), image);
 		slot_idx += 1;
 		handle
 	});
 
 	let output = ctx.load_context.add_labeled_asset(
-		"IrradianceVolume",
+		format!("IrradianceVolume{grid_idx}"),
 		new_animated_lighting_output_image(
 			Extent3d {
 				width: full_size.x,
@@ -121,10 +125,10 @@ fn load_irradiance_volume<Sample: LightGridSample>(
 
 	let styles = ctx
 		.load_context
-		.add_labeled_asset("IrradianceVolumeStyleMap".to_string(), style_map_image);
+		.add_labeled_asset(format!("IrradianceVolume{grid_idx}StyleMap"), style_map_image);
 
 	let animated_lighting_handle = ctx.load_context.add_labeled_asset(
-		"IrradianceVolumeAnimator",
+		format!("IrradianceVolume{grid_idx}Animator"),
 		AnimatedLighting {
 			ty: AnimatedLightingType::IrradianceVolume,
 			output,
