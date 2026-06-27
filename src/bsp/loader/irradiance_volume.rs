@@ -209,12 +209,13 @@ impl IrradianceVolumeBuilder {
 	#[inline]
 	#[track_caller]
 	pub fn put_sample(&mut self, pos: UVec3, sample: impl LightGridSample) {
-		self.put3(pos, IrradianceVolumeDirection::X, sample.sample(LightGridSampleDirection::PosX));
-		self.put3(pos, IrradianceVolumeDirection::Y, sample.sample(LightGridSampleDirection::PosY));
-		self.put3(pos, IrradianceVolumeDirection::Z, sample.sample(LightGridSampleDirection::PosZ));
-		self.put3(pos, IrradianceVolumeDirection::NEG_X, sample.sample(LightGridSampleDirection::NegX));
-		self.put3(pos, IrradianceVolumeDirection::NEG_Y, sample.sample(LightGridSampleDirection::NegY));
-		self.put3(pos, IrradianceVolumeDirection::NEG_Z, sample.sample(LightGridSampleDirection::NegZ));
+		// We convert from the Quake coordinate space here.
+		self.put3(pos, IrradianceVolumeDirection::X, sample.sample(LightGridSampleDirection::NegY));
+		self.put3(pos, IrradianceVolumeDirection::Y, sample.sample(LightGridSampleDirection::PosZ));
+		self.put3(pos, IrradianceVolumeDirection::Z, sample.sample(LightGridSampleDirection::NegX));
+		self.put3(pos, IrradianceVolumeDirection::NEG_X, sample.sample(LightGridSampleDirection::PosY));
+		self.put3(pos, IrradianceVolumeDirection::NEG_Y, sample.sample(LightGridSampleDirection::NegZ));
+		self.put3(pos, IrradianceVolumeDirection::NEG_Z, sample.sample(LightGridSampleDirection::PosX));
 	}
 
 	#[inline]
