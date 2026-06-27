@@ -25,10 +25,7 @@ pub use qbsp::{
 };
 
 #[cfg(all(feature = "client", feature = "bsp"))]
-pub use crate::bsp::{
-	lighting::{LightingAnimator, LightingAnimators},
-	loader::IrradianceVolumeMultipliers,
-};
+pub use crate::bsp::lighting::{LightingAnimator, LightingAnimators};
 pub use crate::{
 	TrenchBroomPlugins, TrenchBroomServer,
 	class::{

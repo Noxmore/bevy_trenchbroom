@@ -43,7 +43,7 @@ pub struct Bsp {
 	#[cfg(feature = "client")]
 	pub lightmap: Option<Handle<AnimatedLighting>>,
 	#[cfg(feature = "client")]
-	pub irradiance_volume: Option<Handle<AnimatedLighting>>,
+	pub irradiance_volumes: Vec<Handle<AnimatedLighting>>,
 	/// Models for brush entities (world geometry).
 	pub models: Vec<BspModel>,
 	/// The source data this BSP's assets was created from.
