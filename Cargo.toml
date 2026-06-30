@@ -84,3 +84,6 @@ physics-integration = []
 avian_f32 = ["physics-integration", "dep:avian3d", "avian3d/f32", "avian3d/parry-f32"]
 avian_f64 = ["physics-integration", "dep:avian3d", "avian3d/f64", "avian3d/parry-f64"]
 bsp = ["dep:qbsp"]
+
+[package.metadata.docs.rs]
+all-features = true
