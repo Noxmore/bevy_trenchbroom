@@ -86,4 +86,4 @@ avian_f64 = ["physics-integration", "dep:avian3d", "avian3d/f64", "avian3d/parry
 bsp = ["dep:qbsp"]
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["client", "avian_f32", "bsp"]
