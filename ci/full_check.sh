@@ -23,5 +23,5 @@ cargo test --locked --workspace --features bevy/x11 --features client,bsp
 LD_LIBRARY_PATH="$(rustc --print target-libdir)" cargo test --locked --workspace --doc --features bevy/x11 --features client,bsp
 
 
-{ echo; echo; echo "Run cargo doc with default features"; } 2> /dev/null
-cargo doc --no-deps --workspace
+{ echo; echo; echo "Run cargo doc"; } 2> /dev/null
+cargo doc --no-deps --workspace --features client,avian_f32,bsp

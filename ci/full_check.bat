@@ -19,5 +19,5 @@ cargo test --locked --workspace --features client,bsp || exit /b 1
 cargo test --locked --workspace --doc --features client,bsp || exit /b 1
 
 
-echo Run cargo doc with default features
-cargo doc --no-deps --workspace || exit /b 1
+echo Run cargo doc
+cargo doc --no-deps --workspace --features client,avian_f32,bsp || exit /b 1
