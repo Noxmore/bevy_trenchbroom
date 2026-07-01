@@ -1,5 +1,6 @@
 # 0.13 to 0.14
 - `MapGeometry` is now called `BrushGeometry`.
+- The new `LIGHTGRIDS` lump introduced in ericw-tools 2.0.0-alpha11 is supported, allowing real directional irradiance volume data. Because of this, `IrradianceVolumeMultipliers` has been removed. Add `-lightgrid_format lightgrids` to your `light` invocation to take advantage of this new feature.
 
 # 0.12 to 0.13
 - `TrenchBroomConfig::asset_manifest` has been added, allowing faster map loading for mainly web builds.

@@ -8,168 +8,149 @@ use bevy::{
 use bsp::*;
 use lighting::{AnimatedLightingHandle, AnimatedLightingType, new_animated_lighting_output_image};
 use ndshape::{RuntimeShape, Shape};
-use qbsp::data::bspx::LightGridCell;
+use qbsp::{
+	bspx::{LightGridOctree, LightGridSample, LightGridSampleDirection},
+	data::bspx::LightGridCell,
+};
 
-pub fn load_irradiance_volume(ctx: &mut BspLoadCtx, world: &mut World) -> anyhow::Result<Option<Handle<AnimatedLighting>>> {
-	let config = &ctx.loader.tb_server.config;
-
-	if config.no_bsp_lighting {
-		return Ok(None);
+pub fn load_irradiance_volumes(ctx: &mut BspLoadCtx, world: &mut World) -> Vec<Handle<AnimatedLighting>> {
+	if ctx.loader.tb_server.config.no_bsp_lighting {
+		return vec![];
 	}
 
 	// Calculate irradiance volumes for light grids.
 	// Right now we just have one big irradiance volume for the entire map, this means the volume has to be less than 682 (2048/3 (z axis is 3x)) cells in size.
-	Ok(if let Some(light_grid) = &ctx.data.bspx.light_grid_octree {
-		let grid_mins = config.to_bevy_space(light_grid.mins);
-		// We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
-		let grid_size = light_grid.size.yzx() + 1;
-		let grid_step = config.to_bevy_space(light_grid.step);
+	if let Some(light_grids) = &ctx.data.bspx.light_grids {
+		light_grids
+			.iter()
+			.enumerate()
+			.map(|(grid_idx, light_grid)| load_irradiance_volume(ctx, world, light_grid, grid_idx))
+			.collect()
+	} else if let Some(light_grid) = &ctx.data.bspx.light_grid_octree {
+		vec![load_irradiance_volume(ctx, world, light_grid, 0)]
+	} else {
+		vec![]
+	}
+}
 
-		let mut input_builders: [Option<IrradianceVolumeBuilder>; 4] = [(); 4].map(|_| None);
+fn load_irradiance_volume<Sample: LightGridSample>(
+	ctx: &mut BspLoadCtx,
+	world: &mut World,
+	light_grid: &LightGridOctree<Sample>,
+	grid_idx: usize,
+) -> Handle<AnimatedLighting> {
+	let config = &ctx.loader.tb_server.config;
 
-		let new_builder = || IrradianceVolumeBuilder::new(grid_size, [0, 0, 0, 255], config.irradiance_volume_multipliers);
+	let grid_mins = config.to_bevy_space(light_grid.mins);
+	// We add 1 to the size because the volume has to be offset by half a step to line up, and as such sometimes doesn't fill the full space
+	let grid_size = light_grid.size.yzx() + 1;
+	let grid_step = config.to_bevy_space(light_grid.step);
 
-		let mut style_map_builder = IrradianceVolumeBuilder::new(grid_size, [255; 4], IrradianceVolumeMultipliers::IDENTITY);
+	let mut input_builders: [Option<IrradianceVolumeBuilder>; 4] = [(); 4].map(|_| None);
 
-		for leaf in &light_grid.leafs {
-			let leaf_mins = leaf.mins.yzx();
-			let leaf_size = leaf.size().yzx();
+	let new_builder = || IrradianceVolumeBuilder::new(grid_size, [0, 0, 0, 255]);
 
-			for x in 0..leaf_size.x {
-				for y in 0..leaf_size.y {
-					for z in 0..leaf_size.z {
-						let LightGridCell::Filled(samples) = leaf.get_cell(z, x, y) else { continue };
-						let dest = uvec3(x + leaf_mins.x, y + leaf_mins.y, z + leaf_mins.z);
-						let mut style_map: [u8; 4] = [255; 4];
+	let mut style_map_builder = IrradianceVolumeBuilder::new(grid_size, [255; 4]);
 
-						for (slot_idx, sample) in samples.into_iter().enumerate() {
-							if slot_idx >= 4 {
-								error!(
-									"Light grid cell at {} has more than 4 samples! Data past sample 4 will be thrown away!",
-									leaf_mins + uvec3(x, y, z)
-								);
-								break;
-							}
+	for leaf in &light_grid.leafs {
+		let leaf_mins = leaf.mins.yzx();
+		let leaf_size = leaf.size().yzx();
 
-							let [r, g, b] = sample.color;
+		for x in 0..leaf_size.x {
+			for y in 0..leaf_size.y {
+				for z in 0..leaf_size.z {
+					let LightGridCell::Filled(samples) = leaf.get_cell(z, x, y) else { continue };
+					let dest = leaf_mins + uvec3(x, y, z);
+					let mut style_map: [u8; 4] = [255; 4];
 
-							input_builders[slot_idx].get_or_insert_with(new_builder).put_all(dest, [r, g, b, 255]);
-							style_map[slot_idx] = sample.style.0;
+					for (slot_idx, sample) in samples.iter().enumerate() {
+						if slot_idx >= 4 {
+							warn!("Light grid cell at {dest} has more than 4 samples! Data past sample 4 will be thrown away!");
+							break;
 						}
 
-						style_map_builder.put_all(dest, style_map);
+						input_builders[slot_idx].get_or_insert_with(new_builder).put_sample(dest, *sample);
+						style_map[slot_idx] = sample.style().0;
 					}
+
+					style_map_builder.put_all(dest, style_map);
 				}
 			}
 		}
+	}
 
-		// This is pretty much instructed by FTE docs
-		flood_non_filled(&mut input_builders, &mut style_map_builder, &new_builder);
+	// This is pretty much instructed by FTE docs
+	flood_non_filled(&mut input_builders, &mut style_map_builder, &new_builder);
 
-		let full_size = IrradianceVolumeBuilder::full_size(grid_size);
+	let full_size = IrradianceVolumeBuilder::full_size(grid_size);
 
-		let mut slot_idx = 0;
-		let input = input_builders.map(|builder| {
-			let mut image = builder.map(IrradianceVolumeBuilder::build).unwrap_or_else(|| {
-				Image::new_fill(
-					Extent3d {
-						width: 1,
-						height: 1,
-						depth_or_array_layers: 1,
-					},
-					TextureDimension::D3,
-					&[0; 4],
-					TextureFormat::Rgba8UnormSrgb,
-					RenderAssetUsages::RENDER_WORLD,
-				)
-			});
-			image.sampler = ImageSampler::linear();
-
-			let handle = ctx.load_context.add_labeled_asset(format!("IrradianceVolumeSlot{slot_idx}"), image);
-			slot_idx += 1;
-			handle
-		});
-
-		let output = ctx.load_context.add_labeled_asset(
-			"IrradianceVolume",
-			new_animated_lighting_output_image(
+	let mut slot_idx = 0;
+	let input = input_builders.map(|builder| {
+		let mut image = builder.map(IrradianceVolumeBuilder::build).unwrap_or_else(|| {
+			Image::new_fill(
 				Extent3d {
-					width: full_size.x,
-					height: full_size.y,
-					depth_or_array_layers: full_size.z,
+					width: 1,
+					height: 1,
+					depth_or_array_layers: 1,
 				},
 				TextureDimension::D3,
-			),
-		);
+				&[0; 4],
+				TextureFormat::Rgba8UnormSrgb,
+				RenderAssetUsages::RENDER_WORLD,
+			)
+		});
+		image.sampler = ImageSampler::linear();
 
-		let mut style_map_image = style_map_builder.build();
-		style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;
-
-		let styles = ctx
+		let handle = ctx
 			.load_context
-			.add_labeled_asset("IrradianceVolumeStyleMap".to_string(), style_map_image);
+			.add_labeled_asset(format!("IrradianceVolume{grid_idx}Slot{slot_idx}"), image);
+		slot_idx += 1;
+		handle
+	});
 
-		let animated_lighting_handle = ctx.load_context.add_labeled_asset(
-			"IrradianceVolumeAnimator",
-			AnimatedLighting {
-				ty: AnimatedLightingType::IrradianceVolume,
-				output,
-				input,
-				styles,
+	let output = ctx.load_context.add_labeled_asset(
+		format!("IrradianceVolume{grid_idx}"),
+		new_animated_lighting_output_image(
+			Extent3d {
+				width: full_size.x,
+				height: full_size.y,
+				depth_or_array_layers: full_size.z,
 			},
-		);
+			TextureDimension::D3,
+		),
+	);
 
-		let scale: Vec3 = grid_size.as_vec3() * grid_step;
+	let mut style_map_image = style_map_builder.build();
+	style_map_image.texture_descriptor.format = TextureFormat::Rgba8Uint;
 
-		world.spawn((
-			Name::new("Light Grid Irradiance Volume"),
-			// LightProbe::new(), // TODO: remove?
-			AnimatedLightingHandle(animated_lighting_handle.clone()),
-			Transform {
-				translation: grid_mins + scale / 2. - Vec3::from_array(grid_step.to_array()) / 2.,
-				scale,
-				..default()
-			},
-		));
+	let styles = ctx
+		.load_context
+		.add_labeled_asset(format!("IrradianceVolume{grid_idx}StyleMap"), style_map_image);
 
-		Some(animated_lighting_handle)
-	} else {
-		None
-	})
-}
+	let animated_lighting_handle = ctx.load_context.add_labeled_asset(
+		format!("IrradianceVolume{grid_idx}Animator"),
+		AnimatedLighting {
+			ty: AnimatedLightingType::IrradianceVolume,
+			output,
+			input,
+			styles,
+		},
+	);
 
-#[derive(Debug, Clone, Copy)]
-pub struct IrradianceVolumeMultipliers {
-	pub x: [f32; 3],
-	pub y: [f32; 3],
-	pub z: [f32; 3],
-	pub neg_x: [f32; 3],
-	pub neg_y: [f32; 3],
-	pub neg_z: [f32; 3],
-}
-impl IrradianceVolumeMultipliers {
-	pub const IDENTITY: Self = Self {
-		x: [1.; 3],
-		y: [1.; 3],
-		z: [1.; 3],
-		neg_x: [1.; 3],
-		neg_y: [1.; 3],
-		neg_z: [1.; 3],
-	};
+	let scale: Vec3 = grid_size.as_vec3() * grid_step;
 
-	pub const SLIGHT_SHADOW: Self = Self {
-		x: [1.2; 3],
-		y: [1.4; 3],
-		z: [1.1; 3],
-		neg_x: [0.9; 3],
-		neg_y: [0.7; 3],
-		neg_z: [1.; 3],
-	};
-}
-impl Default for IrradianceVolumeMultipliers {
-	fn default() -> Self {
-		Self::IDENTITY
-	}
+	world.spawn((
+		Name::new("Light Grid Irradiance Volume"),
+		// LightProbe::new(), // TODO: remove?
+		AnimatedLightingHandle(animated_lighting_handle.clone()),
+		Transform {
+			translation: grid_mins + scale / 2. - Vec3::from_array(grid_step.to_array()) / 2.,
+			scale,
+			..default()
+		},
+	));
+
+	animated_lighting_handle
 }
 
 /// Little helper API to create irradiance volumes for BSPs.
@@ -179,10 +160,9 @@ struct IrradianceVolumeBuilder {
 	full_shape: RuntimeShape<u32, 3>,
 	data: Vec<[u8; 4]>,
 	filled: Vec<bool>,
-	multipliers: IrradianceVolumeMultipliers,
 }
 impl IrradianceVolumeBuilder {
-	pub fn new(size: UVec3, default_color: [u8; 4], multipliers: IrradianceVolumeMultipliers) -> Self {
+	pub fn new(size: UVec3, default_color: [u8; 4]) -> Self {
 		let size: UVec3 = size;
 		let full_size = Self::full_size(size);
 		let shape = RuntimeShape::<u32, 3>::new(full_size.to_array());
@@ -192,7 +172,6 @@ impl IrradianceVolumeBuilder {
 			full_shape: shape,
 			data: vec![default_color; vec_size],
 			filled: vec![false; vec_size],
-			multipliers,
 		}
 	}
 
@@ -216,37 +195,42 @@ impl IrradianceVolumeBuilder {
 
 	#[inline]
 	#[track_caller]
-	pub fn put(&mut self, pos: UVec3, dir: IrradianceVolumeDirection, color: [u8; 4]) {
+	fn put(&mut self, pos: UVec3, dir: IrradianceVolumeDirection, color: [u8; 4]) {
 		let idx = self.linearize(pos, dir);
 
 		self.data[idx] = color;
 		self.filled[idx] = true;
 	}
 
+	/// It's own function to make the usages below single-line.
+	#[inline]
+	#[track_caller]
+	fn put3(&mut self, pos: UVec3, dir: IrradianceVolumeDirection, color: [u8; 3]) {
+		let [r, g, b] = color;
+		self.put(pos, dir, [r, g, b, 255]);
+	}
+
+	#[inline]
+	#[track_caller]
+	pub fn put_sample(&mut self, pos: UVec3, sample: impl LightGridSample) {
+		// We convert from the Quake coordinate space here.
+		self.put3(pos, IrradianceVolumeDirection::X, sample.sample(LightGridSampleDirection::NegY));
+		self.put3(pos, IrradianceVolumeDirection::Y, sample.sample(LightGridSampleDirection::PosZ));
+		self.put3(pos, IrradianceVolumeDirection::Z, sample.sample(LightGridSampleDirection::NegX));
+		self.put3(pos, IrradianceVolumeDirection::NEG_X, sample.sample(LightGridSampleDirection::PosY));
+		self.put3(pos, IrradianceVolumeDirection::NEG_Y, sample.sample(LightGridSampleDirection::NegZ));
+		self.put3(pos, IrradianceVolumeDirection::NEG_Z, sample.sample(LightGridSampleDirection::PosX));
+	}
+
 	#[inline]
 	#[track_caller]
 	pub fn put_all(&mut self, pos: UVec3, color: [u8; 4]) {
-		#[inline]
-		fn clamp(x: f32) -> f32 {
-			x.clamp(0., 255.)
-		}
-
-		#[inline]
-		fn mul_color([r, g, b, a]: [u8; 4], [mul_r, mul_g, mul_b]: [f32; 3]) -> [u8; 4] {
-			[
-				clamp(r as f32 * mul_r) as u8,
-				clamp(g as f32 * mul_g) as u8,
-				clamp(b as f32 * mul_b) as u8,
-				a,
-			]
-		}
-
-		self.put(pos, IrradianceVolumeDirection::X, mul_color(color, self.multipliers.x));
-		self.put(pos, IrradianceVolumeDirection::Y, mul_color(color, self.multipliers.y));
-		self.put(pos, IrradianceVolumeDirection::Z, mul_color(color, self.multipliers.z));
-		self.put(pos, IrradianceVolumeDirection::NEG_X, mul_color(color, self.multipliers.neg_x));
-		self.put(pos, IrradianceVolumeDirection::NEG_Y, mul_color(color, self.multipliers.neg_y));
-		self.put(pos, IrradianceVolumeDirection::NEG_Z, mul_color(color, self.multipliers.neg_z));
+		self.put(pos, IrradianceVolumeDirection::X, color);
+		self.put(pos, IrradianceVolumeDirection::Y, color);
+		self.put(pos, IrradianceVolumeDirection::Z, color);
+		self.put(pos, IrradianceVolumeDirection::NEG_X, color);
+		self.put(pos, IrradianceVolumeDirection::NEG_Y, color);
+		self.put(pos, IrradianceVolumeDirection::NEG_Z, color);
 	}
 
 	pub fn build(self) -> Image {
@@ -356,7 +340,7 @@ fn flood_non_filled(
 	}
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct IrradianceVolumeDirection(UVec3);
 impl IrradianceVolumeDirection {
 	pub fn from_offset(offset: UVec3) -> Option<Self> {

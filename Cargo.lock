@@ -5286,8 +5286,7 @@ checksum = "e0c5ccf5294c6ccd63a74f1565028353830a9c2f5eb0c682c355c471726a6e3f"
 [[package]]
 name = "qbsp"
 version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e77722562654b229fb2b2dad502fed23ac6e10ca3a078821f61577571fbbc22f"
+source = "git+https://github.com/Noxmore/qbsp#0578632a86ab629668e353ef07c6edc9e3088fde"
 dependencies = [
  "bevy_reflect",
  "bitflags 2.13.0",
@@ -5305,8 +5304,7 @@ dependencies = [
 [[package]]
 name = "qbsp_macros"
 version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed08f214146e5aa1241263748820fbfb62df05187d4b4277a33fd6c138b2ea3e"
+source = "git+https://github.com/Noxmore/qbsp#0578632a86ab629668e353ef07c6edc9e3088fde"
 dependencies = [
  "proc-macro2",
  "quote",

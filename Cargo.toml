@@ -62,7 +62,9 @@ serde = { version = "1", features = [
 ] } # serde isn't optional because bevy_materialize requires it anyway
 thiserror = "2"
 disjoint-sets = "0.4.2"
-qbsp = { version = "0.15", features = ["bevy_reflect", "serde"], optional = true }
+# qbsp = { version = "0.15", features = ["bevy_reflect", "serde"], optional = true }
+# TODO: remove
+qbsp = { git = "https://github.com/Noxmore/qbsp", features = ["bevy_reflect", "serde"], optional = true }
 ndshape = "0.3.0"
 strum = { version = "0.27", features = ["derive"] }
 enumflags2.workspace = true
