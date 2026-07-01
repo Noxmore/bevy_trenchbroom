@@ -71,8 +71,8 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev
-      - name: Run cargo doc with default features
-        run: cargo doc --no-deps --workspace
+      - name: Run cargo doc
+        run: cargo doc --no-deps --workspace --features client,avian_f32,bsp
 
   test:
     runs-on: ubuntu-latest
