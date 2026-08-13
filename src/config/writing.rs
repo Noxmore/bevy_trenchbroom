@@ -116,7 +116,7 @@ impl TrenchBroomConfig {
 		Ok(())
 	}
 
-	fn get_default_trenchbroom_userdata_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
+	pub fn get_default_trenchbroom_userdata_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
 		let trenchbroom_userdata = if cfg!(target_os = "linux") {
 			env::home_dir().map(|path| path.join(".TrenchBroom"))
 		} else if cfg!(target_os = "windows") {
@@ -140,7 +140,7 @@ impl TrenchBroomConfig {
 	}
 
 	/// Gets $TRENCHBROOM_DIR/Preferences.json
-	fn get_default_preferences_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
+	pub fn get_default_preferences_path(&self) -> Result<PathBuf, DefaultTrenchBroomUserdataDirError> {
 		let trenchbroom_userdata = self.get_default_trenchbroom_userdata_path()?;
 		let preferences_path = trenchbroom_userdata.join("Preferences.json");
 
@@ -148,7 +148,7 @@ impl TrenchBroomConfig {
 	}
 
 	/// Gets $TRENCHBROOM_DIR/games/$NAME
-	fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomGameConfigError> {
+	pub fn get_default_trenchbroom_game_config_path(&self) -> Result<PathBuf, DefaultTrenchBroomGameConfigError> {
 		let trenchbroom_userdata = self
 			.get_default_trenchbroom_userdata_path()
 			.map_err(DefaultTrenchBroomGameConfigError::UserdataDirError)?;
