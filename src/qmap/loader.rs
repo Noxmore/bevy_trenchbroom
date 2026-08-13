@@ -209,6 +209,12 @@ impl AssetLoader for QuakeMapLoader {
 
 					world.entity_mut(entity).insert(Brushes::Shared(brush_list_handle));
 				}
+				// HACK: Some solid entities (like TrenchBroom's linked groups) might not have any brushes in them. This removes an annoying warning printed in the console in this case.
+				//       This could probably be better implemented if we had scene systems, but oh well.
+				#[cfg(feature = "physics-integration")]
+				if !world.entity(entity).contains::<Brushes>() {
+					world.entity_mut(entity).remove::<crate::physics::ConvexCollision>();
+				}
 			}
 
 			drop(texture_size_cache);
