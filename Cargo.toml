@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 name = "bevy_trenchbroom"
 readme = "readme.md"
 categories = ["game-development"]
-exclude = ["/assets", "/ci", "/compile_map.sh"]
+exclude = ["/assets", "/example", "/ci", "/.github", "/compile_map_*.sh", "/Release Checklist.md", "rustfmt.toml"]
 keywords = ["bevy"]
 description = "TrenchBroom and ericw-tools integration with Bevy."
 
