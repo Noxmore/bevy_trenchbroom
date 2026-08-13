@@ -3,8 +3,6 @@ mod irradiance_volume;
 use std::io;
 
 #[cfg(feature = "client")]
-pub use irradiance_volume::IrradianceVolumeMultipliers;
-#[cfg(feature = "client")]
 mod lightmap;
 mod models;
 mod scene;
@@ -16,7 +14,7 @@ use bevy::{
 };
 use bsp::*;
 #[cfg(feature = "client")]
-use irradiance_volume::load_irradiance_volume;
+use irradiance_volume::load_irradiance_volumes;
 #[cfg(feature = "client")]
 use lightmap::BspLightmap;
 use models::{compute_models, finalize_models};
@@ -105,7 +103,7 @@ impl AssetLoader for BspLoader {
 
 			// TODO: Lightmaps + irradiance volume currently doesn't work until 0.19.1 (https://github.com/bevyengine/bevy/pull/24714)
 			#[cfg(feature = "client")]
-			let irradiance_volume = load_irradiance_volume(&mut ctx, &mut world)?;
+			let irradiance_volumes = load_irradiance_volumes(&mut ctx, &mut world);
 
 			Ok(Bsp {
 				world: load_context.add_labeled_asset("Scene".to_string(), WorldAsset::new(world)),
@@ -113,7 +111,7 @@ impl AssetLoader for BspLoader {
 				#[cfg(feature = "client")]
 				lightmap: lightmap.map(|lm| lm.animated_lighting),
 				#[cfg(feature = "client")]
-				irradiance_volume,
+				irradiance_volumes,
 				models: bsp_models,
 
 				data,

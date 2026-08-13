@@ -162,15 +162,6 @@ pub struct TrenchBroomConfig {
 	#[cfg(all(feature = "client", feature = "bsp"))]
 	#[default(500.)]
 	pub default_irradiance_volume_intensity: f32,
-	/// Multipliers to the colors of BSP loaded irradiance volumes depending on direction.
-	///
-	/// This is because light-grid-loaded irradiance volumes don't have any directionality.
-	/// This fakes it, making objects within look a little nicer.
-	///
-	/// (Default: [`IrradianceVolumeMultipliers::SLIGHT_SHADOW`])
-	#[cfg(all(feature = "client", feature = "bsp"))]
-	#[default(IrradianceVolumeMultipliers::SLIGHT_SHADOW)]
-	pub irradiance_volume_multipliers: IrradianceVolumeMultipliers,
 
 	/// Whether to ignore map entity spawning errors for not having an entity definition for the map entity in question's classname. (Default: false)
 	pub suppress_invalid_entity_definitions: bool,

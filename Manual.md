@@ -406,10 +406,7 @@ In favor of using BSPs...
 As nice as those features are (especially if you're supporting lower-end systems), there are a few limitations due to it being a level format for the 90s.
 - Texture names are limited to 31 characters (Quake 2 formats) or less including directories.
 - Point/Spot/Directional lights are merged into a single class, with the type of light determined from its properties.
-- Light volumes/grids, converted to irradiance volumes for Bevy, doesn't have any directionality*.
 - The compile step slows iteration time, though you can also use `.map` files for iterating, and a BSP for the final product.
-
-<sup>* Fake static directionality is included [here](bevy_trenchbroom::config::TrenchBroomConfig::irradiance_volume_multipliers) to make objects appear more 3D.</sup>
 
 Whether you use BSPs depends on the workflow you want and the type of game you are making.
 
@@ -427,10 +424,11 @@ For compiling the `.map` into a `.bsp`, many of the compiler's defaults are spec
 - `-path assets` This lets the compiler read your loose textures from assets/textures (currently, ["textures" is hardcoded](https://github.com/ericwa/ericw-tools/issues/451)).
 - `-notex` Allows use of loose textures, but doesn't embed WAD textures. See [this issue](https://github.com/ericwa/ericw-tools/issues/404) for context.
 
-`light -wrnormals -extra4 -lightgrid -path assets`
+`light -wrnormals -extra4 -lightgrid -lightgrid_format lightgrids -path assets`
 - `-wrnormals` - Embed vertex normals and tangents, letting phong-shaded surfaces work better with dynamic lights.
 - `-extra4` - Multisampling, makes shadows smoother.
 - `-lightgrid` - Calculate volumetric lighting parsed into irradiance volumes, dynamic objects won't have any lighting without this.
+- `-lightgrid_format lightgrids` - Uses a lightgrid format with directionality.
 - `-path assets` - Same as above, for color bouncing
 
 Along with these, there are also worldspawn keys that can make the default lighting look a lot prettier.
