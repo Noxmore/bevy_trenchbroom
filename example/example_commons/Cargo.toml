@@ -13,7 +13,7 @@ doc = false
 
 [dependencies]
 bevy = { workspace = true, features = ["reflect_auto_register", "png"] }
-bevy-inspector-egui = { version = "0.37", optional = true }
+bevy-inspector-egui = { git = "https://github.com/taboky-dev/bevy-inspector-egui.git", rev = "6c4689637f289647ecad5897da35c29032fcc086", version = "0.37", optional = true }
 
 [features]
 client = ["dep:bevy-inspector-egui"]
