@@ -242,6 +242,7 @@ pub struct AnimatedLightingBindGroups {
 }
 
 #[derive(Resource, ExtractResource, Clone)]
+#[extract_app(RenderApp)]
 pub struct AnimatedLightingPipeline {
 	lightmap_bind_group_layout: BindGroupLayout,
 	irradiance_volume_bind_group_layout: BindGroupLayout,
@@ -307,6 +308,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			shader_defs: vec![],
 			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
+			constants: vec![],
 		});
 
 		let irradiance_volume_pipeline = pipeline_cache.queue_compute_pipeline(ComputePipelineDescriptor {
@@ -317,6 +319,7 @@ impl FromWorld for AnimatedLightingPipeline {
 			shader_defs: vec![],
 			entry_point: Some("main".into()),
 			zero_initialize_workgroup_memory: true,
+			constants: vec![],
 		});
 
 		Self {

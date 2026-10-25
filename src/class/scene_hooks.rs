@@ -370,13 +370,13 @@ mod tests {
 			}
 		}
 
-		fn validate_mesh(trigger: On<Add, Mesh3d>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
+		fn validate_mesh(trigger: On<Add<Mesh3d>>, mesh_query: Query<&Mesh3d>, asset_server: Res<AssetServer>) {
 			let handle = &mesh_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Mesh");
 		}
 
 		fn validate_material(
-			trigger: On<Add, MeshMaterial3d<StandardMaterial>>,
+			trigger: On<Add<MeshMaterial3d<StandardMaterial>>>,
 			material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 			asset_server: Res<AssetServer>,
 		) {
@@ -384,7 +384,7 @@ mod tests {
 			validate_asset(handle, &asset_server, "Material");
 		}
 
-		fn validate_scene(trigger: On<Add, WorldAssetRoot>, scene_query: Query<&WorldAssetRoot>, asset_server: Res<AssetServer>) {
+		fn validate_scene(trigger: On<Add<WorldAssetRoot>>, scene_query: Query<&WorldAssetRoot>, asset_server: Res<AssetServer>) {
 			let handle = &scene_query.get(trigger.event_target()).unwrap().0;
 			validate_asset(handle, &asset_server, "Scene");
 		}

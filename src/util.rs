@@ -149,10 +149,7 @@ impl<K: Eq + Hash + Clone + fmt::Debug + fmt::Display> TextureSizeCache<K> {
 						.await
 					{
 						Ok(image) => break 'size_searcher image.take().size(),
-						Err(LoadDirectError::LoadError {
-							dependency: _,
-							error: AssetLoadError::AssetReaderError(_),
-						}) => {}
+						Err(LoadDirectError::LoadError { dependency: _, error }) if matches!(*error, AssetLoadError::AssetReaderError(_)) => {}
 						Err(err) => {
 							error!("Failed to get size for texture \"{texture}.{ext}\": {err}");
 							break 'size_searcher UVec2::splat(1);

@@ -1,5 +1,5 @@
 use avian3d::{
-	math::AdjustPrecision,
+	math::ToRealPrecision,
 	parry::shape::SharedShape,
 	prelude::{Collider, RigidBody},
 };
@@ -9,13 +9,13 @@ use bevy_trenchbroom::physics::PhysicsBackend;
 /// Integration between the Avian physics engine and bevy_trenchbroom.
 pub struct AvianPhysicsBackend;
 impl PhysicsBackend for AvianPhysicsBackend {
-	type Vector = avian3d::math::Vector;
+	type Vector = avian3d::math::RVector;
 	const ZERO: Self::Vector = Self::Vector::ZERO;
 	fn vec3(v: Vec3) -> Self::Vector {
-		v.adjust_precision()
+		v.real()
 	}
 	fn dvec3(v: DVec3) -> Self::Vector {
-		v.adjust_precision()
+		v.real()
 	}
 
 	type Collider = Collider;
@@ -23,7 +23,7 @@ impl PhysicsBackend for AvianPhysicsBackend {
 		SharedShape::cuboid(half_extents.x, half_extents.y, half_extents.z).into()
 	}
 	fn convex_collider(points: Vec<Self::Vector>) -> Option<Self::Collider> {
-		Collider::convex_hull(points)
+		Collider::convex_hull(&points)
 	}
 	fn trimesh_collider(mesh: &bevy::mesh::Mesh) -> Option<Self::Collider> {
 		Collider::trimesh_from_mesh(mesh)

@@ -1,7 +1,7 @@
 //! Data types split off from the main lighting module for organization.
 use core::fmt;
 
-use bevy::render::{extract_resource::ExtractResource, render_asset::RenderAsset, render_resource::*};
+use bevy::render::{RenderApp, extract_resource::ExtractResource, render_asset::RenderAsset, render_resource::*};
 use ser::SerializeStruct;
 
 use crate::*;
@@ -227,6 +227,7 @@ impl<'de> Deserialize<'de> for LightingAnimator {
 /// You can use this to change animations, and do things like toggle lights.
 #[derive(Resource, ExtractResource, Reflect, Debug, Clone, Default, Serialize, Deserialize)]
 #[reflect(Resource, Default, Serialize, Deserialize)]
+#[extract_app(RenderApp)]
 pub struct LightingAnimators {
 	pub values: HashMap<LightmapStyle, LightingAnimator>,
 }
