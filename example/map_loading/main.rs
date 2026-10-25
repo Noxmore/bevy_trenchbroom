@@ -2,7 +2,6 @@
 
 #[cfg(feature = "example_client")]
 use bevy::ecs::{lifecycle::HookContext, world::DeferredWorld};
-use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::class::builtin::LightingClassesPlugin;
 use bevy_trenchbroom::class::builtin::LightingWorkflow;
