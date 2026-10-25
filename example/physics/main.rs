@@ -1,5 +1,4 @@
 use avian3d::prelude::*;
-use bevy::math::*;
 use bevy::prelude::*;
 use bevy_trenchbroom::config::WriteTrenchBroomConfigOnStartPlugin;
 use bevy_trenchbroom::prelude::*;
