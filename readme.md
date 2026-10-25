@@ -133,6 +133,7 @@ See the [Migration Guide](https://github.com/Noxmore/bevy_trenchbroom/blob/main/
 # Version support table
 | Bevy | bevy_trenchbroom | TrenchBroom   | ericw-tools   | Avian |
 |------|------------------|---------------|---------------|-------|
+| 0.20 | 0.15             | 2026.2        | 2.0.0-alpha11 | 0.8   |
 | 0.19 | 0.14             | 2026.1        | 2.0.0-alpha11 | 0.7   |
 | 0.18 | 0.12-0.13        | 2025.4        | 2.0.0-alpha10 | 0.5   |
 | 0.17 | 0.10-0.11        | 2025.3        | 2.0.0-alpha10 | 0.4   |
