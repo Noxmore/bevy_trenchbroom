@@ -100,6 +100,7 @@ struct Opts {
 struct FieldOpts {
 	must_set: bool,
 	ignore: bool,
+	default_on_error: bool,
 	rename: Option<String>,
 	default: Option<Literal>,
 	title: Option<String>,
@@ -233,7 +234,13 @@ pub(super) fn class_attribute(attr: TokenStream, input: TokenStream, ty: QuakeCl
 			},
 		});
 
-		let not_found_handler = if field_opts.must_set {
+		if field_opts.default_on_error && field_opts.must_set {
+			panic!("default_on_error and must_set currently can't be on the same field! If this is useful to you, file an issue!");
+		}
+
+		let not_found_handler = if field_opts.default_on_error {
+			quote! { .unwrap_or(default.#field_ident) }
+		} else if field_opts.must_set {
 			quote! { ? }
 		} else {
 			quote! { .with_default(default.#field_ident)? }

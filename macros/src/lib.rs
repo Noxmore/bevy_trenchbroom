@@ -26,6 +26,7 @@ use syn::*;
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
 /// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `default_on_error` If this field fails to parse, set it to its default value.
 /// - `rename = "<name>"` Renames this field in-editor.
 /// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
 /// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
@@ -46,6 +47,7 @@ pub fn point_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
 /// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `default_on_error` If this field fails to parse, set it to its default value.
 /// - `rename = "<name>"` Renames this field in-editor.
 /// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
 /// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
@@ -71,6 +73,7 @@ pub fn solid_class(attr: proc_macro::TokenStream, input: proc_macro::TokenStream
 /// # Field attributes (`#[class(...)]`)
 /// - `must_set` Use on fields you want to output an error if not defined, rather than just being replaced by the field's default value.
 /// - `ignore` Don't include this field in-editor. Sets to default value on spawn.
+/// - `default_on_error` If this field fails to parse, set it to its default value.
 /// - `rename = "<name>"` Renames this field in-editor.
 /// - `default = <default>` Overrides the default value of the property in-editor that appears as a hint in the property's UI.
 /// - `title = "<string>"` Sets the title of the property, in-editor it looks like `property_name (Property Title)`.
