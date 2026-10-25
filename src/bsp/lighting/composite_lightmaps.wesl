@@ -1,6 +1,4 @@
-#define_import_path bevy_trenchbroom::composite_lightmaps
-
-#import bevy_render::globals::Globals
+import bevy_render::globals::Globals;
 
 // Must match const value in `bsp_lighting.rs`
 const MAX_ANIMATORS: u32 = 255;

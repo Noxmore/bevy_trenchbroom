@@ -1,6 +1,8 @@
-#import bevy_pbr::forward_io::VertexOutput
-#import bevy_pbr::pbr_fragment::pbr_input_from_vertex_output
-#import bevy_pbr::mesh_view_bindings::globals
+import bevy_pbr::render::{
+	forward_io::VertexOutput,
+	pbr_fragment::pbr_input_from_vertex_output,
+	mesh_view_bindings::globals,
+};
 
 struct QuakeSkyMaterial {
 	fg_scroll: vec2f,
@@ -9,13 +11,13 @@ struct QuakeSkyMaterial {
 	sphere_scale: vec3f,
 }
 
-@group(#{MATERIAL_BIND_GROUP}) @binding(1) var fg_texture: texture_2d<f32>;
-@group(#{MATERIAL_BIND_GROUP}) @binding(2) var fg_sampler: sampler;
+@group(constants::MATERIAL_BIND_GROUP) @binding(1) var fg_texture: texture_2d<f32>;
+@group(constants::MATERIAL_BIND_GROUP) @binding(2) var fg_sampler: sampler;
 
-@group(#{MATERIAL_BIND_GROUP}) @binding(3) var bg_texture: texture_2d<f32>;
-@group(#{MATERIAL_BIND_GROUP}) @binding(4) var bg_sampler: sampler;
+@group(constants::MATERIAL_BIND_GROUP) @binding(3) var bg_texture: texture_2d<f32>;
+@group(constants::MATERIAL_BIND_GROUP) @binding(4) var bg_sampler: sampler;
 
-@group(#{MATERIAL_BIND_GROUP}) @binding(0) var<uniform> material: QuakeSkyMaterial;
+@group(constants::MATERIAL_BIND_GROUP) @binding(0) var<uniform> material: QuakeSkyMaterial;
 
 @fragment
 fn fragment(

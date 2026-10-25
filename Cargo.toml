@@ -87,3 +87,15 @@ bsp = ["dep:qbsp"]
 
 [package.metadata.docs.rs]
 features = ["client", "avian_f32", "bsp"]
+
+[package.metadata.wgsl-analyzer]
+edition = "2026_pre"
+root = "src"
+
+[package.metadata.wgsl-analyzer.dependencies]
+bevy_render = { path = "../bevy/crates/bevy_render" }
+bevy_pbr = { path = "../bevy/crates/bevy_pbr" }
+bevy_core_pipeline = { path = "../bevy/crates/bevy_core_pipeline" }
+bevy_sprite_render = { path = "../bevy/crates/bevy_sprite_render" }
+bevy_ui_render = { path = "../bevy/crates/bevy_ui_render" }
+constants = { path = "../bevy/constants" }
