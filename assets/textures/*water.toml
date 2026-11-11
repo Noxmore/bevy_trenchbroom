@@ -1,0 +1,12 @@
+type = "LiquidMaterial"
+
+[material.base]
+base_color = { Srgba = [1.0, 1.0, 1.0, 0.7] }
+base_color_texture = "*water.png"
+perceptual_roughness = 1
+lightmap_exposure = 10_000 # Unfortunately, the default lightmap exposure setting in 
+alpha_mode = "Blend"
+
+[material.extension]
+magnitude = 0.01
+cycles = 10

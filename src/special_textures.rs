@@ -34,6 +34,8 @@ impl Plugin for SpecialTexturesPlugin {
 		app
 			.add_plugins(MaterialPlugin::<LiquidMaterial>::default())
 			.add_plugins(MaterialPlugin::<QuakeSkyMaterial>::default())
+			.register_extended_generic_material::<StandardMaterial, LiquidMaterialExt>("LiquidMaterial")
+			.register_generic_material::<QuakeSkyMaterial>()
 		;
 	}
 }

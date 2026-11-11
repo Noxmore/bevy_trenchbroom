@@ -1,0 +1,5 @@
+type = "QuakeSkyMaterial"
+
+[material]
+fg = "sky_depth.png" # To match default texture exclusions, and the name _kinda_ fits.
+bg = "sky.png"
