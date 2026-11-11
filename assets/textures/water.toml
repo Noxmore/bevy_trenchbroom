@@ -1,8 +1,8 @@
 type = "LiquidMaterial"
 
 [material.base]
-base_color = { Srgba = [1.0, 1.0, 1.0, 0.7] }
-base_color_texture = "*water.png"
+base_color = { Srgba = [1.0, 1.0, 1.0, 0.7] } # Make it slightly transparent.
+base_color_texture = "water.png" # NOTE: If you're compiling a Quake 1 map, the material should be prefixed with '*'
 perceptual_roughness = 1
 lightmap_exposure = 10_000 # Unfortunately, the default lightmap exposure setting in 
 alpha_mode = "Blend"
