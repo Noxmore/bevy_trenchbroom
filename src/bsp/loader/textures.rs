@@ -19,8 +19,12 @@ impl EmbeddedTextures {
 		let config = &ctx.loader.tb_server.config;
 
 		// Have to clone `texture_pallette` for the borrow checker. Can't figure out why.
-		let palette = match ctx.load_context.read_asset_bytes(config.texture_pallette.clone()).await.ok() {
-			Some(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", config.texture_pallette))?,
+		// Can't and_then because of the await.
+		let palette = match &config.texture_pallette {
+			Some(palette_path) => match ctx.load_context.read_asset_bytes(palette_path.clone()).await.ok() {
+				Some(bytes) => Palette::parse(&bytes).map_err(|err| anyhow!("Parsing palette file {:?}: {err}", config.texture_pallette))?,
+				None => QUAKE_PALETTE.clone(),
+			},
 			None => QUAKE_PALETTE.clone(),
 		};
 

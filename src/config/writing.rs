@@ -238,7 +238,6 @@ impl TrenchBroomConfig {
 				"root": self.material_root.to_string_lossy().as_ref(),
 				// .D is required for WADs to work
 				"extensions": self.texture_extensions.clone(),
-				"palette": self.texture_pallette.to_string_lossy().as_ref(),
 				"attribute": "wad",
 				"excludes": self.texture_exclusions.clone(),
 			},
@@ -257,6 +256,14 @@ impl TrenchBroomConfig {
 		if let Some(icon) = &self.icon {
 			fs::write(folder.join("Icon.png"), icon)?;
 			json.insert("icon", "Icon.png").unwrap();
+		}
+
+		#[cfg(feature = "bsp")]
+		if let Some(palette_path) = &self.texture_pallette {
+			json.get_mut("materials")
+				.unwrap()
+				.insert("palette", palette_path.to_string_lossy().as_ref())
+				.unwrap();
 		}
 
 		let insert_defaults = self.default_face_attributes.is_any_set();
