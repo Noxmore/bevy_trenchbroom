@@ -36,14 +36,14 @@ pub(crate) struct BspLoadCtx<'a, 'lc: 'a> {
 #[derive(TypePath)]
 pub struct BspLoader {
 	pub tb_server: TrenchBroomServer,
-	pub asset_server: AssetServer,
+	pub asset_server: crate::util::LoaderAssetServer,
 	pub type_registry: AppTypeRegistry,
 }
 impl FromWorld for BspLoader {
 	fn from_world(world: &mut World) -> Self {
 		Self {
 			tb_server: world.resource::<TrenchBroomServer>().clone(),
-			asset_server: world.resource::<AssetServer>().clone(),
+			asset_server: crate::util::LoaderAssetServer::from_world(world),
 			type_registry: world.resource::<AppTypeRegistry>().clone(),
 		}
 	}
@@ -61,6 +61,7 @@ impl AssetLoader for BspLoader {
 		load_context: &mut LoadContext,
 	) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
 		Box::pin(async move {
+			let asset_server = self.asset_server.get()?;
 			let mut bytes = Vec::new();
 			reader.read_to_end(&mut bytes).await?;
 
@@ -80,7 +81,7 @@ impl AssetLoader for BspLoader {
 			let mut ctx = BspLoadCtx {
 				loader: self,
 				load_context,
-				asset_server: &self.asset_server,
+				asset_server: &asset_server,
 				type_registry: &self.type_registry,
 				data: &data,
 				entities: &entities,
