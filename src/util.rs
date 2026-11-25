@@ -425,6 +425,30 @@ pub fn angle_to_quat(angle: f32) -> Quat {
 	}
 }
 
+/// The [`AssetServer`] for a loader to hand to hooks. The [`AssetServer`] owns its loaders, so a loader holding a clone of it is a cycle that never drops.
+/// The world holds the only strong reference instead, and the loader a weak one.
+#[derive(Clone)]
+pub struct LoaderAssetServer(std::sync::Weak<AssetServer>);
+impl LoaderAssetServer {
+	/// The server, while its world is alive.
+	pub fn get(&self) -> anyhow::Result<std::sync::Arc<AssetServer>> {
+		self.0.upgrade().ok_or_else(|| anyhow::anyhow!("the AssetServer's world is gone"))
+	}
+}
+impl FromWorld for LoaderAssetServer {
+	fn from_world(world: &mut World) -> Self {
+		if !world.contains_resource::<HeldAssetServer>() {
+			let server = world.resource::<AssetServer>().clone();
+			world.insert_resource(HeldAssetServer(std::sync::Arc::new(server)));
+		}
+		Self(std::sync::Arc::downgrade(&world.resource::<HeldAssetServer>().0))
+	}
+}
+
+/// The strong side of [`LoaderAssetServer`], dropped with the world.
+#[derive(Resource)]
+struct HeldAssetServer(std::sync::Arc<AssetServer>);
+
 #[cfg(test)]
 mod tests {
 	use super::*;
