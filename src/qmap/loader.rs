@@ -12,21 +12,21 @@ use geometry::{Brushes, BrushesAsset, MapGeometryTexture};
 use crate::{
 	class::{QuakeClassMeshView, QuakeClassSpawnView, generate_class_map, spawn_quake_entity_into_scene},
 	geometry::BrushGeometry,
-	util::{MapFileType, TextureSizeCache},
+	util::{LoaderAssetServer, MapFileType, TextureSizeCache},
 };
 
 use super::*;
 
 #[derive(TypePath)]
 pub struct QuakeMapLoader {
-	pub asset_server: AssetServer,
+	pub asset_server: LoaderAssetServer,
 	pub tb_server: TrenchBroomServer,
 	pub type_registry: AppTypeRegistry,
 }
 impl FromWorld for QuakeMapLoader {
 	fn from_world(world: &mut World) -> Self {
 		Self {
-			asset_server: world.resource::<AssetServer>().clone(),
+			asset_server: LoaderAssetServer::from_world(world),
 			tb_server: world.resource::<TrenchBroomServer>().clone(),
 			type_registry: world.resource::<AppTypeRegistry>().clone(),
 		}
@@ -51,6 +51,7 @@ impl AssetLoader for QuakeMapLoader {
 		load_context: &mut bevy::asset::LoadContext,
 	) -> impl ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
 		Box::pin(async move {
+			let asset_server = self.asset_server.get()?;
 			let mut input = String::new();
 			reader.read_to_string(&mut input).await?;
 
@@ -130,7 +131,7 @@ impl AssetLoader for QuakeMapLoader {
 									name: texture,
 									tb_server: &self.tb_server,
 									load_context,
-									asset_server: &self.asset_server,
+									asset_server: &asset_server,
 									entities: &entities,
 									#[cfg(feature = "client")]
 									alpha_mode: None,
@@ -240,8 +241,7 @@ mod tests {
 	use super::*;
 
 	#[cfg(feature = "client")]
-	#[test]
-	fn map_loading() {
+	fn test_app() -> App {
 		let mut app = App::new();
 
 		// Can't find a better solution than this mess :(
@@ -266,6 +266,13 @@ mod tests {
 			.init_asset::<BrushesAsset>()
 			.init_asset_loader::<QuakeMapLoader>()
 		;
+		app
+	}
+
+	#[cfg(feature = "client")]
+	#[test]
+	fn map_loading() {
+		let app = test_app();
 
 		smol::block_on(async {
 			app.world()
@@ -275,5 +282,17 @@ mod tests {
 				.await
 				.unwrap();
 		});
+	}
+
+	/// The [`AssetServer`] owns its loaders, so the loader must not keep the server alive in turn.
+	#[cfg(feature = "client")]
+	#[test]
+	fn loader_drops_with_app() {
+		let app = test_app();
+		let loader =
+			std::sync::Arc::downgrade(&smol::block_on(app.world().resource::<AssetServer>().get_asset_loader_with_extension("map")).unwrap());
+
+		drop(app);
+		assert!(loader.upgrade().is_none(), "the AssetServer outlived its App");
 	}
 }
